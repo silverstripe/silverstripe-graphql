@@ -1,0 +1,6 @@
+---
+Name: graphqlroutes
+---
+SilverStripe\Control\Director:
+  rules:
+    'graphql': 'SilverStripe\GraphQL\Controller'
