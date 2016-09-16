@@ -1,0 +1,28 @@
+{
+  "name": "silverstripe/graphql",
+  "description": "GraphQL server for SilverStripe models and other data",
+  "type": "silverstripe-module",
+  "require": {
+    "php": ">=5.5.0",
+    "silverstripe/framework": "^4",
+    "webonyx/graphql-php": "dev-master"
+  },
+  "require-dev": {
+    "phpunit/PHPUnit": "~4.8"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0.x-dev"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "SilverStripe\\GraphQL\\": "src/"
+    }
+  },
+  "config": {
+    "process-timeout": 600
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}
