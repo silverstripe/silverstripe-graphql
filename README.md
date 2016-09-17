@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/chillu/silverstripe-graphql.svg?branch=master)](https://travis-ci.org/chillu/silverstripe-graphql)
 [![codecov](https://codecov.io/gh/chillu/silverstripe-graphql/branch/master/graph/badge.svg)](https://codecov.io/gh/chillu/silverstripe-graphql)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/chillu/silverstripe-graphql/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/chillu/silverstripe-graphql/?branch=master)
 
 This modules serves SilverStripe data as
 [GraphQL](http://facebook.github.io/react/blog/2015/05/01/graphql-introduction.html) representations,
