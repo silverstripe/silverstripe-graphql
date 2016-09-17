@@ -5,7 +5,7 @@ namespace SilverStripe\Tests\GraphQL;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Controller;
-use SilverStripe\GraphQL\Tests\TestTypeCreator;
+use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\Core\Config\Config;
 use ReflectionClass;
 
@@ -16,7 +16,7 @@ class ControllerTest extends SapphireTest
     {
         Config::inst()->update('SilverStripe\GraphQL', 'schema', [
             'types' => [
-                'mytype' => 'SilverStripe\GraphQL\Tests\TestTypeCreator',
+                'mytype' => 'SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake',
             ]
         ]);
 
@@ -26,7 +26,7 @@ class ControllerTest extends SapphireTest
         $method->setAccessible(true);
         $manager = $method->invoke($controller);
         $this->assertInstanceOf(
-            'SilverStripe\GraphQL\Tests\TestTypeCreator',
+            'SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake',
             $manager->getType('mytype')
         );
     }
