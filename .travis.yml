@@ -16,4 +16,9 @@ before_script:
     - cd ~/builds/ss
 
 script:
-    - vendor/bin/phpunit graphql/tests
+    - vendor/bin/phpunit --coverage-clover=coverage.xml graphql/tests
+
+after_success:
+  - mv coverage.xml ~/build/$TRAVIS_REPO_SLUG
+  - cd ~/build/$TRAVIS_REPO_SLUG
+  - bash <(curl -s https://codecov.io/bash)
