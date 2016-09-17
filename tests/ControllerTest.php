@@ -13,7 +13,7 @@ use ReflectionClass;
 
 class ControllerTest extends SapphireTest
 {
-    
+
     public function testIndex()
     {
         $controller = new Controller();

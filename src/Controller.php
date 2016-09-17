@@ -17,15 +17,19 @@ class Controller extends BaseController
     protected $manager;
 
     public function index(HTTPRequest $request) {
-        $query = $request->getVar('query');
-        $params = $request->getVar('params');
-
-        if(is_string($params)) {
-            $params = json_decode($params, true);
+        if ($request->getHeader('Content-Type') === 'application/json') {
+            $rawBody = $request->getBody();
+            $data = json_decode($rawBody ?: '', true);
+        } else {
+            $data = $request->requestVars();
         }
 
+        $query = isset($data['query']) ? $data['query'] : null;
+//        $operation = isset($data['operation']) ? $data['operation'] : null;
+        $variables = isset($data['variables']) ? $data['variables'] : null;
+
         $manager = $this->getManager();
-        $response = $manager->query($query, $params);
+        $response = $manager->query($query, $variables);
 
         return (new HTTPResponse(json_encode($response)))
             ->addHeader('Content-Type', 'text/json');
