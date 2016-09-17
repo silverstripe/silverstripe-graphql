@@ -13,12 +13,8 @@ It uses the [graphql-php](https://github.com/webonyx/graphql-php) library.
 
 Require the [composer](http://getcomposer.org) package in your `composer.json`
 
-```json
-{
-    "require": {
-        "silverstripe/graphql": "1.0.x-dev"
-    }
-}
+```
+composer require silverstripe/graphql
 ```
 
 ## Usage
@@ -33,8 +29,9 @@ You need to define *Types* and *Queries* to expose your data via this endpoint.
 
 ```yml
 SilverStripe\GraphQL:
-  types:
-    member: 'MyProject\GraphQL\MemberTypeCreator'
+  schema:
+    types:
+      member: 'MyProject\GraphQL\MemberTypeCreator'
 ```
 
 ```php
@@ -65,8 +62,9 @@ class MemberTypeCreator extends TypeCreator {
 
 ```yml
 SilverStripe\GraphQL:
-  types:
-    members: 'MyProject\GraphQL\MemberQueryCreator'
+  schema:
+    queries:
+      members: 'MyProject\GraphQL\MemberQueryCreator'
 ```
 
 ```php
@@ -76,18 +74,19 @@ namespace MyProject\GraphQL;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\QueryCreator;
 use MyProject\MyDataObject;
+use SilverStripe\Security\Member;
 
 class MemberQueryCreator extends QueryCreator {
 
     public function type()
     {
-        return Type::listOf(GraphQL::type('member'));
+        return Type::listOf($this->types['member']->toType()));
     }
 
 
     public function resolve($args)
     {
-        $list = MyDataObject::get();
+        $list = Member::get();
 
         if(isset($args['ID']) {
             $list = $list->filter('ID', $args['ID']);
@@ -102,16 +101,18 @@ class MemberQueryCreator extends QueryCreator {
 You can query data with the following URL:
 
 ```
-/graphql?query=query+members{ID,FirstName}
+/graphql?query=query+FetchMembers{members{ID,FirstName}}
 ```
 
-Here's an example of how the output might look like:
+This can also be expressed more cleanly as:
 
-```json
+```
 {
-  "hero": {
-    "__typename": "Droid",
-    "name": "R2-D2"
+  query FetchMembers {
+    members {
+      ID
+      FirstName
+    }
   }
 }
 ```
