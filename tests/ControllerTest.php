@@ -16,7 +16,7 @@ class ControllerTest extends SapphireTest
     {
         Config::inst()->update('SilverStripe\GraphQL', 'schema', [
             'types' => [
-                'mytype' => 'SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake',
+                'mytype' => TypeCreatorFake::class,
             ]
         ]);
 
@@ -26,7 +26,7 @@ class ControllerTest extends SapphireTest
         $method->setAccessible(true);
         $manager = $method->invoke($controller);
         $this->assertInstanceOf(
-            'SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake',
+            TypeCreatorFake::class,
             $manager->getType('mytype')
         );
     }

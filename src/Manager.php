@@ -26,7 +26,7 @@ class Manager
     /**
      * @var callable
      */
-    protected $errorFormatter = ['SilverStripe\GraphQL\Manager', 'formatError'];
+    protected $errorFormatter = [Manager::class, 'formatError'];
 
     public function __construct($config = null)
     {
