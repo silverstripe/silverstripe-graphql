@@ -19,19 +19,12 @@ class Controller extends BaseController
     }
 
     /**
-     * @return SilverStripe\GraphQL\Manager
+     * @return Manager
      */
     protected function getManager() {
         // Get a service rather than an instance (to allow procedural configuration)
-        $manager = Injector::inst()->get('SilverStripe\GraphQL\Manager');
-
-        // Add types from configuration
-        $configTypes = Config::inst()->get('SilverStripe\GraphQL', 'types');
-        if($configTypes) {
-            foreach($configTypes as $name => $type) {
-                $manager->addType($type, $name);
-            }
-        }
+        $config = Config::inst()->get('SilverStripe\GraphQL', 'schema');
+        $manager = Injector::inst()->create('SilverStripe\GraphQL\Manager', $config);
 
         return $manager;
     }

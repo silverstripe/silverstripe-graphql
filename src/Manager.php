@@ -20,6 +20,21 @@ class Manager
      */
     protected $queries = [];
 
+    public function __construct($config = null)
+    {
+        if($config && array_key_exists('types', $config)) {
+            foreach($config['types'] as $name => $type) {
+                $this->addType($type, $name);
+            }
+        }
+
+        if($config && array_key_exists('queries', $config)) {
+            foreach($config['queries'] as $name => $query) {
+                $this->addQuery($query, $name);
+            }
+        }
+    }
+
     /**
      * @return Schema
      */

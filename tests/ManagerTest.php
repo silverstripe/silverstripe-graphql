@@ -9,6 +9,20 @@ use SilverStripe\Dev\SapphireTest;
 class ManagerTest extends SapphireTest
 {
 
+    public function testConstructWithConfig()
+    {
+        $config = [
+            'types' => [
+                'mytype' => 'SilverStripe\GraphQL\Tests\TestTypeCreator',
+            ],
+        ];
+        $manager = new Manager($config);
+        $this->assertInstanceOf(
+            'SilverStripe\GraphQL\Tests\TestTypeCreator',
+            $manager->getType('mytype')
+        );
+    }
+
     public function testAddTypeAsNamedString() {
         $manager = new Manager();
         $manager->addType('SilverStripe\GraphQL\Tests\TestTypeCreator', 'mytype');

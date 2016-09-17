@@ -14,8 +14,10 @@ class ControllerTest extends SapphireTest
 
     public function testGetGetManagerPopulatesFromConfig()
     {
-        Config::inst()->update('SilverStripe\GraphQL', 'types', [
-            'mytype' => 'SilverStripe\GraphQL\Tests\TestTypeCreator',
+        Config::inst()->update('SilverStripe\GraphQL', 'schema', [
+            'types' => [
+                'mytype' => 'SilverStripe\GraphQL\Tests\TestTypeCreator',
+            ]
         ]);
 
         $controller = new Controller();
