@@ -13,7 +13,6 @@ use ReflectionClass;
 
 class ControllerTest extends SapphireTest
 {
-
     public function testIndex()
     {
         $controller = new Controller();
@@ -30,7 +29,7 @@ class ControllerTest extends SapphireTest
         Config::inst()->update('SilverStripe\GraphQL', 'schema', [
             'types' => [
                 'mytype' => TypeCreatorFake::class,
-            ]
+            ],
         ]);
 
         $controller = new Controller();
@@ -43,5 +42,4 @@ class ControllerTest extends SapphireTest
             $manager->getType('mytype')
         );
     }
-
 }

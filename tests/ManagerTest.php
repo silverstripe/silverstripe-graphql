@@ -12,7 +12,6 @@ use GraphQL\Language\SourceLocation;
 
 class ManagerTest extends SapphireTest
 {
-
     public function testConstructWithConfig()
     {
         $config = [
@@ -36,10 +35,10 @@ class ManagerTest extends SapphireTest
         $schema = $manager->schema();
         $this->assertInstanceOf(Schema::class, $schema);
         $this->assertNotNull($schema->getQueryType()->getField('myquery'));
-
     }
 
-    public function testAddTypeAsNamedString() {
+    public function testAddTypeAsNamedString()
+    {
         $manager = new Manager();
         $manager->addType(TypeCreatorFake::class, 'mytype');
         $this->assertInstanceOf(
@@ -48,7 +47,8 @@ class ManagerTest extends SapphireTest
         );
     }
 
-    public function testAddTypeAsUnnamedString() {
+    public function testAddTypeAsUnnamedString()
+    {
         $manager = new Manager();
         $manager->addType(TypeCreatorFake::class);
         $this->assertInstanceOf(
@@ -57,7 +57,8 @@ class ManagerTest extends SapphireTest
         );
     }
 
-    public function testAddTypeAsNamedObject() {
+    public function testAddTypeAsNamedObject()
+    {
         $manager = new Manager();
         $type = new TypeCreatorFake();
         $manager->addType($type, 'mytype');
@@ -71,7 +72,8 @@ class ManagerTest extends SapphireTest
         );
     }
 
-    public function testAddTypeAsUnnamedObject() {
+    public function testAddTypeAsUnnamedObject()
+    {
         $manager = new Manager();
         $type = new TypeCreatorFake();
         $manager->addType($type);
@@ -85,7 +87,8 @@ class ManagerTest extends SapphireTest
         );
     }
 
-    public function testAddQueryAsNamedString() {
+    public function testAddQueryAsNamedString()
+    {
         $manager = new Manager();
         $manager->addType(TypeCreatorFake::class, 'mytype');
         $manager->addQuery(QueryCreatorFake::class, 'myquery');
@@ -95,7 +98,8 @@ class ManagerTest extends SapphireTest
         );
     }
 
-    public function testAddQueryAsUnnamedString() {
+    public function testAddQueryAsUnnamedString()
+    {
         $manager = new Manager();
         $manager->addType(TypeCreatorFake::class, 'mytype');
         $manager->addQuery(QueryCreatorFake::class);
@@ -105,7 +109,8 @@ class ManagerTest extends SapphireTest
         );
     }
 
-    public function testAddQueryAsNamedObject() {
+    public function testAddQueryAsNamedObject()
+    {
         $manager = new Manager();
         $type = new QueryCreatorFake();
         $manager->addType(TypeCreatorFake::class, 'mytype');
@@ -120,7 +125,8 @@ class ManagerTest extends SapphireTest
         );
     }
 
-    public function testAddQueryAsUnnamedObject() {
+    public function testAddQueryAsUnnamedObject()
+    {
         $manager = new Manager();
         $type = new QueryCreatorFake();
         $manager->addType(TypeCreatorFake::class, 'mytype');
@@ -145,8 +151,8 @@ class ManagerTest extends SapphireTest
         $responseData->errors = [
             Error::createLocatedError(
                 'Something went wrong',
-                [ new SourceLocation(1, 10) ]
-            )
+                [new SourceLocation(1, 10)]
+            ),
         ];
         $mock->method('queryAndReturnResult')
             ->willReturn($responseData);

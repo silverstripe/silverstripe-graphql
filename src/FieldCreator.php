@@ -5,20 +5,20 @@ namespace SilverStripe\GraphQL;
 use SilverStripe\Core\Object;
 use GraphQL\Type\Definition\Type;
 
-class FieldCreator extends Object {
-
+class FieldCreator extends Object
+{
     /**
      * @var array Of type {@link \GraphQL\Type\Definition\ObjectType}.
-     * Allows selection of an existing type in {@link type()}
+     *            Allows selection of an existing type in {@link type()}
      */
     protected $types = [];
 
     /**
-     * @param array|null $types Of type {@link \GraphQL\Type\Definition\ObjectType}.
+     * @param array|null $types Of type {@link \GraphQL\Type\Definition\ObjectType}
      */
     public function __construct($types = null)
     {
-        if($types) {
+        if ($types) {
             $this->types = $types;
         }
 
@@ -59,18 +59,16 @@ class FieldCreator extends Object {
         $args = $this->args();
 
         $attributes = array_merge([
-            'args' => $args
+            'args' => $args,
         ], $this->attributes());
 
         $type = $this->type();
-        if(isset($type))
-        {
+        if (isset($type)) {
             $attributes['type'] = $type;
         }
 
         $resolver = $this->getResolver();
-        if(isset($resolver))
-        {
+        if (isset($resolver)) {
             $attributes['resolve'] = $resolver;
         }
 
@@ -89,23 +87,25 @@ class FieldCreator extends Object {
     /**
      * Dynamically retrieve the value of an attribute.
      *
-     * @param  string  $key
+     * @param string $key
+     *
      * @return mixed
      */
     public function __get($key)
     {
         $attributes = $this->getAttributes();
-        return isset($attributes[$key]) ? $attributes[$key]:null;
+
+        return isset($attributes[$key]) ? $attributes[$key] : null;
     }
     /**
      * Dynamically check if an attribute is set.
      *
-     * @param  string  $key
-     * @return void
+     * @param string $key
      */
     public function __isset($key)
     {
         $attributes = $this->getAttributes();
+
         return isset($attributes[$key]);
     }
 
@@ -114,15 +114,15 @@ class FieldCreator extends Object {
      */
     protected function getResolver()
     {
-        if(!method_exists($this, 'resolve'))
-        {
+        if (!method_exists($this, 'resolve')) {
             return null;
         }
 
         $resolver = array($this, 'resolve');
-        return function() use ($resolver)
-        {
+
+        return function () use ($resolver) {
             $args = func_get_args();
+
             return call_user_func_array($resolver, $args);
         };
     }

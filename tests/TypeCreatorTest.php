@@ -3,12 +3,10 @@
 namespace SilverStripe\GraphQL;
 
 use SilverStripe\Dev\SapphireTest;
-use SilverStripe\GraphQL\TypeCreator;
 use GraphQL\Type\Definition\Type;
 
 class TypeCreatorTest extends SapphireTest
 {
-
     public function testGetFields()
     {
         $mock = $this->getMockBuilder('SilverStripe\GraphQL\TypeCreator')
@@ -60,5 +58,4 @@ class TypeCreatorTest extends SapphireTest
         $fields = $actual['fields']();
         $this->assertArrayHasKey('ID', $fields);
     }
-
 }

@@ -10,13 +10,13 @@ use SilverStripe\Core\Config\Config;
 
 class Controller extends BaseController
 {
-
     /**
      * @var Manager
      */
     protected $manager;
 
-    public function index(HTTPRequest $request) {
+    public function index(HTTPRequest $request)
+    {
         if ($request->getHeader('Content-Type') === 'application/json') {
             $rawBody = $request->getBody();
             $data = json_decode($rawBody ?: '', true);
@@ -38,8 +38,9 @@ class Controller extends BaseController
     /**
      * @return Manager
      */
-    public function getManager() {
-        if($this->manager) {
+    public function getManager()
+    {
+        if ($this->manager) {
             return $this->manager;
         }
 
@@ -57,5 +58,4 @@ class Controller extends BaseController
     {
         $this->manager = $manager;
     }
-
 }

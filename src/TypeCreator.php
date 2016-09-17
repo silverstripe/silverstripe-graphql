@@ -9,8 +9,8 @@ use GraphQL\Type\Definition\ObjectType;
  * Represents a GraphQL type in a way that allows customisation
  * through SilverStripe's DataExtension system.
  */
-class TypeCreator extends Object {
-
+class TypeCreator extends Object
+{
     /**
      * @return array
      */
@@ -22,7 +22,7 @@ class TypeCreator extends Object {
     /**
      * Returns the internal field structures, without field resolution.
      *
-     * @return array A map of field names to type instances in the GraphQL\Type\Definition namespace.
+     * @return array A map of field names to type instances in the GraphQL\Type\Definition namespace
      */
     public function fields()
     {
@@ -64,9 +64,9 @@ class TypeCreator extends Object {
         return array_merge(
             $this->attributes(),
             [
-                'fields' => function() {
+                'fields' => function () {
                     return $this->getFields();
-                }
+                },
             ]
         );
     }
