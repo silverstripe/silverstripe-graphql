@@ -37,10 +37,19 @@ class TypeCreator extends Object
     public function getFields()
     {
         $fields = $this->fields();
+        $allFields = [];
 
-        // TODO Field resolution
+        foreach($fields as $name => $field)
+        {
+            $resolver = $this->getFieldResolver($name, $field);
+            if($resolver)
+            {
+                $field['resolve'] = $resolver;
+            }
+            $allFields[$name] = $field;
+        }
 
-        return $fields;
+        return $allFields;
     }
 
     /**
@@ -69,5 +78,25 @@ class TypeCreator extends Object
                 },
             ]
         );
+    }
+
+    protected function getFieldResolver($name, $field)
+    {
+        $resolveMethod = 'resolve'.ucfirst($name).'Field';
+        if(isset($field['resolve']))
+        {
+            return $field['resolve'];
+        }
+        else if(method_exists($this, $resolveMethod))
+        {
+            $resolver = array($this, $resolveMethod);
+            return function() use ($resolver)
+            {
+                $args = func_get_args();
+                return call_user_func_array($resolver, $args);
+            };
+        }
+
+        return null;
     }
 }

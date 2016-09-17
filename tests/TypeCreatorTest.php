@@ -9,7 +9,7 @@ class TypeCreatorTest extends SapphireTest
 {
     public function testGetFields()
     {
-        $mock = $this->getMockBuilder('SilverStripe\GraphQL\TypeCreator')
+        $mock = $this->getMockBuilder(TypeCreator::class)
             ->setMethods(['fields'])
             ->getMock();
         $mock->method('fields')->willReturn([
@@ -25,7 +25,7 @@ class TypeCreatorTest extends SapphireTest
 
     public function testToArray()
     {
-        $mock = $this->getMockBuilder('SilverStripe\GraphQL\TypeCreator')
+        $mock = $this->getMockBuilder(TypeCreator::class)
             ->setMethods(['fields'])
             ->getMock();
         $mock->method('fields')->willReturn([
@@ -43,7 +43,7 @@ class TypeCreatorTest extends SapphireTest
 
     public function testGetAttributes()
     {
-        $mock = $this->getMockBuilder('SilverStripe\GraphQL\TypeCreator')
+        $mock = $this->getMockBuilder(TypeCreator::class)
             ->setMethods(['fields'])
             ->getMock();
         $mock->method('fields')->willReturn([
@@ -57,5 +57,53 @@ class TypeCreatorTest extends SapphireTest
 
         $fields = $actual['fields']();
         $this->assertArrayHasKey('ID', $fields);
+    }
+
+    public function testGetFieldsUsesResolveConfig()
+    {
+        $mock = $this->getMockBuilder(TypeCreator::class)
+            ->setMethods(['fields','resolveFieldAField'])
+            ->getMock();
+        $mock->method('fields')->willReturn([
+            'fieldA' => [
+                'type' => Type::string(),
+                'resolve' => function() {return 'config';},
+            ],
+            'fieldB' => [
+                'type' => Type::string(),
+            ],
+        ]);
+        $mock->method('resolveFieldA')
+            ->willReturn('method');
+
+        $fields = $mock->getFields();
+        $this->assertArrayHasKey('fieldA', $fields);
+        $this->assertArrayHasKey('fieldB', $fields);
+        $this->assertArrayHasKey('resolve', $fields['fieldA']);
+        $this->assertArrayNotHasKey('resolve', $fields['fieldB']);
+        $this->assertEquals('config', $fields['fieldA']['resolve']());
+    }
+
+    public function testGetFieldsUsesResolverMethod()
+    {
+        $mock = $this->getMockBuilder(TypeCreator::class)
+            ->setMethods(['fields','resolveFieldAField'])
+            ->getMock();
+        $mock->method('fields')->willReturn([
+            'fieldA' => [
+                'type' => Type::string(),
+            ],
+            'fieldB' => [
+                'type' => Type::string(),
+            ],
+        ]);
+        $mock->method('resolveFieldA')
+            ->willReturn('resolved');
+
+        $fields = $mock->getFields();
+        $this->assertArrayHasKey('fieldA', $fields);
+        $this->assertArrayHasKey('fieldB', $fields);
+        $this->assertArrayHasKey('resolve', $fields['fieldA']);
+        $this->assertArrayNotHasKey('resolve', $fields['fieldB']);
     }
 }

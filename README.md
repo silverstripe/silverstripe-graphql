@@ -116,3 +116,9 @@ This can also be expressed more cleanly as:
   }
 }
 ```
+
+## Advanced
+
+### Resolvers
+
+TODO
