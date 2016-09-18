@@ -1,9 +1,9 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests\Fake;
+namespace Chillu\GraphQL\Tests\Fake;
 
 use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\QueryCreator;
+use Chillu\GraphQL\QueryCreator;
 
 class QueryCreatorFake extends QueryCreator
 {

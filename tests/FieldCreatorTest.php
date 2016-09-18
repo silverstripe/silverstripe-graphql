@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL;
+namespace Chillu\GraphQL;
 
 use SilverStripe\Dev\SapphireTest;
 
@@ -8,7 +8,7 @@ class FieldCreatorTest extends SapphireTest
 {
     public function testGetAttributesIncludesResolver()
     {
-        $mock = $this->getMockBuilder('SilverStripe\GraphQL\FieldCreator')
+        $mock = $this->getMockBuilder('Chillu\GraphQL\FieldCreator')
             ->setMethods(['resolve'])
             ->getMock();
         $mock->method('resolve')->willReturn(function () {

@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL;
+namespace Chillu\GraphQL;
 
 use SilverStripe\Dev\SapphireTest;
 use GraphQL\Type\Definition\Type;

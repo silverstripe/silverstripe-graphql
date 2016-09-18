@@ -14,7 +14,7 @@ It uses the [graphql-php](https://github.com/webonyx/graphql-php) library.
 Require the [composer](http://getcomposer.org) package in your `composer.json`
 
 ```
-composer require silverstripe/graphql
+composer require chillu/silverstripe-graphql
 ```
 
 ## Usage
@@ -28,7 +28,7 @@ You need to define *Types* and *Queries* to expose your data via this endpoint.
 
 
 ```yml
-SilverStripe\GraphQL:
+Chillu\GraphQL:
   schema:
     types:
       member: 'MyProject\GraphQL\MemberTypeCreator'
@@ -39,7 +39,7 @@ SilverStripe\GraphQL:
 namespace MyProject\GraphQL;
 
 use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\TypeCreator;
+use Chillu\GraphQL\TypeCreator;
 
 class MemberTypeCreator extends TypeCreator {
 
@@ -61,7 +61,7 @@ class MemberTypeCreator extends TypeCreator {
 ### Define Queries
 
 ```yml
-SilverStripe\GraphQL:
+Chillu\GraphQL:
   schema:
     queries:
       members: 'MyProject\GraphQL\MemberQueryCreator'
@@ -72,7 +72,7 @@ SilverStripe\GraphQL:
 namespace MyProject\GraphQL;
 
 use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\QueryCreator;
+use Chillu\GraphQL\QueryCreator;
 use MyProject\MyDataObject;
 use SilverStripe\Security\Member;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL;
+namespace Chillu\GraphQL;
 
 use SilverStripe\Core\Object;
 use GraphQL\Type\Definition\Type;

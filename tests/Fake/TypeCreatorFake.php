@@ -1,8 +1,8 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests\Fake;
+namespace Chillu\GraphQL\Tests\Fake;
 
-use SilverStripe\GraphQL\TypeCreator;
+use Chillu\GraphQL\TypeCreator;
 
 class TypeCreatorFake extends TypeCreator
 {

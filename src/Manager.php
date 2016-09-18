@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL;
+namespace Chillu\GraphQL;
 
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use GraphQL\Schema;
@@ -12,12 +12,12 @@ use GraphQL\Error;
 class Manager
 {
     /**
-     * @var array {@link SilverStripe\GraphQL\TypeCreator}
+     * @var array {@link Chillu\GraphQL\TypeCreator}
      */
     protected $types = [];
 
     /**
-     * @var array Map of {@link SilverStripe\GraphQL\QueryCreator}
+     * @var array Map of {@link Chillu\GraphQL\QueryCreator}
      */
     protected $queries = [];
 
@@ -90,7 +90,7 @@ class Manager
     }
 
     /**
-     * @param string|Type $type An instance of {@link SilverStripe\GraphQL\TypeCreator} (or a class name)
+     * @param string|Type $type An instance of {@link Chillu\GraphQL\TypeCreator} (or a class name)
      * @param string      $name An optional identifier for this type (defaults to class name)
      */
     public function addType($type, $name = '')
@@ -105,7 +105,7 @@ class Manager
 
         if (!($type instanceof TypeCreator)) {
             throw new InvalidArgumentException(sprintf(
-                'The type named "%s" needs to be a class name or instance of SilverStripe\GraphQL\TypeCreator',
+                'The type named "%s" needs to be a class name or instance of Chillu\GraphQL\TypeCreator',
                 $name
             ));
         }
@@ -124,7 +124,7 @@ class Manager
     }
 
     /**
-     * @param string|Type $query An instance of {@link SilverStripe\GraphQL\QueryCreator} (or a class name)
+     * @param string|Type $query An instance of {@link Chillu\GraphQL\QueryCreator} (or a class name)
      * @param string      $name  An optional identifier for this type (defaults to class name)
      */
     public function addQuery($query, $name = '')
@@ -139,7 +139,7 @@ class Manager
 
         if (!($query instanceof QueryCreator)) {
             throw new InvalidArgumentException(sprintf(
-                'The type named "%s" needs to be a class name or instance of SilverStripe\GraphQL\QueryCreator',
+                'The type named "%s" needs to be a class name or instance of Chillu\GraphQL\QueryCreator',
                 $name
             ));
         }
