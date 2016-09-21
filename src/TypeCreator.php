@@ -80,19 +80,37 @@ class TypeCreator extends Object
         );
     }
 
+    /**
+     * @param $name
+     * @param $field
+     * @return \Closure|null
+     */
     protected function getFieldResolver($name, $field)
     {
         $resolveMethod = 'resolve'.ucfirst($name).'Field';
         if(isset($field['resolve']))
         {
+            // Preconfigured method
             return $field['resolve'];
         }
         else if(method_exists($this, $resolveMethod))
         {
+            // Method for a particular field
             $resolver = array($this, $resolveMethod);
             return function() use ($resolver)
             {
                 $args = func_get_args();
+                return call_user_func_array($resolver, $args);
+            };
+        }
+        else if(method_exists($this, 'resolveField'))
+        {
+            // Method for all fields
+            $resolver = array($this, 'resolveField');
+            return function() use ($resolver)
+            {
+                $args = func_get_args();
+                // See 'resolveType' on https://github.com/webonyx/graphql-php
                 return call_user_func_array($resolver, $args);
             };
         }

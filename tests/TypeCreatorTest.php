@@ -106,4 +106,29 @@ class TypeCreatorTest extends SapphireTest
         $this->assertArrayHasKey('resolve', $fields['fieldA']);
         $this->assertArrayNotHasKey('resolve', $fields['fieldB']);
     }
+
+    public function testGetFieldsUsesAllFieldsResolverMethod()
+    {
+        $mock = $this->getMockBuilder(TypeCreator::class)
+            ->setMethods(['fields','resolveField'])
+            ->getMock();
+        $mock->method('fields')->willReturn([
+            'fieldA' => [
+                'type' => Type::string(),
+            ],
+            'fieldB' => [
+                'type' => Type::string(),
+            ],
+        ]);
+        $mock->method('resolveField')
+            ->willReturn('resolved');
+
+        $fields = $mock->getFields();
+        $this->assertArrayHasKey('fieldA', $fields);
+        $this->assertArrayHasKey('fieldB', $fields);
+        $this->assertArrayHasKey('resolve', $fields['fieldA']);
+        $this->assertArrayHasKey('resolve', $fields['fieldB']);
+        $this->assertEquals('resolved', $fields['fieldA']['resolve']());
+        $this->assertEquals('resolved', $fields['fieldB']['resolve']());
+    }
 }
