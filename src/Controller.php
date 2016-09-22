@@ -25,7 +25,6 @@ class Controller extends BaseController
         }
 
         $query = isset($data['query']) ? $data['query'] : null;
-//        $operation = isset($data['operation']) ? $data['operation'] : null;
         $variables = isset($data['variables']) ? $data['variables'] : null;
 
         $manager = $this->getManager();
@@ -46,7 +45,7 @@ class Controller extends BaseController
 
         // Get a service rather than an instance (to allow procedural configuration)
         $config = Config::inst()->get('Chillu\GraphQL', 'schema');
-        $manager = Injector::inst()->create(Manager::class, $config);
+        $manager = Manager::createFromConfig($config);
 
         return $manager;
     }

@@ -5,6 +5,7 @@ namespace Chillu\GraphQL\Tests;
 use Chillu\GraphQL\Manager;
 use Chillu\GraphQL\Tests\Fake\TypeCreatorFake;
 use Chillu\GraphQL\Tests\Fake\QueryCreatorFake;
+use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\SapphireTest;
 use GraphQL\Error;
 use GraphQL\Schema;
@@ -12,16 +13,16 @@ use GraphQL\Language\SourceLocation;
 
 class ManagerTest extends SapphireTest
 {
-    public function testConstructWithConfig()
+    public function testCreateFromConfig()
     {
         $config = [
             'types' => [
                 'mytype' => TypeCreatorFake::class,
             ],
         ];
-        $manager = new Manager($config);
+        $manager = Manager::createFromConfig($config);
         $this->assertInstanceOf(
-            TypeCreatorFake::class,
+            Type::class,
             $manager->getType('mytype')
         );
     }
@@ -29,43 +30,19 @@ class ManagerTest extends SapphireTest
     public function testSchema()
     {
         $manager = new Manager();
-        $manager->addType(TypeCreatorFake::class, 'mytype');
-        $manager->addQuery(QueryCreatorFake::class, 'myquery');
+        $manager->addType($this->getType($manager), 'mytype');
+        $manager->addQuery($this->getQuery($manager), 'myquery');
 
         $schema = $manager->schema();
         $this->assertInstanceOf(Schema::class, $schema);
         $this->assertNotNull($schema->getQueryType()->getField('myquery'));
     }
 
-    public function testAddTypeAsNamedString()
-    {
-        $manager = new Manager();
-        $manager->addType(TypeCreatorFake::class, 'mytype');
-        $this->assertInstanceOf(
-            TypeCreatorFake::class,
-            $manager->getType('mytype')
-        );
-    }
-
-    public function testAddTypeAsUnnamedString()
-    {
-        $manager = new Manager();
-        $manager->addType(TypeCreatorFake::class);
-        $this->assertInstanceOf(
-            TypeCreatorFake::class,
-            $manager->getType(TypeCreatorFake::class)
-        );
-    }
-
     public function testAddTypeAsNamedObject()
     {
         $manager = new Manager();
-        $type = new TypeCreatorFake();
+        $type = $this->getType($manager);
         $manager->addType($type, 'mytype');
-        $this->assertInstanceOf(
-            TypeCreatorFake::class,
-            $manager->getType('mytype')
-        );
         $this->assertEquals(
             $type,
             $manager->getType('mytype')
@@ -75,69 +52,24 @@ class ManagerTest extends SapphireTest
     public function testAddTypeAsUnnamedObject()
     {
         $manager = new Manager();
-        $type = new TypeCreatorFake();
+        $type = $this->getType($manager);
         $manager->addType($type);
-        $this->assertInstanceOf(
-            TypeCreatorFake::class,
-            $manager->getType(TypeCreatorFake::class)
-        );
         $this->assertEquals(
             $type,
-            $manager->getType(TypeCreatorFake::class)
+            $manager->getType((string)$type)
         );
     }
 
-    public function testAddQueryAsNamedString()
+    public function testAddQuery()
     {
         $manager = new Manager();
-        $manager->addType(TypeCreatorFake::class, 'mytype');
-        $manager->addQuery(QueryCreatorFake::class, 'myquery');
-        $this->assertInstanceOf(
-            QueryCreatorFake::class,
-            $manager->getQuery('myquery')
-        );
-    }
-
-    public function testAddQueryAsUnnamedString()
-    {
-        $manager = new Manager();
-        $manager->addType(TypeCreatorFake::class, 'mytype');
-        $manager->addQuery(QueryCreatorFake::class);
-        $this->assertInstanceOf(
-            QueryCreatorFake::class,
-            $manager->getQuery(QueryCreatorFake::class)
-        );
-    }
-
-    public function testAddQueryAsNamedObject()
-    {
-        $manager = new Manager();
-        $type = new QueryCreatorFake();
-        $manager->addType(TypeCreatorFake::class, 'mytype');
-        $manager->addQuery($type, 'myquery');
-        $this->assertInstanceOf(
-            QueryCreatorFake::class,
-            $manager->getQuery('myquery')
-        );
+        $type = $this->getType($manager);
+        $query = $this->getQuery($manager);
+        $manager->addType($type, 'mytype');
+        $manager->addQuery($query, 'myquery');
         $this->assertEquals(
-            $type,
+            $query,
             $manager->getQuery('myquery')
-        );
-    }
-
-    public function testAddQueryAsUnnamedObject()
-    {
-        $manager = new Manager();
-        $type = new QueryCreatorFake();
-        $manager->addType(TypeCreatorFake::class, 'mytype');
-        $manager->addQuery($type);
-        $this->assertInstanceOf(
-            QueryCreatorFake::class,
-            $manager->getQuery(QueryCreatorFake::class)
-        );
-        $this->assertEquals(
-            $type,
-            $manager->getQuery(QueryCreatorFake::class)
         );
     }
 
@@ -159,5 +91,15 @@ class ManagerTest extends SapphireTest
 
         $response = $mock->query('');
         $this->assertArrayHasKey('errors', $response);
+    }
+
+    protected function getType(Manager $manager)
+    {
+        return (new TypeCreatorFake($manager))->toType();
+    }
+
+    protected function getQuery(Manager $manager)
+    {
+        return (new QueryCreatorFake($manager))->toArray();
     }
 }

@@ -8,6 +8,7 @@ use GraphQL\GraphQL;
 use SilverStripe\Core\Injector\Injector;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Error;
+use GraphQL\Type\Definition\Type;
 
 class Manager
 {
@@ -26,19 +27,44 @@ class Manager
      */
     protected $errorFormatter = [self::class, 'formatError'];
 
-    public function __construct($config = null)
+    /**
+     * @param array $config An array with optional 'types' and 'queries' keys
+     * @return Manager
+     */
+    public static function createFromConfig($config)
     {
+        $manager = Injector::inst()->create(Manager::class);
         if ($config && array_key_exists('types', $config)) {
-            foreach ($config['types'] as $name => $type) {
-                $this->addType($type, $name);
+            foreach ($config['types'] as $name => $typeCreatorClass) {
+                $typeCreator = Injector::inst()->create($typeCreatorClass, $manager);
+                if (!($typeCreator instanceof TypeCreator)) {
+                    throw new InvalidArgumentException(sprintf(
+                        'The type named "%s" needs to be a class extending ' . TypeCreator::class,
+                        $name
+                    ));
+                }
+
+                $type = $typeCreator->toType();
+                $manager->addType($type, $name);
             }
         }
 
         if ($config && array_key_exists('queries', $config)) {
-            foreach ($config['queries'] as $name => $query) {
-                $this->addQuery($query, $name);
+            foreach ($config['queries'] as $name => $queryCreatorClass) {
+                $queryCreator = Injector::inst()->create($queryCreatorClass, $manager);
+                if (!($queryCreator instanceof QueryCreator)) {
+                    throw new InvalidArgumentException(sprintf(
+                        'The type named "%s" needs to be a class extending ' . QueryCreator::class,
+                        $name
+                    ));
+                }
+
+                $query = $queryCreator->toArray();
+                $manager->addQuery($query, $name);
             }
         }
+
+        return $manager;
     }
 
     /**
@@ -48,9 +74,7 @@ class Manager
     {
         $queryType = new ObjectType([
             'name' => 'Query',
-            'fields' => array_map(function ($query) {
-                return $query->toArray();
-            }, $this->queries),
+            'fields' => $this->queries,
         ]);
 
         return new Schema([
@@ -81,6 +105,13 @@ class Manager
         }
     }
 
+    /**
+     * @param string $query
+     * @param array  $params
+     * @param null   $schema
+     *
+     * @return array
+     */
     public function queryAndReturnResult($query, $params = [], $schema = null)
     {
         $schema = $this->schema($schema);
@@ -90,24 +121,14 @@ class Manager
     }
 
     /**
-     * @param string|Type $type An instance of {@link Chillu\GraphQL\TypeCreator} (or a class name)
-     * @param string      $name An optional identifier for this type (defaults to class name)
+     * @param Type   $type
+     * @param string $name An optional identifier for this type (defaults to 'name' attribute in type definition).
+     *                     Needs to be unique in schema.
      */
-    public function addType($type, $name = '')
+    public function addType(Type $type, $name = '')
     {
-        if (!$name) {
-            $name = is_object($type) ? get_class($type) : $type;
-        }
-
-        if (!is_object($type)) {
-            $type = Injector::inst()->get($type);
-        }
-
-        if (!($type instanceof TypeCreator)) {
-            throw new InvalidArgumentException(sprintf(
-                'The type named "%s" needs to be a class name or instance of Chillu\GraphQL\TypeCreator',
-                $name
-            ));
+        if(!$name) {
+            $name = (string)$type;
         }
 
         $this->types[$name] = $type;
@@ -116,7 +137,7 @@ class Manager
     /**
      * @param string $name
      *
-     * @return TypeCreator
+     * @return Type
      */
     public function getType($name)
     {
@@ -124,33 +145,18 @@ class Manager
     }
 
     /**
-     * @param string|Type $query An instance of {@link Chillu\GraphQL\QueryCreator} (or a class name)
-     * @param string      $name  An optional identifier for this type (defaults to class name)
+     * @param array  $query
+     * @param string $name Identifier for this query (unique in schema)
      */
-    public function addQuery($query, $name = '')
+    public function addQuery($query, $name)
     {
-        if (!$name) {
-            $name = is_object($query) ? get_class($query) : $query;
-        }
-
-        if (!is_object($query)) {
-            $query = Injector::inst()->create($query, $this->types);
-        }
-
-        if (!($query instanceof QueryCreator)) {
-            throw new InvalidArgumentException(sprintf(
-                'The type named "%s" needs to be a class name or instance of Chillu\GraphQL\QueryCreator',
-                $name
-            ));
-        }
-
         $this->queries[$name] = $query;
     }
 
     /**
      * @param string $name
      *
-     * @return Type
+     * @return array
      */
     public function getQuery($name)
     {

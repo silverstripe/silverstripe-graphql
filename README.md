@@ -80,7 +80,9 @@ class MemberQueryCreator extends QueryCreator {
 
     public function type()
     {
-        return Type::listOf($this->types['member']->toType()));
+        return function() {
+            return Type::listOf($this->manager->getType('member');
+        };
     }
 
 

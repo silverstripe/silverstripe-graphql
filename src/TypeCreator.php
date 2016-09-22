@@ -4,6 +4,7 @@ namespace Chillu\GraphQL;
 
 use SilverStripe\Core\Object;
 use GraphQL\Type\Definition\ObjectType;
+use Chillu\GraphQL\Manager;
 
 /**
  * Represents a GraphQL type in a way that allows customisation
@@ -11,6 +12,23 @@ use GraphQL\Type\Definition\ObjectType;
  */
 class TypeCreator extends Object
 {
+
+    /**
+     * @var Manager
+     */
+    protected $manager;
+
+    /**
+     * @param Manager|null Used to retrieve types (including the one returned from this creator),
+     * and nest field types regardless of instantiation of their creators.
+     */
+    public function __construct(Manager $manager = null)
+    {
+        $this->manager = $manager;
+
+        parent::__construct();
+    }
+
     /**
      * @return array
      */

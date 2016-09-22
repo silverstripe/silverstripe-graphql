@@ -4,23 +4,22 @@ namespace Chillu\GraphQL;
 
 use SilverStripe\Core\Object;
 use GraphQL\Type\Definition\Type;
+use Chillu\GraphQL\Manager;
 
 class FieldCreator extends Object
 {
     /**
-     * @var array Of type {@link \GraphQL\Type\Definition\ObjectType}.
-     *            Allows selection of an existing type in {@link type()}
+     * @var Manager
      */
-    protected $types = [];
+    protected $manager;
 
     /**
-     * @param array|null $types Of type {@link \GraphQL\Type\Definition\ObjectType}
+     * @param Manager|null Used to retrieve types (including the one returned from this creator),
+     * and nest field types regardless of instantiation of their creators.
      */
-    public function __construct($types = null)
+    public function __construct(Manager $manager = null)
     {
-        if ($types) {
-            $this->types = $types;
-        }
+        $this->manager = $manager;
 
         parent::__construct();
     }

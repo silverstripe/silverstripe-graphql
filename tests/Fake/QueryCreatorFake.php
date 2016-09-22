@@ -9,7 +9,8 @@ class QueryCreatorFake extends QueryCreator
 {
     public function type()
     {
-        // TODO Avoid type conversion in userland
-        return Type::listOf($this->types['mytype']->toType());
+        return function() {
+            return Type::listOf($this->manager->getType('mytype'));
+        };
     }
 }

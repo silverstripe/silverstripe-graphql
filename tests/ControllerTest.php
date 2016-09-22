@@ -17,8 +17,8 @@ class ControllerTest extends SapphireTest
     {
         $controller = new Controller();
         $manager = new Manager();
-        $manager->addType(TypeCreatorFake::class, 'mytype');
-        $manager->addQuery(QueryCreatorFake::class, 'myquery');
+        $manager->addType($this->getType($manager), 'mytype');
+        $manager->addQuery($this->getQuery($manager), 'myquery');
         $controller->setManager($manager);
         $response = $controller->index(new HTTPRequest('GET', ''));
         $this->assertFalse($response->isError());
@@ -26,6 +26,7 @@ class ControllerTest extends SapphireTest
 
     public function testGetGetManagerPopulatesFromConfig()
     {
+        Config::inst()->remove('Chillu\GraphQL', 'schema');
         Config::inst()->update('Chillu\GraphQL', 'schema', [
             'types' => [
                 'mytype' => TypeCreatorFake::class,
@@ -37,9 +38,18 @@ class ControllerTest extends SapphireTest
         $method = $reflection->getMethod('getManager');
         $method->setAccessible(true);
         $manager = $method->invoke($controller);
-        $this->assertInstanceOf(
-            TypeCreatorFake::class,
+        $this->assertNotNull(
             $manager->getType('mytype')
         );
+    }
+
+    protected function getType(Manager $manager)
+    {
+        return (new TypeCreatorFake($manager))->toType();
+    }
+
+    protected function getQuery(Manager $manager)
+    {
+        return (new QueryCreatorFake($manager))->toArray();
     }
 }
