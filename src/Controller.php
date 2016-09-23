@@ -31,6 +31,11 @@ class Controller extends BaseController
         $query = isset($data['query']) ? $data['query'] : null;
         $variables = isset($data['variables']) ? $data['variables'] : null;
 
+        // Some clients (e.g. GraphiQL) double encode as string
+        if(is_string($variables)) {
+            $variables = json_decode($variables, true);
+        }
+
         $manager = $this->getManager();
         $response = $manager->query($query, $variables);
 
