@@ -115,7 +115,7 @@ class Manager
     public function queryAndReturnResult($query, $params = [], $schema = null)
     {
         $schema = $this->schema($schema);
-        $result = GraphQL::executeAndReturnResult($schema, $query, null, $params);
+        $result = GraphQL::executeAndReturnResult($schema, $query, null, null, $params);
 
         return $result;
     }
