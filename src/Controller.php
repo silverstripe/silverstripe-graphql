@@ -40,7 +40,7 @@ class Controller extends BaseController
         $response = $manager->query($query, $variables);
 
         return (new HTTPResponse(json_encode($response)))
-            ->addHeader('Content-Type', 'text/json');
+            ->addHeader('Content-Type', 'application/json');
     }
 
     /**
