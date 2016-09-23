@@ -17,7 +17,11 @@ class Controller extends BaseController
 
     public function index(HTTPRequest $request)
     {
-        if ($request->getHeader('Content-Type') === 'application/json') {
+        $isJson = (
+            $request->getHeader('Content-Type') === 'application/json'
+            || $request->getHeader('content-type') === 'application/json'
+        );
+        if ($isJson) {
             $rawBody = $request->getBody();
             $data = json_decode($rawBody ?: '', true);
         } else {
