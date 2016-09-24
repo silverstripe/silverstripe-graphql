@@ -13,14 +13,19 @@ use GraphQL\Type\Definition\Type;
 class Manager
 {
     /**
-     * @var array {@link Chillu\GraphQL\TypeCreator}
+     * @var array Map of named {@link Type}
      */
     protected $types = [];
 
     /**
-     * @var array Map of {@link Chillu\GraphQL\QueryCreator}
+     * @var array Map of named arrays
      */
     protected $queries = [];
+
+    /**
+     * @var array Map of named arrays
+     */
+    protected $mutations = [];
 
     /**
      * @var callable
@@ -34,6 +39,8 @@ class Manager
     public static function createFromConfig($config)
     {
         $manager = Injector::inst()->create(Manager::class);
+
+        // Types
         if ($config && array_key_exists('types', $config)) {
             foreach ($config['types'] as $name => $typeCreatorClass) {
                 $typeCreator = Injector::inst()->create($typeCreatorClass, $manager);
@@ -49,6 +56,7 @@ class Manager
             }
         }
 
+        // Queries
         if ($config && array_key_exists('queries', $config)) {
             foreach ($config['queries'] as $name => $queryCreatorClass) {
                 $queryCreator = Injector::inst()->create($queryCreatorClass, $manager);
@@ -61,6 +69,22 @@ class Manager
 
                 $query = $queryCreator->toArray();
                 $manager->addQuery($query, $name);
+            }
+        }
+
+        // Mutations
+        if ($config && array_key_exists('mutations', $config)) {
+            foreach ($config['mutations'] as $name => $mutationCreatorClass) {
+                $mutationCreator = Injector::inst()->create($mutationCreatorClass, $manager);
+                if (!($mutationCreator instanceof MutationCreator)) {
+                    throw new InvalidArgumentException(sprintf(
+                        'The mutation named "%s" needs to be a class extending ' . MutationCreator::class,
+                        $name
+                    ));
+                }
+
+                $mutation = $mutationCreator->toArray();
+                $manager->addMutation($mutation, $name);
             }
         }
 
@@ -77,8 +101,14 @@ class Manager
             'fields' => $this->queries,
         ]);
 
+        $mutationType = new ObjectType([
+            'name' => 'Mutation',
+            'fields' => $this->mutations,
+        ]);
+
         return new Schema([
             'query' => $queryType,
+            'mutation' => $mutationType,
         ]);
     }
 
@@ -161,6 +191,25 @@ class Manager
     public function getQuery($name)
     {
         return $this->queries[$name];
+    }
+
+    /**
+     * @param array  $mutation
+     * @param string $name Identifier for this mutation (unique in schema)
+     */
+    public function addMutation($mutation, $name)
+    {
+        $this->mutations[$name] = $mutation;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return array
+     */
+    public function getMutation($name)
+    {
+        return $this->mutations[$name];
     }
 
     /**

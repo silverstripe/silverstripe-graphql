@@ -5,6 +5,7 @@ namespace Chillu\GraphQL\Tests;
 use Chillu\GraphQL\Manager;
 use Chillu\GraphQL\Tests\Fake\TypeCreatorFake;
 use Chillu\GraphQL\Tests\Fake\QueryCreatorFake;
+use Chillu\GraphQL\Tests\Fake\MutationCreatorFake;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\SapphireTest;
 use GraphQL\Error;
@@ -19,11 +20,25 @@ class ManagerTest extends SapphireTest
             'types' => [
                 'mytype' => TypeCreatorFake::class,
             ],
+            'queries' => [
+                'myquery' => QueryCreatorFake::class,
+            ],
+            'mutations' => [
+                'mymutation' => MutationCreatorFake::class,
+            ],
         ];
         $manager = Manager::createFromConfig($config);
         $this->assertInstanceOf(
             Type::class,
             $manager->getType('mytype')
+        );
+        $this->assertInternalType(
+            'array',
+            $manager->getQuery('myquery')
+        );
+        $this->assertInternalType(
+            'array',
+            $manager->getMutation('mymutation')
         );
     }
 
@@ -32,9 +47,12 @@ class ManagerTest extends SapphireTest
         $manager = new Manager();
         $manager->addType($this->getType($manager), 'mytype');
         $manager->addQuery($this->getQuery($manager), 'myquery');
+        $manager->addMutation($this->getMutation($manager), 'mymutation');
 
         $schema = $manager->schema();
         $this->assertInstanceOf(Schema::class, $schema);
+        $this->assertNotNull($schema->getType('TypeCreatorFake'));
+        $this->assertNotNull($schema->getMutationType()->getField('mymutation'));
         $this->assertNotNull($schema->getQueryType()->getField('myquery'));
     }
 
@@ -73,6 +91,19 @@ class ManagerTest extends SapphireTest
         );
     }
 
+    public function testAddMutation()
+    {
+        $manager = new Manager();
+        $mutation = $this->getMutation($manager);
+        $type = $this->getType($manager);
+        $manager->addMutation($mutation, 'mymutation');
+        $manager->addType($type, 'mytype');
+        $this->assertEquals(
+            $mutation,
+            $manager->getMutation('mymutation')
+        );
+    }
+
     public function testQueryWithError()
     {
         $mock = $this->getMockBuilder(Manager::class)
@@ -101,5 +132,10 @@ class ManagerTest extends SapphireTest
     protected function getQuery(Manager $manager)
     {
         return (new QueryCreatorFake($manager))->toArray();
+    }
+
+    protected function getMutation(Manager $manager)
+    {
+        return (new MutationCreatorFake($manager))->toArray();
     }
 }
