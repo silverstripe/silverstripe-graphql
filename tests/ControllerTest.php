@@ -9,7 +9,10 @@ use Chillu\GraphQL\Controller;
 use Chillu\GraphQL\Tests\Fake\TypeCreatorFake;
 use Chillu\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\Core\Config\Config;
+use GraphQL\Schema;
+use GraphQL\Type\Definition\ObjectType;
 use ReflectionClass;
+use Exception;
 
 class ControllerTest extends SapphireTest
 {
@@ -41,6 +44,62 @@ class ControllerTest extends SapphireTest
         $this->assertNotNull(
             $manager->getType('mytype')
         );
+    }
+
+    public function testIndexWithException()
+    {
+        Config::inst()->update('SilverStripe\\Control\\Director', 'environment_type', 'live');
+
+        $controller = new Controller();
+        $managerMock = $this->getMockBuilder(Schema::class)
+            ->setMethods(['query'])
+            ->setConstructorArgs([
+                ['query' => new ObjectType([
+                    'name' => 'Query',
+                    'fields' => []
+                ])]
+            ])
+            ->getMock();
+
+        $managerMock->method('query')
+            ->will($this->throwException(new Exception('Failed')));
+
+        $controller->setManager($managerMock);
+        $response = $controller->index(new HTTPRequest('GET', ''));
+        $this->assertFalse($response->isError());
+        $responseObj = json_decode($response->getBody(), true);
+        $this->assertNotNull($responseObj);
+        $this->assertArrayHasKey('errors', $responseObj);
+        $this->assertEquals('Failed', $responseObj['errors'][0]['message']);
+        $this->assertArrayNotHasKey('trace', $responseObj['errors'][0]);
+    }
+
+    public function testIndexWithExceptionIncludesTraceInDevMode()
+    {
+        Config::inst()->update('SilverStripe\\Control\\Director', 'environment_type', 'dev');
+
+        $controller = new Controller();
+        $managerMock = $this->getMockBuilder(Schema::class)
+            ->setMethods(['query'])
+            ->setConstructorArgs([
+                ['query' => new ObjectType([
+                    'name' => 'Query',
+                    'fields' => []
+                ])]
+            ])
+            ->getMock();
+
+        $managerMock->method('query')
+            ->will($this->throwException(new Exception('Failed')));
+
+        $controller->setManager($managerMock);
+        $response = $controller->index(new HTTPRequest('GET', ''));
+        $this->assertFalse($response->isError());
+        $responseObj = json_decode($response->getBody(), true);
+        $this->assertNotNull($responseObj);
+        $this->assertArrayHasKey('errors', $responseObj);
+        $this->assertEquals('Failed', $responseObj['errors'][0]['message']);
+        $this->assertArrayHasKey('trace', $responseObj['errors'][0]);
     }
 
     protected function getType(Manager $manager)

@@ -7,6 +7,8 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Control\Director;
+use Exception;
 
 class Controller extends BaseController
 {
@@ -37,9 +39,25 @@ class Controller extends BaseController
         }
 
         $manager = $this->getManager();
-        $response = $manager->query($query, $variables);
 
-        return (new HTTPResponse(json_encode($response)))
+        try {
+            $result = $manager->query($query, $variables);
+        } catch (Exception $exception) {
+            $error = ['message' => $exception->getMessage()];
+
+            if(Director::isDev()) {
+                $error['code'] = $exception->getCode();
+                $error['file'] = $exception->getFile();
+                $error['line'] = $exception->getLine();
+                $error['trace'] = $exception->getTrace();
+            }
+
+            $result = [
+                'errors' => [$error]
+            ];
+        }
+
+        return (new HTTPResponse(json_encode($result)))
             ->addHeader('Content-Type', 'application/json');
     }
 
