@@ -38,6 +38,7 @@ class Manager
      */
     public static function createFromConfig($config)
     {
+        /** @var Manager $manager */
         $manager = Injector::inst()->create(Manager::class);
 
         // Types
