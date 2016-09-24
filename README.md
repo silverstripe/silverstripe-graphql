@@ -124,3 +124,17 @@ This can also be expressed more cleanly as:
 ### Resolvers
 
 TODO
+
+## TODO
+
+ * InputObject support (less verbose update/create mutations)
+ * Input/constraint validation on mutations (with third-party validator)
+ * Pagination
+ * CSRF protection (or token-based auth)
+ * Generate CRUD operations based on DataObject reflection
+ * Generate DataObject relationship CRUD operations
+ * Create Enum GraphQL types from DBEnum
+ * Date casting
+ * Interfaces
+ * Add types explicitly to generated schema
+ * Schema serialisation/caching (performance)

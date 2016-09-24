@@ -10,6 +10,9 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Control\Director;
 use Exception;
 
+/**
+ * @todo CSRF protection (or token-based auth)
+ */
 class Controller extends BaseController
 {
     /**
