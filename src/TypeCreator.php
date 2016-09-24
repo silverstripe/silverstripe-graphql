@@ -4,6 +4,7 @@ namespace Chillu\GraphQL;
 
 use SilverStripe\Core\Object;
 use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\InputObjectType;
 use Chillu\GraphQL\Manager;
 
 /**
@@ -17,6 +18,11 @@ class TypeCreator extends Object
      * @var Manager
      */
     protected $manager;
+
+    /**
+     * @var bool Determines if the object should be cast as an {@link InputObjectType}
+     */
+    protected $inputObject = false;
 
     /**
      * @param Manager|null Used to retrieve types (including the one returned from this creator),
@@ -71,10 +77,22 @@ class TypeCreator extends Object
     }
 
     /**
+     * @return bool
+     */
+    public function isInputObject()
+    {
+        return $this->inputObject;
+    }
+
+    /**
      * @return ObjectType
      */
     public function toType()
     {
+        if($this->isInputObject()) {
+            return new InputObjectType($this->toArray());
+        }
+
         return new ObjectType($this->toArray());
     }
 

@@ -2,6 +2,7 @@
 
 namespace Chillu\GraphQL;
 
+use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\Dev\SapphireTest;
 use GraphQL\Type\Definition\Type;
 
@@ -9,61 +10,52 @@ class TypeCreatorTest extends SapphireTest
 {
     public function testGetFields()
     {
-        $mock = $this->getMockBuilder(TypeCreator::class)
-            ->setMethods(['fields'])
-            ->getMock();
+        $mock = $this->getTypeCreatorMock();
         $mock->method('fields')->willReturn([
             'ID' => [
                 'type' => Type::nonNull(Type::id()),
             ],
         ]);
-
         $fields = $mock->getFields();
-
         $this->assertArrayHasKey('ID', $fields);
     }
 
     public function testToArray()
     {
-        $mock = $this->getMockBuilder(TypeCreator::class)
-            ->setMethods(['fields'])
-            ->getMock();
-        $mock->method('fields')->willReturn([
-            'ID' => [
-                'type' => Type::nonNull(Type::id()),
-            ],
-        ]);
-
+        $mock = $this->getTypeCreatorMock();
         $actual = $mock->toArray();
         $this->assertArrayHasKey('fields', $actual);
-
         $fields = $actual['fields']();
         $this->assertArrayHasKey('ID', $fields);
     }
 
+    public function testToType()
+    {
+        $mock = $this->getTypeCreatorMock();
+        $actual = $mock->toType();
+        $this->assertInstanceOf(Type::class, $actual);
+    }
+
+    public function testToTypeWithInputObject()
+    {
+        $mock = $this->getTypeCreatorMock(['isInputObject']);
+        $mock->method('isInputObject')->willReturn(true);
+        $actual = $mock->toType();
+        $this->assertInstanceOf(InputObjectType::class, $actual);
+    }
+
     public function testGetAttributes()
     {
-        $mock = $this->getMockBuilder(TypeCreator::class)
-            ->setMethods(['fields'])
-            ->getMock();
-        $mock->method('fields')->willReturn([
-            'ID' => [
-                'type' => Type::nonNull(Type::id()),
-            ],
-        ]);
-
+        $mock = $this->getTypeCreatorMock();
         $actual = $mock->getAttributes();
         $this->assertArrayHasKey('fields', $actual);
-
         $fields = $actual['fields']();
         $this->assertArrayHasKey('ID', $fields);
     }
 
     public function testGetFieldsUsesResolveConfig()
     {
-        $mock = $this->getMockBuilder(TypeCreator::class)
-            ->setMethods(['fields','resolveFieldAField'])
-            ->getMock();
+        $mock = $this->getTypeCreatorMock(['resolveFieldAField', 'fields']);
         $mock->method('fields')->willReturn([
             'fieldA' => [
                 'type' => Type::string(),
@@ -73,7 +65,7 @@ class TypeCreatorTest extends SapphireTest
                 'type' => Type::string(),
             ],
         ]);
-        $mock->method('resolveFieldA')
+        $mock->method('resolveFieldAField')
             ->willReturn('method');
 
         $fields = $mock->getFields();
@@ -86,9 +78,7 @@ class TypeCreatorTest extends SapphireTest
 
     public function testGetFieldsUsesResolverMethod()
     {
-        $mock = $this->getMockBuilder(TypeCreator::class)
-            ->setMethods(['fields','resolveFieldAField'])
-            ->getMock();
+        $mock = $this->getTypeCreatorMock(['resolveFieldAField', 'fields']);
         $mock->method('fields')->willReturn([
             'fieldA' => [
                 'type' => Type::string(),
@@ -97,7 +87,7 @@ class TypeCreatorTest extends SapphireTest
                 'type' => Type::string(),
             ],
         ]);
-        $mock->method('resolveFieldA')
+        $mock->method('resolveFieldAField')
             ->willReturn('resolved');
 
         $fields = $mock->getFields();
@@ -109,9 +99,7 @@ class TypeCreatorTest extends SapphireTest
 
     public function testGetFieldsUsesAllFieldsResolverMethod()
     {
-        $mock = $this->getMockBuilder(TypeCreator::class)
-            ->setMethods(['fields','resolveField'])
-            ->getMock();
+        $mock = $this->getTypeCreatorMock(['resolveField', 'fields']);
         $mock->method('fields')->willReturn([
             'fieldA' => [
                 'type' => Type::string(),
@@ -130,5 +118,27 @@ class TypeCreatorTest extends SapphireTest
         $this->assertArrayHasKey('resolve', $fields['fieldB']);
         $this->assertEquals('resolved', $fields['fieldA']['resolve']());
         $this->assertEquals('resolved', $fields['fieldB']['resolve']());
+    }
+
+    protected function getTypeCreatorMock($extraMethods = [])
+    {
+        $mock = $this->getMockBuilder(TypeCreator::class)
+            ->setMethods(array_unique(array_merge(['fields', 'attributes'], $extraMethods)))
+            ->getMock();
+
+        if(!in_array('fields', $extraMethods)) {
+            $mock->method('fields')->willReturn([
+                'ID' => [
+                    'type' => Type::nonNull(Type::id()),
+                ],
+            ]);
+        }
+
+        if(!in_array('attributes', $extraMethods)) {
+            $mock->method('attributes')
+                ->willReturn(['name' => 'myType']);
+        }
+
+        return $mock;
     }
 }
