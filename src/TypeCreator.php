@@ -54,6 +54,14 @@ class TypeCreator extends Object
     }
 
     /**
+     * @return array
+     */
+    public function interfaces()
+    {
+        return [];
+    }
+
+    /**
      * Returns field structure with field resolvers added.
      *
      * @return array
@@ -106,7 +114,9 @@ class TypeCreator extends Object
 
     public function getAttributes()
     {
-        return array_merge(
+        $interfaces = $this->interfaces();
+
+        $attributes = array_merge(
             $this->attributes(),
             [
                 'fields' => function () {
@@ -114,6 +124,12 @@ class TypeCreator extends Object
                 },
             ]
         );
+
+        if(sizeof($interfaces)) {
+            $attributes['interfaces'] = $interfaces;
+        }
+
+        return $attributes;
     }
 
     /**
