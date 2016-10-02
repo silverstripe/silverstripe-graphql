@@ -41,7 +41,7 @@ class Manager
         /** @var Manager $manager */
         $manager = Injector::inst()->create(Manager::class);
 
-        // Types
+        // Types (incl. Interfaces and InputTypes)
         if ($config && array_key_exists('types', $config)) {
             foreach ($config['types'] as $name => $typeCreatorClass) {
                 $typeCreator = Injector::inst()->create($typeCreatorClass, $manager);
@@ -110,6 +110,8 @@ class Manager
         return new Schema([
             'query' => $queryType,
             'mutation' => $mutationType,
+            // usually inferred from 'query', but required for polymorphism on InterfaceType-based query results
+            'types' => $this->types,
         ]);
     }
 
