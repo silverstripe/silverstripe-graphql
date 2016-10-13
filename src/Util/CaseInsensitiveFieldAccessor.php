@@ -136,7 +136,7 @@ class CaseInsensitiveFieldAccessor {
         if($optFn(self::DATAOBJECT) && $object instanceof DataObject) {
             $parents = ClassInfo::ancestry($object, true);
             foreach($parents as $parent) {
-                $fields = DataObject::database_fields($parent);
+                $fields = DataObject::getSchema()->databaseFields($parent);
                 foreach($fields as $objectFieldName => $fieldClass) {
                     if(strcasecmp($objectFieldName, $fieldName) === 0) {
                         return $objectFieldName;
