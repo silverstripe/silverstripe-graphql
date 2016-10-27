@@ -5,7 +5,7 @@
   "require": {
     "php": ">=5.5.0",
     "silverstripe/framework": "^4",
-    "webonyx/graphql-php": "dev-master"
+    "webonyx/graphql-php": "~0.7.2"
   },
   "require-dev": {
     "phpunit/PHPUnit": "~4.8"
