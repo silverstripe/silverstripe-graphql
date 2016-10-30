@@ -10,11 +10,6 @@
   "require-dev": {
     "phpunit/PHPUnit": "~4.8"
   },
-  "extra": {
-    "branch-alias": {
-      "dev-master": "1.0.x-dev"
-    }
-  },
   "autoload": {
     "psr-4": {
       "Chillu\\GraphQL\\": "src/"
