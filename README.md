@@ -116,7 +116,7 @@ class ReadMembersQueryCreator extends QueryCreator
         $list = Member::get();
 
         // Optional filtering by properties
-        if(isset($args['Email']) {
+        if(isset($args['Email'])) {
             $list = $list->filter('Email', $args['Email']);
         }
 
