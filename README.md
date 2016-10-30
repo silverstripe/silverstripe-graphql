@@ -106,7 +106,7 @@ class ReadMembersQueryCreator extends QueryCreator
     {
         // Return a "thunk" to lazy load types
         return function() {
-            return Type::listOf($this->manager->getType('member');
+            return Type::listOf($this->manager->getType('member'));
         };
     }
 
