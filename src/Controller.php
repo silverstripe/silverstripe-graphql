@@ -1,6 +1,6 @@
 <?php
 
-namespace Chillu\GraphQL;
+namespace SilverStripe\GraphQL;
 
 use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\HTTPRequest;
@@ -74,7 +74,7 @@ class Controller extends BaseController
         }
 
         // Get a service rather than an instance (to allow procedural configuration)
-        $config = Config::inst()->get('Chillu\GraphQL', 'schema');
+        $config = Config::inst()->get('SilverStripe\GraphQL', 'schema');
         $manager = Manager::createFromConfig($config);
 
         return $manager;

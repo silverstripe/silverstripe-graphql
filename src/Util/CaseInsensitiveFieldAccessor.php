@@ -1,6 +1,6 @@
 <?php
 
-namespace Chillu\GraphQL\Util;
+namespace SilverStripe\GraphQL\Util;
 
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Core\ClassInfo;

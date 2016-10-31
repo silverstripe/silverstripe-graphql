@@ -1,6 +1,6 @@
 <?php
 
-namespace Chillu\GraphQL;
+namespace SilverStripe\GraphQL;
 
 /**
  * Represents a GraphQL mutation.

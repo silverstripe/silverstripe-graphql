@@ -1,6 +1,6 @@
 <?php
 
-namespace Chillu\GraphQL;
+namespace SilverStripe\GraphQL;
 
 use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\Dev\SapphireTest;

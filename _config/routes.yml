@@ -3,4 +3,4 @@ Name: graphqlroutes
 ---
 SilverStripe\Control\Director:
   rules:
-    'graphql': 'Chillu\GraphQL\Controller'
+    'graphql': 'SilverStripe\GraphQL\Controller'

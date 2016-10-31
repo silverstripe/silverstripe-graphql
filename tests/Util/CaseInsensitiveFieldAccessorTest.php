@@ -1,9 +1,9 @@
 <?php
 
-namespace Chillu\GraphQL\Tests\Util;
+namespace SilverStripe\GraphQL\Tests\Util;
 
-use Chillu\GraphQL\Util\CaseInsensitiveFieldAccessor;
-use Chillu\GraphQL\Tests\DataObjectFake;
+use SilverStripe\GraphQL\Util\CaseInsensitiveFieldAccessor;
+use SilverStripe\GraphQL\Tests\DataObjectFake;
 use SilverStripe\Dev\SapphireTest;
 
 class CaseInsensitiveFieldAccessorTest extends SapphireTest

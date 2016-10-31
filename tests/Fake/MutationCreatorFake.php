@@ -1,8 +1,8 @@
 <?php
 
-namespace Chillu\GraphQL\Tests\Fake;
+namespace SilverStripe\GraphQL\Tests\Fake;
 
-use Chillu\GraphQL\MutationCreator;
+use SilverStripe\GraphQL\MutationCreator;
 
 class MutationCreatorFake extends MutationCreator
 {

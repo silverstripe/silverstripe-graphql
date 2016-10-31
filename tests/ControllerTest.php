@@ -4,10 +4,10 @@ namespace SilverStripe\Tests\GraphQL;
 
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Dev\SapphireTest;
-use Chillu\GraphQL\Manager;
-use Chillu\GraphQL\Controller;
-use Chillu\GraphQL\Tests\Fake\TypeCreatorFake;
-use Chillu\GraphQL\Tests\Fake\QueryCreatorFake;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Controller;
+use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
+use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\Core\Config\Config;
 use GraphQL\Schema;
 use GraphQL\Type\Definition\ObjectType;
@@ -29,8 +29,8 @@ class ControllerTest extends SapphireTest
 
     public function testGetGetManagerPopulatesFromConfig()
     {
-        Config::inst()->remove('Chillu\GraphQL', 'schema');
-        Config::inst()->update('Chillu\GraphQL', 'schema', [
+        Config::inst()->remove('SilverStripe\GraphQL', 'schema');
+        Config::inst()->update('SilverStripe\GraphQL', 'schema', [
             'types' => [
                 'mytype' => TypeCreatorFake::class,
             ],

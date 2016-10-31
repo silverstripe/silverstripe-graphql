@@ -1,6 +1,6 @@
 <?php
 
-namespace Chillu\GraphQL\Tests;
+namespace SilverStripe\GraphQL\Tests;
 
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\ORM\DataObject;

@@ -1,5 +1,5 @@
 {
-  "name": "chillu/silverstripe-graphql",
+  "name": "silverstripe/graphql",
   "description": "GraphQL server for SilverStripe models and other data",
   "type": "silverstripe-module",
   "require": {
@@ -12,7 +12,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Chillu\\GraphQL\\": "src/"
+      "SilverStripe\\GraphQL\\": "src/"
     }
   },
   "config": {

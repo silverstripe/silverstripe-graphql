@@ -1,8 +1,8 @@
 <?php
 
-namespace Chillu\GraphQL;
+namespace SilverStripe\GraphQL;
 
-use Chillu\GraphQL\Util\CaseInsensitiveFieldAccessor;
+use SilverStripe\GraphQL\Util\CaseInsensitiveFieldAccessor;
 use GraphQL\Type\Definition\Type;
 
 class DataObjectInterfaceTypeCreator extends InterfaceTypeCreator {

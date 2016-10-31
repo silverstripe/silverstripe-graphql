@@ -1,6 +1,6 @@
 <?php
 
-namespace Chillu\GraphQL;
+namespace SilverStripe\GraphQL;
 
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use GraphQL\Schema;

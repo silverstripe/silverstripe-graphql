@@ -1,11 +1,11 @@
 <?php
 
-namespace Chillu\GraphQL\Tests;
+namespace SilverStripe\GraphQL\Tests;
 
-use Chillu\GraphQL\Manager;
-use Chillu\GraphQL\Tests\Fake\TypeCreatorFake;
-use Chillu\GraphQL\Tests\Fake\QueryCreatorFake;
-use Chillu\GraphQL\Tests\Fake\MutationCreatorFake;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
+use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
+use SilverStripe\GraphQL\Tests\Fake\MutationCreatorFake;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\SapphireTest;
 use GraphQL\Error;

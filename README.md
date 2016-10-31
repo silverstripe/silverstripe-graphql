@@ -1,8 +1,8 @@
 # SilverStripe GraphQL Server
 
-[![Build Status](https://travis-ci.org/chillu/silverstripe-graphql.svg?branch=master)](https://travis-ci.org/chillu/silverstripe-graphql)
-[![codecov](https://codecov.io/gh/chillu/silverstripe-graphql/branch/master/graph/badge.svg)](https://codecov.io/gh/chillu/silverstripe-graphql)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/chillu/silverstripe-graphql/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/chillu/silverstripe-graphql/?branch=master)
+[![Build Status](https://travis-ci.org/silverstripe/silverstripe-graphql.svg?branch=master)](https://travis-ci.org/silverstripe/silverstripe-graphql)
+[![codecov](https://codecov.io/gh/silverstripe/silverstripe-graphql/branch/master/graph/badge.svg)](https://codecov.io/gh/silverstripe/silverstripe-graphql)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/silverstripe/silverstripe-graphql/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/silverstripe/silverstripe-graphql/?branch=master)
 
 This modules serves SilverStripe data as
 [GraphQL](http://facebook.github.io/react/blog/2015/05/01/graphql-introduction.html) representations,
@@ -16,7 +16,7 @@ The APIs are very similar, for example
 Require the [composer](http://getcomposer.org) package in your `composer.json`
 
 ```
-composer require chillu/silverstripe-graphql
+composer require silverstripe/silverstripe-graphql
 ```
 
 ## Usage
@@ -41,7 +41,7 @@ for available types.
 namespace MyProject\GraphQL;
 
 use GraphQL\Type\Definition\Type;
-use Chillu\GraphQL\TypeCreator;
+use SilverStripe\GraphQL\TypeCreator;
 
 class MemberTypeCreator extends TypeCreator
 {
@@ -64,7 +64,7 @@ Each type class needs to be registered with a unique name against the schema
 through YAML configuration:
 
 ```yml
-Chillu\GraphQL:
+SilverStripe\GraphQL:
   schema:
     types:
       member: 'MyProject\GraphQL\MemberTypeCreator'
@@ -82,7 +82,7 @@ and accesses fields based on the referred "type" definition.
 namespace MyProject\GraphQL;
 
 use GraphQL\Type\Definition\Type;
-use Chillu\GraphQL\QueryCreator;
+use SilverStripe\GraphQL\QueryCreator;
 use MyProject\MyDataObject;
 use SilverStripe\Security\Member;
 
@@ -129,7 +129,7 @@ class ReadMembersQueryCreator extends QueryCreator
 We'll register the query with a unique name through YAML configuration:
 
 ```yml
-Chillu\GraphQL:
+SilverStripe\GraphQL:
   schema:
     queries:
       readMembers: 'MyProject\GraphQL\ReadMembersQueryCreator'
@@ -168,7 +168,7 @@ will automatically include it in the response.
 namespace MyProject\GraphQL;
 
 use GraphQL\Type\Definition\Type;
-use Chillu\GraphQL\MutationCreator;
+use SilverStripe\GraphQL\MutationCreator;
 use SilverStripe\Security\Member;
 
 
@@ -214,7 +214,7 @@ We'll register this mutation through YAML configuration:
 
 ```
 yml
-Chillu\GraphQL:
+SilverStripe\GraphQL:
   schema:
     mutations:
       createMember: 'MyProject\GraphQL\CreateMemberMutationCreator'
