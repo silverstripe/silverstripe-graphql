@@ -24,6 +24,11 @@ composer require silverstripe/silverstripe-graphql
 GraphQL is used through a single route which defaults to `/graphql`.
 You need to define *Types* and *Queries* to expose your data via this endpoint.
 
+## Examples
+
+Code examples can be found in the `examples/` folder
+(built out from the configuration docs below).
+
 ## Configuration
 
 ### Define Types
