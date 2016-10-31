@@ -46,10 +46,17 @@ use SilverStripe\GraphQL\TypeCreator;
 class MemberTypeCreator extends TypeCreator
 {
 
+    public function attributes()
+    {
+        return [
+            'name' => 'member'
+        ];
+    }
+
     public function fields()
     {
         return [
-            'ID' => ['type' => Type::nonNull(Type::int())],
+            'ID' => ['type' => Type::nonNull(Type::id())],
             'Email' => ['type' => Type::string()],
             'FirstName' => ['type' => Type::string()],
             'Surname' => ['type' => Type::string()],
@@ -57,7 +64,6 @@ class MemberTypeCreator extends TypeCreator
     }
 
 }
-
 ```
 
 Each type class needs to be registered with a unique name against the schema
@@ -106,7 +112,7 @@ class ReadMembersQueryCreator extends QueryCreator
     {
         // Return a "thunk" to lazy load types
         return function() {
-            return Type::listOf($this->manager->getType('member');
+            return Type::listOf($this->manager->getType('member'));
         };
     }
 
@@ -116,14 +122,13 @@ class ReadMembersQueryCreator extends QueryCreator
         $list = Member::get();
 
         // Optional filtering by properties
-        if(isset($args['Email']) {
+        if(isset($args['Email'])) {
             $list = $list->filter('Email', $args['Email']);
         }
 
         return $list;
     }
 }
-
 ```
 
 We'll register the query with a unique name through YAML configuration:
@@ -144,14 +149,12 @@ You can query data with the following URL:
 The query contained in the `query` parameter can be reformatted as follows:
 
 ```
-{
-  query readMembers {
-    members {
-      ID
-      Email
-      FirstName
-      Surname
-    }
+query {
+  readMembers {
+    ID
+    Email
+    FirstName
+    Surname
   }
 }
 ```
@@ -201,13 +204,14 @@ class CreateMemberMutationCreator extends MutationCreator
 
     public function resolve($object, array $args, $context, $info)
     {
-        if(!singleton('Member')->canCreate()) {
+        if(!singleton(Member::class)->canCreate()) {
             throw new \InvalidArgumentException('Member creation not allowed');
         }
 
         return (new Member($args))->write();
     }
 }
+
 ```
 
 We'll register this mutation through YAML configuration:
@@ -219,6 +223,20 @@ SilverStripe\GraphQL:
     mutations:
       createMember: 'MyProject\GraphQL\CreateMemberMutationCreator'
 ```
+
+You can run a mutation with the following query:
+
+```
+mutation($Email:String!) {
+  createMember(Email:$Email) {
+    ID
+  }
+}
+```
+
+This will create a new member with an email address,
+which you can pass in as query variables: `{"Email": "test@test.com"}`.
+It'll return the new `ID` property of the created member.
 
 ### Define Interfaces
 
