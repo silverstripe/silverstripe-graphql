@@ -49,7 +49,7 @@ class MemberTypeCreator extends TypeCreator
     public function fields()
     {
         return [
-            'ID' => ['type' => Type::nonNull(Type::number())],
+            'ID' => ['type' => Type::nonNull(Type::int())],
             'Email' => ['type' => Type::string()],
             'FirstName' => ['type' => Type::string()],
             'Surname' => ['type' => Type::string()],
