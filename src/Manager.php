@@ -7,7 +7,7 @@ use GraphQL\Schema;
 use GraphQL\GraphQL;
 use SilverStripe\Core\Injector\Injector;
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Error\Error;
+use GraphQL\Error;
 use GraphQL\Type\Definition\Type;
 
 class Manager
