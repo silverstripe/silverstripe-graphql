@@ -16,7 +16,7 @@ The APIs are very similar, for example
 Require the [composer](http://getcomposer.org) package in your `composer.json`
 
 ```
-composer require silverstripe/silverstripe-graphql
+composer require silverstripe/graphql
 ```
 
 ## Usage
