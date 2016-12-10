@@ -2,6 +2,7 @@ SilverStripe\GraphQL:
   schema:
     types:
       member: 'MyProject\GraphQL\MemberTypeCreator'
+      group: 'MyProject\GraphQL\GroupTypeCreator'
     queries:
       readMembers: 'MyProject\GraphQL\ReadMembersQueryCreator'
     mutations:

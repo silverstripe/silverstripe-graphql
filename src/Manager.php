@@ -174,7 +174,11 @@ class Manager
      */
     public function getType($name)
     {
-        return $this->types[$name];
+        if(isset($this->types[$name])) {
+            return $this->types[$name];
+        } else {
+            throw new \InvalidArgumentException("Type '$name' is not a registered GraphQL type");
+        }
     }
 
     /**

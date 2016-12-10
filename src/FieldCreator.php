@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL;
 use SilverStripe\Core\Object;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\ORM\Limitable;
 
 class FieldCreator extends Object
 {
@@ -121,8 +122,9 @@ class FieldCreator extends Object
 
         return function () use ($resolver) {
             $args = func_get_args();
+            $result = call_user_func_array($resolver, $args);
 
-            return call_user_func_array($resolver, $args);
+            return $result;
         };
     }
 }
