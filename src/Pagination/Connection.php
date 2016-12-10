@@ -6,11 +6,13 @@ use SilverStripe\Core\Object;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\SS_List;
 use SilverStripe\ORM\Limitable;
+use SilverStripe\ORM\Sortable;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\TypeCreator;
 use SilverStripe\GraphQL\FieldCreator;
 use SilverStripe\GraphQL\Pagination\PageInfoType;
+use SilverStripe\GraphQL\Pagination\SortDirectionType;
 use GraphQL\Type\Definition\ResolveInfo;
 
 /**
@@ -91,6 +93,12 @@ class Connection extends Object
             ],
             'offset' => [
                 'type' => Type::int()
+            ],
+            'sort' => [
+                'type' => Type::string()
+            ],
+            'sortDirection' => [
+                'type' => Injector::inst()->get(SortDirectionType::class)->toType()
             ]
         ]);
     }
@@ -168,7 +176,7 @@ class Connection extends Object
             throw new \Exception('Connection::resolve() must resolve to a SS_List instance.');
         }
 
-        return static::wrapList($result, $args, $context, $info);
+        return static::prepareList($result, $args, $context, $info);
     }
 
     /**
@@ -177,7 +185,7 @@ class Connection extends Object
      *
      * @param SS_List $list
      */
-    public static function wrapList($list, $args, $context = null, $info = null) {
+    public static function prepareList($list, $args, $context = null, $info = null) {
         $limit = (isset($args['limit'])) ? $args['limit'] : null;
         $offset = (isset($args['offset'])) ? $args['offset'] : 0;
 
@@ -194,6 +202,13 @@ class Connection extends Object
 
             if($offset > 0) {
                 $previousPage = true;
+            }
+        }
+
+        if($list instanceof Sortable) {
+            if(isset($args['sort'])) {
+                $direction = (isset($args['sortDirection'])) ? $args['sortDirection'] : 'ASC';
+                $list = $list->sort($args['sort'], $direction);
             }
         }
 

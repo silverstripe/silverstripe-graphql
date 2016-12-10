@@ -32,7 +32,7 @@ class MemberTypeCreator extends TypeCreator
                 'type' => $groups->toType(),
                 'args' => $groups->args(),
                 'resolve' => function($obj, $args) {
-                    return Connection::wrapList($obj->Groups(), $args);
+                    return Connection::prepareList($obj->Groups(), $args);
                 }
             ]
         ];
