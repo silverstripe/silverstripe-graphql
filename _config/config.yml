@@ -1,0 +1,26 @@
+---
+Name: graphqlconfig
+---
+SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder:
+  default_fields:
+    ID: ID
+    
+## Map DB fields to GraphQL types
+SilverStripe\ORM\FieldType\DBField:
+  # fallback
+  graphql_type: 'String'
+
+SilverStripe\ORM\FieldType\DBInt:
+  graphql_type: 'Int'
+
+SilverStripe\ORM\FieldType\DBBoolean:
+  graphql_type: 'Boolean'
+
+SilverStripe\ORM\FieldType\DBFloat:
+  graphql_type: 'Float'
+
+SilverStripe\ORM\FieldType\DBPrimaryKey:
+  graphql_type: 'ID'
+
+SilverStripe\ORM\FieldType\DBForeignKey:
+  graphql_type: 'ID'

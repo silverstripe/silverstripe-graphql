@@ -8,7 +8,16 @@ use SilverStripe\ORM\DataObject;
 class DataObjectFake extends DataObject implements TestOnly
 {
     private static $db = [
-        'MyField' => 'Varchar'
+        'MyField' => 'Varchar',
+        'MyInt' => 'Int'
+    ];
+
+    private static $has_one = [
+    	'Author' => 'SilverStripe\Security\Member'
+    ];
+
+    private static $many_many = [
+    	'Files' => 'SilverStripe\Assets\File'
     ];
 
     public $customSetterFieldResult;

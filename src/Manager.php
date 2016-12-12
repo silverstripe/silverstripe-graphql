@@ -3,8 +3,6 @@
 namespace SilverStripe\GraphQL;
 
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
-use GraphQL\Executor\ExecutionResult;
-use GraphQL\Language\SourceLocation;
 use GraphQL\Schema;
 use GraphQL\GraphQL;
 use SilverStripe\Core\Injector\Injector;
@@ -12,15 +10,10 @@ use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Error;
 use GraphQL\Type\Definition\Type;
-use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
+use SilverStripe\GraphQL\Scaffolding\ScaffoldingProvider;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
 
-/**
- * Manager is the master container for a graphql endpoint, and contains
- * all queries, mutations, and types.
- *
- * Instantiate with {@see Manager::createFromConfig()} with a config array.
- */
 class Manager
 {
     use Injectable;
@@ -52,12 +45,42 @@ class Manager
 
     /**
      * @param array $config An array with optional 'types' and 'queries' keys
+     *
      * @return Manager
      */
     public static function createFromConfig($config)
     {
         /** @var Manager $manager */
-        $manager = Injector::inst()->create(Manager::class);
+        $manager = Injector::inst()->create(self::class);
+
+        if (isset($config['scaffolding'])) {
+            $scaffolder = GraphQLScaffolder::createFromConfig($config['scaffolding']);
+        } else {
+            $scaffolder = new GraphQLScaffolder();
+        }
+
+        if (isset($config['scaffolding_providers'])) {
+            foreach ($config['scaffolding_providers'] as $provider) {
+                if (!class_exists($provider)) {
+                    throw new InvalidArgumentException(sprintf(
+                        'Scaffolding provider %s does not exist.',
+                        $provider
+                    ));
+                }
+
+                $provider = Injector::inst()->create($provider);
+
+                if (!$provider instanceof ScaffoldingProvider) {
+                    throw new InvalidArgumentException(sprintf(
+                        'All scaffolding providers must implement the %s interface',
+                        ScaffoldingProvider::class
+                    ));
+                }
+                $scaffolder = $provider->provideGraphQLScaffolding($scaffolder);
+            }
+        }
+
+        $scaffolder->addToManager($manager);
 
         // Types (incl. Interfaces and InputTypes)
         if ($config && array_key_exists('types', $config)) {
@@ -65,7 +88,7 @@ class Manager
                 $typeCreator = Injector::inst()->create($typeCreatorClass, $manager);
                 if (!($typeCreator instanceof TypeCreator)) {
                     throw new InvalidArgumentException(sprintf(
-                        'The type named "%s" needs to be a class extending ' . TypeCreator::class,
+                        'The type named "%s" needs to be a class extending '.TypeCreator::class,
                         $name
                     ));
                 }
@@ -81,7 +104,7 @@ class Manager
                 $queryCreator = Injector::inst()->create($queryCreatorClass, $manager);
                 if (!($queryCreator instanceof QueryCreator)) {
                     throw new InvalidArgumentException(sprintf(
-                        'The type named "%s" needs to be a class extending ' . QueryCreator::class,
+                        'The type named "%s" needs to be a class extending '.QueryCreator::class,
                         $name
                     ));
                 }
@@ -97,7 +120,7 @@ class Manager
                 $mutationCreator = Injector::inst()->create($mutationCreatorClass, $manager);
                 if (!($mutationCreator instanceof MutationCreator)) {
                     throw new InvalidArgumentException(sprintf(
-                        'The mutation named "%s" needs to be a class extending ' . MutationCreator::class,
+                        'The mutation named "%s" needs to be a class extending '.MutationCreator::class,
                         $name
                     ));
                 }
@@ -111,8 +134,6 @@ class Manager
     }
 
     /**
-     * Build the main Schema instance that represents the final schema for this endpoint
-     *
      * @return Schema
      */
     public function schema()
@@ -136,15 +157,15 @@ class Manager
     }
 
     /**
-     * Execute an arbitrary operation (mutation / query) on this schema
+     * @param string $query
+     * @param array  $params
+     * @param null   $schema
      *
-     * @param string $query Raw query
-     * @param array $params List of arguments given for this operation
      * @return array
      */
-    public function query($query, $params = [])
+    public function query($query, $params = [], $schema = null)
     {
-        $executionResult = $this->queryAndReturnResult($query, $params);
+        $executionResult = $this->queryAndReturnResult($query, $params, $schema);
 
         if (!empty($executionResult->errors)) {
             return [
@@ -160,12 +181,14 @@ class Manager
 
     /**
      * @param string $query
-     * @param array $params
-     * @return ExecutionResult
+     * @param array  $params
+     * @param null   $schema
+     *
+     * @return array
      */
-    public function queryAndReturnResult($query, $params = [])
+    public function queryAndReturnResult($query, $params = [], $schema = null)
     {
-        $schema = $this->schema();
+        $schema = $this->schema($schema);
         $context = $this->getContext();
         $result = GraphQL::executeAndReturnResult($schema, $query, null, $context, $params);
 
@@ -173,25 +196,21 @@ class Manager
     }
 
     /**
-     * Register a new type
-     *
-     * @param Type $type
-     * @param string $name An optional identifier for this type (defaults to 'name'
-     * attribute in type definition). Needs to be unique in schema.
+     * @param Type   $type
+     * @param string $name An optional identifier for this type (defaults to 'name' attribute in type definition).
+     *                     Needs to be unique in schema
      */
     public function addType(Type $type, $name = '')
     {
         if (!$name) {
-            $name = (string)$type;
+            $name = (string) $type;
         }
-
         $this->types[$name] = $type;
     }
 
     /**
-     * Return a type definition by name
-     *
      * @param string $name
+     *
      * @return Type
      */
     public function getType($name)
@@ -204,10 +223,8 @@ class Manager
     }
 
     /**
-     * Register a new Query
-     *
-     * @param array $query
-     * @param string $name Identifier for this query (unique in schema)
+     * @param array  $query
+     * @param string $name  Identifier for this query (unique in schema)
      */
     public function addQuery($query, $name)
     {
@@ -215,9 +232,8 @@ class Manager
     }
 
     /**
-     * Get a query by name
-     *
      * @param string $name
+     *
      * @return array
      */
     public function getQuery($name)
@@ -226,10 +242,8 @@ class Manager
     }
 
     /**
-     * Register a new mutation
-     *
-     * @param array $mutation
-     * @param string $name Identifier for this mutation (unique in schema)
+     * @param array  $mutation
+     * @param string $name     Identifier for this mutation (unique in schema)
      */
     public function addMutation($mutation, $name)
     {
@@ -237,9 +251,8 @@ class Manager
     }
 
     /**
-     * Get a mutation by name
-     *
      * @param string $name
+     *
      * @return array
      */
     public function getMutation($name)
@@ -250,25 +263,26 @@ class Manager
     /**
      * More verbose error display defaults.
      *
-     * @param Error $exception
+     * @param Error $e
+     *
      * @return array
      */
-    public static function formatError(Error $exception)
+    public static function formatError(Error $e)
     {
         $error = [
-            'message' => $exception->getMessage(),
+            'message' => $e->getMessage(),
         ];
 
-        $locations = $exception->getLocations();
+        $locations = $e->getLocations();
         if (!empty($locations)) {
-            $error['locations'] = array_map(function (SourceLocation $loc) {
+            $error['locations'] = array_map(function ($loc) {
                 return $loc->toArray();
             }, $locations);
         }
 
-        $previous = $exception->getPrevious();
-        if ($previous && $previous instanceof ValidationException) {
-            $error['validation'] = $previous->getResult()->getMessages();
+        $previous = $e->getPrevious();
+        if ($previous && $previous instanceof ValidationError) {
+            $error['validation'] = $previous->getValidatorMessages();
         }
 
         return $error;
@@ -297,8 +311,6 @@ class Manager
     }
 
     /**
-     * Get global context to pass to $context for all queries
-     *
      * @return array
      */
     protected function getContext()
