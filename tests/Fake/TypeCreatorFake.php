@@ -12,4 +12,11 @@ class TypeCreatorFake extends TypeCreator
             'name' => 'TypeCreatorFake',
         ];
     }
+
+    public function fields()
+    {
+        return [
+            'MyField'
+        ];
+    }
 }

@@ -23,7 +23,7 @@ class PageInfoType extends Object {
                 'fields' => [
                     'totalCount' => ['type' => Type::nonNull(Type::id())],
                     'hasNextPage' => ['type' => Type::nonNull(Type::boolean())],
-                    'hasPreviousPage' => ['type' => Type::nonNull(Type::string())]
+                    'hasPreviousPage' => ['type' => Type::nonNull(Type::boolean())]
                 ]
             ]);
         }

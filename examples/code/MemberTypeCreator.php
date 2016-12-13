@@ -1,4 +1,5 @@
 <?php
+
 namespace MyProject\GraphQL;
 
 use GraphQL\Type\Definition\Type;
@@ -21,6 +22,11 @@ class MemberTypeCreator extends TypeCreator
             'name' => 'Groups',
             'nodeType' => $this->manager->getType('group'),
             'description' => 'A list of the users groups',
+            'sortableFields' => [
+                'ID', 'Title'
+            ],
+            'defaultLimit' => 10,
+            'maximumLimit' => 100
         ]);
 
         return [
@@ -31,11 +37,13 @@ class MemberTypeCreator extends TypeCreator
             'Groups' => [
                 'type' => $groups->toType(),
                 'args' => $groups->args(),
-                'resolve' => function($obj, $args) {
-                    return Connection::prepareList($obj->Groups(), $args);
+                'resolve' => function($obj, $args) use ($groups) {
+                    return $groups->resolveList(
+                        $obj->Groups(),
+                        $args
+                    );
                 }
             ]
         ];
     }
-
 }

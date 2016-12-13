@@ -5,11 +5,11 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/silverstripe/silverstripe-graphql/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/silverstripe/silverstripe-graphql/?branch=master)
 
 This modules serves SilverStripe data as
-[GraphQL](http://facebook.github.io/react/blog/2015/05/01/graphql-introduction.html) representations,
-with helpers to generate schemas based on SilverStripe model introspection.
-It layers a pluggable schema registration system on top of the
-[graphql-php](https://github.com/webonyx/graphql-php) library.
-The APIs are very similar, for example
+[GraphQL](http://facebook.github.io/react/blog/2015/05/01/graphql-introduction.html)
+representations, with helpers to generate schemas based on SilverStripe model
+introspection. It layers a pluggable schema registration system on top of the
+[graphql-php](https://github.com/webonyx/graphql-php) library. The APIs are
+very similar, for example:
 
 ## Installation
 
@@ -21,32 +21,35 @@ composer require silverstripe/graphql
 
 ## Usage
 
-GraphQL is used through a single route which defaults to `/graphql`.
-You need to define *Types* and *Queries* to expose your data via this endpoint.
+GraphQL is used through a single route which defaults to `/graphql`. You need
+to define *Types* and *Queries* to expose your data via this endpoint.
 
 ## Examples
 
-Code examples can be found in the `examples/` folder
-(built out from the configuration docs below).
+Code examples can be found in the `examples/` folder (built out from the
+configuration docs below).
 
 ## Configuration
 
 ### Define Types
 
-Types describe your data. While your data could be any arbitrary structure,
-in a SilverStripe project a GraphQL type usually relates to a `DataObject`.
-GraphQL uses this information to validate queries and allow GraphQL
-clients to introspect your API capabilities. The GraphQL type system is hierarchical,
-so the `fields()` definition declares object properties as scalar types within
-your complex type. Refer to the [graphql-php type definitions](https://github.com/webonyx/graphql-php#type-system)
+Types describe your data. While your data could be any arbitrary structure, in
+a SilverStripe project a GraphQL type usually relates to a `DataObject`.
+GraphQL uses this information to validate queries and allow GraphQL clients to
+introspect your API capabilities. The GraphQL type system is hierarchical, so
+the `fields()` definition declares object properties as scalar types within
+your complex type. Refer to the
+[graphql-php type definitions](https://github.com/webonyx/graphql-php#type-system)
 for available types.
 
 ```php
 <?php
+
 namespace MyProject\GraphQL;
 
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\TypeCreator;
+use SilverStripe\GraphQL\Pagination\Connection;
 
 class MemberTypeCreator extends TypeCreator
 {
@@ -67,8 +70,8 @@ class MemberTypeCreator extends TypeCreator
             'Surname' => ['type' => Type::string()],
         ];
     }
-
 }
+
 ```
 
 Each type class needs to be registered with a unique name against the schema
@@ -81,7 +84,8 @@ SilverStripe\GraphQL:
       member: 'MyProject\GraphQL\MemberTypeCreator'
 ```
 
-### Define Queries
+
+## Define Queries
 
 Types can be exposed via "queries". These queries are in charge of retrieving
 data through the SilverStripe ORM. The response itself is handled by the
@@ -164,6 +168,198 @@ query {
 }
 ```
 
+## Pagination
+
+The GraphQL module also provides a wrapper to return paginated and sorted
+records using offset based pagination. To have a `Query` return a page-able
+list of records queries should extend the `PaginatedQueryCreator` class and
+return a `Connection` instance.
+
+```
+<?php
+
+namespace MyProject\GraphQL;
+
+use GraphQL\Type\Definition\Type;
+use SilverStripe\GraphQL\QueryCreator;
+use SilverStripe\Security\Member;
+use SilverStripe\GraphQL\Pagination\Connection;
+use SilverStripe\GraphQL\Pagination\PaginatedQueryCreator;
+use SilverStripe\GraphQL\Manager;
+
+class ReadMembersQueryCreator extends PaginatedQueryCreator
+{
+    public function connection() {
+        return Connection::create([
+            'name' => 'readMembers',
+            'args' => [
+                'Email' => ['type' => Type::string()]
+            ],
+            'nodeType' => $this->manager->getType('member'),
+            'resolveConnection' => function() {
+                $list = Member::get();
+
+                // Optional filtering by properties
+                if(isset($args['Email'])) {
+                    $list = $list->filter('Email', $args['Email']);
+                }
+
+                return $list;
+            }
+        ]);
+    }
+}
+
+Using a `Connection` the GraphQL server will return the results wrapped under
+the `edges` result type. `Connection` supports the following arguments:
+
+* `limit`
+* `offset`
+* `sort`
+* `sortDirection`
+
+Additional arguments can be added by providing the `args` parameter (such as
+`Email` in the previous example).
+
+Pagination information is provided under the `pageInfo` type. This object type
+supports the following fields:
+
+* `totalCount` returns the total number of items in the list,
+* `hasNextPage` returns whether more records are available at the end
+
+```
+query Members {
+  readMembers(limit:1,offset:0) {
+    edges {
+      node {
+        ID
+        FirstName
+        Email
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      totalCount
+    }
+  }
+}
+```
+
+#### Setting Pagination and Sorting options
+
+To limit the ability for users to perform searching and ordering as they wish,
+`Collection` instances can define their own limits and defaults.
+
+* `sortableFields` an array of allowed sort columns.
+* `defaultLimit` integer for the default page length (default 100)
+* `maximumLimit` integer for the maximum `limit` records per page to prevent
+excessive load trying to load millions of records (default 100)
+
+```
+public function connection() {
+    return Connection::create([
+        'name' => 'readMembers',
+        // ... from previous example
+        'sortableFields' => [
+            'ID', 'Title'
+        ],
+        'defaultLimit' => 10,
+        'maximumLimit' => 100
+    ]);
+}
+```
+
+#### Nested Connections
+
+`Connection` can be used to create nested relations such as `has_many` and
+`many_many` models.
+
+```
+<?php
+
+namespace MyProject\GraphQL;
+
+use GraphQL\Type\Definition\Type;
+use SilverStripe\GraphQL\TypeCreator;
+use SilverStripe\GraphQL\Pagination\Connection;
+
+class MemberTypeCreator extends TypeCreator
+{
+
+    public function attributes()
+    {
+        return [
+            'name' => 'member'
+        ];
+    }
+
+    public function fields()
+    {
+        $groups = Connection::create([
+            'name' => 'Groups',
+            'nodeType' => $this->manager->getType('group'),
+            'description' => 'A list of the users groups',
+            'sortableFields' => [
+                'ID', 'Title'
+            ],
+            'defaultLimit' => 10,
+            'maximumLimit' => 100
+        ]);
+
+        return [
+            'ID' => ['type' => Type::nonNull(Type::id())],
+            'Email' => ['type' => Type::string()],
+            'FirstName' => ['type' => Type::string()],
+            'Surname' => ['type' => Type::string()],
+            'Groups' => [
+                'type' => $groups->toType(),
+                'args' => $groups->args(),
+                'resolve' => function($obj, $args) use ($groups) {
+                    return $groups->resolveList(
+                        $obj->Groups(),
+                        $args
+                    );
+                }
+            ]
+        ];
+    }
+}
+```
+
+```
+query Members {
+  readMembers(limit: 10) {
+    edges {
+      node {
+        ID
+        FirstName
+        Email
+        Groups(sort:"Title",sortDirection:DESC) {
+          edges {
+            node {
+              ID
+              Title
+              Description
+            }
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+            totalCount
+          }
+        }
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      totalCount
+    }
+  }
+}
+```
+
 ### Define Mutations
 
 A "mutation" is a specialised GraphQL query which has side effects on your data,
@@ -239,9 +435,9 @@ mutation($Email:String!) {
 }
 ```
 
-This will create a new member with an email address,
-which you can pass in as query variables: `{"Email": "test@test.com"}`.
-It'll return the new `ID` property of the created member.
+This will create a new member with an email address, which you can pass in as
+query variables: `{"Email": "test@test.com"}`. It'll return the new `ID`
+property of the created member.
 
 ### Define Interfaces
 
@@ -253,9 +449,13 @@ TODO
 
 ## Testing/Debugging Queries and Mutations
 
-This module comes bundled with an implementation of [graphiql](https://github.com/graphql/graphiql), an in-browser IDE for GraphQL servers. It provides browseable documentation of your schema, as well as autocomplete and syntax-checking of your queries.
+This module comes bundled with an implementation of
+[graphiql](https://github.com/graphql/graphiql), an in-browser IDE for GraphQL
+servers. It provides browse-able documentation of your schema, as  well as auto
+complete and syntax-checking of your queries.
 
-This tool is available in **dev mode only**. It can be accessed at `/dev/graphiql/`.
+This tool is available in **dev mode only**. It can be accessed at
+`/dev/graphiql/`.
 
 <img src="https://github.com/graphql/graphiql/raw/master/resources/graphiql.png">
 
@@ -263,7 +463,6 @@ This tool is available in **dev mode only**. It can be accessed at `/dev/graphiq
 
  * Permission checks
  * Input/constraint validation on mutations (with third-party validator)
- * Pagination
  * CSRF protection (or token-based auth)
  * Generate CRUD operations based on DataObject reflection
  * Generate DataObject relationship CRUD operations

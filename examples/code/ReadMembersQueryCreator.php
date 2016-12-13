@@ -17,7 +17,7 @@ class ReadMembersQueryCreator extends PaginatedQueryCreator
                 'Email' => ['type' => Type::string()]
             ],
             'nodeType' => $this->manager->getType('member'),
-            'nodeResolve' => function() {
+            'resolveConnection' => function() {
                 $list = Member::get();
 
                 // Optional filtering by properties

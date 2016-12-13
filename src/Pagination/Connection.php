@@ -61,13 +61,31 @@ class Connection extends Object
      */
     protected $connectionArgs = [];
 
+    /**
+     * @var array
+     */
+    protected $sortableFields = [];
+
+    /**
+     * @var int
+     */
+    protected $defaultLimit = 100;
+
+    /**
+     * The maximum limit supported for the connection. Used to prevent excessive
+     * load on the server. To override the default limit, use {@link setLimits}
+     *
+     * @var int
+     */
+    protected $maximumLimit = 100;
+
     public function __construct($args)
     {
         $this->connectionName = $args['name'];
         $this->connectedType = $args['nodeType'];
 
-        if(isset($args['nodeResolve'])) {
-            $this->connectionResolver = $args['nodeResolve'];
+        if(isset($args['resolveConnection'])) {
+            $this->connectionResolver = $args['resolveConnection'];
         }
 
         if(isset($args['args'])) {
@@ -77,6 +95,44 @@ class Connection extends Object
         if(isset($args['description'])) {
             $this->connectionDescription = $args['description'];
         }
+
+        if(isset($args['sortableFields'])) {
+            $this->sortableFields = $args['sortableFields'];
+        }
+
+        if(isset($args['defaultLimit'])) {
+            $this->defaultLimit = $args['defaultLimit'];
+        }
+
+        if(isset($args['maximumLimit'])) {
+            $this->maximumLimit = $args['maximumLimit'];
+        }
+    }
+
+    /**
+     * Update the maximum and default limits for returned records.
+     *
+     * @param int $defaultLimit
+     * @param int $maximumLimit
+     *
+     * @return $this
+     */
+    public function setLimits($defaultLimit, $maximumLimit = null) {
+        $this->defaultLimit = $defaultLimit;
+        $this->maximumLimit = $maximumLimit;
+
+        return $this;
+    }
+
+    /**
+     * Update the allowed array of sortable fields.
+     *
+     * @param array
+     *
+     * @return $this
+     */
+    public function setSortableFields($fields) {
+        $this->sortableFields = $fields;
     }
 
     /**
@@ -87,7 +143,13 @@ class Connection extends Object
      */
     public function args()
     {
-        return array_merge($this->connectionArgs, [
+        $existing = $this->connectionArgs;
+
+        if(!is_array($existing)) {
+            $existing = [];
+        }
+
+        return array_merge($existing, [
             'limit' => [
                 'type' => Type::int(),
             ],
@@ -125,8 +187,6 @@ class Connection extends Object
      */
     public function getEdgeType()
     {
-        $resolver = $this->connectionResolver;
-
         return new ObjectType([
             'name' => $this->connectionName . 'Edge',
             'description' => 'The collections edge',
@@ -150,7 +210,6 @@ class Connection extends Object
         return new ObjectType([
             'name' => $this->connectionName . 'Connection',
             'description' => $this->connectionDescription,
-            'args' => $this->args(),
             'fields' => $this->fields()
         ]);
     }
@@ -176,18 +235,25 @@ class Connection extends Object
             throw new \Exception('Connection::resolve() must resolve to a SS_List instance.');
         }
 
-        return static::prepareList($result, $args, $context, $info);
+        return $this->resolveList($result, $args, $context, $info);
     }
 
     /**
      * Wraps an {@link SS_List} with the required data in order to return it as
-     * a response.
+     * a response. If you wish to resolve a standard array as a list use
+     * {@link ArrayList}.
      *
      * @param SS_List $list
+     *
+     * @return array
      */
-    public static function prepareList($list, $args, $context = null, $info = null) {
-        $limit = (isset($args['limit'])) ? $args['limit'] : null;
+    public function resolveList($list, $args, $context = null, $info = null) {
+        $limit = (isset($args['limit']) && $args['limit']) ? $args['limit'] : $this->defaultLimit;
         $offset = (isset($args['offset'])) ? $args['offset'] : 0;
+
+        if($limit > $this->maximumLimit) {
+            $limit = $this->maximumLimit;
+        }
 
         $nextPage = false;
         $previousPage = false;
@@ -208,7 +274,10 @@ class Connection extends Object
         if($list instanceof Sortable) {
             if(isset($args['sort'])) {
                 $direction = (isset($args['sortDirection'])) ? $args['sortDirection'] : 'ASC';
-                $list = $list->sort($args['sort'], $direction);
+
+                if(in_array($args['sort'], $this->sortableFields)) {
+                    $list = $list->sort($args['sort'], $direction);
+                }
             }
         }
 

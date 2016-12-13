@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests;
+namespace SilverStripe\GraphQL\Tests\Fake;
 
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\ORM\DataObject;
