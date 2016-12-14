@@ -334,7 +334,7 @@ query Members {
         ID
         FirstName
         Email
-        Groups(sort:"Title",sortDirection:DESC) {
+        Groups(sortBy:[{field: "Title", direction:DESC}]) {
           edges {
             node {
               ID
@@ -416,8 +416,7 @@ class CreateMemberMutationCreator extends MutationCreator
 
 We'll register this mutation through YAML configuration:
 
-```
-yml
+```yml
 SilverStripe\GraphQL:
   schema:
     mutations:

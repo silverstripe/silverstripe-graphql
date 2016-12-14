@@ -21,7 +21,7 @@ use InvalidArgumentException;
  * and return a list of edges.
  *
  * <code>
- *  friends(limit:2,offset:2) {
+ *  friends(limit:2,offset:2,sortBy:[{field:"Name",direction:ASC}]) {
  *     edges {
  *       node {
  *         name
