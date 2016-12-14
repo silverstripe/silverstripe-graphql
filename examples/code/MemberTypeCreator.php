@@ -18,16 +18,12 @@ class MemberTypeCreator extends TypeCreator
 
     public function fields()
     {
-        $groups = Connection::create([
-            'name' => 'Groups',
-            'nodeType' => $this->manager->getType('group'),
-            'description' => 'A list of the users groups',
-            'sortableFields' => [
-                'ID', 'Title'
-            ],
-            'defaultLimit' => 10,
-            'maximumLimit' => 100
-        ]);
+        $groupsConnection = Connection::create('Groups')
+            ->setConnectionType(function() {
+                return $this->manager->getType('group');
+            })
+            ->setDescription('A list of the users groups')
+            ->setSortableFields(['ID', 'Title']);
 
         return [
             'ID' => ['type' => Type::nonNull(Type::id())],
@@ -35,10 +31,10 @@ class MemberTypeCreator extends TypeCreator
             'FirstName' => ['type' => Type::string()],
             'Surname' => ['type' => Type::string()],
             'Groups' => [
-                'type' => $groups->toType(),
-                'args' => $groups->args(),
-                'resolve' => function($obj, $args) use ($groups) {
-                    return $groups->resolveList(
+                'type' => $groupsConnection->toType(),
+                'args' => $groupsConnection->args(),
+                'resolve' => function($obj, $args) use ($groupsConnection) {
+                    return $groupsConnection->resolveList(
                         $obj->Groups(),
                         $args
                     );

@@ -12,15 +12,19 @@ class PaginatedQueryFake extends PaginatedQueryCreator
 {
     public function connection()
     {
-        return Connection::create([
-            'name' => 'testPagination',
-            'args' => [
-                'MyField' => ['type' => Type::string()]
-            ],
-            'nodeType' => $this->manager->getType('TypeCreatorFake'),
-            'nodeResolve' => function() {
+        return Connection::create('testPagination')
+            ->setArgs([
+                'MyField' => [
+                    'type' => Type::string()
+                ]
+            ])
+            ->setConnectionType(function()  {
+                return $this->manager->getType('TypeCreatorFake');
+            })
+            ->setConnectionResolver(function() {
+                $list = DataObjectFake::get();
+
                 return $list;
-            }
-        ]);
+            });
     }
 }

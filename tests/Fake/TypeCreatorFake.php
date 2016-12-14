@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
+use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\TypeCreator;
 
 class TypeCreatorFake extends TypeCreator
@@ -16,7 +17,9 @@ class TypeCreatorFake extends TypeCreator
     public function fields()
     {
         return [
-            'MyField'
+            'MyField' => [
+                'type' => Type::string()
+            ]
         ];
     }
 }

@@ -7,23 +7,31 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ObjectType;
 
 /**
- * Supports offset based pagination within GraphQL
- *
- * @todo cursor support
+ * Supports offset based pagination within GraphQL.
  */
-class PageInfoType extends Object {
+class PageInfoType extends Object
+{
+    /**
+     * @var ObjectType
+     */
+    protected $type;
 
-    private $type;
-
-    public function toType() {
+    public function toType()
+    {
         if(!$this->type) {
             $this->type = new ObjectType([
                 'name' => 'PageInfo',
                 'description' => 'Information about pagination in a connection.',
                 'fields' => [
-                    'totalCount' => ['type' => Type::nonNull(Type::id())],
-                    'hasNextPage' => ['type' => Type::nonNull(Type::boolean())],
-                    'hasPreviousPage' => ['type' => Type::nonNull(Type::boolean())]
+                    'totalCount' => [
+                        'type' => Type::nonNull(Type::id())
+                    ],
+                    'hasNextPage' => [
+                        'type' => Type::nonNull(Type::boolean())
+                    ],
+                    'hasPreviousPage' => [
+                        'type' => Type::nonNull(Type::boolean())
+                    ]
                 ]
             ]);
         }

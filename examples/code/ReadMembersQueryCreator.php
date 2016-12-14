@@ -11,13 +11,17 @@ use SilverStripe\GraphQL\Manager;
 class ReadMembersQueryCreator extends PaginatedQueryCreator
 {
     public function connection() {
-        return Connection::create([
-            'name' => 'readMembers',
-            'args' => [
-                'Email' => ['type' => Type::string()]
-            ],
-            'nodeType' => $this->manager->getType('member'),
-            'resolveConnection' => function() {
+        return Connection::create('readMembers')
+            ->setConnectionType(function() {
+                return $this->manager->getType('member');
+            })
+            ->setArgs([
+                'Email' => [
+                    'type' => Type::string()
+                ]
+            ])
+            ->setSortableFields(['ID', 'FirstName', 'Email'])
+            ->setConnectionResolver(function($obj, $args) {
                 $list = Member::get();
 
                 // Optional filtering by properties
@@ -26,7 +30,6 @@ class ReadMembersQueryCreator extends PaginatedQueryCreator
                 }
 
                 return $list;
-            }
-        ]);
+            });
     }
 }

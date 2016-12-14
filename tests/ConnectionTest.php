@@ -13,6 +13,7 @@ use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\PaginatedQueryFake;
 use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\ResolveInfo;
+use InvalidArgumentException;
 
 class ConnectionTest extends SapphireTest
 {
@@ -32,6 +33,8 @@ class ConnectionTest extends SapphireTest
 
     public function setUp()
     {
+        parent::setUp();
+
         $config = [
             'types' => [
                 'TypeCreatorFake' => TypeCreatorFake::class,
@@ -42,10 +45,11 @@ class ConnectionTest extends SapphireTest
         ];
 
         $this->manager = Manager::createFromConfig($config);
-        $this->connection = new Connection([
-            'name' => 'testConnection',
-            'nodeType' => $this->manager->getType('TypeCreatorFake'),
-            'resolveConnection' => function() {
+        $this->connection = Connection::create('testConnection')
+            ->setConnectionType(function() {
+                return $this->manager->getType('TypeCreatorFake');
+            })
+            ->setConnectionResolver(function() {
                 $result = new ArrayList();
                 $result->push([
                     'ID' => 10,
@@ -53,10 +57,8 @@ class ConnectionTest extends SapphireTest
                 ]);
 
                 return $result;
-            }
-        ]);
+            });
 
-        parent::setUp();
 
         $fakeObject = new DataObjectFake([
             'MyField' => 'object1'
@@ -75,11 +77,10 @@ class ConnectionTest extends SapphireTest
     {
         $list = DataObjectFake::get();
 
-        $connection = new Connection([
-            'name' => 'testFake',
-            'sortableFields' => ['MyField'],
-            'nodeType' =>  $this->manager->getType('TypeCreatorFake')
-        ]);
+        $connection = Connection::create('testFake')
+            ->setConnectionType(function() {
+                return $this->manager->getType('TypeCreatorFake');
+            });
 
         $result = $connection->resolveList($list, []);
 
@@ -103,15 +104,46 @@ class ConnectionTest extends SapphireTest
     {
         $list = DataObjectFake::get();
 
-        $connection = new Connection([
-            'name' => 'testFake',
-            'sortableFields' => ['MyField'],
-            'nodeType' =>  $this->manager->getType('TypeCreatorFake')
-        ]);
+        $connection = Connection::create('testFake')
+            ->setSortableFields(['MyField'])
+            ->setConnectionType(function() {
+                return $this->manager->getType('TypeCreatorFake');
+            });
 
         // test a resolution with the limit
-        $result = $connection->resolveList($list, ['sort' => 'MyField', 'sortDirection' => 'DESC']);
+        $result = $connection->resolveList(
+            $list,
+            ['sortBy' => [['field' => 'MyField', 'direction' => 'DESC']]]
+        );
+
         $this->assertEquals('object2', $result['edges']->first()->MyField);
+        $this->assertEquals('object1', $result['edges']->last()->MyField);
+
+        $result = $connection->resolveList(
+            $list,
+            ['sortBy' => [['field' => 'MyField', 'direction' => 'ASC']]]
+        );
+
+        $this->assertEquals('object1', $result['edges']->first()->MyField);
+    }
+
+    public function testSortByInvalidColumnThrowsException()
+    {
+        $this->setExpectedException(InvalidArgumentException::class);
+
+        $list = DataObjectFake::get();
+
+        $connection = Connection::create('testFake')
+            ->setSortableFields(['MyField'])
+            ->setConnectionType(function() {
+                return $this->manager->getType('TypeCreatorFake');
+            });
+
+        // test a resolution with the limit
+        $result = $connection->resolveList(
+            $list,
+            ['sortBy' => [['field' => 'ID', 'direction' => 'DESC']]]
+        );
     }
 
     public function testToType()

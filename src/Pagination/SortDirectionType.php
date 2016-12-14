@@ -9,8 +9,14 @@ use GraphQL\Type\Definition\ObjectType;
 
 class SortDirectionType extends Object {
 
+    /**
+     * @var ObjectType
+     */
     private $type;
 
+    /**
+     * @return ObjectType
+     */
     public function toType() {
         if(!$this->type) {
             $this->type = new EnumType([

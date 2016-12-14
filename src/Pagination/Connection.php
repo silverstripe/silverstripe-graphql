@@ -14,6 +14,7 @@ use SilverStripe\GraphQL\FieldCreator;
 use SilverStripe\GraphQL\Pagination\PageInfoType;
 use SilverStripe\GraphQL\Pagination\SortDirectionType;
 use GraphQL\Type\Definition\ResolveInfo;
+use InvalidArgumentException;
 
 /**
  * A connection to a list of items on a object type. Collections are paginated
@@ -42,24 +43,27 @@ class Connection extends Object
     protected $connectionName;
 
     /**
-     * @var ObjectType
+     * Return a thunk function, which in turn returns the lazy-evaluated
+     * {@link ObjectType}.
+     *
+     * @var Callable
      */
     protected $connectedType;
 
     /**
      * @var string
      */
-    protected $connectionDescription;
+    protected $description;
 
     /**
-     * @var callable
+     * @var Callable
      */
     protected $connectionResolver;
 
     /**
      * @var array
      */
-    protected $connectionArgs = [];
+    protected $args = [];
 
     /**
      * @var array
@@ -79,60 +83,133 @@ class Connection extends Object
      */
     protected $maximumLimit = 100;
 
-    public function __construct($args)
+    /**
+     * @param string $connectionName
+     */
+    public function __construct($connectionName)
     {
-        $this->connectionName = $args['name'];
-        $this->connectedType = $args['nodeType'];
+        $this->connectionName = $connectionName;
 
-        if(isset($args['resolveConnection'])) {
-            $this->connectionResolver = $args['resolveConnection'];
-        }
-
-        if(isset($args['args'])) {
-            $this->connectionArgs = $args['args'];
-        }
-
-        if(isset($args['description'])) {
-            $this->connectionDescription = $args['description'];
-        }
-
-        if(isset($args['sortableFields'])) {
-            $this->sortableFields = $args['sortableFields'];
-        }
-
-        if(isset($args['defaultLimit'])) {
-            $this->defaultLimit = $args['defaultLimit'];
-        }
-
-        if(isset($args['maximumLimit'])) {
-            $this->maximumLimit = $args['maximumLimit'];
-        }
+        parent::__construct();
     }
 
     /**
-     * Update the maximum and default limits for returned records.
-     *
-     * @param int $defaultLimit
-     * @param int $maximumLimit
+     * @param Callable
      *
      * @return $this
      */
-    public function setLimits($defaultLimit, $maximumLimit = null) {
-        $this->defaultLimit = $defaultLimit;
-        $this->maximumLimit = $maximumLimit;
+    public function setConnectionResolver($func)
+    {
+        $this->connectionResolver = $func;
 
         return $this;
     }
 
     /**
-     * Update the allowed array of sortable fields.
+     * Pass in the lazy-evaluated {@link ObjectType} via a thunk function. This
+     * will be evaluated when the edge is generated.
      *
+     * @param Callable
+     *
+     * @return $this
+     */
+    public function setConnectionType($func)
+    {
+        $this->connectedType = $func;
+
+        return $this;
+    }
+
+    /**
+     * @return Callable
+     */
+    public function getConnectionResolver()
+    {
+        return $this->connectionResolver;
+    }
+
+    /**
      * @param array
      *
      * @return $this
      */
-    public function setSortableFields($fields) {
+    public function setArgs($args)
+    {
+        $this->args = $args;
+
+        return $this;
+    }
+
+    /**
+     * @param string
+     *
+     * @return $this
+     */
+    public function setDescription($string)
+    {
+        $this->description = $string;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDescription()
+    {
+        return $this->description;
+    }
+
+    /**
+     * @param array
+     *
+     * @return $this
+     */
+    public function setSortableFields($fields)
+    {
         $this->sortableFields = $fields;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getSortableFields()
+    {
+        return $this->sortableFields;
+    }
+
+    /**
+     * @param int
+     *
+     * @return $this
+     */
+    public function setDefaultLimit($limit)
+    {
+        $this->defaultLimit = $limit;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDefaultLimit()
+    {
+        return $this->defaultLimit;
+    }
+
+    /**
+     * @param int
+     *
+     * @return $this
+     */
+    public function setMaximumLimit($limit)
+    {
+        $this->maximumLimit = $limit;
+
+        return $this;
     }
 
     /**
@@ -143,7 +220,7 @@ class Connection extends Object
      */
     public function args()
     {
-        $existing = $this->connectionArgs;
+        $existing = $this->args;
 
         if(!is_array($existing)) {
             $existing = [];
@@ -156,11 +233,10 @@ class Connection extends Object
             'offset' => [
                 'type' => Type::int()
             ],
-            'sort' => [
-                'type' => Type::string()
-            ],
-            'sortDirection' => [
-                'type' => Injector::inst()->get(SortDirectionType::class)->toType()
+            'sortBy' => [
+                'type' => Type::listOf(
+                    Injector::inst()->get(SortInputType::class)->toType()
+                )
             ]
         ]);
     }
@@ -172,7 +248,9 @@ class Connection extends Object
     {
         return [
             'pageInfo' => [
-                'type' => Type::nonNull(Injector::inst()->get(PageInfoType::class)->toType()),
+                'type' => Type::nonNull(
+                    Injector::inst()->get(PageInfoType::class)->toType()
+                ),
                 'description' => 'Pagination information'
             ],
             'edges' => [
@@ -187,12 +265,16 @@ class Connection extends Object
      */
     public function getEdgeType()
     {
+        if(!$this->connectedType) {
+            throw new InvalidArgumentException('Missing connectedType callable');
+        }
+
         return new ObjectType([
             'name' => $this->connectionName . 'Edge',
             'description' => 'The collections edge',
             'fields' => [
                 'node' => [
-                    'type' => $this->connectedType,
+                    'type' => call_user_func($this->connectedType),
                     'description' => 'The node at the end of the collections edge',
                     'resolve' => function($obj) {
                         return $obj;
@@ -209,7 +291,7 @@ class Connection extends Object
     {
         return new ObjectType([
             'name' => $this->connectionName . 'Connection',
-            'description' => $this->connectionDescription,
+            'description' => $this->description,
             'fields' => $this->fields()
         ]);
     }
@@ -247,7 +329,8 @@ class Connection extends Object
      *
      * @return array
      */
-    public function resolveList($list, $args, $context = null, $info = null) {
+    public function resolveList($list, $args, $context = null, $info = null)
+    {
         $limit = (isset($args['limit']) && $args['limit']) ? $args['limit'] : $this->defaultLimit;
         $offset = (isset($args['offset'])) ? $args['offset'] : 0;
 
@@ -272,11 +355,29 @@ class Connection extends Object
         }
 
         if($list instanceof Sortable) {
-            if(isset($args['sort'])) {
-                $direction = (isset($args['sortDirection'])) ? $args['sortDirection'] : 'ASC';
+            if(isset($args['sortBy']) && !empty($args['sortBy'])) {
+                // convert the input from the input format of field, direction
+                // to an accepted SS_List sort format.
+                // https://github.com/graphql/graphql-relay-js/issues/20#issuecomment-220494222
+                $sort = [];
 
-                if(in_array($args['sort'], $this->sortableFields)) {
-                    $list = $list->sort($args['sort'], $direction);
+                foreach($args['sortBy'] as $sortInput) {
+                    $direction = (isset($sortInput['direction'])) ? $sortInput['direction'] : 'ASC';
+
+                    if(isset($sortInput['field'])) {
+                        if(!in_array($sortInput['field'], $this->getSortableFields())) {
+                            throw new InvalidArgumentException(sprintf(
+                                '"%s" is not a valid sort column',
+                                $sortInput['field']
+                            ));
+                        }
+
+                        $sort[$sortInput['field']] = $direction;
+                    }
+                }
+
+                if($sort) {
+                    $list = $list->sort($sort);
                 }
             }
         }

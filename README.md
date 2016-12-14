@@ -171,11 +171,16 @@ query {
 ## Pagination
 
 The GraphQL module also provides a wrapper to return paginated and sorted
-records using offset based pagination. To have a `Query` return a page-able
-list of records queries should extend the `PaginatedQueryCreator` class and
-return a `Connection` instance.
+records using offset based pagination.
 
-```
+> This module currently does not support Relay (cursor based) pagination.
+> [This blog post](https://dev-blog.apollodata.com/understanding-pagination-rest-graphql-and-relay-b10f835549e7#.kg5qkwvuz)
+> describes the differences.
+
+To have a `Query` return a page-able list of records queries should extend the
+`PaginatedQueryCreator` class and return a `Connection` instance.
+
+```php
 <?php
 
 namespace MyProject\GraphQL;
@@ -190,13 +195,17 @@ use SilverStripe\GraphQL\Manager;
 class ReadMembersQueryCreator extends PaginatedQueryCreator
 {
     public function connection() {
-        return Connection::create([
-            'name' => 'readMembers',
-            'args' => [
-                'Email' => ['type' => Type::string()]
-            ],
-            'nodeType' => $this->manager->getType('member'),
-            'resolveConnection' => function() {
+        return Connection::create('readMembers')
+            ->setConnectionType(function() {
+                return $this->manager->getType('member');
+            })
+            ->setArgs([
+                'Email' => [
+                    'type' => Type::string()
+                ]
+            ])
+            ->setSortableFields(['ID', 'FirstName', 'Email'])
+            ->setConnectionResolver(function($obj, $args) {
                 $list = Member::get();
 
                 // Optional filtering by properties
@@ -205,27 +214,28 @@ class ReadMembersQueryCreator extends PaginatedQueryCreator
                 }
 
                 return $list;
-            }
-        ]);
+            });
     }
 }
+```
 
 Using a `Connection` the GraphQL server will return the results wrapped under
 the `edges` result type. `Connection` supports the following arguments:
 
 * `limit`
 * `offset`
-* `sort`
-* `sortDirection`
+* `sortBy`
 
-Additional arguments can be added by providing the `args` parameter (such as
-`Email` in the previous example).
+Additional arguments can be added by providing the `setArgs` function (such as
+`Email` in the previous example). Each argument must be given a specific type.
 
 Pagination information is provided under the `pageInfo` type. This object type
 supports the following fields:
 
 * `totalCount` returns the total number of items in the list,
-* `hasNextPage` returns whether more records are available at the end
+* `hasNextPage` returns whether more records are available.
+* `hasPreviousPage` returns whether more records are available by decreasing
+the offset.
 
 ```
 query Members {
@@ -251,31 +261,24 @@ query Members {
 To limit the ability for users to perform searching and ordering as they wish,
 `Collection` instances can define their own limits and defaults.
 
-* `sortableFields` an array of allowed sort columns.
-* `defaultLimit` integer for the default page length (default 100)
-* `maximumLimit` integer for the maximum `limit` records per page to prevent
+* `setSortableFields` an array of allowed sort columns.
+* `setDefaultLimit` integer for the default page length (default 100)
+* `setMaximumLimit` integer for the maximum `limit` records per page to prevent
 excessive load trying to load millions of records (default 100)
 
-```
-public function connection() {
-    return Connection::create([
-        'name' => 'readMembers',
-        // ... from previous example
-        'sortableFields' => [
-            'ID', 'Title'
-        ],
-        'defaultLimit' => 10,
-        'maximumLimit' => 100
-    ]);
-}
+```php
+return Connection::create('readMembers')
+    ...
+    ->setDefaultLimit(10)
+    ->setMaximumLimit(100); // previous users requesting more than 100 records
 ```
 
 #### Nested Connections
 
-`Connection` can be used to create nested relations such as `has_many` and
+`Connection` can be used to return related objects such as `has_many` and
 `many_many` models.
 
-```
+```php
 <?php
 
 namespace MyProject\GraphQL;
@@ -296,16 +299,12 @@ class MemberTypeCreator extends TypeCreator
 
     public function fields()
     {
-        $groups = Connection::create([
-            'name' => 'Groups',
-            'nodeType' => $this->manager->getType('group'),
-            'description' => 'A list of the users groups',
-            'sortableFields' => [
-                'ID', 'Title'
-            ],
-            'defaultLimit' => 10,
-            'maximumLimit' => 100
-        ]);
+        $groupsConnection = Connection::create('Groups')
+            ->setConnectionType(function() {
+                return $this->manager->getType('group');
+            })
+            ->setDescription('A list of the users groups')
+            ->setSortableFields(['ID', 'Title']);
 
         return [
             'ID' => ['type' => Type::nonNull(Type::id())],
@@ -313,10 +312,10 @@ class MemberTypeCreator extends TypeCreator
             'FirstName' => ['type' => Type::string()],
             'Surname' => ['type' => Type::string()],
             'Groups' => [
-                'type' => $groups->toType(),
-                'args' => $groups->args(),
-                'resolve' => function($obj, $args) use ($groups) {
-                    return $groups->resolveList(
+                'type' => $groupsConnection->toType(),
+                'args' => $groupsConnection->args(),
+                'resolve' => function($obj, $args) use ($groupsConnection) {
+                    return $groupsConnection->resolveList(
                         $obj->Groups(),
                         $args
                     );
@@ -367,7 +366,7 @@ such as create, update or delete. Each of these operations would be expressed
 as its own mutation class. Returning an object from the `resolve()` method
 will automatically include it in the response.
 
-```
+```php
 <?php
 namespace MyProject\GraphQL;
 
