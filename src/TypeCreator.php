@@ -5,11 +5,12 @@ namespace SilverStripe\GraphQL;
 use SilverStripe\Core\Object;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
 
 /**
- * Represents a GraphQL type in a way that allows customisation
- * through SilverStripe's DataExtension system.
+ * Represents a GraphQL type in a way that allows customization through
+ * SilverStripe's {@link DataExtension} system.
  */
 class TypeCreator extends Object
 {
