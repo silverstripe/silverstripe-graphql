@@ -65,7 +65,7 @@ class ScaffoldingTest extends SapphireTest
             ->method('getType')
             ->will($this->returnArgument(0));
 
-        $mutationCreator = new MutationOperationCreator($managerMock, 'testOperation', 'testType');
+        $mutationCreator = new MutationOperationCreator($managerMock, 'testOperation', 'testType', 'testResolver');
         $result = $mutationCreator->type();
 
         $this->assertInstanceOf('\Closure', $result);
@@ -82,7 +82,7 @@ class ScaffoldingTest extends SapphireTest
             ->method('getType')
             ->willReturn(new ObjectType(['name' => 'test']));
 
-        $mutationCreator = new QueryOperationCreator($managerMock, 'testOperation', 'testType');
+        $mutationCreator = new QueryOperationCreator($managerMock, 'testOperation', 'testType','testResolver');
         $result = $mutationCreator->type();
 
         $this->assertInstanceOf('\Closure', $result);
