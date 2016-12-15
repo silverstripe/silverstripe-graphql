@@ -24,7 +24,7 @@ class PageInfoType extends Object
                 'description' => 'Information about pagination in a connection.',
                 'fields' => [
                     'totalCount' => [
-                        'type' => Type::nonNull(Type::id())
+                        'type' => Type::nonNull(Type::int())
                     ],
                     'hasNextPage' => [
                         'type' => Type::nonNull(Type::boolean())
