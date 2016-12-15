@@ -36,17 +36,15 @@ class ReadOperationScaffolder extends QueryScaffolder
         parent::__construct($operationName, $this->typeName());
 
         $this->setResolver(function ($object, array $args, $context, $info) {
-            if (singleton($this->dataObjectName)->canView()) {
-                $list = DataList::create($this->dataObjectName);
-                $list = $list->limit($args['Limit']);
-                if (isset($args['Sort'])) {
-                    $list = $list->sort($args['Sort']);
-                }
-
-                // filterByCallback(canView()) ??
-
-                return $list;
+            $list = DataList::create($this->dataObjectClass);
+            $list = $list->limit($args['Limit']);
+            if (isset($args['Sort'])) {
+                $list = $list->sort($args['Sort']);
             }
+
+            return $list->filterbyCallback(function ($item, $list) {
+            	return $item->canView();
+            });
         });
 
     }

@@ -10,6 +10,7 @@ use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use SilverStripe\ORM\DataList;
 use SilverStripe\GraphQL\Manager;
 use GraphQL\Type\Definition\Type;
+use Exception;
 
 /**
  * Scaffolds a generic update operation for DataObjects
@@ -32,32 +33,28 @@ class UpdateOperationScaffolder extends MutationScaffolder
             $this->typeName()
         );
 
-        $args = [];
-        $instance = $this->getDataObjectInstance();
-
-        // Setup default input args.. Placeholder!
-        foreach ($instance->db() as $dbFieldName => $dbFieldType) {
-            $result = $instance->obj($dbFieldName);
-            $typeName = $result->config()->graphql_type;
-            $args[$dbFieldName] = $typeName;
-        }
-
-        $this->args = $args;
-
         // Todo: this is totally half baked
-        $this->setResolver(function ($object, array $args, $context, $info) {
-            if (singleton($this->dataObjectName)->canEdit()) {
-                $obj = DataList::create($this->dataObjectName)
-                    ->byID($args['ID']);
+        $this->setResolver(function ($object, array $args, $context, $info) {            
+            $obj = DataList::create($this->dataObjectClass)
+                ->byID($args['ID']);
+            if(!$obj) {
+            	throw new Exception(sprintf(
+            		"%s with ID %s not found",
+            		$this->dataObjectClass,
+            		$args['ID']
+            	));
+            }
 
-                if ($obj) {
-                    $obj->update($args['Input']);
-                    $obj->write();
-                }
+            if ($obj->canEdit()) {
+                $obj->update($args['Input']);
+                $obj->write();
 
                 return $obj;
             } else {
-                // permission error
+                throw new Exception(sprintf(
+                	"Cannot edit this %s",
+                	$this->dataObjectClass
+                ));
             }
         });
 
@@ -85,14 +82,20 @@ class UpdateOperationScaffolder extends MutationScaffolder
     protected function generateInputType()
     {
         $fields = [];
-        $args = $this->args;
-        unset($args['ID']);
+        $instance = $this->getDataObjectInstance();
 
-        foreach ($args as $fieldName => $typeStr) {
-            $arr = (new TypeParser($typeStr))->toArray();
-            $arr['name'] = $fieldName;
+        // Setup default input args.. Placeholder!
+        $db = $instance->db();
+        unset($db['ID']);
+        
+        foreach ($db as $dbFieldName => $dbFieldType) {
+            $result = $instance->obj($dbFieldName);
+            $typeName = $result->config()->graphql_type;
+            $arr = (new TypeParser($typeName))->toArray();
+            $arr['name'] = $dbFieldName;
             $fields[] = $arr;
         }
+
         return new InputObjectType([
             'name' => $this->typeName() . 'UpdateInputType',
             'fields' => $fields

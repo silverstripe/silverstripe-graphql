@@ -8,6 +8,7 @@ use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use SilverStripe\GraphQL\Manager;
+use Exception;
 
 /**
  * A generic "create" operation for a DataObject
@@ -30,31 +31,18 @@ class CreateOperationScaffolder extends MutationScaffolder
             $this->typeName()
         );
 
-        $args = [];
-        $instance = $this->getDataObjectInstance();
-
-        // Setup default input args.. Placeholder!
-        foreach ($instance->db() as $dbFieldName => $dbFieldType) {
-            $result = $instance->obj($dbFieldName);
-            $typeName = $result->config()->graphql_type;
-            $args[$dbFieldName] = $typeName;
-        }
-        unset($args['ID']);
-
-        $this->args = $args;
-
         // Todo: this is totally half baked
         $this->setResolver(function ($object, array $args, $context, $info) {
-            if (singleton($this->dataObjectName)->canCreate()) {
+            if (singleton($this->dataObjectClass)->canCreate()) {
                 $newObject = Injector::inst()->createWithArgs(
-                    $this->dataObjectName,
+                    $this->dataObjectClass,
                     $args
                 );
                 $newObject->write();
 
                 return $newObject;
             } else {
-                // somehow deal with permission errors here
+                throw new Exception("Cannot create {$this->dataObjectClass}");
             }
         });
 
@@ -78,11 +66,20 @@ class CreateOperationScaffolder extends MutationScaffolder
     protected function generateInputType()
     {
         $fields = [];
-        foreach ($this->args as $fieldName => $typeStr) {
-            $arr = (new TypeParser($typeStr))->toArray();
-            $arr['name'] = $fieldName;
+        $instance = $this->getDataObjectInstance();
+
+        // Setup default input args.. Placeholder!
+        $db = $instance->db();
+        unset($db['ID']);
+
+        foreach ($db as $dbFieldName => $dbFieldType) {
+            $result = $instance->obj($dbFieldName);
+            $typeName = $result->config()->graphql_type;
+            $arr = (new TypeParser($typeName))->toArray();
+            $arr['name'] = $dbFieldName;
             $fields[] = $arr;
         }
+
         return new InputObjectType([
             'name' => $this->typeName() . 'CreateInputType',
             'fields' => $fields
