@@ -64,7 +64,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
                                 $ops[] = constant($constStr);
                             } else {
                                 throw new \Exception(
-                                    "Invalid operation: $op"
+                                    "Invalid operation: $op on $dataobjectClass"
                                 );
                             }
                         }
