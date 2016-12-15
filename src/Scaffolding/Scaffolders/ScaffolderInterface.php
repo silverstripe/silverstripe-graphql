@@ -6,7 +6,6 @@ use SilverStripe\GraphQL\Manager;
 
 /**
  * Defines a class that transforms into a type or field creator
- * @package SilverStripe\GraphQL\Scaffolding\Scaffolders
  */
 interface ScaffolderInterface
 {

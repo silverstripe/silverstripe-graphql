@@ -9,8 +9,6 @@ use GraphQL\Type\Definition\ResolveInfo;
 
 /**
  * Creates a GraphQL type for a DataObject
- * @package SilverStripe\GraphQL\Scaffolding\Creators
- * @author Uncle Cheese <unclecheese@leftandmain.com>
  */
 class DataObjectTypeCreator extends TypeCreator
 {

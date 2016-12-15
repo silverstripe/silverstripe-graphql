@@ -7,7 +7,6 @@ use GraphQL\Type\Definition\Type;
 
 /**
  * Parses an array of args into the proper graphql-php spec, using first-class type objects in lieu of strings
- * @package SilverStripe\GraphQL\Scaffolding\Util
  */
 class ArgsParser
 {

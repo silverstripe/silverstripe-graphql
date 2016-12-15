@@ -6,7 +6,6 @@ use SilverStripe\GraphQL\MutationCreator;
 
 /**
  * Creates a GraphQL mutation field
- * @package SilverStripe\GraphQL\Scaffolding\Operations
  */
 class MutationOperationCreator extends MutationCreator
 {

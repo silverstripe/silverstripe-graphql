@@ -8,8 +8,8 @@ use SilverStripe\GraphQL\Scaffolding\ResolverInterface;
 use SilverStripe\Core\Injector\Injector;
 
 /**
- * Trait Operation
- * @package SilverStripe\GraphQL\Scaffolding\Operations
+ * Provides functionality common to both operation scaffolders. Cannot
+ * be a subclass due to their distinct inheritance chains
  */
 abstract class OperationScaffolder
 {

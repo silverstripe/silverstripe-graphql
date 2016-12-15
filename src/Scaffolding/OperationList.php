@@ -8,7 +8,6 @@ use Doctrine\Instantiator\Exception\InvalidArgumentException;
 
 /**
  * An array list designed to work with OperationScaffolders
- * @package SilverStripe\GraphQL\Scaffolding
  */
 class OperationList extends ArrayList
 {

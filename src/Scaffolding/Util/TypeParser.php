@@ -7,7 +7,6 @@ use Doctrine\Instantiator\Exception\InvalidArgumentException;
 
 /**
  * Parses a type, e.g. String!=20 into an array defining the arg type
- * @package SilverStripe\GraphQL\Scaffolding\Util
  */
 class TypeParser
 {

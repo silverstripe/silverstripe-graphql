@@ -7,7 +7,6 @@ use SilverStripe\GraphQL\Manager;
 
 /**
  * Injects Operation creator features into mutations and queries, which are different inheritance chains
- * @package SilverStripe\GraphQL\Scaffolding\Operations
  */
 trait OperationCreatorTrait
 {

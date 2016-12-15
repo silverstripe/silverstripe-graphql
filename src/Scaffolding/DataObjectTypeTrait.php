@@ -7,8 +7,6 @@ use SilverStripe\Core\Config\Config;
 
 /**
  * Offers a few helper methods for classes that are DataObject subclass bound.
- *
- * @package SilverStripe\GraphQL\Scaffolding
  */
 trait DataObjectTypeTrait
 {

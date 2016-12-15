@@ -13,7 +13,6 @@ use GraphQL\Type\Definition\Type;
 
 /**
  * Scaffolds a generic update operation for DataObjects
- * @package SilverStripe\GraphQL\Scaffolding\Scaffolders
  */
 class UpdateOperationScaffolder extends MutationScaffolder
 {

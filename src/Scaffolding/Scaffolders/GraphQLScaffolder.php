@@ -11,8 +11,6 @@ use SilverStripe\GraphQL\Scaffolding\Creators\QueryOperationCreator;
 /**
  * The entry point for a GraphQL scaffolding definition. Holds DataObject type definitions,
  * and their nested Mutation/Query definitions.
- *
- * @package SilverStripe\GraphQL\Scaffolding
  */
 class GraphQLScaffolder implements ManagerMutatorInterface
 {

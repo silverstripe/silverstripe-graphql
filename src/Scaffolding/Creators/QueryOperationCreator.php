@@ -8,7 +8,6 @@ use GraphQL\Type\Definition\Type;
 
 /**
  * Creates a GraphQL query field
- * @package SilverStripe\GraphQL\Scaffolding\Operations
  */
 class QueryOperationCreator extends QueryCreator
 {

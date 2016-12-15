@@ -8,7 +8,6 @@ use SilverStripe\ORM\DataList;
 
 /**
  * A generic delete operation
- * @package SilverStripe\GraphQL\Scaffolding\Scaffolders
  */
 class DeleteOperationScaffolder extends MutationScaffolder
 {

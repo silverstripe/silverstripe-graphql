@@ -11,7 +11,6 @@ use SilverStripe\GraphQL\Manager;
 
 /**
  * A generic "create" operation for a DataObject
- * @package SilverStripe\GraphQL\Scaffolding\Scaffolders
  */
 class CreateOperationScaffolder extends MutationScaffolder
 {

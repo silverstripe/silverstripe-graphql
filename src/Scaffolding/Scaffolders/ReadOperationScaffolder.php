@@ -8,7 +8,6 @@ use SilverStripe\ORM\DataList;
 
 /**
  * Scaffolds a generic read operation for DataObjects
- * @package SilverStripe\GraphQL\Scaffolding\Scaffolders
  */
 class ReadOperationScaffolder extends QueryScaffolder
 {

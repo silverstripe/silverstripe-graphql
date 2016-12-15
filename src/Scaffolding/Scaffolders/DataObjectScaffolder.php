@@ -14,9 +14,9 @@ use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use SilverStripe\GraphQL\Scaffolding\Creators\DataObjectTypeCreator;
 use SilverStripe\GraphQL\Scaffolding\DataObjectTypeTrait;
 use SilverStripe\Core\Config\Config;
+
 /**
  * Scaffolds a DataObjectTypeCreator
- * @package SilverStripe\GraphQL\Scaffolding
  */
 class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterface
 {

@@ -4,8 +4,6 @@ namespace SilverStripe\GraphQL\Scaffolding;
 
 /**
  * Applied to classes that resolve queries or mutations
- * 
- * @package SilverStripe\GraphQL\Scaffolding\Resolvers
  */
 interface ResolverInterface
 {

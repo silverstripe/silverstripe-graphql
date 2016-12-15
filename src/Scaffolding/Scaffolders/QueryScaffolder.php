@@ -7,7 +7,6 @@ use SilverStripe\GraphQL\Scaffolding\Creators\QueryOperationCreator;
 
 /**
  * Scaffolds a GraphQL query field
- * @package SilverStripe\GraphQL\Scaffolding\Scaffolders
  */
 class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInterface, ScaffolderInterface
 {
