@@ -28,8 +28,8 @@ class DataObjectTypeCreator extends TypeCreator
     /**
      * DataObjectTypeCreator constructor.
      * @param Manager $manager
-     * @param $typeName
-     * @param $fields
+     * @param string $typeName
+     * @param array $fields
      */
     public function __construct(Manager $manager, $typeName, $fields)
     {

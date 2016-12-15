@@ -33,12 +33,12 @@ trait OperationCreatorTrait
     /**
      * OperationCreatorTrait constructor.
      * @param Manager $manager
-     * @param $operationName
-     * @param $typeName
-     * @param null $resolver
+     * @param string $operationName
+     * @param string $typeName
+     * @param SilverStripe\GraphQL\Scaffolding\ResolverInterface|\Closure $resolver
      * @param array $argsMap
      */
-    public function __construct(Manager $manager, $operationName, $typeName, $resolver = null, $argsMap = [])
+    public function __construct(Manager $manager, $operationName, $typeName, $resolver, $argsMap = [])
     {
         $this->typeName = $typeName;
         $this->resolver = $resolver;
