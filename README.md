@@ -494,7 +494,12 @@ property of the created member.
 
 ## Scaffolding DataObjects into the Schema
 
-Making a DataObject accessible through the GraphQL API involves quite a bit of boilerplate. In the above example, we can see that creating endpoints for a query and a mutation requires creating three new classes, along with an update to the configuration, and we haven't even dealt with data relations yet. For applications that require a lot of business logic and specific functionality, an architecture like this affords the developer a lot of control, but for developers who just want to make a given model accessible through GraphQL with some basic Create, Read, Update, and Delete operations, scaffolding them can save a lot of time and reduce the clutter in your project.
+Making a DataObject accessible through the GraphQL API involves quite a bit of boilerplate. In the above example, we can 
+see that creating endpoints for a query and a mutation requires creating three new classes, along with an update to the 
+configuration, and we haven't even dealt with data relations yet. For applications that require a lot of business logic 
+and specific functionality, an architecture like this affords the developer a lot of control, but for developers who 
+just want to make a given model accessible through GraphQL with some basic create, cead, update, and delete operations, 
+scaffolding them can save a lot of time and reduce the clutter in your project.
 
 Scaffolding DataObjects can be achieved in two non-exclusive ways:
 
@@ -527,9 +532,26 @@ class Post extends DataObject {
 }
 ```
 
+### Scaffolding DataObjects through the Config layer
+
+Many of the declarations you make through procedural code can be done via YAML. If you don't have any logic in your 
+scaffolding, using YAML is a simple approach to adding scaffolding.
+
+We'll need to define a `scaffolding` node in the `SilverStripe\GraphQL.schema` setting.
+
+```yaml
+SilverStripe\GraphQL:
+  schema:
+    scaffolding:
+      ## scaffolding will go here
+
+```
+
 ### Scaffolding DataObjects through procedural code
 
-The GraphQL `Manager` class will bootstrap itself with any scaffolders that are registered in its config. These scaffolders must implement the `ScaffoldingProvider` interface. A logical place to add this code may be in your DataObject, but it could be anywhere.
+Alternatively, for more complex requirements, you can create the scaffolding with code. The GraphQL `Manager` class will 
+bootstrap itself with any scaffolders that are registered in its config. These scaffolders must implement the 
+`ScaffoldingProvider` interface. A logical place to add this code may be in your DataObject, but it could be anywhere.
 
 As a `ScaffoldingProvider`, the class must now offer the `provideGraphQLScaffolding()` method.
 
@@ -556,60 +578,19 @@ SilverStripe\GraphQL:
       - My\Project\Post
 ```
 
-### Scaffolding DataObjects through the Config layer
-
-Many of the declarations you make through procedural code can be done via YAML. If you don't have any logic in your scaffolding, using the YAML approach may make more sense.
-
-We'll need to define a `scaffolding` node in the `SilverStripe\GraphQL.schema` setting.
-
-```yaml
-SilverStripe\GraphQL:
-  schema:
-    scaffolding:
-      ## scaffolding goes here
-
-```
 
 ### Exposing a DataObject to GraphQL
 
-Let's now expose the `Post` type. We'll choose the fields we want to offer, along with a simple query and mutation.
-
-**Code**:
-```php
-class Post extends DataObject implements ScaffoldingProvider {
-	//...
-    public function provideGraphQLScaffolding(GraphQLScaffolder $scaffolder)
-    {
-    	$scaffolder->dataObject(Post::class)
-    		->addFields(['ID','Title','Content'])
-    		->query('readPosts', function() {
-    			return Post::get()->limit(10);
-    		});
-    	$scaffolder->dataObject(Post::class)
-    		->mutation('updatePostTitle')
-    		->addArgs([
-    			'ID' => 'ID!',
-    			'NewTitle' => 'String!'
-    		])
-    		->setResolver(function($obj, $args) {
-    			$post = Post::get()->byID($args['ID']);
-    			$post->Title = $args['NewTitle'];
-    			$post->write();
-
-    			return $post;
-    		});
-
-    	return $scaffolder;
-	}
-}
-```
+Let's now expose the `Post` type. We'll choose the fields we want to offer, along with a simple query and mutation. To
+resolve queries and mutations, we'll need to specify the name of a resolver class. This class
+must implement the `SilverStripe\GraphQL\Scaffolding\ResolverInterface`. (More on this below).
 
 **YAML**:
 ```
 SilverStripe\GraphQL:
   schema:
     scaffolding_providers:
-      - MyFamily\Model\Post
+      - My\Project\Post
     scaffolding:
       My\Project\Post:
         fields: [ID, Title, Content]
@@ -642,9 +623,48 @@ mutation UpdatePostTitle($ID: ID!, $NewTitle: String!) {
 }
 ```
 
+**Code**:
+```php
+namespace My\Project;
+
+class Post extends DataObject implements ScaffoldingProvider {
+	//...
+    public function provideGraphQLScaffolding(GraphQLScaffolder $scaffolder)
+    {
+    	$scaffolder->dataObject(Post::class)
+    		->addFields(['ID','Title','Content'])
+    		->query('readPosts', function() {
+    			if(Injector::inst()->get('Post')->canView()) {
+    				return Post::get()->limit(10);
+    			}
+    		});
+    	$scaffolder->dataObject(Post::class)
+    		->mutation('updatePostTitle')
+    		->addArgs([
+    			'ID' => 'ID!',
+    			'NewTitle' => 'String!'
+    		])
+    		->setResolver(function($obj, $args) {
+    			$post = Post::get()->byID($args['ID']);
+    			if($post->canEdit()) {
+	    			$post->Title = $args['NewTitle'];
+	    			$post->write();
+    			}
+
+    			return $post;
+    		});
+
+    	return $scaffolder;
+	}
+}
+```
+
+
 #### Using a custom resolver
 
-The simplest way to add a resolver is via an anonymous function, passed as the optional second parameter to `mutation()` or `query()`, or via the `setResolver()` method. Resolvers may also exist in class definitions that implement the `ResolverInterface`.
+The simplest way to add a resolver is via an anonymous function, passed as the optional second parameter to `mutation()` 
+or `query()`, or via the `setResolver()` method. Resolvers may also exist in class definitions that implement the 
+`ResolverInterface`.
 
 **When using the YAML approach, custom resolver classes are compulsory**, since you can't define closures in YAML.
 
@@ -697,7 +717,9 @@ SilverStripe\GraphQL:
         fields: [ID, Title, Content, Author, Files]
 ```
 
-Relations are treated just like fields, and the new types are automatically detected, and added to the schema. By default, these new types offer only `ID` as an exposed field (a configuration setting), so we'll probably want to customise that a bit. 
+Relations are treated just like fields, and the new types are automatically detected, and added to the schema. By 
+default, these new types offer only `ID` as an exposed field (a configuration setting), so we'll probably want to 
+customise that a bit. 
 
 **Code**:
 ```php
@@ -705,11 +727,11 @@ Relations are treated just like fields, and the new types are automatically dete
 		->addFields(['ID','Title','Content','Author','Files'])
 		//...
 	$scaffolder->dataObject(Member::class)
-		->addFields(['Name','Email','Groups']); // creates new type "Group"
+		->addFields(['ID','Name','Email','Groups']); // creates new type "Group"
 	$scaffolder->dataObject(File::class)
-		->addFields(['Filename']);
+		->addFields(['ID','Filename']);
 	$scaffolder->dataObject(Group::class)
-		->addFields(['Title']);
+		->addFields(['ID','Title']);
 ```
 
 **YAML**:
@@ -724,17 +746,20 @@ SilverStripe\GraphQL:
         mutations:
           # ...        
       SilverStripe\Security\Member:
-        fields: [Name, Email, Groups]
+        fields: [ID, Name, Email, Groups]
       SilverStripe\Assets\File:
-        fields: [Filename]
+        fields: [ID, Filename]
       SilverStripe\Security\Group:
-        fields: [Title]
+        fields: [ID, Title]
 
 ```
 
-None of these new types have queries or mutations associated with them, but we can now access them as data related to our `Post` object.
+None of these new types have queries or mutations associated with them, but we can now access them as data related to 
+our `Post` object.
 
-Notice that we're able to use the computational method 'Name', which resolves to 'getName()' on the Member object. Fields are not necessarily one-to-one with `$db`. They are simply any public method on the DataObject that returns a `DataList`, `DataObject`, or `DBField`.
+Notice that we're able to use the computated value 'Name', which resolves to 'getName()' on the Member object. 
+Fields are not necessarily one-to-one with `$db`. They are simply any public method on the DataObject that returns a 
+`DataList`, `DataObject`, or `DBField`.
 
 ```
 query {
@@ -756,9 +781,12 @@ query {
 
 ### Ready-made CRUD operations
 
-Even with the fluency of scaffolding, many of these operations may look the same, and the resolver functions may start to get repetitive with each simple read, create, edit, delete operation we offer. For basic CRUD definitions, you can use the operations that come bundled with the scaffolder and save a lot configuration effort.
+Even with the fluency of scaffolding, many of these operations may look the same, and the resolver functions may start 
+to get repetitive with each simple read, create, edit, delete operation we offer. For basic CRUD definitions, you can 
+use the operations that come bundled with the scaffolder and save a lot configuration effort.
 
-These ready-made operations will automatically generate input types and add them to your schema. They offer very basic functionality that checks for permission and performs a simple CRUD operation on your DataObject.
+These ready-made operations will automatically generate input types and add them to your schema. They offer very basic 
+functionality that checks for permission and performs a simple CRUD operation on your DataObject.
 
 
 **Code:**
