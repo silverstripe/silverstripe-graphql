@@ -5,6 +5,10 @@ namespace SilverStripe\GraphQL;
 use SilverStripe\GraphQL\Util\CaseInsensitiveFieldAccessor;
 use GraphQL\Type\Definition\Type;
 
+/**
+ * Base interface for any {@link DataObject} passed back as a node.
+ *
+ */
 class DataObjectInterfaceTypeCreator extends InterfaceTypeCreator {
 
     public function attributes()
@@ -26,7 +30,6 @@ class DataObjectInterfaceTypeCreator extends InterfaceTypeCreator {
             'lastEdited' => [
                 'type' => Type::string(),
             ],
-
         ];
     }
 
