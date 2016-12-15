@@ -7,7 +7,6 @@ use SilverStripe\GraphQL\Scaffolding\Creators\MutationOperationCreator;
 
 /**
  * Scaffolds a GraphQL mutation field
- * @package SilverStripe\GraphQL\Scaffolding\Scaffolders
  */
 class MutationScaffolder extends OperationScaffolder implements ManagerMutatorInterface, ScaffolderInterface
 {
