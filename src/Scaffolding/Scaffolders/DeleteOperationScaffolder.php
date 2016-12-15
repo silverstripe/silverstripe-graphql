@@ -16,14 +16,11 @@ class DeleteOperationScaffolder extends MutationScaffolder
 
     /**
      * DeleteOperationScaffolder constructor.
-     * @param null $dataObjectName
+     * @param string $dataObjectClass
      */
-    public function __construct($dataObjectName)
+    public function __construct($dataObjectClass)
     {
-        $this->dataObjectName = $dataObjectName;
-        $this->args = [
-            'ID' => 'ID!'
-        ];
+        $this->dataObjectClass = $dataObjectClass;
 
         parent::__construct(
             'delete' . ucfirst($this->typeName()),

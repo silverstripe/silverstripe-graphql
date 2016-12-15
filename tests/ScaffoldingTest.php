@@ -375,8 +375,8 @@ class ScaffoldingTest extends SapphireTest
 
         $this->assertEquals('Some_Namespaced_Table', $scaffolder->typeName());
 
-        $scaffolder->setDataObjectName('test');
-        $this->assertEquals('test', $scaffolder->getDataObjectName());
+        $scaffolder->setDataObjectClass('test');
+        $this->assertEquals('test', $scaffolder->getDataObjectClass());
     }
 
     public function testDataObjectScaffolderCreator()
@@ -566,7 +566,7 @@ class ScaffoldingTest extends SapphireTest
         ];
 
         foreach ($scaffolds as $scaffold) {
-            $name = $scaffold->getDataObjectName();
+            $name = $scaffold->getDataObjectClass();
             $typeName = ucfirst($scaffold->typeName());
             $pluralTypeName = $scaffold->getDataObjectInstance()->plural_name();
             $pluralTypeName = str_replace(' ', '', $pluralTypeName);

@@ -19,11 +19,11 @@ class CreateOperationScaffolder extends MutationScaffolder
 
     /**
      * CreateOperationScaffolder constructor.
-     * @param null $dataObjectName
+     * @param string $dataObjectClass
      */
-    public function __construct($dataObjectName)
+    public function __construct($dataObjectClass)
     {
-        $this->dataObjectName = $dataObjectName;
+        $this->dataObjectClass = $dataObjectClass;
 
         parent::__construct(
             'create' . ucfirst($this->typeName()),

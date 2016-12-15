@@ -13,7 +13,7 @@ trait DataObjectTypeTrait
     /**
      * @var string
      */
-    protected $dataObjectName;
+    protected $dataObjectClass;
 
     /**
      * @var string
@@ -28,9 +28,9 @@ trait DataObjectTypeTrait
     /**
      * @return string
      */
-    public function getDataObjectName()
+    public function getDataObjectClass()
     {
-        return $this->dataObjectName;
+        return $this->dataObjectClass;
     }
 
     /**
@@ -38,10 +38,7 @@ trait DataObjectTypeTrait
      */
     public function typeName()
     {
-        /* Type names must be unique and predictable. Cannot allow customisation. */
-        //return $this->dataObjectTypeName ?: $this->getDataObjectInstance()->singular_name();
-
-        return $this->typeNameForDataObject($this->dataObjectName);
+        return $this->typeNameForDataObject($this->dataObjectClass);
     }
 
     /**
@@ -53,7 +50,7 @@ trait DataObjectTypeTrait
             return $this->dataObjectInstance;
         }
 
-        return $this->dataObjectInstance = Injector::inst()->get($this->dataObjectName);
+        return $this->dataObjectInstance = Injector::inst()->get($this->dataObjectClass);
     }
 
     /**
@@ -61,9 +58,9 @@ trait DataObjectTypeTrait
      * @param string $name
      * @return  $this
      */
-    public function setDataObjectName($name)
+    public function setDataObjectClass($class)
     {
-        $this->dataObjectName = $name;
+        $this->dataObjectClass = $class;
 
         return $this;
     }

@@ -38,14 +38,14 @@ class GraphQLScaffolder implements ManagerMutatorInterface
     public static function createFromConfig($config)
     {
         $scaffolder = Injector::inst()->create(GraphQLScaffolder::class);
-        foreach ($config as $dataObjectName => $settings) {
+        foreach ($config as $dataObjectClass => $settings) {
             if (empty($settings['fields']) || !is_array($settings['fields'])) {
                 throw new \Exception(
-                    "No array of fields defined for $dataObjectName"
+                    "No array of fields defined for $dataObjectClass"
                 );
             }
 
-            $scaffolder->dataObject($dataObjectName)
+            $scaffolder->dataObject($dataObjectClass)
                 ->addFields($settings['fields']);
 
             if (isset($settings['operations'])) {
@@ -76,7 +76,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
                 }
                 foreach ($ops as $op) {
                     $method = ($op === GraphQLScaffolder::READ) ? 'query' : 'mutation';
-                    $scaffolder->dataObject($dataObjectName)
+                    $scaffolder->dataObject($dataObjectClass)
                         ->$method($op);
                 }
             }
@@ -94,7 +94,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
                             );
                         }
                         $args = isset($fieldSettings['args']) ? (array)$fieldSettings['args'] : [];
-                        $scaffolder->dataObject($dataObjectName)
+                        $scaffolder->dataObject($dataObjectClass)
                             ->$method($fieldName)
                             ->setResolver($fieldSettings['resolver'])
                             ->addArgs($args);
@@ -112,15 +112,15 @@ class GraphQLScaffolder implements ManagerMutatorInterface
      * @param DataObjectScaffold $scaffold
      * @throws InvalidArgumentException
      */
-    public function dataObject($name, $typeName = null)
+    public function dataObject($class, $typeName = null)
     {
         foreach ($this->scaffolds as $scaffold) {
-            if ($scaffold->getDataObjectName() == $name) {
+            if ($scaffold->getDataObjectClass() == $class) {
                 return $scaffold;
             }
         }
 
-        $scaffold = new DataObjectScaffolder($name, $typeName);
+        $scaffold = new DataObjectScaffolder($class, $typeName);
         $this->scaffolds[] = $scaffold;
 
         return $scaffold;

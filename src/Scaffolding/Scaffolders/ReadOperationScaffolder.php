@@ -16,11 +16,11 @@ class ReadOperationScaffolder extends QueryScaffolder
 
     /**
      * ReadOperationScaffolder constructor.
-     * @param null $dataObjectName
+     * @param string $dataObjectClass
      */
-    public function __construct($dataObjectName)
+    public function __construct($dataObjectClass)
     {
-        $this->dataObjectName = $dataObjectName;
+        $this->dataObjectClass = $dataObjectClass;
 
         // default args of some sort
         $this->args = [

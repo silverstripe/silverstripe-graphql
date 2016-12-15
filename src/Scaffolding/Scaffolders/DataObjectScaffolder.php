@@ -39,18 +39,18 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
     /**
      * DataObjectScaffold constructor.
-     * @param $dataObjectName
+     * @param string $dataObjectClass
      */
-    public function __construct($dataObjectName)
+    public function __construct($dataObjectClass)
     {
-        if (!class_exists($dataObjectName)) {
+        if (!class_exists($dataObjectClass)) {
             throw new InvalidArgumentException(sprintf(
                 'DataObjectScaffold instantiated with non-existent classname "%s"',
-                $dataObjectName
+                $dataObjectClass
             ));
         }
 
-        if (!is_subclass_of($dataObjectName, DataObject::class)) {
+        if (!is_subclass_of($dataObjectClass, DataObject::class)) {
             throw new InvalidArgumentException(sprintf(
                 'DataObjectScaffold must instantiate with a classname that is a subclass of %s',
                 DataObject::class
@@ -61,7 +61,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         $this->mutations = OperationList::create([]);
         $this->fields = ArrayList::create([]);
 
-        $this->dataObjectName = $dataObjectName;
+        $this->dataObjectClass = $dataObjectClass;
     }
 
     /**
@@ -79,7 +79,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         if ($scaffoldClass = self::getOperationScaffoldForName($name)) {
-            $operationScaffold = new $scaffoldClass($this->dataObjectName);
+            $operationScaffold = new $scaffoldClass($this->dataObjectClass);
         } else {
             $operationScaffold = new QueryScaffolder(
                 $name,
@@ -109,7 +109,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         if ($scaffoldClass = self::getOperationScaffoldForName($name)) {
-            $operationScaffold = new $scaffoldClass($this->dataObjectName);
+            $operationScaffold = new $scaffoldClass($this->dataObjectClass);
         } else {
             $operationScaffold = new MutationScaffolder(
                 $name,
