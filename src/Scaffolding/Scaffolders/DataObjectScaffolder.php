@@ -308,7 +308,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         $creator = $this->getCreator($manager);
 
-        if (!$manager->getType($this->typeName())) {
+        if (!$manager->hasType($this->typeName())) {
             $manager->addType($creator->toType(), $this->typeName());
         }
 
