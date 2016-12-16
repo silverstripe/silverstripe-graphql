@@ -28,8 +28,9 @@ class PaginatedQueryCreator extends QueryCreator
         $this->connection = $this->connection();
     }
 
-    public function connection() {
-        throw new \Exception('Missing connection() definition on "'. get_class(this) .'"');
+    public function connection() 
+    {
+        throw new \Exception('Missing connection() definition on "'. get_class($this) .'"');
     }
 
     /**
