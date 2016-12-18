@@ -7,8 +7,8 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\ObjectType;
 
-class SortDirectionType extends Object {
-
+class SortDirectionType extends Object
+{
     /**
      * @var ObjectType
      */
@@ -17,7 +17,8 @@ class SortDirectionType extends Object {
     /**
      * @return ObjectType
      */
-    public function toType() {
+    public function toType()
+    {
         if(!$this->type) {
             $this->type = new EnumType([
                 'name' => 'SortDirection',

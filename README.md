@@ -334,7 +334,7 @@ query Members {
         ID
         FirstName
         Email
-        Groups(sortBy:[{field: "Title", direction:DESC}]) {
+        Groups(sortBy:[{field:Title, direction:DESC}]) {
           edges {
             node {
               ID
