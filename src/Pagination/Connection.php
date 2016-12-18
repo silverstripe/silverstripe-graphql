@@ -66,7 +66,8 @@ class Connection extends Object
     protected $args = [];
 
     /**
-     * @var array
+     * @var array Keyed by field argument name, values as DataObject column names.
+     * Does not support in-memory sorting for composite values (getters).
      */
     protected $sortableFields = [];
 
@@ -161,13 +162,15 @@ class Connection extends Object
     }
 
     /**
-     * @param array
+     * @param array See {@link $sortableFields}
      *
      * @return $this
      */
     public function setSortableFields($fields)
     {
-        $this->sortableFields = $fields;
+        foreach($fields as $field => $lookup) {
+            $this->sortableFields[is_numeric($field) ? $lookup : $field] = $lookup;
+        }
 
         return $this;
     }
@@ -355,6 +358,7 @@ class Connection extends Object
         }
 
         if($list instanceof Sortable) {
+            $sortableFields = $this->getSortableFields();
             if(isset($args['sortBy']) && !empty($args['sortBy'])) {
                 // convert the input from the input format of field, direction
                 // to an accepted SS_List sort format.
@@ -365,14 +369,15 @@ class Connection extends Object
                     $direction = (isset($sortInput['direction'])) ? $sortInput['direction'] : 'ASC';
 
                     if(isset($sortInput['field'])) {
-                        if(!in_array($sortInput['field'], $this->getSortableFields())) {
+                        if(!array_key_exists($sortInput['field'], $sortableFields)) {
                             throw new InvalidArgumentException(sprintf(
                                 '"%s" is not a valid sort column',
                                 $sortInput['field']
                             ));
                         }
 
-                        $sort[$sortInput['field']] = $direction;
+                        $column = $sortableFields[$sortInput['field']];
+                        $sort[$column] = $direction;
                     }
                 }
 

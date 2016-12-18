@@ -127,6 +127,33 @@ class ConnectionTest extends SapphireTest
         $this->assertEquals('object1', $result['edges']->first()->MyField);
     }
 
+    public function testResolveListSortWithCustomMapping()
+    {
+        $list = DataObjectFake::get();
+
+        $connection = Connection::create('testFake')
+            ->setSortableFields(['MyFieldAlias' => 'MyField'])
+            ->setConnectionType(function() {
+                return $this->manager->getType('TypeCreatorFake');
+            });
+
+        // test a resolution with the limit
+        $result = $connection->resolveList(
+            $list,
+            ['sortBy' => [['field' => 'MyFieldAlias', 'direction' => 'DESC']]]
+        );
+
+        $this->assertEquals('object2', $result['edges']->first()->MyField);
+        $this->assertEquals('object1', $result['edges']->last()->MyField);
+
+        $result = $connection->resolveList(
+            $list,
+            ['sortBy' => [['field' => 'MyFieldAlias', 'direction' => 'ASC']]]
+        );
+
+        $this->assertEquals('object1', $result['edges']->first()->MyField);
+    }
+
     public function testSortByInvalidColumnThrowsException()
     {
         $this->setExpectedException(InvalidArgumentException::class);
