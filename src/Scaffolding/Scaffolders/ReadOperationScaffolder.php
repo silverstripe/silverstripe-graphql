@@ -22,12 +22,6 @@ class ReadOperationScaffolder extends QueryScaffolder
     {
         $this->dataObjectClass = $dataObjectClass;
 
-        // default args of some sort
-        $this->args = [
-            'Limit' => 'Int=20',
-            'Sort' => 'String'
-        ];
-
         $typeName = $this->getDataObjectInstance()->plural_name();
         $typeName = str_replace(' ', '', $typeName);
         $typeName = ucfirst($typeName);
@@ -37,14 +31,8 @@ class ReadOperationScaffolder extends QueryScaffolder
 
         $this->setResolver(function ($object, array $args, $context, $info) {
             $list = DataList::create($this->dataObjectClass);
-            $list = $list->limit($args['Limit']);
-            if (isset($args['Sort'])) {
-                $list = $list->sort($args['Sort']);
-            }
-
-            return $list->filterbyCallback(function ($item, $list) {
-            	return $item->canView();
-            });
+            
+            return $list;
         });
 
     }

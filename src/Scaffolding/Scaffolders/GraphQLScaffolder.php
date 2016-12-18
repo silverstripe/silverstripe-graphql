@@ -94,10 +94,13 @@ class GraphQLScaffolder implements ManagerMutatorInterface
                             );
                         }
                         $args = isset($fieldSettings['args']) ? (array)$fieldSettings['args'] : [];
-                        $scaffolder->dataObject($dataObjectClass)
+                        $operation = $scaffolder->dataObject($dataObjectClass)
                             ->$method($fieldName)
                             ->setResolver($fieldSettings['resolver'])
                             ->addArgs($args);
+                        if($group === 'queries' && isset($fieldSettings['paginate'])) {
+                        	$operation->setUsePagination((boolean) $fieldSettings['paginate']);
+                        }
                     }
                 }
             }

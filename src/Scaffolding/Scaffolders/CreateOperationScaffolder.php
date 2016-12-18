@@ -6,6 +6,7 @@ use SilverStripe\GraphQL\Scaffolding\DataObjectTypeTrait;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use SilverStripe\GraphQL\Manager;
 use Exception;
@@ -69,7 +70,12 @@ class CreateOperationScaffolder extends MutationScaffolder
         $instance = $this->getDataObjectInstance();
 
         // Setup default input args.. Placeholder!
-        $db = $instance->db();
+		$db = (array) Config::inst()->get(
+			$this->dataObjectClass,
+			'db',
+			Config::INHERITED
+		);
+
         unset($db['ID']);
 
         foreach ($db as $dbFieldName => $dbFieldType) {

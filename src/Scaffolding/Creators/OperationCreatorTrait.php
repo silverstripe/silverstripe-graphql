@@ -2,7 +2,6 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Creators;
 
-use SilverStripe\GraphQL\Scaffolding\ResolverInterface;
 use SilverStripe\GraphQL\Manager;
 
 /**
@@ -10,15 +9,12 @@ use SilverStripe\GraphQL\Manager;
  */
 trait OperationCreatorTrait
 {
+    use PolymorphicResolverTrait;
+    
     /**
      * @var string
      */
     protected $typeName;
-
-    /**
-     * @var \Closure|SilverStripe\GraphQL\ResolverInterface
-     */
-    protected $resolver;
 
     /**
      * @var string
@@ -67,29 +63,12 @@ trait OperationCreatorTrait
     }
 
     /**
-     * Overload the getResolver() method to be aware of the ResolverInterface option
+     * Overload the getResolver() method to be aware of the polymorphic resolvers
      * @return mixed
      */
-    protected function getResolver()
+    public function getResolver()
     {
-        $resolver = $this->resolver;
-
-        return function () use ($resolver) {
-            $args = func_get_args();
-            if (is_callable($resolver)) {
-                return call_user_func_array($resolver, $args);
-            } else {
-                if ($resolver instanceof ResolverInterface) {
-                    return call_user_func_array([$resolver, 'resolve'], $args);
-                } else {
-                    throw new \Exception(sprintf(
-                        '%s resolver must be a closure or implement %s',
-                        __CLASS__,
-                        ResolverInterface::class
-                    ));
-                }
-            }
-        };
+    	return $this->createResolverFunction();
     }
 
 }
