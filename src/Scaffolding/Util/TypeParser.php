@@ -82,21 +82,27 @@ class TypeParser
     public function toArray()
     {
         $type = null;
+        $defaultValue = null;
         switch ($this->argType) {
             case Type::ID:
                 $type = Type::id();
+                $defaultValue = (int) $this->defaultValue;
                 break;
             case Type::STRING:
                 $type = Type::string();
+                $defaultValue = (string) $this->defaultValue;
                 break;
             case Type::BOOLEAN:
                 $type = Type::boolean();
+                $defaultValue = (boolean) $this->defaultValue;
                 break;
             case Type::INT:
                 $type = Type::int();
+                $defaultValue = (int) $this->defaultValue;
                 break;
             case Type::FLOAT:
                 $type = Type::float();
+                $defaultValue = (float) $this->defaultValue;
                 break;
 
         }
@@ -111,7 +117,7 @@ class TypeParser
 
         return [
             'type' => $type,
-            'defaultValue' => $this->defaultValue
+            'defaultValue' => $defaultValue
         ];
     }
 }

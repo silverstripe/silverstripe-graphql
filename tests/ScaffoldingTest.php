@@ -681,86 +681,99 @@ class ScaffoldingTest extends SapphireTest
         $this->assertInstanceOf(InputObjectType::class, $type->getWrappedType());
     }
 
-    // public function testTypeParser()
-    // {
-    //     $parser = new TypeParser('String!=Test');
-    //     $this->assertTrue($parser->isRequired());
-    //     $this->assertEquals('String', $parser->getArgTypeName());
-    //     $this->assertEquals('Test', $parser->getDefaultValue());
+    public function testTypeParser()
+    {
+        $parser = new TypeParser('String!=Test');
+        $this->assertTrue($parser->isRequired());
+        $this->assertEquals('String', $parser->getArgTypeName());
+        $this->assertEquals('Test', $parser->getDefaultValue());
+        $this->assertTrue(is_string($parser->toArray()['defaultValue']));
 
-    //     $parser = new TypeParser('String! = Test');
-    //     $this->assertTrue($parser->isRequired());
-    //     $this->assertEquals('String', $parser->getArgTypeName());
-    //     $this->assertEquals('Test', $parser->getDefaultValue());
+        $parser = new TypeParser('String! = Test');
+        $this->assertTrue($parser->isRequired());
+        $this->assertEquals('String', $parser->getArgTypeName());
+        $this->assertEquals('Test', $parser->getDefaultValue());
 
-    //     $parser = new TypeParser('Int!');
-    //     $this->assertTrue($parser->isRequired());
-    //     $this->assertEquals('Int', $parser->getArgTypeName());
-    //     $this->assertNull($parser->getDefaultValue());
+        $parser = new TypeParser('Int!');
+        $this->assertTrue($parser->isRequired());
+        $this->assertEquals('Int', $parser->getArgTypeName());
+        $this->assertNull($parser->getDefaultValue());
 
-    //     $parser = new TypeParser('Boolean');
-    //     $this->assertFalse($parser->isRequired());
-    //     $this->assertEquals('Boolean', $parser->getArgTypeName());
-    //     $this->assertNull($parser->getDefaultValue());
+        $parser = new TypeParser('Int!=23');
+        $this->assertTrue($parser->isRequired());
+        $this->assertEquals('Int', $parser->getArgTypeName());
+        $this->assertEquals('23', $parser->getDefaultValue());
+		$this->assertTrue(is_int($parser->toArray()['defaultValue']));
 
-    //     $parser = new TypeParser('String!=Test');
-    //     $arr = $parser->toArray();
-    //     $this->assertInstanceOf(NonNull::class, $arr['type']);
-    //     $this->assertInstanceOf(StringType::class, $arr['type']->getWrappedType());
-    //     $this->assertEquals('Test', $arr['defaultValue']);
+        $parser = new TypeParser('Boolean');
+        $this->assertFalse($parser->isRequired());
+        $this->assertEquals('Boolean', $parser->getArgTypeName());
+        $this->assertNull($parser->getDefaultValue());
 
-    //     $this->setExpectedException(InvalidArgumentException::class);
-    //     $parser = new TypeParser('  ... Nothing');
+        $parser = new TypeParser('Boolean=1');
+        $this->assertFalse($parser->isRequired());
+        $this->assertEquals('Boolean', $parser->getArgTypeName());
+        $this->assertEquals('1', $parser->getDefaultValue());
+		$this->assertTrue(is_bool($parser->toArray()['defaultValue']));
 
-    //     $this->setExpectedException(InvalidArgumentException::class);
-    //     $parser = (new TypeParser('Nothing'))->toArray();
-    // }
+        $parser = new TypeParser('String!=Test');
+        $arr = $parser->toArray();
+        $this->assertInstanceOf(NonNull::class, $arr['type']);
+        $this->assertInstanceOf(StringType::class, $arr['type']->getWrappedType());
+        $this->assertEquals('Test', $arr['defaultValue']);
 
-    // public function testArgsParser()
-    // {
-    //     $parsers = [
-    //         new ArgsParser([
-    //             'Test' => 'String'
-    //         ]),
-    //         new ArgsParser([
-    //             'Test' => Type::string()
-    //         ]),
-    //         new ArgsParser([
-    //             'Test' => ['type' => Type::string()]
-    //         ])
-    //     ];
+        $this->setExpectedException(InvalidArgumentException::class);
+        $parser = new TypeParser('  ... Nothing');
 
-    //     foreach ($parsers as $parser) {
-    //         $arr = $parser->toArray();
-    //         $this->assertArrayHasKey('Test', $arr);
-    //         $this->assertArrayHasKey('type', $arr['Test']);
-    //         $this->assertInstanceOf(StringType::class, $arr['Test']['type']);
-    //     }
-    // }
+        $this->setExpectedException(InvalidArgumentException::class);
+        $parser = (new TypeParser('Nothing'))->toArray();
+    }
+
+    public function testArgsParser()
+    {
+        $parsers = [
+            new ArgsParser([
+                'Test' => 'String'
+            ]),
+            new ArgsParser([
+                'Test' => Type::string()
+            ]),
+            new ArgsParser([
+                'Test' => ['type' => Type::string()]
+            ])
+        ];
+
+        foreach ($parsers as $parser) {
+            $arr = $parser->toArray();
+            $this->assertArrayHasKey('Test', $arr);
+            $this->assertArrayHasKey('type', $arr['Test']);
+            $this->assertInstanceOf(StringType::class, $arr['Test']['type']);
+        }
+    }
 
 
-    // public function testOperationList()
-    // {
-    //     $list = new OperationList();
+    public function testOperationList()
+    {
+        $list = new OperationList();
 
-    //     $list->push(new MutationScaffolder('myMutation1', 'test1'));
-    //     $list->push(new MutationScaffolder('myMutation2', 'test2'));
+        $list->push(new MutationScaffolder('myMutation1', 'test1'));
+        $list->push(new MutationScaffolder('myMutation2', 'test2'));
 
-    //     $this->assertInstanceOf(
-    //         MutationScaffolder::class,
-    //         $list->findByName('myMutation1')
-    //     );
-    //     $this->assertFalse($list->findByName('myMutation3'));
+        $this->assertInstanceOf(
+            MutationScaffolder::class,
+            $list->findByName('myMutation1')
+        );
+        $this->assertFalse($list->findByName('myMutation3'));
 
-    //     $list->removeByName('myMutation2');
-    //     $this->assertEquals(1, $list->count());
+        $list->removeByName('myMutation2');
+        $this->assertEquals(1, $list->count());
 
-    //     $list->removeByName('nothing');
-    //     $this->assertEquals(1, $list->count());
+        $list->removeByName('nothing');
+        $this->assertEquals(1, $list->count());
 
-    //     $this->setExpectedException(InvalidArgumentException::class);
-    //     $list->push(new OperationList());
-    // }
+        $this->setExpectedException(InvalidArgumentException::class);
+        $list->push(new OperationList());
+    }
 
     protected function createOperationCreator($resolver = null)
     {
