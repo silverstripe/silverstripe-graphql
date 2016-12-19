@@ -21,7 +21,7 @@ use InvalidArgumentException;
  * and return a list of edges.
  *
  * <code>
- *  friends(limit:2,offset:2,sortBy:[{field:"Name",direction:ASC}]) {
+ *  friends(limit:2,offset:2,sortBy:[{field:Name,direction:ASC}]) {
  *     edges {
  *       node {
  *         name
@@ -229,19 +229,26 @@ class Connection extends Object
             $existing = [];
         }
 
-        return array_merge($existing, [
+        $args = array_merge($existing, [
             'limit' => [
                 'type' => Type::int(),
             ],
             'offset' => [
                 'type' => Type::int()
-            ],
-            'sortBy' => [
-                'type' => Type::listOf(
-                    Injector::inst()->get(SortInputType::class)->toType()
-                )
             ]
         ]);
+
+        if($fields = $this->getSortableFields()) {
+            $args['sortBy'] = [
+                'type' => Type::listOf(
+                    Injector::inst()->create(SortInputType::class, $this->connectionName)
+                        ->setSortableFields($fields)
+                        ->toType()
+                )
+            ];
+        }
+
+        return $args;
     }
 
     /**
