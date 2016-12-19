@@ -22,7 +22,8 @@ class SortInputType extends Object
 
 
     /**
-     * @var array
+     * @var array Keyed by field argument name, values as DataObject column names.
+     * Does not support in-memory sorting for composite values (getters).
      */
     protected $sortableFields = [];
 
@@ -53,9 +54,9 @@ class SortInputType extends Object
     {
         $values = [];
 
-        foreach($this->sortableFields as $field) {
-            $values[$field] = [
-                'value' => $field
+        foreach($this->sortableFields as $fieldAlias => $fieldName) {
+            $values[$fieldAlias] = [
+                'value' => $fieldAlias
             ];
         }
 
