@@ -61,14 +61,14 @@ class SortInputType extends Object
         }
 
         $sortableField  =  new EnumType([
-            'name' => $this->inputName . 'SortFieldType',
+            'name' => ucfirst($this->inputName) . 'SortFieldType',
             'description' => 'Field name to sort by.',
             'values' => $values
         ]);
 
         if(!$this->type) {
             $this->type = new InputObjectType([
-                'name' => $this->inputName .'InputObjectType',
+                'name' => ucfirst($this->inputName) .'SortInputType',
                 'description' => 'Define the sorting',
                 'fields' => [
                     'field' => [
