@@ -6,12 +6,15 @@ use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use GraphQL\Schema;
 use GraphQL\GraphQL;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Error;
 use GraphQL\Type\Definition\Type;
 
 class Manager
 {
+    use Injectable;
+
     /**
      * @var array Map of named {@link Type}
      */
