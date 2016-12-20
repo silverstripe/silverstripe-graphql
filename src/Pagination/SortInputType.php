@@ -32,6 +32,7 @@ class SortInputType extends Object
      */
     public function __construct($name)
     {
+        parent::__construct();
         $this->inputName = $name;
     }
 
@@ -48,13 +49,13 @@ class SortInputType extends Object
     }
 
     /**
-     * @return ObjectType
+     * @return Type
      */
     public function toType()
     {
         $values = [];
 
-        foreach($this->sortableFields as $fieldAlias => $fieldName) {
+        foreach ($this->sortableFields as $fieldAlias => $fieldName) {
             $values[$fieldAlias] = [
                 'value' => $fieldAlias
             ];
@@ -66,7 +67,7 @@ class SortInputType extends Object
             'values' => $values
         ]);
 
-        if(!$this->type) {
+        if (!$this->type) {
             $this->type = new InputObjectType([
                 'name' => ucfirst($this->inputName) .'SortInputType',
                 'description' => 'Define the sorting',

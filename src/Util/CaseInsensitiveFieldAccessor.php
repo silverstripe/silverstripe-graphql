@@ -21,7 +21,8 @@ use InvalidArgumentException;
  * @see http://www.php.net/manual/en/functions.user-defined.php
  * @see http://php.net/manual/en/function.array-change-key-case.php
  */
-class CaseInsensitiveFieldAccessor {
+class CaseInsensitiveFieldAccessor
+{
 
     const HAS_METHOD = 'HAS_METHOD';
     const HAS_FIELD = 'HAS_FIELD';
@@ -47,7 +48,7 @@ class CaseInsensitiveFieldAccessor {
 
         $objectFieldName = $this->getObjectFieldName($object, $fieldName, $opts);
 
-        if(!$objectFieldName) {
+        if (!$objectFieldName) {
             throw new InvalidArgumentException(sprintf(
                 'Field name or method "%s" does not exist on %s',
                 $fieldName,
@@ -56,12 +57,12 @@ class CaseInsensitiveFieldAccessor {
         }
 
         // Correct case for methods (e.g. canView)
-        if($object->hasMethod($objectFieldName)) {
+        if ($object->hasMethod($objectFieldName)) {
             return $object->{$objectFieldName}();
         }
 
         // Correct case (and getters)
-        if($object->hasField($objectFieldName)) {
+        if ($object->hasField($objectFieldName)) {
             return $object->{$objectFieldName};
         }
 
@@ -88,7 +89,7 @@ class CaseInsensitiveFieldAccessor {
 
         $objectFieldName = $this->getObjectFieldName($object, $fieldName, $opts);
 
-        if(!$objectFieldName) {
+        if (!$objectFieldName) {
             throw new InvalidArgumentException(sprintf(
                 'Field name "%s" does not exist on %s',
                 $fieldName,
@@ -97,17 +98,17 @@ class CaseInsensitiveFieldAccessor {
         }
 
         // Correct case for methods (e.g. canView)
-        if($object->hasMethod($objectFieldName)) {
+        if ($object->hasMethod($objectFieldName)) {
             $object->{$objectFieldName}($value);
         }
 
         // Correct case (and getters)
-        if($object->hasField($objectFieldName)) {
+        if ($object->hasField($objectFieldName)) {
             $object->{$objectFieldName} = $value;
         }
 
         // Infer casing
-        if($object instanceof DataObject) {
+        if ($object instanceof DataObject) {
             $object->setField($objectFieldName, $value);
         }
 
@@ -115,7 +116,7 @@ class CaseInsensitiveFieldAccessor {
     }
 
     /**
-     * @param $object The object to resolve a name on
+     * @param ViewableData $object The object to resolve a name on
      * @param string $fieldName Name in different casing
      * @param array $opts Map of which lookups to use (class constants to booleans).
      *              Example: [ViewableDataCaseInsensitiveFieldMapper::HAS_METHOD => true]
@@ -123,22 +124,22 @@ class CaseInsensitiveFieldAccessor {
      */
     protected function getObjectFieldName(ViewableData $object, $fieldName, $opts = [])
     {
-        $optFn = function($type) use(&$opts) {
+        $optFn = function ($type) use (&$opts) {
             return (in_array($type, $opts) && $opts[$type] === true);
         };
 
         // Correct case (and getters)
-        if($optFn(self::HAS_FIELD) && $object->hasField($fieldName)) {
+        if ($optFn(self::HAS_FIELD) && $object->hasField($fieldName)) {
             return $fieldName;
         }
 
         // Infer casing from DataObject fields
-        if($optFn(self::DATAOBJECT) && $object instanceof DataObject) {
+        if ($optFn(self::DATAOBJECT) && $object instanceof DataObject) {
             $parents = ClassInfo::ancestry($object, true);
-            foreach($parents as $parent) {
+            foreach ($parents as $parent) {
                 $fields = DataObject::getSchema()->databaseFields($parent);
-                foreach($fields as $objectFieldName => $fieldClass) {
-                    if(strcasecmp($objectFieldName, $fieldName) === 0) {
+                foreach ($fields as $objectFieldName => $fieldClass) {
+                    if (strcasecmp($objectFieldName, $fieldName) === 0) {
                         return $objectFieldName;
                     }
                 }
@@ -148,16 +149,15 @@ class CaseInsensitiveFieldAccessor {
         // Setters
         // TODO Support for Object::$extra_methods (case sensitive array key check)
         $setterName = "set" . ucfirst($fieldName);
-        if($optFn(self::HAS_SETTER) && $object->hasMethod($setterName)) {
+        if ($optFn(self::HAS_SETTER) && $object->hasMethod($setterName)) {
             return $setterName;
         }
 
         // Correct case for methods (e.g. canView) - method_exists() is case insensitive
-        if($optFn(self::HAS_METHOD) && $object->hasMethod($fieldName)) {
+        if ($optFn(self::HAS_METHOD) && $object->hasMethod($fieldName)) {
             return $fieldName;
         }
 
         return null;
     }
-
 }

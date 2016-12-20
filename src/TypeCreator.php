@@ -2,11 +2,10 @@
 
 namespace SilverStripe\GraphQL;
 
+use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Object;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\InputObjectType;
-use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\Manager;
 
 /**
  * Represents a GraphQL type in a way that allows customization through
@@ -72,11 +71,9 @@ class TypeCreator extends Object
         $fields = $this->fields();
         $allFields = [];
 
-        foreach($fields as $name => $field)
-        {
+        foreach ($fields as $name => $field) {
             $resolver = $this->getFieldResolver($name, $field);
-            if($resolver)
-            {
+            if ($resolver) {
                 $field['resolve'] = $resolver;
             }
             $allFields[$name] = $field;
@@ -94,11 +91,11 @@ class TypeCreator extends Object
     }
 
     /**
-     * @return ObjectType
+     * @return Type
      */
     public function toType()
     {
-        if($this->isInputObject()) {
+        if ($this->isInputObject()) {
             return new InputObjectType($this->toArray());
         }
 
@@ -126,7 +123,7 @@ class TypeCreator extends Object
             ]
         );
 
-        if(sizeof($interfaces)) {
+        if (sizeof($interfaces)) {
             $attributes['interfaces'] = $interfaces;
         }
 
@@ -141,27 +138,20 @@ class TypeCreator extends Object
     protected function getFieldResolver($name, $field)
     {
         $resolveMethod = 'resolve'.ucfirst($name).'Field';
-        if(isset($field['resolve']))
-        {
+        if (isset($field['resolve'])) {
             // Preconfigured method
             return $field['resolve'];
-        }
-        else if(method_exists($this, $resolveMethod))
-        {
+        } elseif (method_exists($this, $resolveMethod)) {
             // Method for a particular field
             $resolver = array($this, $resolveMethod);
-            return function() use ($resolver)
-            {
+            return function () use ($resolver) {
                 $args = func_get_args();
                 return call_user_func_array($resolver, $args);
             };
-        }
-        else if(method_exists($this, 'resolveField'))
-        {
+        } elseif (method_exists($this, 'resolveField')) {
             // Method for all fields
             $resolver = array($this, 'resolveField');
-            return function() use ($resolver)
-            {
+            return function () use ($resolver) {
                 $args = func_get_args();
                 // See 'resolveType' on https://github.com/webonyx/graphql-php
                 return call_user_func_array($resolver, $args);

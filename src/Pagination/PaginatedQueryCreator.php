@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Pagination;
 
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryCreator;
 use GraphQL\Type\Definition\ResolveInfo;
 
@@ -11,10 +12,10 @@ use GraphQL\Type\Definition\ResolveInfo;
  * {@link Connection} object type to encapsulate the edges, nodes and page
  * information.
  */
-class PaginatedQueryCreator extends QueryCreator
+abstract class PaginatedQueryCreator extends QueryCreator implements OperationResolver
 {
     /**
-     * @var SilverStripe\GraphQL\Pagination\Connection
+     * @var Connection
      */
     protected $connection;
 
@@ -28,10 +29,12 @@ class PaginatedQueryCreator extends QueryCreator
         $this->connection = $this->connection();
     }
 
-    public function connection() 
-    {
-        throw new \Exception('Missing connection() definition on "'. get_class($this) .'"');
-    }
+    /**
+     * Get connection for this query
+     *
+     * @return Connection
+     */
+    abstract public function connection();
 
     /**
      * @return array
@@ -46,7 +49,7 @@ class PaginatedQueryCreator extends QueryCreator
      */
     public function type()
     {
-        return function() {
+        return function () {
             return $this->connection->toType();
         };
     }
@@ -54,7 +57,7 @@ class PaginatedQueryCreator extends QueryCreator
     /**
      * {@inheritDoc}
      */
-    public function resolve($value, $args, $context, ResolveInfo $info)
+    public function resolve($value, array $args, $context, ResolveInfo $info)
     {
         return $this->connection->resolve(
             $value,
