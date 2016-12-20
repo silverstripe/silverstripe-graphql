@@ -69,7 +69,8 @@
 	  return (0, _isomorphicFetch2.default)(baseURL + '/' + GRAPHQL_ROUTE + '/', {
 	    method: 'post',
 	    headers: { 'Content-Type': 'application/json' },
-	    body: JSON.stringify(graphQLParams)
+	    body: JSON.stringify(graphQLParams),
+	    credentials: 'same-origin'
 	  }).then(function (response) {
 	    return response.json();
 	  });
