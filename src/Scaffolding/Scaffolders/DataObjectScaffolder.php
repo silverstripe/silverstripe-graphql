@@ -11,9 +11,12 @@ use SilverStripe\GraphQL\Manager;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Scaffolding\OperationList;
 use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
+use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 use SilverStripe\GraphQL\Scaffolding\Creators\DataObjectTypeCreator;
 use SilverStripe\GraphQL\Scaffolding\DataObjectTypeTrait;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
+use SilverStripe\Core\ClassInfo;
 
 /**
  * Scaffolds a DataObjectTypeCreator
@@ -23,19 +26,19 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     use DataObjectTypeTrait;
 
     /**
-     * @var OperationList
-     */
-    protected $queries;
-
-    /**
-     * @var  OperationList
-     */
-    protected $mutations;
-
-    /**
      * @var array
      */
     protected $fields;
+
+    /**
+     * @var  SilverStripe\GraphQL\Scaffolding\OperationList
+     */
+    protected $operations;
+
+    /**
+     * @var  SilverStripe\GraphQL\Scaffolding\OperationList     
+     */
+    protected $nestedQueries;
 
     /**
      * DataObjectScaffold constructor.
@@ -52,100 +55,17 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         if (!is_subclass_of($dataObjectClass, DataObject::class)) {
             throw new InvalidArgumentException(sprintf(
-                'DataObjectScaffold must instantiate with a classname that is a subclass of %s',
-                DataObject::class
+                'DataObjectScaffold must instantiate with a classname that is a subclass of %s (%s given)',
+                DataObject::class,
+                $dataObjectClass
             ));
         }
 
-        $this->queries = OperationList::create([]);
-        $this->mutations = OperationList::create([]);
         $this->fields = ArrayList::create([]);
+        $this->operations = OperationList::create([]);
+        $this->nestedQueries = OperationList::create([]);
 
         $this->dataObjectClass = $dataObjectClass;
-    }
-
-    /**
-     * Find or make a query
-     * @param $name
-     * @param null $resolver
-     * @return bool|QueryScaffolder
-     */
-    public function query($name, $resolver = null)
-    {
-        $query = $this->queries->findByName($name);
-
-        if ($query) {
-            return $query;
-        }
-
-        if ($scaffoldClass = self::getOperationScaffoldForName($name)) {
-            $operationScaffold = new $scaffoldClass($this->dataObjectClass);
-        } else {
-            $operationScaffold = new QueryScaffolder(
-                $name,
-                $this->typeName(),
-                $resolver
-            );
-        }
-
-        $this->queries->push($operationScaffold);
-
-        return $operationScaffold;
-    }
-
-
-    /**
-     * Find or make a mutation
-     * @param $name
-     * @param null $resolver
-     * @return bool|MutationScaffolder
-     */
-    public function mutation($name, $resolver = null)
-    {
-        $mutation = $this->mutations->findByName($name);
-
-        if ($mutation) {
-            return $mutation;
-        }
-
-        if ($scaffoldClass = self::getOperationScaffoldForName($name)) {
-            $operationScaffold = new $scaffoldClass($this->dataObjectClass);
-        } else {
-            $operationScaffold = new MutationScaffolder(
-                $name,
-                $this->typeName(),
-                $resolver
-            );
-        }
-
-        $this->mutations->push($operationScaffold);
-
-        return $operationScaffold;
-    }
-
-    /**
-     * Removes a mutation
-     * @param $name
-     * @return $this
-     */
-    public function removeMutation($name)
-    {
-        $this->mutations->removeByName($name);
-
-        return $this;
-    }
-
-
-    /**
-     * Removes a query
-     * @param $name
-     * @return $this
-     */
-    public function removeQuery($name)
-    {
-        $this->queries->removeByName($name);
-
-        return $this;
     }
 
     /**
@@ -170,6 +90,34 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     public function addField($field)
     {
         return $this->addFields((array)$field);
+    }
+
+    /**
+     * Adds all db fields, and optionally has_one
+     * 
+     * @param boolean $includeHasOne
+     * @return  $this
+     */
+    public function addAllFields($includeHasOne = false)
+    {
+    	$fields = $this->allFieldsFromDataObject($includeHasOne);
+
+    	return $this->addFields($fields);
+    }
+
+    /**
+     * Adds fields against a blacklist
+     * 
+     * @param array   $exclusions
+     * @param boolean $includeHasOne
+     * @return  $this
+     */
+    public function addAllFieldsExcept(array $exclusions, $includeHasOne = false)
+    {
+    	$fields = $this->allFieldsFromDataObject($includeHasOne);
+    	$filteredFields = array_diff($fields, $exclusions);
+
+    	return $this->addFields($filteredFields);
     }
 
     /**
@@ -199,27 +147,90 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     /**
      * @return array
      */
-    public function getQueries()
-    {
-        return $this->queries;
-    }
-
-    /**
-     * @return array
-     */
-    public function getMutations()
-    {
-        return $this->mutations;
-    }
-
-    /**
-     * @return array
-     */
     public function getFields()
     {
         return $this->fields;
     }
 
+    /**
+     * @return OperationList
+     */
+    public function getNestedQueries()
+    {
+    	return $this->nestedQueries;
+    }
+
+    /**
+     * Removes an operation
+     * @param $name
+     * @return $this
+     */
+    public function removeOperation($identifier)
+    {
+        $this->operations->removeByName($identifier);
+
+        return $this;
+    }
+
+    public function nestedQuery($fieldName)
+    {
+    	$query = $this->nestedQueries->findByName($fieldName);
+
+    	if($query) {
+    		return $query;
+    	}
+
+    	$result = $this->getDataObjectInstance()->obj($fieldName);
+
+        if (!$result instanceof DataList && !$result instanceof ArrayList) {
+        	throw new InvalidArgumentException(sprintf(
+        		'%s::addNestedQuery() tried to add %s, but must be passed a method name or relation that returns a DataList or ArrayList',
+        		__CLASS__,
+        		$fieldName
+        	));
+        }
+
+        $typeName = ScaffoldingUtil::typeNameForDataObject($result->dataClass());
+
+        $queryScaffolder = new QueryScaffolder(
+        	$fieldName,
+        	$typeName,
+        	function ($obj) use ($fieldName) {        		
+        		return $obj->obj($fieldName);
+        	}
+        );
+
+        $this->nestedQueries->push($queryScaffolder);
+    }
+
+    /**
+     * Find or make an operation
+     * @param int $identifier
+     * 
+     * @return OperationScaffolder
+     */
+    public function operation($identifier)
+    {
+        $op = $this->operations->findByName($identifier);
+
+        if ($op) {
+            return $op;
+        }
+
+        if ($scaffoldClass = self::getOperationScaffoldForName($identifier)) {
+            $operationScaffold = new $scaffoldClass($this->dataObjectClass);
+        } else {
+        	throw new InvalidArgumentException(sprintf(
+        		'Invalid operation: %s added to %s',
+        		$identifier,
+        		$this->dataObjectClass
+        	));
+        }
+
+        $this->operations->push($operationScaffold);
+
+        return $operationScaffold;
+    }
 
     /**
      * Puts all of the configuration into a type creator
@@ -229,7 +240,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         $fieldMap = [];
         $instance = $this->getDataObjectInstance();
-        $extraDataObjects = $this->getExtraDataObjects();
+        $extraDataObjects = $this->nestedDataObjectTypes();
         $fields = array_unique($this->fields->toArray());
 
         if (empty($fields)) {
@@ -238,6 +249,15 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         foreach ($fields as $fieldName) {
             $result = $instance->obj($fieldName);
+            if ($result instanceof DataList || $result instanceof ArrayList) {
+                throw new InvalidArgumentException(sprintf(
+                	'Fieldname %s added to %s returns a list. This should be defined as a nested query using addNestedQuery(%s)',
+                	$fieldName,
+                	$this->dataObjectClass,
+                	$fieldName
+                ));
+            }
+
             if ($result instanceof DBField) {
                 $typeName = $result->config()->graphql_type;
                 $fieldMap[$fieldName] = (new TypeParser($typeName))->toArray();
@@ -254,50 +274,35 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         foreach ($extraDataObjects as $fieldName => $className) {
             $result = $instance->obj($fieldName);
-            $typeName = $this->typeNameForDataObject($className);
+            $typeName = ScaffoldingUtil::typeNameForDataObject($className);
 
-            if ($result instanceof DataList || $result instanceof ArrayList) {
-                $fieldMap[$fieldName] = [
-                    'type' => function () use ($manager, $typeName) {
-                        return Type::listOf($manager->getType($typeName));
-                    }
-                ];
-            } else {
-                $fieldMap[$fieldName] = [
-                    'type' => function () use ($manager, $typeName) {
-                        return $manager->getType($typeName);
-                    }
-                ];
-            }
+            $fieldMap[$fieldName] = [
+                'type' => function () use ($manager, $typeName) {
+                    return $manager->getType($typeName);
+                }
+            ];
+        }
+
+        foreach ($this->nestedQueries as $scaffolder) {
+        	$creator = $scaffolder->getCreator($manager);
+        	$fieldMap[$scaffolder->getName()] = $creator->toArray();
         }
 
         return new DataObjectTypeCreator($manager, $this->typeName(), $fieldMap);
     }
 
-
     /**
-     * Gets any DataObjects that are implicitly required by this type definition, e.g. has_one, has_many
+     * Gets types for all ancestors of this class that will need to be added
      * @return array
      */
-    public function getExtraDataObjects()
-    {
-        $types = [];
-        $instance = $this->getDataObjectInstance();
-        $fields = $this->fields->toArray();
-
-        foreach ($fields as $fieldName) {
-            $result = $instance->obj($fieldName);
-            if ($result instanceof DataList || $result instanceof ArrayList) {
-                $types[$fieldName] = $result->dataClass();
-            } else {
-                if ($result instanceof DataObjectInterface) {
-                    $types[$fieldName] = get_class($result);
-                }
-            }
-        }
-
-        return $types;
-    }
+    public function getDependentTypes()
+    {    	
+    	return array_merge(
+    		$this->ancestralTypes(),
+    		array_values($this->nestedDataObjectTypes()),
+    		array_values($this->nestedConnections())
+    	);
+    }	
 
 
     /**
@@ -307,21 +312,84 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     public function addToManager(Manager $manager)
     {
         $creator = $this->getCreator($manager);
-
         if (!$manager->hasType($this->typeName())) {
             $manager->addType($creator->toType(), $this->typeName());
         }
 
-        foreach ($this->queries as $op) {
-            $op->addToManager($manager);
+        foreach($this->operations as $op) {
+        	$op->addToManager($manager);
         }
-
-        foreach ($this->mutations as $op) {
-            $op->addToManager($manager);
-        }
-
     }
 
+    /**
+     * @param  boolean $includeHasOne
+     * @return array
+     */
+    protected function allFieldsFromDataObject($includeHasOne = false)
+    {
+    	$fields = [];
+    	$db = DataObject::config()->fixed_fields;
+    	$db = array_merge($db, Config::inst()->get($this->dataObjectClass, 'db', Config::INHERITED));
+
+    	foreach($db as $fieldName => $type) {
+    		$fields[] = $fieldName;
+    	}
+
+    	if($includeHasOne) {    		
+    		$hasOne = $this->getDataObjectInstance()->hasOne();
+    		foreach($hasOne as $fieldName => $class) {
+    			$fields[] = $fieldName;
+    		}
+    	}
+
+    	return $fields;
+    }
+
+    /**
+     * Gets any DataObjects that are implicitly required by this type definition, e.g. has_one, has_many
+     * @return array
+     */
+    protected function nestedDataObjectTypes()
+    {
+        $types = [];
+        $instance = $this->getDataObjectInstance();
+        $fields = $this->fields->toArray();
+
+        foreach ($fields as $fieldName) {
+            $result = $instance->obj($fieldName);
+            if ($result instanceof DataObjectInterface) {
+                $types[$fieldName] = get_class($result);
+            }
+        }
+
+        return $types;
+    }
+
+    protected function nestedConnections()
+    {
+    	$queries = [];
+    	foreach($this->nestedQueries as $q) {
+    		$queries[$q->getName()] = $this->getDataObjectInstance()
+    			->obj($q->getName())
+    			->dataClass();
+    	}
+
+    	return $queries;
+    }
+
+
+    protected function ancestralTypes()
+    {
+    	$types = [];
+    	$ancestry = array_reverse(ClassInfo::ancestry($this->dataObjectClass));
+    	
+    	foreach($ancestry as $class) {    		
+    		if($class == DataObject::class) break;
+    		$types[] = $class;
+    	}
+
+    	return $types;
+    }
 
     /**
      * @param $name

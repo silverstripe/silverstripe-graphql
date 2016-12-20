@@ -4,6 +4,7 @@ namespace SilverStripe\GraphQL\Scaffolding;
 
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 
 /**
  * Offers a few helper methods for classes that are DataObject subclass bound.
@@ -38,7 +39,7 @@ trait DataObjectTypeTrait
      */
     public function typeName()
     {
-        return $this->typeNameForDataObject($this->dataObjectClass);
+        return ScaffoldingUtil::typeNameForDataObject($this->dataObjectClass);
     }
 
     /**
@@ -63,21 +64,6 @@ trait DataObjectTypeTrait
         $this->dataObjectClass = $class;
 
         return $this;
-    }
-
-    /**
-     * Given a DataObject subclass name, transform it into a sanitised (and implicitly unique) type
-     * name suitable for the GraphQL schema
-     * 
-     * @param $class
-     * @return mixed
-     */
-    protected function typeNameForDataObject($class)
-    {
-        $typeName = Config::inst()->get($class, 'table_name', Config::UNINHERITED) ?:
-            Injector::inst()->get($class)->singular_name();
-
-        return preg_replace('/[^A-Za-z0-9_]/', '_', $typeName);
     }
 
 }

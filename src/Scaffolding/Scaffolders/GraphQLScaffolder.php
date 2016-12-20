@@ -7,6 +7,8 @@ use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Creators\MutationOperationCreator;
 use SilverStripe\GraphQL\Scaffolding\Creators\QueryOperationCreator;
+use SilverStripe\GraphQL\Scaffolding\OperationList;
+use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 
 /**
  * The entry point for a GraphQL scaffolding definition. Holds DataObject type definitions,
@@ -29,6 +31,16 @@ class GraphQLScaffolder implements ManagerMutatorInterface
     protected $scaffolds = [];
 
     /**
+     * @var OperationList
+     */
+    protected $queries;
+
+    /**
+     * @var  OperationList
+     */
+    protected $mutations;
+	
+    /**
      * Create from an array, e.g. derived from YAML
      *
      * @param $config
@@ -45,7 +57,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
                 );
             }
 
-            $scaffolder->dataObject($dataObjectClass)
+            $scaffolder->type($dataObjectClass)
                 ->addFields($settings['fields']);
 
             if (isset($settings['operations'])) {
@@ -76,7 +88,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
                 }
                 foreach ($ops as $op) {
                     $method = ($op === GraphQLScaffolder::READ) ? 'query' : 'mutation';
-                    $scaffolder->dataObject($dataObjectClass)
+                    $scaffolder->type($dataObjectClass)
                         ->$method($op);
                 }
             }
@@ -94,7 +106,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
                             );
                         }
                         $args = isset($fieldSettings['args']) ? (array)$fieldSettings['args'] : [];
-                        $operation = $scaffolder->dataObject($dataObjectClass)
+                        $operation = $scaffolder->type($dataObjectClass)
                             ->$method($fieldName)
                             ->setResolver($fieldSettings['resolver'])
                             ->addArgs($args);
@@ -110,12 +122,21 @@ class GraphQLScaffolder implements ManagerMutatorInterface
     }
 
     /**
+     * Constructor
+     */
+	public function __construct()
+	{
+        $this->queries = OperationList::create([]);
+        $this->mutations = OperationList::create([]);		
+	}    
+
+    /**
      * Finds or makes a DataObject definition
      *
      * @param DataObjectScaffold $scaffold
      * @throws InvalidArgumentException
      */
-    public function dataObject($class, $typeName = null)
+    public function type($class, $typeName = null)
     {
         foreach ($this->scaffolds as $scaffold) {
             if ($scaffold->getDataObjectClass() == $class) {
@@ -129,6 +150,83 @@ class GraphQLScaffolder implements ManagerMutatorInterface
         return $scaffold;
     }
 
+    /**
+     * Find or make a query
+     * @param string $name
+     * @param  string $class
+     * @param null $resolver
+     * @return bool|QueryScaffolder
+     */
+    public function query($name, $class, $resolver = null)
+    {
+        $query = $this->queries->findByName($name);
+
+        if ($query) {
+            return $query;
+        }
+
+        $operationScaffold = new QueryScaffolder(
+            $name,
+            ScaffoldingUtil::typeNameForDataObject($class),
+            $resolver
+        );
+
+        $this->queries->push($operationScaffold);
+
+        return $operationScaffold;
+    }
+
+
+    /**
+     * Find or make a mutation
+     * @param  string $name
+     * @param  string  $class
+     * @param null $resolver
+     * @return bool|MutationScaffolder
+     */
+    public function mutation($name, $class, $resolver = null)
+    {
+        $mutation = $this->mutations->findByName($name);
+
+        if ($mutation) {
+            return $mutation;
+        }
+
+        $operationScaffold = new MutationScaffolder(
+            $name,
+            ScaffoldingUtil::typeNameForDataObject($class),
+            $resolver
+        );
+
+        $this->mutations->push($operationScaffold);
+
+        return $operationScaffold;
+    }
+
+    /**
+     * Removes a mutation
+     * @param $name
+     * @return $this
+     */
+    public function removeMutation($name)
+    {
+        $this->mutations->removeByName($name);
+
+        return $this;
+    }
+
+
+    /**
+     * Removes a query
+     * @param $name
+     * @return $this
+     */
+    public function removeQuery($name)
+    {
+        $this->queries->removeByName($name);
+
+        return $this;
+    }
 
     /**
      * Adds every DataObject and its dependencies to the Manager
@@ -137,20 +235,17 @@ class GraphQLScaffolder implements ManagerMutatorInterface
     public function addToManager(Manager $manager)
     {
         // Gather all new types that were implicitly added through
-        // addFields(), e.g. member->addFields(['Groups'])
-        $extraDataObjects = [];
+        // addFields() and addNestedQuery()
+        $types = [];
         foreach ($this->scaffolds as $scaffold) {
-            $types = $scaffold->getExtraDataObjects();
-            foreach ($types as $fieldName => $className) {
-                $extraDataObjects[] = $className;
-            }
+            $types = array_merge($types, $scaffold->getDependentTypes());
         }
 
-        $extraDataObjects = array_unique($extraDataObjects);
+        $types = array_unique($types);
 
         // Ensure that all these types exist in the scaffolder
-        foreach ($extraDataObjects as $className) {
-            $this->dataObject($className);
+        foreach ($types as $className) {
+            $this->type($className);
         }
 
         // Add all DataObjects to the manager
