@@ -1,26 +1,28 @@
 <?php
 
-namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
+namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
-use SilverStripe\GraphQL\Scaffolding\DataObjectTypeTrait;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
-use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
 use Exception;
 
 /**
- * A generic "create" operation for a DataObject
+ * A generic "create" operation for a DataObject.
  */
-class CreateOperationScaffolder extends MutationScaffolder
+class Create extends MutationScaffolder implements CRUDInterface
 {
-
     use DataObjectTypeTrait;
 
     /**
      * CreateOperationScaffolder constructor.
+     *
      * @param string $dataObjectClass
      */
     public function __construct($dataObjectClass)
@@ -28,7 +30,7 @@ class CreateOperationScaffolder extends MutationScaffolder
         $this->dataObjectClass = $dataObjectClass;
 
         parent::__construct(
-            'create' . ucfirst($this->typeName()),
+            'create'.ucfirst($this->typeName()),
             $this->typeName()
         );
 
@@ -46,7 +48,14 @@ class CreateOperationScaffolder extends MutationScaffolder
                 throw new Exception("Cannot create {$this->dataObjectClass}");
             }
         });
+    }
 
+    /**
+     * @return string`
+     */
+    public function getIdentifier()
+    {
+        return GraphQLScaffolder::CREATE;
     }
 
     /**
@@ -56,8 +65,8 @@ class CreateOperationScaffolder extends MutationScaffolder
     {
         return [
             'Input' => [
-                'type' => Type::nonNull($this->generateInputType())
-            ]
+                'type' => Type::nonNull($this->generateInputType()),
+            ],
         ];
     }
 
@@ -70,11 +79,11 @@ class CreateOperationScaffolder extends MutationScaffolder
         $instance = $this->getDataObjectInstance();
 
         // Setup default input args.. Placeholder!
-		$db = (array) Config::inst()->get(
-			$this->dataObjectClass,
-			'db',
-			Config::INHERITED
-		);
+        $db = (array) Config::inst()->get(
+            $this->dataObjectClass,
+            'db',
+            Config::INHERITED
+        );
 
         unset($db['ID']);
 
@@ -87,9 +96,8 @@ class CreateOperationScaffolder extends MutationScaffolder
         }
 
         return new InputObjectType([
-            'name' => $this->typeName() . 'CreateInputType',
-            'fields' => $fields
+            'name' => $this->typeName().'CreateInputType',
+            'fields' => $fields,
         ]);
-
     }
 }

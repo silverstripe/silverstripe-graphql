@@ -3,44 +3,43 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use SilverStripe\GraphQL\Manager;
-use SilverStripe\GraphQL\Scaffolding\Creators\QueryOperationCreator;
-use SilverStripe\GraphQL\Scaffolding\Creators\PaginatedQueryOperationCreator;
 use SilverStripe\GraphQL\Pagination\Connection;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
+use Doctrine\Instantiator\Exception\InvalidArgumentException;
 
 /**
- * Scaffolds a GraphQL query field
+ * Scaffolds a GraphQL query field.
  */
 class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInterface, ScaffolderInterface
 {
+    /**
+     * @var bool
+     */
+    protected $usePagination = true;
 
-	/**
-	 * @var boolean
-	 */
-	protected $usePagination = true;
+    /**
+     * @var array
+     */
+    protected $sortableFields = [];
 
-	/**
-	 * @var array
-	 */
-	protected $sortableFields = [];
+    /**
+     * @param bool $bool
+     */
+    public function setUsePagination($bool)
+    {
+        $this->usePagination = (bool) $bool;
 
-	/**
-	 * @param boolean $bool
-	 */
-	public function setUsePagination($bool)
-	{
-		$this->usePagination = (boolean) $bool;
-
-		return $this;
-	}
+        return $this;
+    }
 
     /**
      * @param Manager $manager
      */
     public function addToManager(Manager $manager)
     {
-        $operationType = $this->getCreator($manager);
         $manager->addQuery(
-            $operationType->toArray(),
+            $this->scaffold($manager),
             $this->getName()
         );
     }
@@ -50,50 +49,75 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
      */
     public function addSortableFields($fields)
     {
-    	$this->sortableFields = array_unique(
-    		array_merge(
-    			$this->sortableFields,
-    			(array) $fields
-    		)
-    	);
-    	
-    	return $this;
+        $this->sortableFields = array_unique(
+            array_merge(
+                $this->sortableFields,
+                (array) $fields
+            )
+        );
+
+        return $this;
+    }
+
+    public function applyConfig(array $config)
+    {
+        parent::applyConfig($config);
+        if (isset($config['sortableFields'])) {
+            if (is_array($config['sortableFields'])) {
+                $this->addSortableFields($config['sortableFields']);
+            } else {
+                throw new InvalidArgumentException(sprintf(
+                    'sortableFields must be an array (see %s)',
+                    $this->typeName
+                ));
+            }
+        }
+        if (isset($config['paginate'])) {
+            $this->setUsePagination((bool) $config['paginate']);
+        }
+
+        return $this;
     }
 
     /**
-     * Creates a Connection for pagination
+     * Creates a Connection for pagination.
+     *
      * @return Connection
      */
-    protected function createConnection()
+    protected function createConnection(Manager $manager)
     {
+        $typeName = $this->typeName;
+
         return Connection::create($this->operationName)
+            ->setConnectionType(function () use ($manager, $typeName) {
+                return $manager->getType($typeName);
+            })
+            ->setConnectionResolver($this->createResolverFunction())
             ->setArgs($this->createArgs())
             ->setSortableFields($this->sortableFields);
     }
 
     /**
      * @param Manager $manager
-     * @return QueryOperationCreator
+     *
+     * @return array
      */
-    public function getCreator(Manager $manager)
+    public function scaffold(Manager $manager)
     {
-        if($this->usePagination) {
-        	return new PaginatedQueryOperationCreator(
-        		$manager,
-        		$this->createConnection(),
-        		$this->operationName,
-        		$this->typeName,
-        		$this->resolver
-        	);
+        if ($this->usePagination) {
+            return (new PaginationScaffolder(
+                $manager,
+                $this->createConnection($manager)
+            ))->toArray();
         }
 
-        return new QueryOperationCreator(
-            $manager,
-            $this->operationName,
-            $this->typeName,
-            $this->resolver,
-            $this->createArgs()
-        );
+        return [
+            'name' => $this->operationName,
+            'args' => $this->createArgs(),
+            'type' => function () use ($manager) {
+                return $manager->getType($this->typeName);
+            },
+            'resolve' => $this->createResolverFunction(),
+        ];
     }
 }
-

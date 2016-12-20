@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Scaffolding;
+namespace SilverStripe\GraphQL\Scaffolding\Interfaces;
 
 /**
  * Applied to classes that resolve queries or mutations

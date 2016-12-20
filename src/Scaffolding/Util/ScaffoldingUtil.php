@@ -4,6 +4,8 @@ namespace SilverStripe\GraphQL\Scaffolding\Util;
 
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\ORM\DataObjectInterface;
+use SilverStripe\ORM\FieldType\DBField;
 
 class ScaffoldingUtil
 {
@@ -20,6 +22,12 @@ class ScaffoldingUtil
             Injector::inst()->get($class)->singular_name();
 
         return preg_replace('/[^A-Za-z0-9_]/', '_', $typeName);
+    }
+
+
+    public static function isValidFieldName(DataObjectInterface $instance, $fieldName)
+    {
+        return ($instance->hasMethod($fieldName) || $instance->hasField($fieldName));
     }
 
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Scaffolding;
+namespace SilverStripe\GraphQL\Scaffolding\Traits;
 
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Config\Config;

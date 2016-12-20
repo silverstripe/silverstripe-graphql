@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
+namespace SilverStripe\GraphQL\Scaffolding\Interfaces;
 
 use SilverStripe\GraphQL\Manager;
 
@@ -13,5 +13,5 @@ interface ScaffolderInterface
      * @param Manager $manager
      * @return mixed
      */
-    public function getCreator(Manager $manager);
+    public function scaffold(Manager $manager);
 }

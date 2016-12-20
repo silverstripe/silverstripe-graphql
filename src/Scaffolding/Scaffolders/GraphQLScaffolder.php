@@ -5,10 +5,10 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 use SilverStripe\Core\Injector\Injector;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
-use SilverStripe\GraphQL\Scaffolding\Creators\MutationOperationCreator;
-use SilverStripe\GraphQL\Scaffolding\Creators\QueryOperationCreator;
-use SilverStripe\GraphQL\Scaffolding\OperationList;
+use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
+use SilverStripe\ORM\ArrayLib;
 
 /**
  * The entry point for a GraphQL scaffolding definition. Holds DataObject type definitions,
@@ -16,14 +16,13 @@ use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
  */
 class GraphQLScaffolder implements ManagerMutatorInterface
 {
+    const CREATE = 'create';
 
-    const CREATE = 1;
+    const READ = 'read';
 
-    const READ = 2;
+    const UPDATE = 'update';
 
-    const UPDATE = 3;
-
-    const DELETE = 4;
+    const DELETE = 'delete';
 
     /**
      * @var array
@@ -36,84 +35,60 @@ class GraphQLScaffolder implements ManagerMutatorInterface
     protected $queries;
 
     /**
-     * @var  OperationList
+     * @var OperationList
      */
     protected $mutations;
-	
+
     /**
-     * Create from an array, e.g. derived from YAML
+     * Create from an array, e.g. derived from YAML.
      *
      * @param $config
+     *
      * @return mixed
+     *
      * @throws InvalidArgumentException
      */
     public static function createFromConfig($config)
     {
-        $scaffolder = Injector::inst()->create(GraphQLScaffolder::class);
-        foreach ($config as $dataObjectClass => $settings) {
-            if (empty($settings['fields']) || !is_array($settings['fields'])) {
-                throw new \Exception(
-                    "No array of fields defined for $dataObjectClass"
+        $scaffolder = Injector::inst()->create(self::class);
+        if (isset($config['types'])) {
+            if (!ArrayLib::is_associative($config['types'])) {
+                throw new InvalidArgumentException(
+                    '"types" must be a map of class name to settings.'
                 );
             }
 
-            $scaffolder->type($dataObjectClass)
-                ->addFields($settings['fields']);
-
-            if (isset($settings['operations'])) {
-                $ops = [];
-                if ($settings['operations'] === 'all') {
-                    $ops = [self::CREATE, self::READ, self::UPDATE, self::DELETE];
-                } else {
-                    if (is_array($settings['operations'])) {
-                        foreach ($settings['operations'] as $op) {
-                            $constStr = sprintf(
-                                '%s::%s',
-                                GraphQLScaffolder::class,
-                                strtoupper($op)
-                            );
-                            if (defined($constStr)) {
-                                $ops[] = constant($constStr);
-                            } else {
-                                throw new \Exception(
-                                    "Invalid operation: $op on $dataobjectClass"
-                                );
-                            }
-                        }
-                    } else {
-                        throw new \Exception(
-                            "Operations field must be an array of operations or 'all'"
-                        );
-                    }
-                }
-                foreach ($ops as $op) {
-                    $method = ($op === GraphQLScaffolder::READ) ? 'query' : 'mutation';
-                    $scaffolder->type($dataObjectClass)
-                        ->$method($op);
-                }
+            foreach ($config['types'] as $dataObjectClass => $settings) {
+                $scaffold = $scaffolder->type($dataObjectClass)
+                    ->applyConfig($settings);
             }
-            $queryMap = [
-                'queries' => 'query',
-                'mutations' => 'mutation'
-            ];
+        }
 
-            foreach ($queryMap as $group => $method) {
-                if (isset($settings[$group]) && is_array($settings[$group])) {
-                    foreach ($settings[$group] as $fieldName => $fieldSettings) {
-                        if (empty($fieldSettings['resolver'])) {
-                            throw new \Exception(
-                                "All queries and mutations must have a 'resolver' attribute"
-                            );
-                        }
-                        $args = isset($fieldSettings['args']) ? (array)$fieldSettings['args'] : [];
-                        $operation = $scaffolder->type($dataObjectClass)
-                            ->$method($fieldName)
-                            ->setResolver($fieldSettings['resolver'])
-                            ->addArgs($args);
-                        if($group === 'queries' && isset($fieldSettings['paginate'])) {
-                        	$operation->setUsePagination((boolean) $fieldSettings['paginate']);
-                        }
+        $queryMap = [
+            'queries' => 'query',
+            'mutations' => 'mutation',
+        ];
+
+        foreach ($queryMap as $group => $method) {
+            if (isset($config[$group])) {
+                if (!ArrayLib::is_associative($config[$group])) {
+                    throw new InvalidArgumentException(sprintf(
+                        '"%s" must be a map of operation name to settings.',
+                        $group
+                    ));
+                }
+
+                foreach ($config[$group] as $fieldName => $fieldSettings) {
+                    if (!isset($fieldSettings['type'])) {
+                        throw new InvalidArgumentException(sprintf(
+                            '"%s" must have a "type" field. See %s',
+                            $group,
+                            $queryName
+                        ));
                     }
+
+                    $scaffolder->$method($fieldName, $fieldSettings['type'])
+                        ->applyConfig($fieldSettings);
                 }
             }
         }
@@ -122,21 +97,22 @@ class GraphQLScaffolder implements ManagerMutatorInterface
     }
 
     /**
-     * Constructor
+     * Constructor.
      */
-	public function __construct()
-	{
+    public function __construct()
+    {
         $this->queries = OperationList::create([]);
-        $this->mutations = OperationList::create([]);		
-	}    
+        $this->mutations = OperationList::create([]);
+    }
 
     /**
-     * Finds or makes a DataObject definition
+     * Finds or makes a DataObject definition.
      *
      * @param DataObjectScaffold $scaffold
+     *
      * @throws InvalidArgumentException
      */
-    public function type($class, $typeName = null)
+    public function type($class)
     {
         foreach ($this->scaffolds as $scaffold) {
             if ($scaffold->getDataObjectClass() == $class) {
@@ -144,17 +120,20 @@ class GraphQLScaffolder implements ManagerMutatorInterface
             }
         }
 
-        $scaffold = new DataObjectScaffolder($class, $typeName);
+        $scaffold = (new DataObjectScaffolder($class))
+                ->setChainableParent($this);
         $this->scaffolds[] = $scaffold;
 
         return $scaffold;
     }
 
     /**
-     * Find or make a query
+     * Find or make a query.
+     *
      * @param string $name
-     * @param  string $class
-     * @param null $resolver
+     * @param string $class
+     * @param null   $resolver
+     *
      * @return bool|QueryScaffolder
      */
     public function query($name, $class, $resolver = null)
@@ -165,23 +144,24 @@ class GraphQLScaffolder implements ManagerMutatorInterface
             return $query;
         }
 
-        $operationScaffold = new QueryScaffolder(
+        $operationScaffold = (new QueryScaffolder(
             $name,
             ScaffoldingUtil::typeNameForDataObject($class),
             $resolver
-        );
+        ))->setChainableParent($this);
 
         $this->queries->push($operationScaffold);
 
         return $operationScaffold;
     }
 
-
     /**
-     * Find or make a mutation
-     * @param  string $name
-     * @param  string  $class
-     * @param null $resolver
+     * Find or make a mutation.
+     *
+     * @param string $name
+     * @param string $class
+     * @param null   $resolver
+     *
      * @return bool|MutationScaffolder
      */
     public function mutation($name, $class, $resolver = null)
@@ -192,11 +172,11 @@ class GraphQLScaffolder implements ManagerMutatorInterface
             return $mutation;
         }
 
-        $operationScaffold = new MutationScaffolder(
+        $operationScaffold = (new MutationScaffolder(
             $name,
             ScaffoldingUtil::typeNameForDataObject($class),
             $resolver
-        );
+        ))->setChainableParent($this);
 
         $this->mutations->push($operationScaffold);
 
@@ -204,8 +184,10 @@ class GraphQLScaffolder implements ManagerMutatorInterface
     }
 
     /**
-     * Removes a mutation
+     * Removes a mutation.
+     *
      * @param $name
+     *
      * @return $this
      */
     public function removeMutation($name)
@@ -215,10 +197,11 @@ class GraphQLScaffolder implements ManagerMutatorInterface
         return $this;
     }
 
-
     /**
-     * Removes a query
+     * Removes a query.
+     *
      * @param $name
+     *
      * @return $this
      */
     public function removeQuery($name)
@@ -229,27 +212,46 @@ class GraphQLScaffolder implements ManagerMutatorInterface
     }
 
     /**
-     * Adds every DataObject and its dependencies to the Manager
+     * Adds every DataObject and its dependencies to the Manager.
+     *
      * @param Manager $manager
      */
     public function addToManager(Manager $manager)
     {
-        // Gather all new types that were implicitly added through
-        // addFields() and addNestedQuery()
-        $types = [];
         foreach ($this->scaffolds as $scaffold) {
-            $types = array_merge($types, $scaffold->getDependentTypes());
-        }
+            // Add dependent classes, e.g has_one, has_many nested queries
+            foreach ($scaffold->getDependentClasses() as $class) {
+                $this->type($class);
+            }
+            // The fields and operations explicitly exposed to the lowest type in the ancestry
+            $exposedFields = $scaffold->getFields();
+            $exposedOperations = $scaffold->getOperations();
 
-        $types = array_unique($types);
-
-        // Ensure that all these types exist in the scaffolder
-        foreach ($types as $className) {
-            $this->type($className);
+            // Expose all the ancestors, and add the exposed fields and operations
+            foreach ($scaffold->getAncestralClasses() as $class) {
+                $ancestorType = $this->type($class);
+                $inst = $ancestorType->getDataObjectInstance();
+                foreach ($exposedFields as $field) {
+                    if (ScaffoldingUtil::isValidFieldName($inst, $field)) {
+                        $ancestorType->addField($field);
+                    }
+                }
+                foreach ($exposedOperations as $op) {
+                    $ancestorType->operation($op->getIdentifier());
+                }
+            }
         }
 
         // Add all DataObjects to the manager
         foreach ($this->scaffolds as $scaffold) {
+            $scaffold->addToManager($manager);
+        }
+
+        foreach ($this->queries as $scaffold) {
+            $scaffold->addToManager($manager);
+        }
+
+        foreach ($this->mutations as $scaffold) {
             $scaffold->addToManager($manager);
         }
     }

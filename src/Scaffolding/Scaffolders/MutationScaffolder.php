@@ -3,39 +3,39 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use SilverStripe\GraphQL\Manager;
-use SilverStripe\GraphQL\Scaffolding\Creators\MutationOperationCreator;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 
 /**
- * Scaffolds a GraphQL mutation field
+ * Scaffolds a GraphQL mutation field.
  */
 class MutationScaffolder extends OperationScaffolder implements ManagerMutatorInterface, ScaffolderInterface
 {
-
     /**
      * @param Manager $manager
      */
     public function addToManager(Manager $manager)
     {
-        $operationType = $this->getCreator($manager);
         $manager->addMutation(
-            $operationType->toArray(),
+            $this->scaffold($manager),
             $this->getName()
         );
     }
 
     /**
      * @param Manager $manager
-     * @return MutationOperationCreator
+     *
+     * @return array
      */
-    public function getCreator(Manager $manager)
+    public function scaffold(Manager $manager)
     {
-        return new MutationOperationCreator(
-            $manager,
-            $this->operationName,
-            $this->typeName,
-            $this->resolver,
-            $this->createArgs()
-        );
+        return [
+            'name' => $this->operationName,
+            'args' => $this->createArgs(),
+            'type' => function () use ($manager) {
+                return $manager->getType($this->typeName);
+            },
+            'resolve' => $this->createResolverFunction(),
+        ];
     }
-
 }

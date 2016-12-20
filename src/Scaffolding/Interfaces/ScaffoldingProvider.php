@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Scaffolding;
+namespace SilverStripe\GraphQL\Scaffolding\Interfaces;
 
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
 

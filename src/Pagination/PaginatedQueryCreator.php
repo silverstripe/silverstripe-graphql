@@ -22,11 +22,11 @@ abstract class PaginatedQueryCreator extends QueryCreator implements OperationRe
     /**
      * @param Manager $manager
      */
-    public function __construct(Manager $manager)
+    public function __construct(Manager $manager, Connection $connection = null)
     {
         parent::__construct($manager);
 
-        $this->connection = $this->connection();
+        $this->connection = $connection ?: $this->connection();
     }
 
     /**

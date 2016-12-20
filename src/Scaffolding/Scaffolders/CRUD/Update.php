@@ -1,28 +1,28 @@
 <?php
 
-namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
+namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
-use SilverStripe\GraphQL\Scaffolding\DataObjectTypeTrait;
-use SilverStripe\GraphQL\Scaffolding\Resolvers\Update;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use GraphQL\Type\Definition\InputObjectType;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use SilverStripe\ORM\DataList;
 use SilverStripe\GraphQL\Manager;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use Exception;
 
 /**
- * Scaffolds a generic update operation for DataObjects
+ * Scaffolds a generic update operation for DataObjects.
  */
-class UpdateOperationScaffolder extends MutationScaffolder
+class Update extends MutationScaffolder implements CRUDInterface
 {
-
     use DataObjectTypeTrait;
 
     /**
      * UpdateOperationScaffolder constructor.
+     *
      * @param string $dataObjectClass
      */
     public function __construct($dataObjectClass)
@@ -30,20 +30,20 @@ class UpdateOperationScaffolder extends MutationScaffolder
         $this->dataObjectClass = $dataObjectClass;
 
         parent::__construct(
-            'update' . ucfirst($this->typeName()),
+            'update'.ucfirst($this->typeName()),
             $this->typeName()
         );
 
         // Todo: this is totally half baked
-        $this->setResolver(function ($object, array $args, $context, $info) {            
+        $this->setResolver(function ($object, array $args, $context, $info) {
             $obj = DataList::create($this->dataObjectClass)
                 ->byID($args['ID']);
-            if(!$obj) {
-            	throw new Exception(sprintf(
-            		"%s with ID %s not found",
-            		$this->dataObjectClass,
-            		$args['ID']
-            	));
+            if (!$obj) {
+                throw new Exception(sprintf(
+                    '%s with ID %s not found',
+                    $this->dataObjectClass,
+                    $args['ID']
+                ));
             }
 
             if ($obj->canEdit()) {
@@ -53,17 +53,24 @@ class UpdateOperationScaffolder extends MutationScaffolder
                 return $obj;
             } else {
                 throw new Exception(sprintf(
-                	"Cannot edit this %s",
-                	$this->dataObjectClass
+                    'Cannot edit this %s',
+                    $this->dataObjectClass
                 ));
             }
         });
-
     }
 
+    /**
+     * @return string`
+     */
+    public function getIdentifier()
+    {
+        return GraphQLScaffolder::UPDATE;
+    }
 
     /**
-     * Use a generated Input type, and require an ID
+     * Use a generated Input type, and require an ID.
+     *
      * @return array
      */
     protected function createArgs()
@@ -71,13 +78,14 @@ class UpdateOperationScaffolder extends MutationScaffolder
         return [
             'ID' => (new TypeParser('ID!'))->toArray(),
             'Input' => [
-                'type' => Type::nonNull($this->generateInputType())
-            ]
+                'type' => Type::nonNull($this->generateInputType()),
+            ],
         ];
     }
 
     /**
-     * Based on the args provided, create an Input type to add to the Manager
+     * Based on the args provided, create an Input type to add to the Manager.
+     *
      * @return InputObjectType
      */
     protected function generateInputType()
@@ -86,14 +94,14 @@ class UpdateOperationScaffolder extends MutationScaffolder
         $instance = $this->getDataObjectInstance();
 
         // Setup default input args.. Placeholder!
-		$db = (array) Config::inst()->get(
-			$this->dataObjectClass,
-			'db',
-			Config::INHERITED
-		);
+        $db = (array) Config::inst()->get(
+            $this->dataObjectClass,
+            'db',
+            Config::INHERITED
+        );
 
         unset($db['ID']);
-        
+
         foreach ($db as $dbFieldName => $dbFieldType) {
             $result = $instance->obj($dbFieldName);
             $typeName = $result->config()->graphql_type;
@@ -103,8 +111,8 @@ class UpdateOperationScaffolder extends MutationScaffolder
         }
 
         return new InputObjectType([
-            'name' => $this->typeName() . 'UpdateInputType',
-            'fields' => $fields
+            'name' => $this->typeName().'UpdateInputType',
+            'fields' => $fields,
         ]);
     }
 }

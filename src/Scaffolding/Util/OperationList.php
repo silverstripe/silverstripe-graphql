@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Scaffolding;
+namespace SilverStripe\GraphQL\Scaffolding\Util;
 
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
 use SilverStripe\ORM\ArrayList;
@@ -48,7 +48,7 @@ class OperationList extends ArrayList
 
     /**
      * @param $name
-     * @return bool
+     * @return bool|OperationScaffold
      */
     public function findByName($name)
     {
@@ -59,6 +59,21 @@ class OperationList extends ArrayList
         }
 
         return false;
+    }
+
+    /**
+     * @param  string $class
+     * @return bool|OperationScaffold
+     */
+    public function findByType($class)
+    {
+    	foreach ($this->items as $key => $value) {
+    		if($class === get_class($value)) {
+    			return $value;
+    		}
+    	}
+
+    	return false;
     }
 
     /**
