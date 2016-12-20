@@ -4,8 +4,6 @@ namespace SilverStripe\GraphQL;
 
 use SilverStripe\Core\Object;
 use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\Manager;
-use SilverStripe\ORM\Limitable;
 
 class FieldCreator extends Object
 {
@@ -97,10 +95,12 @@ class FieldCreator extends Object
 
         return isset($attributes[$key]) ? $attributes[$key] : null;
     }
+
     /**
      * Dynamically check if an attribute is set.
      *
      * @param string $key
+     * @return bool
      */
     public function __isset($key)
     {
@@ -114,7 +114,7 @@ class FieldCreator extends Object
      */
     protected function getResolver()
     {
-        if (!method_exists($this, 'resolve')) {
+        if (! method_exists($this, 'resolve')) {
             return null;
         }
 

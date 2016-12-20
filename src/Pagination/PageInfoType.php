@@ -18,7 +18,7 @@ class PageInfoType extends Object
 
     public function toType()
     {
-        if(!$this->type) {
+        if (!$this->type) {
             $this->type = new ObjectType([
                 'name' => 'PageInfo',
                 'description' => 'Information about pagination in a connection.',

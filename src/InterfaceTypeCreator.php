@@ -4,18 +4,17 @@ namespace SilverStripe\GraphQL;
 
 use GraphQL\Type\Definition\InterfaceType as BaseInterfaceType;
 
-class InterfaceTypeCreator extends TypeCreator {
+class InterfaceTypeCreator extends TypeCreator
+{
 
     protected function getTypeResolver()
     {
-        if(!method_exists($this, 'resolveType'))
-        {
+        if (!method_exists($this, 'resolveType')) {
             return null;
         }
 
         $resolver = array($this, 'resolveType');
-        return function() use ($resolver)
-        {
+        return function () use ($resolver) {
             $args = func_get_args();
             return call_user_func_array($resolver, $args);
         };
@@ -31,8 +30,7 @@ class InterfaceTypeCreator extends TypeCreator {
         $attributes = parent::getAttributes();
 
         $resolver = $this->getTypeResolver();
-        if(isset($resolver))
-        {
+        if (isset($resolver)) {
             $attributes['resolveType'] = $resolver;
         }
 
@@ -43,5 +41,4 @@ class InterfaceTypeCreator extends TypeCreator {
     {
         return new BaseInterfaceType($this->toArray());
     }
-
 }

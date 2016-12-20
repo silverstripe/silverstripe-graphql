@@ -7,7 +7,7 @@ namespace SilverStripe\GraphQL;
  *
  * @todo Validation support
  */
-class MutationCreator extends FieldCreator
+abstract class MutationCreator extends FieldCreator
 {
 
 }

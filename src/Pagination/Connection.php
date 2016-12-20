@@ -4,15 +4,12 @@ namespace SilverStripe\GraphQL\Pagination;
 
 use SilverStripe\Core\Object;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\ORM\SS_List;
 use SilverStripe\ORM\Limitable;
 use SilverStripe\ORM\Sortable;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ObjectType;
-use SilverStripe\GraphQL\TypeCreator;
-use SilverStripe\GraphQL\FieldCreator;
-use SilverStripe\GraphQL\Pagination\PageInfoType;
-use SilverStripe\GraphQL\Pagination\SortDirectionType;
 use GraphQL\Type\Definition\ResolveInfo;
 use InvalidArgumentException;
 
@@ -35,7 +32,7 @@ use InvalidArgumentException;
  *   }
  * </code>
  */
-class Connection extends Object
+class Connection extends Object implements OperationResolver
 {
     /**
      * @var string
@@ -162,13 +159,12 @@ class Connection extends Object
     }
 
     /**
-     * @param array See {@link $sortableFields}
-     *
+     * @param array $fields See {@link $sortableFields}
      * @return $this
      */
     public function setSortableFields($fields)
     {
-        foreach($fields as $field => $lookup) {
+        foreach ($fields as $field => $lookup) {
             $this->sortableFields[is_numeric($field) ? $lookup : $field] = $lookup;
         }
 
@@ -225,7 +221,7 @@ class Connection extends Object
     {
         $existing = $this->args;
 
-        if(!is_array($existing)) {
+        if (!is_array($existing)) {
             $existing = [];
         }
 
@@ -238,7 +234,7 @@ class Connection extends Object
             ]
         ]);
 
-        if($fields = $this->getSortableFields()) {
+        if ($fields = $this->getSortableFields()) {
             $args['sortBy'] = [
                 'type' => Type::listOf(
                     Injector::inst()->create(SortInputType::class, $this->connectionName)
@@ -275,7 +271,7 @@ class Connection extends Object
      */
     public function getEdgeType()
     {
-        if(!$this->connectedType) {
+        if (!$this->connectedType) {
             throw new InvalidArgumentException('Missing connectedType callable');
         }
 
@@ -286,7 +282,7 @@ class Connection extends Object
                 'node' => [
                     'type' => call_user_func($this->connectedType),
                     'description' => 'The node at the end of the collections edge',
-                    'resolve' => function($obj) {
+                    'resolve' => function ($obj) {
                         return $obj;
                     }
                 ]
@@ -313,17 +309,17 @@ class Connection extends Object
      * @param array $args
      * @param array $context
      * @param ResolveInfo $info
-     *
      * @return array
+     * @throws \Exception
      */
-    public function resolve($value, $args, $context, ResolveInfo $info)
+    public function resolve($value, array $args, $context, ResolveInfo $info)
     {
         $result = call_user_func_array(
             $this->connectionResolver,
             func_get_args()
         );
 
-        if(!$result instanceof SS_List) {
+        if (!$result instanceof SS_List) {
             throw new \Exception('Connection::resolve() must resolve to a SS_List instance.');
         }
 
@@ -336,15 +332,17 @@ class Connection extends Object
      * {@link ArrayList}.
      *
      * @param SS_List $list
-     *
+     * @param array $args
+     * @param null $context
+     * @param ResolveInfo $info
      * @return array
      */
-    public function resolveList($list, $args, $context = null, $info = null)
+    public function resolveList($list, array $args, $context = null, ResolveInfo $info = null)
     {
         $limit = (isset($args['limit']) && $args['limit']) ? $args['limit'] : $this->defaultLimit;
         $offset = (isset($args['offset'])) ? $args['offset'] : 0;
 
-        if($limit > $this->maximumLimit) {
+        if ($limit > $this->maximumLimit) {
             $limit = $this->maximumLimit;
         }
 
@@ -352,31 +350,31 @@ class Connection extends Object
         $previousPage = false;
         $count = $list->count();
 
-        if($list instanceof Limitable) {
+        if ($list instanceof Limitable) {
             $list = $list->limit($limit, $offset);
 
-            if($limit && (($limit + $offset) < $count)) {
+            if ($limit && (($limit + $offset) < $count)) {
                 $nextPage = true;
             }
 
-            if($offset > 0) {
+            if ($offset > 0) {
                 $previousPage = true;
             }
         }
 
-        if($list instanceof Sortable) {
+        if ($list instanceof Sortable) {
             $sortableFields = $this->getSortableFields();
-            if(isset($args['sortBy']) && !empty($args['sortBy'])) {
+            if (isset($args['sortBy']) && !empty($args['sortBy'])) {
                 // convert the input from the input format of field, direction
                 // to an accepted SS_List sort format.
                 // https://github.com/graphql/graphql-relay-js/issues/20#issuecomment-220494222
                 $sort = [];
 
-                foreach($args['sortBy'] as $sortInput) {
+                foreach ($args['sortBy'] as $sortInput) {
                     $direction = (isset($sortInput['direction'])) ? $sortInput['direction'] : 'ASC';
 
-                    if(isset($sortInput['field'])) {
-                        if(!array_key_exists($sortInput['field'], $sortableFields)) {
+                    if (isset($sortInput['field'])) {
+                        if (!array_key_exists($sortInput['field'], $sortableFields)) {
                             throw new InvalidArgumentException(sprintf(
                                 '"%s" is not a valid sort column',
                                 $sortInput['field']
@@ -388,7 +386,7 @@ class Connection extends Object
                     }
                 }
 
-                if($sort) {
+                if ($sort) {
                     $list = $list->sort($sort);
                 }
             }
