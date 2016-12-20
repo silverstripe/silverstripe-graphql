@@ -122,8 +122,16 @@ class CaseInsensitiveFieldAccessor
      *              Example: [ViewableDataCaseInsensitiveFieldMapper::HAS_METHOD => true]
      * @return null|string Name in actual casing on $object
      */
-    protected function getObjectFieldName(ViewableData $object, $fieldName, $opts = [])
+    public function getObjectFieldName(ViewableData $object, $fieldName, $opts = [])
     {
+        $opts = $opts ?: [];
+        $opts = array_merge([
+            self::HAS_METHOD => true,
+            self::HAS_FIELD => true,
+            self::HAS_SETTER => true,
+            self::DATAOBJECT => true,
+        ], $opts);
+
         $optFn = function ($type) use (&$opts) {
             return (in_array($type, $opts) && $opts[$type] === true);
         };
