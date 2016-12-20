@@ -7,19 +7,21 @@ use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\ArrayList;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\GraphQL\Pagination\SortInputType;
 use SilverStripe\GraphQL\Pagination\Connection;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\PaginatedQueryFake;
+use GraphQL\Type\Definition\InputObjectField;
 use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\ResolveInfo;
 use InvalidArgumentException;
 
 class ConnectionTest extends SapphireTest
 {
-    protected $extraDataObjects = array(
+    protected $extraDataObjects = [
         'SilverStripe\GraphQL\Tests\Fake\DataObjectFake'
-    );
+    ];
 
     /**
      * @var Connection
@@ -196,5 +198,34 @@ class ConnectionTest extends SapphireTest
         $resolve = $this->connection->resolve(null, [], [], new ResolveInfo([]));
         $item = $resolve['edges']->first();
         $this->assertEquals('testMyValidResolverValue', $item['MyValue']);
+    }
+
+    public function testCollectionWithLimits()
+    {
+        $list = DataObjectFake::get();
+
+        $connection = Connection::create('testFakeConnection')
+            ->setMaximumLimit(1)
+            ->setConnectionType(function() {
+                return $this->manager->getType('TypeCreatorFake');
+            });
+
+        // test a resolution with the limit
+        $result = $connection->resolveList(
+            $list,
+            ['offset' => 1]
+        );
+
+        $this->assertEquals(1, $result['edges']->count(), 'We set maximum limit of 1');
+        $this->assertTrue($result['pageInfo']['hasPreviousPage']);
+    }
+
+    public function testSortInputTypeRendersType()
+    {
+        $type = new SortInputType('TestSort');
+        $type->setSortableFields(['ID', 'Title']);
+
+        $built = $type->toType();
+        $this->assertInstanceOf(InputObjectField::class, $built->getField('field'));
     }
 }

@@ -2,14 +2,16 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
-use SilverStripe\Core\Object;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\EnumType;
 
-class SortInputType extends Object
+class SortInputType
 {
+    use Injectable;
+
     /**
      * @var InputObjectType
      */
@@ -32,7 +34,6 @@ class SortInputType extends Object
      */
     public function __construct($name)
     {
-        parent::__construct();
         $this->inputName = $name;
     }
 

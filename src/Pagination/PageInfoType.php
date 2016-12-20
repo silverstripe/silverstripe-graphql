@@ -2,15 +2,17 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
-use SilverStripe\Core\Object;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ObjectType;
+use SilverStripe\Core\Injector\Injectable;
 
 /**
  * Supports offset based pagination within GraphQL.
  */
-class PageInfoType extends Object
+class PageInfoType
 {
+    use Injectable;
+
     /**
      * @var ObjectType
      */
