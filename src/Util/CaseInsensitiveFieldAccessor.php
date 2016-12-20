@@ -80,12 +80,12 @@ class CaseInsensitiveFieldAccessor
     public function setValue(ViewableData $object, $fieldName, $value, $opts = [])
     {
         $opts = $opts ?: [];
-        $opts = [
-                self::HAS_METHOD => true,
-                self::HAS_FIELD => true,
-                self::HAS_SETTER => true,
-                self::DATAOBJECT => true,
-            ] + $opts;
+        $opts = array_merge([
+            self::HAS_METHOD => true,
+            self::HAS_FIELD => true,
+            self::HAS_SETTER => true,
+            self::DATAOBJECT => true,
+        ], $opts);
 
         $objectFieldName = $this->getObjectFieldName($object, $fieldName, $opts);
 
