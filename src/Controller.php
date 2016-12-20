@@ -5,7 +5,6 @@ namespace SilverStripe\GraphQL;
 use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Control\Director;
 use Exception;
@@ -37,7 +36,7 @@ class Controller extends BaseController
         $variables = isset($data['variables']) ? $data['variables'] : null;
 
         // Some clients (e.g. GraphiQL) double encode as string
-        if(is_string($variables)) {
+        if (is_string($variables)) {
             $variables = json_decode($variables, true);
         }
 
@@ -48,7 +47,7 @@ class Controller extends BaseController
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
 
-            if(Director::isDev()) {
+            if (Director::isDev()) {
                 $error['code'] = $exception->getCode();
                 $error['file'] = $exception->getFile();
                 $error['line'] = $exception->getLine();

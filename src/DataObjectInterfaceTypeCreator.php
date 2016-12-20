@@ -2,14 +2,13 @@
 
 namespace SilverStripe\GraphQL;
 
-use SilverStripe\GraphQL\Util\CaseInsensitiveFieldAccessor;
 use GraphQL\Type\Definition\Type;
 
 /**
  * Base interface for any {@link DataObject} passed back as a node.
- *
  */
-class DataObjectInterfaceTypeCreator extends InterfaceTypeCreator {
+class DataObjectInterfaceTypeCreator extends InterfaceTypeCreator
+{
 
     public function attributes()
     {
@@ -19,7 +18,8 @@ class DataObjectInterfaceTypeCreator extends InterfaceTypeCreator {
         ];
     }
 
-    public function fields() {
+    public function fields()
+    {
         return [
             'id' => [
                 'type' => Type::nonNull(Type::int()),
@@ -37,15 +37,14 @@ class DataObjectInterfaceTypeCreator extends InterfaceTypeCreator {
     {
         $type = null;
 
-        if($fqnType = $this->manager->getType(get_class($object))) {
+        if ($fqnType = $this->manager->getType(get_class($object))) {
             $type = $fqnType;
         }
 
-        if($baseType = $this->manager->getType(get_class($object))) {
+        if ($baseType = $this->manager->getType(get_class($object))) {
             $type = $baseType;
         }
 
         return $type;
     }
-
 }

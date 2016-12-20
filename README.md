@@ -98,10 +98,11 @@ namespace MyProject\GraphQL;
 
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\QueryCreator;
+use SilverStripe\GraphQL\OperationResolver;
 use MyProject\MyDataObject;
 use SilverStripe\Security\Member;
 
-class ReadMembersQueryCreator extends QueryCreator
+class ReadMembersQueryCreator extends QueryCreator implements OperationResolver
 {
 
     public function attributes()
@@ -126,7 +127,7 @@ class ReadMembersQueryCreator extends QueryCreator
     }
 
 
-    public function resolve($args)
+    public function resolve($object, array $args, $context, $info)
     {
         $list = Member::get();
 
@@ -372,10 +373,10 @@ namespace MyProject\GraphQL;
 
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\MutationCreator;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\Security\Member;
 
-
-class CreateMemberMutationCreator extends MutationCreator
+class CreateMemberMutationCreator extends MutationCreator implements OperationResolver
 {
 
    public function attributes()
