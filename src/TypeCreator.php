@@ -4,6 +4,7 @@ namespace SilverStripe\GraphQL;
 
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Object;
+use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\InputObjectType;
 
@@ -11,8 +12,9 @@ use GraphQL\Type\Definition\InputObjectType;
  * Represents a GraphQL type in a way that allows customization through
  * SilverStripe's {@link DataExtension} system.
  */
-class TypeCreator extends Object
+class TypeCreator
 {
+    use Injectable;
 
     /**
      * @var Manager
@@ -31,8 +33,6 @@ class TypeCreator extends Object
     public function __construct(Manager $manager = null)
     {
         $this->manager = $manager;
-
-        parent::__construct();
     }
 
     /**

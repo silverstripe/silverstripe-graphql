@@ -2,11 +2,14 @@
 
 namespace SilverStripe\GraphQL;
 
-use SilverStripe\Core\Object;
+use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Config\Configurable;
 use GraphQL\Type\Definition\Type;
 
-class FieldCreator extends Object
+class FieldCreator
 {
+    use Injectable;
+
     /**
      * @var Manager
      */
@@ -19,8 +22,6 @@ class FieldCreator extends Object
     public function __construct(Manager $manager = null)
     {
         $this->manager = $manager;
-
-        parent::__construct();
     }
 
     /**
