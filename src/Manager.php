@@ -10,6 +10,7 @@ use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Error;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\Security\Member;
 
 class Manager
 {
@@ -151,7 +152,8 @@ class Manager
     public function queryAndReturnResult($query, $params = [], $schema = null)
     {
         $schema = $this->schema($schema);
-        $result = GraphQL::executeAndReturnResult($schema, $query, null, null, $params);
+        $context = $this->getContext();
+        $result = GraphQL::executeAndReturnResult($schema, $query, null, $context, $params);
 
         return $result;
     }
@@ -248,5 +250,15 @@ class Manager
         }
 
         return $error;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getContext()
+    {
+        return [
+            'currentUser' => Member::currentUser()
+        ];
     }
 }
