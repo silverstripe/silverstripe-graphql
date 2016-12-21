@@ -7,6 +7,7 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Control\Director;
+use SilverStripe\ORM\Versioning\Versioned;
 use Exception;
 
 /**
@@ -21,6 +22,10 @@ class Controller extends BaseController
 
     public function index(HTTPRequest $request)
     {
+        $stage = $request->param('Stage');
+        if ($stage && in_array($stage, [Versioned::DRAFT, Versioned::LIVE])) {
+            Versioned::set_stage($stage);
+        }
         $isJson = (
             $request->getHeader('Content-Type') === 'application/json'
             || $request->getHeader('content-type') === 'application/json'
