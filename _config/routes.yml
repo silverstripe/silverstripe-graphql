@@ -3,7 +3,10 @@ Name: graphqlroutes
 ---
 SilverStripe\Control\Director:
   rules:
-    'graphql': 'SilverStripe\GraphQL\Controller'
+    # Default admin route stage is draft
+    graphql:
+      Controller: 'SilverStripe\GraphQL\Controller'
+      Stage: Stage
 ---
 only:
   environment: 'dev'
