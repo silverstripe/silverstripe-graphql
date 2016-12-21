@@ -26,10 +26,8 @@ class Controller extends BaseController
         if ($stage && in_array($stage, [Versioned::DRAFT, Versioned::LIVE])) {
             Versioned::set_stage($stage);
         }
-        $isJson = (
-            $request->getHeader('Content-Type') === 'application/json'
-            || $request->getHeader('content-type') === 'application/json'
-        );
+        $contentType = $request->getHeader('Content-Type') ?: $request->getHeader('content-type');
+        $isJson = preg_match('#^application/json\b#', $contentType);
         if ($isJson) {
             $rawBody = $request->getBody();
             $data = json_decode($rawBody ?: '', true);
