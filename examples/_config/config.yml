@@ -12,3 +12,46 @@ SilverStripe\GraphQL:
   authenticators:
     - class: SilverStripe\GraphQL\Auth\BasicAuthAuthenticator
       priority: 10
+    scaffolding_providers:
+     - My\Project\Post
+    scaffolding:
+      types:
+        My\Project\Post:
+          fields: [ID, Title, Content, Author, Date]
+          nestedQueries:
+            Comments:
+              args:
+                Today: Boolean
+              sortableFields: [Author]
+              resolver: My\Project\CommentsResolver
+            Files: true
+          operations:
+            create: true
+            read:
+              args:
+                StartingWith: String
+              resolver: My\Project\ReadResolver
+        SilverStripe\Security\Member:
+          fields: [Name, FirstName, Surname, Email]
+        SilverStripe\Assets\File:
+          fieldsExcept: [Content]
+          fields: [File]
+        My\Project\Comment:
+          fields: [Comment, Author]
+        SilverStripe\CMS\Model\RedirectorPage:
+          fields: [ExternalURL, Content]
+          operations:
+            read: true
+            create: true
+      mutations:
+        updatePostTitle:
+          type: My\Project\Post
+          args:
+            ID: ID!
+            NewTitle: String!
+          resolver: My\Project\UpdatePostResolver
+      queries:
+        latestPost:
+          type: My\Project\Post
+          paginate: false
+          resolver: My\Project\LatestPostResolver

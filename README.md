@@ -498,7 +498,7 @@ Making a DataObject accessible through the GraphQL API involves quite a bit of b
 see that creating endpoints for a query and a mutation requires creating three new classes, along with an update to the 
 configuration, and we haven't even dealt with data relations yet. For applications that require a lot of business logic 
 and specific functionality, an architecture like this affords the developer a lot of control, but for developers who 
-just want to make a given model accessible through GraphQL with some basic create, cead, update, and delete operations, 
+just want to make a given model accessible through GraphQL with some basic create, read, update, and delete operations, 
 scaffolding them can save a lot of time and reduce the clutter in your project.
 
 Scaffolding DataObjects can be achieved in two non-exclusive ways:
@@ -513,7 +513,7 @@ The example code will show demonstrate both methods for each section.
 For these examples, we'll imagine we have the following model:
 
 ```php
-namespace My\Project;
+namespace MyProject\GraphQL;
 
 class Post extends DataObject {
 
@@ -524,6 +524,10 @@ class Post extends DataObject {
 
   private static $has_one = [
   	'Author' => 'SilverStripe\Security\Member'
+  ];
+
+  private static $has_many = [
+  	'Comments' => 'MyProject\GraphQL\Comment'
   ];
 
   private static $many_many = [
@@ -542,7 +546,7 @@ We'll need to define a `scaffolding` node in the `SilverStripe\GraphQL.schema` s
 ```yaml
 SilverStripe\GraphQL:
   schema:
-    scaffolding:
+    scaffolding:      
       ## scaffolding will go here
 
 ```
@@ -556,8 +560,8 @@ bootstrap itself with any scaffolders that are registered in its config. These s
 As a `ScaffoldingProvider`, the class must now offer the `provideGraphQLScaffolding()` method.
 
 ```php
-namespace My\Project;
-use SilverStripe\GraphQL\Scaffolding\ScaffoldingProvider;
+namespace MyProject\GraphQL;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
 
 class Post extends DataObject implements ScaffoldingProvider {
@@ -575,7 +579,7 @@ In order to register the scaffolding provider with the manager, we'll need to ma
 SilverStripe\GraphQL:
   schema:
     scaffolding_providers:
-      - My\Project\Post
+      - MyProject\GraphQL\Post
 ```
 
 
@@ -585,24 +589,17 @@ Let's now expose the `Post` type. We'll choose the fields we want to offer, alon
 resolve queries and mutations, we'll need to specify the name of a resolver class. This class
 must implement the `SilverStripe\GraphQL\Scaffolding\ResolverInterface`. (More on this below).
 
-**YAML**:
+**Via YAML**:
 ```
 SilverStripe\GraphQL:
   schema:
-    scaffolding_providers:
-      - My\Project\Post
     scaffolding:
-      My\Project\Post:
-        fields: [ID, Title, Content]
-        queries:
-          readPosts:
-            resolver: MyResolver
-        mutations:
-          updatePostTitle:
-            args:
-              ID: 'ID!'
-              NewTitle: 'String!'
-            resolver: MyResolver
+      types:
+        MyProject\GraphQL\Post:
+          fields: [ID, Title, Content]
+          operations:
+            read: true
+            create: true
 ```
 
 We can now access the posts via GraphQL.
@@ -616,62 +613,111 @@ query {
 ```
 
 ```
-mutation UpdatePostTitle($ID: ID!, $NewTitle: String!) {
-	updatePostTitle(ID:$ID, NewTitle: $NewTitle) {
+mutation UpdatePost($ID: ID!, $Input: PostUpdateInputType!)
+	updatePost(ID:$ID, Input: { Title: "Some new Title" }) {
 		Title
 	}
 }
 ```
 
-**Code**:
+**...Or with code**:
 ```php
-namespace My\Project;
+namespace MyProject\GraphQL;
 
 class Post extends DataObject implements ScaffoldingProvider {
 	//...
     public function provideGraphQLScaffolding(GraphQLScaffolder $scaffolder)
     {
-    	$scaffolder->dataObject(Post::class)
-    		->addFields(['ID','Title','Content'])
-    		->query('readPosts', function() {
-    			if(Injector::inst()->get('Post')->canView()) {
-    				return Post::get()->limit(10);
-    			}
-    		});
-    	$scaffolder->dataObject(Post::class)
-    		->mutation('updatePostTitle')
-    		->addArgs([
-    			'ID' => 'ID!',
-    			'NewTitle' => 'String!'
-    		])
-    		->setResolver(function($obj, $args) {
-    			$post = Post::get()->byID($args['ID']);
-    			if($post->canEdit()) {
-	    			$post->Title = $args['NewTitle'];
-	    			$post->write();
-    			}
-
-    			return $post;
-    		});
+    	$scaffolder
+    		->type(Post::class)
+	    		->addFields(['ID','Title','Content'])
+	    		->operation(GraphQLScaffolder::READ)
+	    			->end()
+	    		->operation(GraphQLScaffolder::UPDATE)
+	    			->end()
+	    		->end();
 
     	return $scaffolder;
 	}
 }
 ```
 
+#### Adding arguments
+
+You can add arguments to basic crud operations, but keep in mind you'll need to use your own
+resolver, as the default resolvers will not be aware of any custom arguments you've allowed.
+
+Using YAML, simply use a map of options instead of `true`.
+
+**Via YAML**
+```yaml
+SilverStripe\GraphQL:
+  schema:
+    scaffolding:
+      types:
+        MyProject\GraphQL\Post:
+          fields: [ID, Title, Content]
+          operations:
+            read:
+              args:
+                StartingWith: String
+              resolver: MyProject\GraphQL\ReadPostResolver
+            create: true
+```
+
+**... Or with code**
+```php
+	$scaffolder
+		->type(Post::class)
+    		->addFields(['ID','Title','Content'])
+    		->operation(GraphQLScaffolder::READ)
+    			->addArgs([
+    				'StartingWith' => 'String'
+    			])
+        		->setResolver(function($obj, $args) {
+        			$list = Post::get();
+        			if(isset($args['StartingWith'])) {
+        				$list = $list->filter('Title:StartsWith', $args['StartingWith']);
+        			}
+
+        			return $list;
+        		})         	
+    			->end()
+    		->operation(GraphQLScaffolder::UPDATE)
+    			->end()
+    		->end();
+```
+
+**GraphQL**
+```
+query {
+  readPosts(StartingWith: "o") {
+    edges {
+      node {
+        Title
+        Content
+      }
+    }
+  }
+}
+```
+
+> Argument definitions are expressed using a shorthand. Append `!` to the argument type to
+make it required, and `=SomeValue` to set it to a default value, e.g. `'Category' => 'String!'` or
+`'Answer' => 'Int=42'`.
 
 #### Using a custom resolver
 
-The simplest way to add a resolver is via an anonymous function, passed as the optional second parameter to `mutation()` 
-or `query()`, or via the `setResolver()` method. Resolvers may also exist in class definitions that implement the 
+As seen in the code example above, the simplest way to add a resolver is via an anonymous function
+via the `setResolver()` method. In YAML, you can't define such functions, so resolvers be names or instances of classes thatt implement the 
 `ResolverInterface`.
 
 **When using the YAML approach, custom resolver classes are compulsory**, since you can't define closures in YAML.
 
 
 ```php
-namespace My\Project;
-use SilverStripe\GraphQL\Scaffolding\ResolverInterface;
+namespace MyProject\GraphQL;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 
 class MyResolver implements ResolverInterface
 {
@@ -687,137 +733,485 @@ class MyResolver implements ResolverInterface
 This resolver class may now be assigned as either an instance, or a string to the query or mutation definition.
 
 ```php
-	$scaffolder->dataObject(Post::class)
-		->mutation('updatePostTitle')
-		->setResolver(MyResolver::class);
+	$scaffolder
+		->type(Post::class)
+			->operation(GraphQLScaffolder::UPDATE)
+				->setResolver(MyResolver::class)
+				->end();
 ```
 Or...
 ```php
-	$scaffolder->dataObject(Post::class)
-		->mutation('updatePostTitle')
-		->setResolver(new MyResolver());
+	$scaffolder
+		->type(Post::class)
+			->operation(GraphQLScaffolder::UPDATE)
+				->setResolver(new MyResolver())
+				->end();
 ```
+#### Configuring pagination and sorting
 
-#### Adding related objects
+By default, all queries are paginated and have no sortable fields. Both of these settings are
+configurable.
 
-Let's make the post author and attached files accessible through GraphQL. This requires only one small change.
-
-**Code**:
-```php
-	$scaffolder->dataObject(Post::class)
-		->addFields(['ID','Title','Content','Author','Files'])
-```
-
-**YAML**:
-```
+**Via YAML**
+```yaml
 SilverStripe\GraphQL:
   schema:
     scaffolding:
-      My\Project\Post:
-        fields: [ID, Title, Content, Author, Files]
+      types:
+        MyProject\GraphQL\Post:
+          fields: [ID, Title, Content]
+          operations:
+            read:
+              args:
+                StartingWith: String
+              resolver: MyProject\GraphQL\ReadPostResolver
+              sortableFields: [Title]            
+            create: true
+        MyProject\GraphQL\Comment:
+          fields: [Comment, Author]
+          operations:
+            read:
+              paginate: false
 ```
 
-Relations are treated just like fields, and the new types are automatically detected, and added to the schema. By 
-default, these new types offer only `ID` as an exposed field (a configuration setting), so we'll probably want to 
-customise that a bit. 
-
-**Code**:
+**... Or with code**
 ```php
-	$scaffolder->dataObject(Post::class)
-		->addFields(['ID','Title','Content','Author','Files'])
-		//...
-	$scaffolder->dataObject(Member::class)
-		->addFields(['ID','Name','Email','Groups']); // creates new type "Group"
-	$scaffolder->dataObject(File::class)
-		->addFields(['ID','Filename']);
-	$scaffolder->dataObject(Group::class)
-		->addFields(['ID','Title']);
+	$scaffolder
+		->type(Post::class)
+    		->addFields(['ID','Title','Content'])
+    		->operation(GraphQLScaffolder::READ)
+    			->addArgs([
+    				'StartingWith' => 'String'
+    			])
+        		->setResolver(function($obj, $args) {
+        			$list = Post::get();
+        			if(isset($args['StartingWith'])) {
+        				$list = $list->filter('Title:StartsWith', $args['StartingWith']);
+        			}
+
+        			return $list;
+        		})
+        		->addSortableFields(['Title'])         	
+    			->end()
+    		->operation(GraphQLScaffolder::UPDATE)
+    			->end()
+    		->end()
+    	->type(Comment::class)
+    		->addFields(['Comment','Author'])
+    		->operation(GraphQLScaffolder::READ)
+    			->setUsePagination(false)
+    			->end();
 ```
 
-**YAML**:
+**GraphQL**
 ```
-SilverStripe\GraphQL:
-  schema:
-    scaffolding:
-      My\Project\Post:
-        fields: [ID, Title, Content, Author, Files]
-        queries:
-          # ...
-        mutations:
-          # ...        
-      SilverStripe\Security\Member:
-        fields: [ID, Name, Email, Groups]
-      SilverStripe\Assets\File:
-        fields: [ID, Filename]
-      SilverStripe\Security\Group:
-        fields: [ID, Title]
-
-```
-
-None of these new types have queries or mutations associated with them, but we can now access them as data related to 
-our `Post` object.
-
-Notice that we're able to use the computated value 'Name', which resolves to 'getName()' on the Member object. 
-Fields are not necessarily one-to-one with `$db`. They are simply any public method on the DataObject that returns a 
-`DataList`, `DataObject`, or `DBField`.
-
-```
-query {
-	readPosts {
-		Title
-		Content
-		Author {
-			Name
-			Groups {
-				Title
-			}
-		}
-		Files {
-			Filename
+query readPosts(StartingWith: "a", sortBy: [{field:Title, direction:DESC}]) {
+	edges {
+		node {
+			Title
 		}
 	}
 }
 ```
 
-### Ready-made CRUD operations
-
-Even with the fluency of scaffolding, many of these operations may look the same, and the resolver functions may start 
-to get repetitive with each simple read, create, edit, delete operation we offer. For basic CRUD definitions, you can 
-use the operations that come bundled with the scaffolder and save a lot configuration effort.
-
-These ready-made operations will automatically generate input types and add them to your schema. They offer very basic 
-functionality that checks for permission and performs a simple CRUD operation on your DataObject.
-
-
-**Code:**
-```php
-	$scaffolder->dataObject(Post::class)
-		->addFields(['ID','Title','Content','Author','Files'])
-		->query(GraphQLScaffolder::READ)
-		->mutation(GraphQLScaffolder::UPDATE)
-		->mutation(GraphQLScaffolder::DELETE)
-		->mutation(GraphQLScaffolder::CREATE)
+```
+query readComments {
+	Author
+	Comment
+}
 ```
 
-For YAML, the API is slightly different. You'll need the `operations` setting for this.
+#### Adding related objects
 
-**YAML**:
+The `Post` type we're using has a `$has_one` relation to `Author` (Member), and plural relationships
+to `File` and `Comment`. Let's expose both of those to the query.
+
+For the `$has_one`, the relationship can simply be declared as a field. For `$has_many`, `$many_many`,
+and any custom getter that returns a `DataList`, we can set up a nested query.
+
+
+**Via YAML**:
+```
+SilverStripe\GraphQL:
+  schema:
+    scaffolding:
+      types:
+        MyProject\GraphQL\Post:
+          fields: [ID, Title, Content, Author]
+          operations:
+            read:
+              args:
+                StartingWith: String
+              resolver: MyProject\GraphQL\ReadPostResolver
+              sortableFields: [Title]            
+            create: true
+          nestedQueries:
+            Comments: true
+            Files: true
+        MyProject\GraphQL\Comment:
+          fields: [Comment, Author]
+          operations:
+            read:
+              paginate: false
+
+```
+
+**... Or with code**:
+```php
+	$scaffolder
+		->type(Post::class)
+    		->addFields(['ID','Title','Content', 'Author'])
+    		->operation(GraphQLScaffolder::READ)
+    			->addArgs([
+    				'StartingWith' => 'String'
+    			])
+        		->setResolver(function($obj, $args) {
+        			$list = Post::get();
+        			if(isset($args['StartingWith'])) {
+        				$list = $list->filter('Title:StartsWith', $args['StartingWith']);
+        			}
+
+        			return $list;
+        		})
+        		->addSortableFields(['Title'])         	
+    			->end()    			
+    		->operation(GraphQLScaffolder::UPDATE)
+    			->end()
+    		->nestedQuery('Comments')
+    			->end()
+    		->nestedQuery('Files')
+    			->end()
+    		->end()
+    	->type(Comment::class)
+    		->addFields(['Comment','Author'])
+    		->operation(GraphQLScaffolder::READ)
+    			->setUsePagination(false)
+    			->end();
+
+```
+
+**GraphQL**
+
+```
+query {
+  readPosts(StartingWith: "a") {
+    edges {
+      node {
+        Title
+        Content
+        Date
+        Author {
+        	ID
+        }
+        Comments {
+          edges {
+            node {
+              Comment
+            }
+          }
+        }
+        Files(limit: 2) {
+          edges {
+            node {
+            	ID
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Notice that we can only query the `ID` field of `Files` and `Author`, our new related fields.
+This is because the types are implicitly created by the configuration, but only to the point that
+they exist in the schema. They won't eagerly add fields. That's still up to you. By default, you'll only
+get the `ID` field, as configured in `SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder.default_fields`.
+
+Let's add some more fields.
+
+**Via YAML*:
 ```yaml
 SilverStripe\GraphQL:
   schema:
     scaffolding:
-      My\Project\Post:
-        operations: [CREATE, READ, UPDATE, DELETE]
+      types:
+        MyProject\GraphQL\Post:
+          ## ...
+        MyProject\GraphQL\Comment:
+          ## ...
+        SilverStripe\Security\Member
+          fields: [FirstName, Surname, Name, Email]
+        SilverStripe\Assets\File:
+          fields: [Filename, URL]
 ```
 
-> As shorthand, the expression `[CREATE, READ, UPDATE, DELETE]` can also be expressed as `operations: all`.
+**... Or with code**
+```php
+	$scaffolder
+		->type(Post::class)
+		//...
+		->type(Member::class)
+			->addFields(['FirstName','Surname','Name','Email'])
+			->end()
+		->type(File::class)
+			->addFields(['Filename','URL'])
+			->end();
+```
 
-We now have a new queries and mutations with automatically generated names:
+Notice that we can freely use the custom getter `Name` on the `Member` record. Fields and `$db` are not one-to-one.
 
-* readPosts
-* createPost(Input: PostCreateInputType)
-* updatePost(ID: ID!, Input: PostUpdateInputType)
-* deletePost(ID: ID!)
+Nested queries can be configured just like operations.
+
+**Via YAML*:
+```yaml
+SilverStripe\GraphQL:
+  schema:
+    scaffolding:
+      types:
+        MyProject\GraphQL\Post:
+          ## ...
+          nestedQueries:
+            Comments:
+              args:
+                OnlyToday: Boolean
+                resolver: MyProject\GraphQL\CommentResolver
+          ##...
+        ##...
+```
+
+**... Or with code**
+```php
+	$scaffolder
+		->type(Post::class)
+			->nestedQuery('Comments')
+				->addArgs([
+					'OnlyToday' => 'Boolean'
+				])
+            	->setResolver(function($obj, $args, $context) {
+            		$comments = $obj->Comments();
+            		if(isset($args['OnlyToday']) && $args['OnlyToday']) {
+            			$comments = $comments->where('DATE(Created) = DATE(NOW())');
+            		}
+
+            		return $comments;
+            	})
+			->end()
+			//...
+		//...
+```
+
+
+**GraphQL**
+
+```
+query {
+  readPosts(StartingWith: "a") {
+    edges {
+      node {
+        Title
+        Content
+        Date
+        Author {
+        	Name
+        	Email
+        }
+        Comments(OnlyToday: true) {
+          edges {
+            node {
+              Comment
+            }
+          }
+        }
+        Files(limit: 2) {
+          edges {
+            node {
+            	Filename
+            	URL
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+
+#### Whitelisting fields in bulk
+
+If you have a type you want to be fairly well exposed, it can be tedious to add each
+field piecemeal. As a shortcut, you can use `addAllFieldsExcept()` (code) or `fieldsExcept` (yaml).
+
+**Via YAML**:
+```yaml
+SilverStripe\GraphQL:
+  schema:
+    scaffolding:
+      types:
+        MyProject\GraphQL\Post:
+          fieldsExcept: [SecretThing]
+```
+
+**... Or with code**:
+```php
+	$scaffolder
+		->type(Post::class)
+			->addAllFieldsExcept(['SecretThing'])
+```
+
+#### Adding arbitrary queries and mutations
+
+Not every operation maps to simple CRUD. For this, you can define custom queries and mutations
+in your schema, so long as they map to an existing type.
+
+**Via YAML**
+```yaml
+SilverStripe\GraphQL:
+  schema:
+    scaffolding:
+      types:
+        MyProject\GraphQL\Post:
+          ##...
+      mutations:
+        updatePostTitle:
+          type: MyProject\GraphQL\Post
+          args:
+            ID: ID!
+            NewTitle: String!
+          resolver: MyProject\GraphQL\UpdatePostResolver
+      queries:
+        latestPost:
+          type: MyProject\GraphQL\Post
+          paginate: false
+          resolver: MyProject\GraphQL\LatestPostResolver
+```
+
+**... Or with code**:
+```php
+	$scaffolder
+		->type(Post::class)
+			//...            
+        ->mutation('updatePostTitle', Post::class)
+            ->addArgs([
+                'ID' => 'ID!',
+                'NewTitle' => 'String!'
+            ])
+            ->setResolver(function($obj, $args) {
+                $post = Post::get()->byID($args['ID']);
+                if($post->canEdit()) {
+                    $post->Title = $args['NewTitle'];
+                    $post->write();
+                }
+
+                return $post;
+            })
+            ->end()
+	    ->query('latestPost', Post::class)
+        	->setUsePagination(false)
+        	->setResolver(function($obj, $args) {
+        		return Post::get()->sort('Date', 'DESC')->first();
+        	})
+        	->end()
+```
+
+**GraphQL**
+```
+mutation updatePostTitle(ID: 123, NewTitle: 'Foo') {
+	Title
+}
+```
+
+```
+query latestPost {
+	Title
+}
+```
+
+#### Dealing with inheritence
+
+Adding any given type will implicitly add all of its ancestors, all the way back to `DataObject`.
+Any fields you've listed on a descendant that are available on those ancestors will be exposed on the ancestors
+as well. For CRUD operations, each ancestor gets its own set of operations and input types.
+
+**Via YAML**:
+```yaml
+SilverStripe\GraphQL:
+  schema:
+    scaffolding:
+      types:
+        MyProject\GraphQL\Post:
+          ##...
+        SilverStripe\CMS\Model\RedirectorPage:
+          fields: [ExternalURL, Content]
+          operations:
+            read: true
+            create: true
+        Page:
+          fields: [MyCustomField]
+```
+
+**... Or with code**:
+```php
+	$scaffolder
+        ->type('SilverStripe\CMS\Model\RedirectorPage')
+        	->addFields(['ExternalURL','Content'])
+        	->operation(GraphQLScaffolder::READ)
+        		->end()
+        	->operation(GraphQLScaffolder::CREATE)
+        		->end()
+        	->end()
+        ->type('Page')
+        	->addFields(['MyCustomField'])
+        	->end();
+```
+
+We now have the following added to our schema:
+
+```
+type RedirectorPage {
+	ID
+	ExternalURL
+	Content
+	MyCustomField
+}
+
+type Page {
+	ID
+	Content
+	MyCustomField
+}
+
+type SiteTree {
+	ID
+	Content
+}
+
+query readRedirectorPages {
+	RedirectorPage
+}
+
+query readPages {
+	Page
+}
+
+query readSiteTrees {
+	SiteTree
+}
+
+mutation createRedirectorPage {
+	RedirectorPageCreateInputType
+}
+
+mutation createPage {
+	PageCreateInputType
+}
+
+mutation createSiteTree {
+	SiteTreeCreateInputType
+}
+```
+
 
 ### Define Interfaces
 

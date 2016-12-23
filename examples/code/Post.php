@@ -1,0 +1,131 @@
+<?php
+
+namespace MyProject\GraphQL;
+
+use SilverStripe\ORM\DataObject;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Security\Member;
+use SilverStripe\Assets\File;
+
+class Post extends DataObject implements ScaffoldingProvider {
+
+	private static $db = [
+		'Title' => 'Varchar',
+		'Content' => 'HTMLText',
+		'Date' => 'SilverStripe\ORM\FieldType\DBDateTime'
+	];
+
+	private static $has_one = [
+		'Author' => 'SilverStripe\Security\Member'
+	];
+
+	private static $many_many = [
+		'Files' => 'SilverStripe\Assets\File'
+	];
+
+	private static $has_many = [
+		'Comments' => 'MyProject\GraphQL\Comment'
+	];
+
+	public function provideGraphQLScaffolding(GraphQLScaffolder $scaffolder)
+	{
+        $scaffolder
+        	->type(Post::class)
+            	->addFields(['ID','Title','Content', 'Author', 'Date'])
+            	// basic many_many nested query, no options
+            	->nestedQuery('Files')
+	            	->end()
+	            // more complex nested query
+	            ->nestedQuery('Comments')
+	            	->addArgs([
+	            		'Today' => 'Boolean'
+	            	])
+	            	->addSortableFields(['Author'])
+	            	->setResolver(function($obj, $args, $context) {
+	            		$comments = $obj->Comments();
+	            		if(isset($args['Today']) && $args['Today']) {
+	            			$comments = $comments->where('DATE(Created) = DATE(NOW())');
+	            		}
+
+	            		return $comments;
+	            	})
+	            	->end()
+	            // basic crud operation, no options
+            	->operation(GraphQLScaffolder::CREATE)
+            		->end()
+
+            	// complex crud operation, with custom args
+            	->operation(GraphQLScaffolder::READ)
+            		->addArgs([
+            			'StartingWith' => 'String'
+            		])
+            		->setResolver(function($obj, $args) {
+            			$list = Post::get();
+            			if(isset($args['StartingWith'])) {
+            				$list = $list->filter('Title:StartsWith', $args['StartingWith']);
+            			}
+
+            			return $list;
+            		})         	
+            		->end()
+            	->end()
+
+            // these types were all created implicitly above. Add some fields to them.
+            ->type(Member::class)
+            	->addFields(['Name','FirstName', 'Surname', 'Email'])
+            	->end()
+            ->type(File::class)
+            	->addAllFieldsExcept(['Content'])
+            	->addFields(['File'])
+            	->end()
+            ->type(Comment::class)
+            	->addFields(['Comment','Author'])
+            	->end()
+
+            // Arbitrary mutation
+            ->mutation('updatePostTitle', Post::class)
+	            ->addArgs([
+	                'ID' => 'ID!',
+	                'NewTitle' => 'String!'
+	            ])
+	            ->setResolver(function($obj, $args) {
+	                $post = Post::get()->byID($args['ID']);
+	                if($post->canEdit()) {
+	                    $post->Title = $args['NewTitle'];
+	                    $post->write();
+	                }
+
+	                return $post;
+	            })
+	            ->end()
+
+	        // Arbitrary query
+	        ->query('latestPost', Post::class)
+	        	->setUsePagination(false)
+	        	->setResolver(function($obj, $args) {
+	        		return Post::get()->sort('Date', 'DESC')->first();
+	        	})
+	        	->end()
+	        ->type('SilverStripe\CMS\Model\RedirectorPage')
+	        	->addFields(['ExternalURL','Content'])
+	        	->operation(GraphQLScaffolder::READ)
+	        		->end()
+	        	->operation(GraphQLScaffolder::CREATE)
+	        		->end()
+	        	->end()
+	        ->type('Page')
+	        	->addFields(['BackwardsTitle'])
+	        	->end();
+
+
+
+        return $scaffolder;		
+	}  
+
+	public function canView($member = null, $context = []) { return true; }
+	public function canEdit($member = null, $context = []) { return true; }
+	public function canCreate($member = null, $context = []) { return true; }
+	public function canDelete($member = null, $context = []) { return true; }
+}
