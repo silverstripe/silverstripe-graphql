@@ -228,4 +228,36 @@ class ConnectionTest extends SapphireTest
         $built = $type->toType();
         $this->assertInstanceOf(InputObjectField::class, $built->getField('field'));
     }
+
+    public function testArgsAsArray()
+    {
+        $connection = Connection::create('testFakeConnection')
+            ->setConnectionType(function () {
+                return $this->manager->getType('TypeCreatorFake');
+            })
+            ->setArgs([
+                'arg1' => [
+                    'type' => Type::int()
+                ]
+            ]);
+
+        $this->assertArrayHasKey('arg1', $connection->args());
+    }
+
+    public function testArgsAsCallable()
+    {
+        $connection = Connection::create('testFakeConnection')
+            ->setConnectionType(function () {
+                return $this->manager->getType('TypeCreatorFake');
+            })
+            ->setArgs(function () {
+                return [
+                    'arg1' => [
+                        'type' => Type::int()
+                    ]
+                ];
+            });
+
+        $this->assertArrayHasKey('arg1', $connection->args());
+    }
 }
