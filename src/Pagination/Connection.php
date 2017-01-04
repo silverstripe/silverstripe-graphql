@@ -127,7 +127,7 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @param array
+     * @param array|Callable
      *
      * @return $this
      */
@@ -219,7 +219,7 @@ class Connection implements OperationResolver
      */
     public function args()
     {
-        $existing = $this->args;
+        $existing = is_callable($this->args) ? call_user_func($this->args) : $this->args;
 
         if (!is_array($existing)) {
             $existing = [];
