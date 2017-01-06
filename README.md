@@ -96,15 +96,14 @@ and accesses fields based on the referred "type" definition.
 <?php
 namespace MyProject\GraphQL;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\QueryCreator;
 use SilverStripe\GraphQL\OperationResolver;
-use MyProject\MyDataObject;
 use SilverStripe\Security\Member;
 
 class ReadMembersQueryCreator extends QueryCreator implements OperationResolver
 {
-
     public function attributes()
     {
         return [
@@ -112,7 +111,8 @@ class ReadMembersQueryCreator extends QueryCreator implements OperationResolver
         ];
     }
 
-    public function args() {
+    public function args()
+    {
         return [
             'Email' => ['type' => Type::string()]
         ];
@@ -121,18 +121,17 @@ class ReadMembersQueryCreator extends QueryCreator implements OperationResolver
     public function type()
     {
         // Return a "thunk" to lazy load types
-        return function() {
+        return function () {
             return Type::listOf($this->manager->getType('member'));
         };
     }
 
-
-    public function resolve($object, array $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         $list = Member::get();
 
         // Optional filtering by properties
-        if(isset($args['Email'])) {
+        if (isset($args['Email'])) {
             $list = $list->filter('Email', $args['Email']);
         }
 
