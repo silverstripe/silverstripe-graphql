@@ -1,14 +1,16 @@
 <?php
 
-namespace SilverStripe\Tests\GraphQL;
+namespace SilverStripe\GraphQL\Tests;
 
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Controller;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Security\Member;
 use GraphQL\Schema;
 use GraphQL\Type\Definition\ObjectType;
 use ReflectionClass;
@@ -16,6 +18,17 @@ use Exception;
 
 class ControllerTest extends SapphireTest
 {
+    /**
+     * {@inheritDoc}
+     */
+    public function setUp()
+    {
+        parent::setUp();
+
+        Config::inst()->nest();
+        Config::inst()->update('SilverStripe\\GraphQL', 'authenticators', null);
+    }
+
     public function testIndex()
     {
         $controller = new Controller();
@@ -100,6 +113,67 @@ class ControllerTest extends SapphireTest
         $this->assertArrayHasKey('errors', $responseObj);
         $this->assertEquals('Failed', $responseObj['errors'][0]['message']);
         $this->assertArrayHasKey('trace', $responseObj['errors'][0]);
+    }
+
+    /**
+     * Test that an instance of the authentication handler is returned
+     */
+    public function testGetAuthHandler()
+    {
+        $controller = new Controller;
+        $controller->setManager(new Manager);
+        $this->assertInstanceOf(Handler::class, $controller->getAuthHandler());
+    }
+
+    /**
+     * Test that authentication can work or not, but that a response is still given to the client
+     *
+     * @param string $authenticator
+     * @param string $shouldFail
+     * @dataProvider authenticatorProvider
+     */
+    public function testAuthenticationProtectionOnQueries($authenticator, $shouldFail)
+    {
+        Config::inst()->update('SilverStripe\\GraphQL', 'authenticators', [
+            ['class' => $authenticator]
+        ]);
+
+        $controller = new Controller;
+        $manager = new Manager;
+        $controller->setManager($manager);
+        $manager->addType($this->getType($manager), 'mytype');
+        $manager->addQuery($this->getQuery($manager), 'myquery');
+
+        $response = $controller->index(new HTTPRequest('GET', ''));
+
+        $assertion = ($shouldFail) ? 'assertContains' : 'assertNotContains';
+        $this->{$assertion}('Authentication failed', $response->getBody());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function authenticatorProvider()
+    {
+        return [
+            [
+                Fake\PushoverAuthenticatorFake::class,
+                false,
+            ],
+            [
+                Fake\BrutalAuthenticatorFake::class,
+                true,
+            ]
+        ];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function tearDown()
+    {
+        Config::inst()->unnest();
+        parent::tearDown();
     }
 
     protected function getType(Manager $manager)
