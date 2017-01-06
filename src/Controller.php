@@ -5,8 +5,10 @@ namespace SilverStripe\GraphQL;
 use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\HTTPResponse_Exception;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Control\Director;
+use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\ORM\Versioning\Versioned;
 use Exception;
 
@@ -20,6 +22,9 @@ class Controller extends BaseController
      */
     protected $manager;
 
+    /**
+     * {@inheritDoc}
+     */
     public function index(HTTPRequest $request)
     {
         $stage = $request->param('Stage');
@@ -43,9 +48,13 @@ class Controller extends BaseController
             $variables = json_decode($variables, true);
         }
 
-        $manager = $this->getManager();
+        $this->setManager($manager = $this->getManager());
 
         try {
+            $member = $this->getAuthHandler()->requireAuthentication($request);
+            if ($member) {
+                $manager->setMember($member);
+            }
             $result = $manager->query($query, $variables);
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
@@ -88,5 +97,15 @@ class Controller extends BaseController
     public function setManager($manager)
     {
         $this->manager = $manager;
+    }
+
+    /**
+     * Get an instance of the authorization Handler to manage any authentication requirements
+     *
+     * @return Handler
+     */
+    public function getAuthHandler()
+    {
+        return new Handler;
     }
 }

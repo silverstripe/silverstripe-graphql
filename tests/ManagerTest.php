@@ -8,6 +8,7 @@ use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\MutationCreatorFake;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\Security\Member;
 use GraphQL\Error;
 use GraphQL\Schema;
 use GraphQL\Language\SourceLocation;
@@ -122,6 +123,19 @@ class ManagerTest extends SapphireTest
 
         $response = $mock->query('');
         $this->assertArrayHasKey('errors', $response);
+    }
+
+    /**
+     * Test the getter and setter for the Member. If not set, Member should be retrieved from the session.
+     */
+    public function testGetAndSetMember()
+    {
+        $manager = new Manager;
+        $this->assertNull($manager->getMember());
+
+        $member = Member::create();
+        $manager->setMember($member);
+        $this->assertSame($member, $manager->getMember());
     }
 
     protected function getType(Manager $manager)

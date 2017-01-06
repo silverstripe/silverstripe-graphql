@@ -457,6 +457,72 @@ This tool is available in **dev mode only**. It can be accessed at
 
 <img src="https://github.com/graphql/graphiql/raw/master/resources/graphiql.png">
 
+## Authentication
+
+Some SilverStripe resources have permission requirements to perform CRUD operations
+on, for example the `Member` object in the previous examples.
+
+If you are logged into the CMS and performing a request from the same session then
+the same Member session is used to authenticate GraphQL requests, however if you
+are performing requests from an anonymous/external application you may need to
+authenticate before you can complete a request.
+
+Please note that when implementing GraphQL resources it is the developer's
+responsibility to ensure that permission checks are implemented wherever
+resources are accessed.
+
+### Basic Authentication
+
+Silverstripe has built in support for [HTTP basic authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
+It can be configured for GraphQL implementation with YAML configuration (see below).
+This is kept separate from the SilverStripe CMS authenticator because GraphQL needs
+to use the successfully authenticated member for CMS permission filtering, whereas
+the global `BasicAuth` does not log the member in or use it for model security.
+
+#### YAML configuration
+
+You will need to define the class under `SilverStripe\GraphQL.authenticators`.
+You can optionally provide a `priority` number if you want to control which
+Authenticator is used when multiple are defined (higher priority returns first).
+
+Here's an example for implementing HTTP basic authentication:
+
+```yaml
+SilverStripe\GraphQL:
+  authenticators:
+    - class: SilverStripe\GraphQL\Auth\BasicAuthAuthenticator
+      priority: 10
+```
+
+#### In GraphiQL
+
+If you want to add basic authentication support to your GraphQL requests you can
+do so by adding a custom `Authorization` HTTP header to your GraphiQL requests.
+
+If you are using the [GraphiQL macOS app](https://github.com/skevy/graphiql-app)
+this can be done from "Edit HTTP Headers". The `/dev/graphiql` implementation
+does not support custom HTTP headers at this point.
+
+Your custom header should follow the following format:
+
+```
+# Key: Value
+Authorization: Basic aGVsbG86d29ybGQ=
+```
+
+`Basic` is followed by a [base64 encoded](https://en.wikipedia.org/wiki/Base64)
+combination of your username, colon and password. The above example is `hello:world`.
+
+**Note:** Authentication credentials are transferred in plain text when using HTTP
+basic authenticaiton. We strongly recommend using TLS for non-development use.
+
+Example:
+
+```shell
+php -r 'echo base64_encode("hello:world");'
+# aGVsbG86d29ybGQ=
+```
+
 ## TODO
 
  * Permission checks
