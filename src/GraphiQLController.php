@@ -29,7 +29,8 @@ class GraphiQLController extends BaseController
         $route = null;
 
         foreach ($routes as $pattern => $controllerInfo) {
-            if ($controllerInfo == Controller::class || is_subclass_of($controllerInfo, Controller::class)) {
+            $routeClass = (is_string($controllerInfo)) ? $controllerInfo : $controllerInfo['Controller'];
+            if ($routeClass == Controller::class || is_subclass_of($routeClass, Controller::class)) {
                 $route = $pattern;
                 break;
             }
