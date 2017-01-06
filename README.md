@@ -160,7 +160,7 @@ SilverStripe\GraphQL:
 You can query data with the following URL:
 
 ```
-/graphql?query=query+readMembers{members{ID,Email,FirstName,Surname}}
+/graphql?query=query{readMembers{ID,Email,FirstName,Surname}}
 ```
 
 The query contained in the `query` parameter can be reformatted as follows:
