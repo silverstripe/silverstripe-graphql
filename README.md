@@ -53,7 +53,6 @@ use SilverStripe\GraphQL\Pagination\Connection;
 
 class MemberTypeCreator extends TypeCreator
 {
-
     public function attributes()
     {
         return [
@@ -128,7 +127,16 @@ class ReadMembersQueryCreator extends QueryCreator implements OperationResolver
 
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        $list = Member::get();
+        $member = Member::singleton();
+
+        if (!$member->canView($context['currentUser'])) {
+            throw new \InvalidArgumentException(sprintf(
+                '%s view access not permitted',
+                Member::class
+            ));
+        }
+
+        $list = $member::get();
 
         // Optional filtering by properties
         if (isset($args['Email'])) {
@@ -186,17 +194,16 @@ To have a `Query` return a page-able list of records queries should extend the
 namespace MyProject\GraphQL;
 
 use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\QueryCreator;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Pagination\Connection;
 use SilverStripe\GraphQL\Pagination\PaginatedQueryCreator;
-use SilverStripe\GraphQL\Manager;
 
 class ReadMembersQueryCreator extends PaginatedQueryCreator
 {
-    public function connection() {
+    public function connection()
+    {
         return Connection::create('readMembers')
-            ->setConnectionType(function() {
+            ->setConnectionType(function () {
                 return $this->manager->getType('member');
             })
             ->setArgs([
@@ -205,11 +212,19 @@ class ReadMembersQueryCreator extends PaginatedQueryCreator
                 ]
             ])
             ->setSortableFields(['ID', 'FirstName', 'Email'])
-            ->setConnectionResolver(function($obj, $args) {
-                $list = Member::get();
+            ->setConnectionResolver(function ($obj, $args, $context) {
+                $member = Member::singleton();
+                if (!$member->canView($context['currentUser'])) {
+                    throw new \InvalidArgumentException(sprintf(
+                        '%s view access not permitted',
+                        Member::class
+                    ));
+                }
+
+                $list = $member::get();
 
                 // Optional filtering by properties
-                if(isset($args['Email'])) {
+                if (isset($args['Email'])) {
                     $list = $list->filter('Email', $args['Email']);
                 }
 
@@ -217,6 +232,7 @@ class ReadMembersQueryCreator extends PaginatedQueryCreator
             });
     }
 }
+
 ```
 
 Using a `Connection` the GraphQL server will return the results wrapped under
@@ -404,7 +420,7 @@ class CreateMemberMutationCreator extends MutationCreator implements OperationRe
 
     public function resolve($object, array $args, $context, $info)
     {
-        if(!singleton(Member::class)->canCreate()) {
+        if (!singleton(Member::class)->canCreate()) {
             throw new \InvalidArgumentException('Member creation not allowed');
         }
 

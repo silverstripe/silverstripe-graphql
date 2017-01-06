@@ -1,16 +1,16 @@
 <?php
 namespace MyProject\GraphQL;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\MutationCreator;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\Security\Member;
 
-
-class CreateMemberMutationCreator extends MutationCreator
+class CreateMemberMutationCreator extends MutationCreator implements OperationResolver
 {
-
-   public function attributes()
-   {
+    public function attributes()
+    {
         return [
             'name' => 'createMember',
             'description' => 'Creates a member without permissions or group assignments'
@@ -19,7 +19,7 @@ class CreateMemberMutationCreator extends MutationCreator
 
     public function type()
     {
-        return function() {
+        return function () {
             return $this->manager->getType('member');
         };
     }
@@ -33,9 +33,9 @@ class CreateMemberMutationCreator extends MutationCreator
         ];
     }
 
-    public function resolve($object, array $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        if(!singleton(Member::class)->canCreate()) {
+        if (!singleton(Member::class)->canCreate()) {
             throw new \InvalidArgumentException('Member creation not allowed');
         }
 
