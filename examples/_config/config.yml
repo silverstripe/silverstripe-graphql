@@ -5,5 +5,6 @@ SilverStripe\GraphQL:
       group: 'MyProject\GraphQL\GroupTypeCreator'
     queries:
       readMembers: 'MyProject\GraphQL\ReadMembersQueryCreator'
+      paginatedReadMembers: 'MyProject\GraphQL\PaginatedReadMembersQueryCreator'
     mutations:
       createMember: 'MyProject\GraphQL\CreateMemberMutationCreator'

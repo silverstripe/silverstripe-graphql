@@ -91,46 +91,60 @@ data through the SilverStripe ORM. The response itself is handled by the
 underlying GraphQL PHP library, which loops through the resulting `DataList`
 and accesses fields based on the referred "type" definition.
 
+**Note:** This will return ALL records. See below for a paginated example.
+
 ```php
 <?php
+
 namespace MyProject\GraphQL;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Security\Member;
-use SilverStripe\GraphQL\Pagination\Connection;
-use SilverStripe\GraphQL\Pagination\PaginatedQueryCreator;
+use SilverStripe\GraphQL\OperationResolver;
+use SilverStripe\GraphQL\QueryCreator;
 
-class ReadMembersQueryCreator extends PaginatedQueryCreator
+class ReadMembersQueryCreator extends QueryCreator implements OperationResolver
 {
-    public function connection()
+    public function attributes()
     {
-        return Connection::create('readMembers')
-            ->setConnectionType(function () {
-                return $this->manager->getType('member');
-            })
-            ->setArgs([
-                'Email' => [
-                    'type' => Type::string()
-                ]
-            ])
-            ->setSortableFields(['ID', 'FirstName', 'Email'])
-            ->setConnectionResolver(function ($obj, $args, $context) {
-                $member = Member::singleton();
-                if (!$member->canView($context['currentUser'])) {
-                    throw new \InvalidArgumentException(sprintf(
-                        '%s view access not permitted',
-                        Member::class
-                    ));
-                }
-                $list = Member::get();
+        return [
+            'name' => 'readMembers'
+        ];
+    }
 
-                // Optional filtering by properties
-                if (isset($args['Email'])) {
-                    $list = $list->filter('Email', $args['Email']);
-                }
+    public function args()
+    {
+        return [
+            'Email' => ['type' => Type::string()]
+        ];
+    }
 
-                return $list;
-            });
+    public function type()
+    {
+        // Return a "thunk" to lazy load types
+        return function () {
+            return Type::listOf($this->manager->getType('member'));
+        };
+    }
+
+    public function resolve($object, array $args, $context, ResolveInfo $info)
+    {
+        $member = Member::singleton();
+        if (!$member->canView($context['currentUser'])) {
+            throw new \InvalidArgumentException(sprintf(
+                '%s view access not permitted',
+                Member::class
+            ));
+        }
+        $list = Member::get();
+
+        // Optional filtering by properties
+        if (isset($args['Email'])) {
+            $list = $list->filter('Email', $args['Email']);
+        }
+
+        return $list;
     }
 }
 ```
@@ -147,22 +161,38 @@ SilverStripe\GraphQL:
 You can query data with the following URL:
 
 ```
-/graphql/?query=query+Members{readMembers(limit:1,offset:0){edges{node{ID+FirstName+Email}}}}
+/graphql/?query={readMembers{ID+FirstName+Email}}
 ```
 
 The query contained in the `query` parameter can be reformatted as follows:
 
-```
-query Members {
-  readMembers(limit:1,offset:0) {
-    edges {
-      node {
-        ID
-        FirstName
-        Email
-      }
-    }
+```graphql
+{
+  readMembers {
+    ID
+    FirstName
+    Email
   }
+}
+```
+
+You can apply the `Email` filter in the above example like so:
+
+```graphql
+query ($Email: String) {
+  readMembers(Email: $Email) {
+    ID
+    FirstName
+    Email
+  }
+}
+```
+
+And add a query variable:
+
+```json
+{
+  "Email": "john@example.com"
 }
 ```
 
@@ -188,11 +218,11 @@ use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Pagination\Connection;
 use SilverStripe\GraphQL\Pagination\PaginatedQueryCreator;
 
-class ReadMembersQueryCreator extends PaginatedQueryCreator
+class PaginatedReadMembersQueryCreator extends PaginatedQueryCreator
 {
     public function connection()
     {
-        return Connection::create('readMembers')
+        return Connection::create('paginatedReadMembers')
             ->setConnectionType(function () {
                 return $this->manager->getType('member');
             })
@@ -224,6 +254,15 @@ class ReadMembersQueryCreator extends PaginatedQueryCreator
 
 ```
 
+You will need to add a new unique query alias to your configuration:
+
+```yml
+SilverStripe\GraphQL:
+  schema:
+    queries:
+      paginatedReadMembers: 'MyProject\GraphQL\PaginatedReadMembersQueryCreator'
+```
+
 Using a `Connection` the GraphQL server will return the results wrapped under
 the `edges` result type. `Connection` supports the following arguments:
 
@@ -242,9 +281,17 @@ supports the following fields:
 * `hasPreviousPage` returns whether more records are available by decreasing
 the offset.
 
+You can query paginated data with the following URL:
+
 ```
+/graphql/?query=query+Members{paginatedReadMembers(limit:1,offset:0){edges{node{ID+FirstName+Email}}pageInfo{hasNextPage+hasPreviousPage+totalCount}}}
+```
+
+The query contained in the `query` parameter can be reformatted as follows:
+
+```graphql
 query Members {
-  readMembers(limit:1,offset:0) {
+  paginatedReadMembers(limit: 1, offset: 0) {
     edges {
       node {
         ID
@@ -259,6 +306,7 @@ query Members {
     }
   }
 }
+
 ```
 
 #### Setting Pagination and Sorting options
@@ -272,7 +320,7 @@ To limit the ability for users to perform searching and ordering as they wish,
 excessive load trying to load millions of records (default 100)
 
 ```php
-return Connection::create('readMembers')
+return Connection::create('paginatedReadMembers')
     // ...
     ->setDefaultLimit(10)
     ->setMaximumLimit(100); // previous users requesting more than 100 records
@@ -331,15 +379,15 @@ class MemberTypeCreator extends TypeCreator
 }
 ```
 
-```
+```graphql
 query Members {
-  readMembers(limit: 10) {
+  paginatedReadMembers(limit: 10) {
     edges {
       node {
         ID
         FirstName
         Email
-        Groups(sortBy:[{field:Title, direction:DESC}]) {
+        Groups(sortBy: [{field: Title, direction: DESC}]) {
           edges {
             node {
               ID
@@ -382,8 +430,8 @@ use SilverStripe\Security\Member;
 
 class CreateMemberMutationCreator extends MutationCreator implements OperationResolver
 {
-   public function attributes()
-   {
+    public function attributes()
+    {
         return [
             'name' => 'createMember',
             'description' => 'Creates a member without permissions or group assignments'
@@ -429,9 +477,9 @@ SilverStripe\GraphQL:
 
 You can run a mutation with the following query:
 
-```
-mutation($Email:String!) {
-  createMember(Email:$Email) {
+```graphql
+mutation ($Email: String!) {
+  createMember(Email: $Email) {
     ID
   }
 }
