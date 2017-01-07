@@ -8,7 +8,6 @@ use SilverStripe\GraphQL\Pagination\Connection;
 
 class MemberTypeCreator extends TypeCreator
 {
-
     public function attributes()
     {
         return [
@@ -19,7 +18,7 @@ class MemberTypeCreator extends TypeCreator
     public function fields()
     {
         $groupsConnection = Connection::create('Groups')
-            ->setConnectionType(function() {
+            ->setConnectionType(function () {
                 return $this->manager->getType('group');
             })
             ->setDescription('A list of the users groups')
@@ -33,10 +32,11 @@ class MemberTypeCreator extends TypeCreator
             'Groups' => [
                 'type' => $groupsConnection->toType(),
                 'args' => $groupsConnection->args(),
-                'resolve' => function($obj, $args) use ($groupsConnection) {
+                'resolve' => function ($obj, $args, $context) use ($groupsConnection) {
                     return $groupsConnection->resolveList(
                         $obj->Groups(),
-                        $args
+                        $args,
+                        $context
                     );
                 }
             ]
