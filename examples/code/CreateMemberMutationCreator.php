@@ -35,7 +35,7 @@ class CreateMemberMutationCreator extends MutationCreator implements OperationRe
 
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        if (!singleton(Member::class)->canCreate()) {
+        if (!singleton(Member::class)->canCreate($context['currentUser'])) {
             throw new \InvalidArgumentException('Member creation not allowed');
         }
 

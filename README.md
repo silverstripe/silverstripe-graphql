@@ -95,55 +95,42 @@ and accesses fields based on the referred "type" definition.
 <?php
 namespace MyProject\GraphQL;
 
-use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\QueryCreator;
-use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\Security\Member;
+use SilverStripe\GraphQL\Pagination\Connection;
+use SilverStripe\GraphQL\Pagination\PaginatedQueryCreator;
 
-class ReadMembersQueryCreator extends QueryCreator implements OperationResolver
+class ReadMembersQueryCreator extends PaginatedQueryCreator
 {
-    public function attributes()
+    public function connection()
     {
-        return [
-            'name' => 'readMembers'
-        ];
-    }
+        return Connection::create('readMembers')
+            ->setConnectionType(function () {
+                return $this->manager->getType('member');
+            })
+            ->setArgs([
+                'Email' => [
+                    'type' => Type::string()
+                ]
+            ])
+            ->setSortableFields(['ID', 'FirstName', 'Email'])
+            ->setConnectionResolver(function ($obj, $args, $context) {
+                $member = Member::singleton();
+                if (!$member->canView($context['currentUser'])) {
+                    throw new \InvalidArgumentException(sprintf(
+                        '%s view access not permitted',
+                        Member::class
+                    ));
+                }
+                $list = Member::get();
 
-    public function args()
-    {
-        return [
-            'Email' => ['type' => Type::string()]
-        ];
-    }
+                // Optional filtering by properties
+                if (isset($args['Email'])) {
+                    $list = $list->filter('Email', $args['Email']);
+                }
 
-    public function type()
-    {
-        // Return a "thunk" to lazy load types
-        return function () {
-            return Type::listOf($this->manager->getType('member'));
-        };
-    }
-
-    public function resolve($object, array $args, $context, ResolveInfo $info)
-    {
-        $member = Member::singleton();
-
-        if (!$member->canView($context['currentUser'])) {
-            throw new \InvalidArgumentException(sprintf(
-                '%s view access not permitted',
-                Member::class
-            ));
-        }
-
-        $list = $member::get();
-
-        // Optional filtering by properties
-        if (isset($args['Email'])) {
-            $list = $list->filter('Email', $args['Email']);
-        }
-
-        return $list;
+                return $list;
+            });
     }
 }
 ```
@@ -160,18 +147,21 @@ SilverStripe\GraphQL:
 You can query data with the following URL:
 
 ```
-/graphql?query=query{readMembers{ID,Email,FirstName,Surname}}
+/graphql/?query=query+Members{readMembers(limit:1,offset:0){edges{node{ID+FirstName+Email}}}}
 ```
 
 The query contained in the `query` parameter can be reformatted as follows:
 
 ```
-query {
-  readMembers {
-    ID
-    Email
-    FirstName
-    Surname
+query Members {
+  readMembers(limit:1,offset:0) {
+    edges {
+      node {
+        ID
+        FirstName
+        Email
+      }
+    }
   }
 }
 ```
@@ -220,8 +210,7 @@ class ReadMembersQueryCreator extends PaginatedQueryCreator
                         Member::class
                     ));
                 }
-
-                $list = $member::get();
+                $list = Member::get();
 
                 // Optional filtering by properties
                 if (isset($args['Email'])) {
@@ -284,7 +273,7 @@ excessive load trying to load millions of records (default 100)
 
 ```php
 return Connection::create('readMembers')
-    ...
+    // ...
     ->setDefaultLimit(10)
     ->setMaximumLimit(100); // previous users requesting more than 100 records
 ```
@@ -305,7 +294,6 @@ use SilverStripe\GraphQL\Pagination\Connection;
 
 class MemberTypeCreator extends TypeCreator
 {
-
     public function attributes()
     {
         return [
@@ -330,10 +318,11 @@ class MemberTypeCreator extends TypeCreator
             'Groups' => [
                 'type' => $groupsConnection->toType(),
                 'args' => $groupsConnection->args(),
-                'resolve' => function($obj, $args) use ($groupsConnection) {
+                'resolve' => function($obj, $args, $context) use ($groupsConnection) {
                     return $groupsConnection->resolveList(
                         $obj->Groups(),
-                        $args
+                        $args,
+                        $context
                     );
                 }
             ]
@@ -393,7 +382,6 @@ use SilverStripe\Security\Member;
 
 class CreateMemberMutationCreator extends MutationCreator implements OperationResolver
 {
-
    public function attributes()
    {
         return [
@@ -420,7 +408,7 @@ class CreateMemberMutationCreator extends MutationCreator implements OperationRe
 
     public function resolve($object, array $args, $context, $info)
     {
-        if (!singleton(Member::class)->canCreate()) {
+        if (!singleton(Member::class)->canCreate($context['currentUser'])) {
             throw new \InvalidArgumentException('Member creation not allowed');
         }
 

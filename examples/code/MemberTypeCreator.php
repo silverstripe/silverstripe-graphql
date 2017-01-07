@@ -32,10 +32,11 @@ class MemberTypeCreator extends TypeCreator
             'Groups' => [
                 'type' => $groupsConnection->toType(),
                 'args' => $groupsConnection->args(),
-                'resolve' => function ($obj, $args) use ($groupsConnection) {
+                'resolve' => function ($obj, $args, $context) use ($groupsConnection) {
                     return $groupsConnection->resolveList(
                         $obj->Groups(),
-                        $args
+                        $args,
+                        $context
                     );
                 }
             ]

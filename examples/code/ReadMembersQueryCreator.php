@@ -1,54 +1,41 @@
 <?php
 namespace MyProject\GraphQL;
 
-use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\QueryCreator;
-use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\Security\Member;
+use SilverStripe\GraphQL\Pagination\Connection;
+use SilverStripe\GraphQL\Pagination\PaginatedQueryCreator;
 
-class ReadMembersQueryCreator extends QueryCreator implements OperationResolver
+class ReadMembersQueryCreator extends PaginatedQueryCreator
 {
-    public function attributes()
+    public function connection()
     {
-        return [
-            'name' => 'readMembers'
-        ];
-    }
+        return Connection::create('readMembers')
+            ->setConnectionType(function () {
+                return $this->manager->getType('member');
+            })
+            ->setArgs([
+                'Email' => [
+                    'type' => Type::string()
+                ]
+            ])
+            ->setSortableFields(['ID', 'FirstName', 'Email'])
+            ->setConnectionResolver(function ($obj, $args, $context) {
+                $member = Member::singleton();
+                if (!$member->canView($context['currentUser'])) {
+                    throw new \InvalidArgumentException(sprintf(
+                        '%s view access not permitted',
+                        Member::class
+                    ));
+                }
+                $list = Member::get();
 
-    public function args()
-    {
-        return [
-            'Email' => ['type' => Type::string()]
-        ];
-    }
+                // Optional filtering by properties
+                if (isset($args['Email'])) {
+                    $list = $list->filter('Email', $args['Email']);
+                }
 
-    public function type()
-    {
-        // Return a "thunk" to lazy load types
-        return function () {
-            return Type::listOf($this->manager->getType('member'));
-        };
-    }
-
-    public function resolve($object, array $args, $context, ResolveInfo $info)
-    {
-        $member = Member::singleton();
-
-        if (!$member->canView($context['currentUser'])) {
-            throw new \InvalidArgumentException(sprintf(
-                '%s view access not permitted',
-                Member::class
-            ));
-        }
-
-        $list = $member::get();
-
-        // Optional filtering by properties
-        if (isset($args['Email'])) {
-            $list = $list->filter('Email', $args['Email']);
-        }
-
-        return $list;
+                return $list;
+            });
     }
 }
