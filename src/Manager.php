@@ -37,6 +37,11 @@ class Manager
     protected $errorFormatter = [self::class, 'formatError'];
 
     /**
+     * @var Member
+     */
+    protected $member;
+
+    /**
      * @param array $config An array with optional 'types' and 'queries' keys
      * @return Manager
      */
@@ -253,12 +258,34 @@ class Manager
     }
 
     /**
+     * Set the Member for the current context
+     *
+     * @param  Member $member
+     * @return $this
+     */
+    public function setMember(Member $member)
+    {
+        $this->member = $member;
+        return $this;
+    }
+
+    /**
+     * Get the Member for the current context either from a previously set value or the current user
+     *
+     * @return Member
+     */
+    public function getMember()
+    {
+        return $this->member ?: Member::currentUser();
+    }
+
+    /**
      * @return array
      */
     protected function getContext()
     {
         return [
-            'currentUser' => Member::currentUser()
+            'currentUser' => $this->getMember()
         ];
     }
 }
