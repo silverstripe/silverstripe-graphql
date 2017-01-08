@@ -8,3 +8,7 @@ SilverStripe\GraphQL:
       paginatedReadMembers: 'MyProject\GraphQL\PaginatedReadMembersQueryCreator'
     mutations:
       createMember: 'MyProject\GraphQL\CreateMemberMutationCreator'
+  # Enforce HTTP basic authentication for GraphQL requests
+  authenticators:
+    - class: SilverStripe\GraphQL\Auth\BasicAuthAuthenticator
+      priority: 10
