@@ -309,13 +309,23 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
     public function applyConfig(array $config)
     {
-        if (empty($config['fields']) || !is_array($config['fields'])) {
+        $dataObjectClass = $this->dataObjectClass;
+        if (empty($config['fields']) && empty($config['fieldsExcept'])) {
             throw new \Exception(
                 "No array of fields defined for $dataObjectClass"
             );
         }
-
-        $this->addFields($config['fields']);
+        if(isset($config['fields'])) {
+	        if($config['fields'] === '*')  {        	
+	        	$this->addAllFields();
+	        } else if(is_array($config['fields'])) {
+	        	$this->addFields($config['fields']);	
+	        } else {
+	    		throw new \Exception(
+	    			"Fields must be an array, or '*' for all fields in $dataObjectClass"
+	    		);        	
+	        }
+    	}		
 
         if (isset($config['fieldsExcept'])) {
             if (!is_array($config['fieldsExcept'])) {
