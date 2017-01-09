@@ -173,6 +173,14 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     }
 
     /**
+     * @return OperationList
+     */
+    public function getNestedQueries()
+    {
+    	return $this->nestedQueries;
+    }
+
+    /**
      * Removes an operation.
      *
      * @param $name
