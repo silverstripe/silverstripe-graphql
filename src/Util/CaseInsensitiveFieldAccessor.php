@@ -100,10 +100,10 @@ class CaseInsensitiveFieldAccessor
         if ($object->hasMethod($objectFieldName)) {
             // Correct case for methods (e.g. canView)
             $object->{$objectFieldName}($value);
-        } else if ($object->hasField($objectFieldName)) {
+        } elseif ($object->hasField($objectFieldName)) {
             // Correct case (and getters)
             $object->{$objectFieldName} = $value;
-        } else if ($object instanceof DataObject) {
+        } elseif ($object instanceof DataObject) {
             // Infer casing
             $object->setField($objectFieldName, $value);
         }

@@ -5,7 +5,6 @@ namespace SilverStripe\GraphQL;
 use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
-use SilverStripe\Control\HTTPResponse_Exception;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Control\Director;
 use SilverStripe\GraphQL\Auth\Handler;
@@ -13,6 +12,7 @@ use SilverStripe\ORM\Versioning\Versioned;
 use Exception;
 
 /**
+ * Top level controller for handling graphql requests.
  * @todo CSRF protection (or token-based auth)
  */
 class Controller extends BaseController
@@ -23,7 +23,10 @@ class Controller extends BaseController
     protected $manager;
 
     /**
-     * {@inheritDoc}
+     * Handles requests to /graphql (index action)
+     *
+     * @param HTTPRequest $request
+     * @return HTTPResponse
      */
     public function index(HTTPRequest $request)
     {

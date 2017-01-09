@@ -9,7 +9,7 @@ class QueryCreatorFake extends QueryCreator
 {
     public function type()
     {
-        return function() {
+        return function () {
             return Type::listOf($this->manager->getType('mytype'));
         };
     }
