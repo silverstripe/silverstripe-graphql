@@ -11,6 +11,7 @@ use SilverStripe\ORM\DataList;
 use SilverStripe\GraphQL\Manager;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
 use Exception;
 
 /**
