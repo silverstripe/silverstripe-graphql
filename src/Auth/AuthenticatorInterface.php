@@ -3,6 +3,8 @@
 namespace SilverStripe\GraphQL\Auth;
 
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\ORM\ValidationException;
+use SilverStripe\Security\Member;
 
 /**
  * An AuthenticatorInterface is responsible for authenticating against a SilverStripe CMS Member from

@@ -2,10 +2,10 @@
 
 namespace SilverStripe\GraphQL;
 
-/**
- * Represents a GraphQL mutation.
+ /**
+ * Represents a writable entrypoint field in the top level graphql 'mutation' schema
  *
- * @todo Validation support
+ * @link https://github.com/webonyx/graphql-php#schema
  */
 abstract class MutationCreator extends FieldCreator
 {

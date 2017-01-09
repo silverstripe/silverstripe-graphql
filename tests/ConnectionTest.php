@@ -7,7 +7,7 @@ use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\ArrayList;
 use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\Pagination\SortInputType;
+use SilverStripe\GraphQL\Pagination\SortInputTypeCreator;
 use SilverStripe\GraphQL\Pagination\Connection;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
@@ -222,7 +222,7 @@ class ConnectionTest extends SapphireTest
 
     public function testSortInputTypeRendersType()
     {
-        $type = new SortInputType('TestSort');
+        $type = new SortInputTypeCreator('TestSort');
         $type->setSortableFields(['ID', 'Title']);
 
         $built = $type->toType();
