@@ -272,39 +272,6 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     }
 
     /**
-     * Find or make an operation.
-     *
-     * @param string $operation
-     *
-     * @return OperationScaffolder
-     */
-    public function operation($operation)
-    {
-        $scaffoldClass = OperationScaffolder::getOperationScaffoldFromIdentifier($operation);
-
-        if (!$scaffoldClass) {
-            throw new InvalidArgumentException(sprintf(
-                'Invalid operation: %s added to %s',
-                $operation,
-                $this->dataObjectClass
-            ));
-        }
-
-        $operation = new $scaffoldClass($this->dataObjectClass);
-        $existing = $this->operations->findByType(get_class($operation));
-
-        if ($existing) {
-            return $existing;
-        }
-
-        $this->operations->push(
-            $operation->setChainableParent($this)
-        );
-
-        return $operation;
-    }
-
-    /**
      * Gets types for all ancestors of this class that will need to be added.
      *
      * @return array
