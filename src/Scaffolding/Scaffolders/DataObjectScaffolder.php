@@ -117,13 +117,16 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     /**
      * Adds fields against a blacklist.
      *
-     * @param array $exclusions
+     * @param array|string $exclusions
      * @param bool  $includeHasOne
      *
      * @return $this
      */
-    public function addAllFieldsExcept(array $exclusions, $includeHasOne = false)
+    public function addAllFieldsExcept($exclusions, $includeHasOne = false)
     {
+        if(!is_array($exclusions)) {
+        	$exclusions = [$exclusions];
+        }
         $fields = $this->allFieldsFromDataObject($includeHasOne);
         $filteredFields = array_diff($fields, $exclusions);
 
