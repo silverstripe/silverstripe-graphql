@@ -295,6 +295,9 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         $ancestry = array_reverse(ClassInfo::ancestry($this->dataObjectClass));
 
         foreach ($ancestry as $class) {
+            if($class === $this->dataObjectClass) {
+            	continue;
+            }
             if ($class == DataObject::class) {
                 break;
             }
