@@ -188,11 +188,45 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      * @return $this
      */
     public function removeOperation($identifier)
-    {
-        $this->operations->removeByName($identifier);
+    {        
+        $this->operations->removeByIdentifier($identifier);
 
         return $this;
     }
+
+    /**
+     * Find or make an operation.
+     *
+     * @param string $operation
+     *
+     * @return OperationScaffolder
+     */
+    public function operation($operation)
+    {	
+        $scaffoldClass = OperationScaffolder::getOperationScaffoldFromIdentifier($operation);
+
+        if (!$scaffoldClass) {
+            throw new InvalidArgumentException(sprintf(
+                'Invalid operation: %s added to %s',
+                $operation,
+                $this->dataObjectClass
+            ));
+        }
+
+        $scaffolder = new $scaffoldClass($this->dataObjectClass);
+        $existing = $this->operations->findByIdentifier($operation);
+
+        if ($existing) {        
+            return $existing;
+        }
+
+        $this->operations->push(
+            $scaffolder->setChainableParent($this)
+        );
+
+        return $scaffolder;
+    }
+
 
     /**
      * Finds or adds a nested query, e.g. has_many/many_many relation.
