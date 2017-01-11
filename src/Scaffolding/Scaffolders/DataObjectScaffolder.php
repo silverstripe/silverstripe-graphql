@@ -338,33 +338,31 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             $this->addAllFieldsExcept($config['fieldsExcept']);
         }
 
-        if (!isset($config['operations'])) {
-            return $this;
-        }
+        if (isset($config['operations'])) {            
+	        if ($config['operations'] === '*') {
+	            $config['operations'] = [
+	                GraphQLScaffolder::CREATE => true,
+	                GraphQLScaffolder::READ => true,
+	                GraphQLScaffolder::UPDATE => true,
+	                GraphQLScaffolder::DELETE => true,
+	            ];
+	        }
 
-        if ($config['operations'] === '*') {
-            $config['operations'] = [
-                GraphQLScaffolder::CREATE => true,
-                GraphQLScaffolder::READ => true,
-                GraphQLScaffolder::UPDATE => true,
-                GraphQLScaffolder::DELETE => true,
-            ];
-        }
+	        if (!ArrayLib::is_associative($config['operations'])) {
+	            throw new \Exception(
+	                'Operations field must be a map of operation names to a map of settings, or true/false'
+	            );
+	        }
 
-        if (!ArrayLib::is_associative($config['operations'])) {
-            throw new \Exception(
-                'Operations field must be a map of operation names to a map of settings, or true/false'
-            );
-        }
+	        foreach ($config['operations'] as $opID => $opSettings) {
+	            if ($opSettings === false) {
+	                continue;
+	            }
 
-        foreach ($config['operations'] as $opID => $opSettings) {
-            if ($opSettings === false) {
-                continue;
-            }
-
-            $this->operation($opID)
-                ->applyConfig((array) $opSettings);
-        }
+	            $this->operation($opID)
+	                ->applyConfig((array) $opSettings);
+	        }
+    	}
 
         if (isset($config['nestedQueries'])) {
             if (!ArrayLib::is_associative($config['nestedQueries'])) {
