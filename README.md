@@ -590,7 +590,7 @@ resolve queries and mutations, we'll need to specify the name of a resolver clas
 must implement the `SilverStripe\GraphQL\Scaffolding\ResolverInterface`. (More on this below).
 
 **Via YAML**:
-```
+```yaml
 SilverStripe\GraphQL:
   schema:
     scaffolding:
@@ -602,7 +602,10 @@ SilverStripe\GraphQL:
             create: true
 ```
 
-We can now access the posts via GraphQL.
+By declaring these two operations, we have automatically added a new query and 
+mutation to the GraphQL schema, using naming naming conventions derived from
+the operation type and the `singular_name` or `plural_name` of the DataObject.
+
 ```
 query {
 	readPosts {
@@ -613,10 +616,14 @@ query {
 ```
 
 ```
-mutation UpdatePost($ID: ID!, $Input: PostUpdateInputType!)
-	updatePost(ID:$ID, Input: { Title: "Some new Title" }) {
+mutation CreatePost($Input: PostCreateInputType!)
+	createPost(Input: $Input) {
 		Title
 	}
+}
+
+{
+	"Input": {Title: "My Title"}
 }
 ```
 
@@ -660,7 +667,7 @@ SilverStripe\GraphQL:
           operations:
             read:
               args:
-                StartingWith: String
+                Title: String
               resolver: MyProject\ReadPostResolver
             create: true
 ```
@@ -672,12 +679,15 @@ SilverStripe\GraphQL:
     		->addFields(['ID','Title','Content'])
     		->operation(SchemaScaffolder::READ)
     			->addArgs([
-    				'StartingWith' => 'String'
+    				'Title' => 'String'
     			])
-        		->setResolver(function($obj, $args) {
+        		->setResolver(function($obj, $args, $context) {
+        			if(!singleton(Post::class)->canView($context['currentMember'])) {
+        				throw new \Exception('Cannot view Post');
+        			}
         			$list = Post::get();
-        			if(isset($args['StartingWith'])) {
-        				$list = $list->filter('Title:StartsWith', $args['StartingWith']);
+        			if(isset($args['Title'])) {
+        				$list = $list->filter('Title:PartialMatch', $args['Title']);
         			}
 
         			return $list;
@@ -831,7 +841,7 @@ and any custom getter that returns a `DataList`, we can set up a nested query.
 
 
 **Via YAML**:
-```
+```yaml
 SilverStripe\GraphQL:
   schema:
     scaffolding:
