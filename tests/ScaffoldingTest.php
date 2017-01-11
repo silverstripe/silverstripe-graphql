@@ -3,787 +3,857 @@
 namespace SilverStripe\GraphQL;
 
 use SilverStripe\Dev\SapphireTest;
-// use GraphQL\Type\Definition\Type;
-// use GraphQL\Type\Definition\NonNull;
-// use GraphQL\Type\Definition\InputObjectType;
-// use SilverStripe\GraphQL\Scaffolding\Creators\DataObjectTypeCreator;
-// use SilverStripe\GraphQL\Manager;
-// use GraphQL\Type\Definition\ResolveInfo;
-// use GraphQL\Type\Definition\ObjectType;
-// use GraphQL\Type\Definition\ListOfType;
-// use GraphQL\Type\Definition\StringType;
-// use GraphQL\Type\Definition\IntType;
-// use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
-// use SilverStripe\GraphQL\Scaffolding\Creators\MutationOperationCreator;
-// use SilverStripe\GraphQL\Scaffolding\Creators\QueryOperationCreator;
-// use SilverStripe\GraphQL\Scaffolding\Creators\PaginatedQueryOperationCreator;
-// use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
-// use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
-// use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
-// use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
-// use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
-// use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
-// use SilverStripe\GraphQL\Scaffolding\Scaffolders\CreateOperationScaffolder;
-// use SilverStripe\GraphQL\Scaffolding\Scaffolders\UpdateOperationScaffolder;
-// use SilverStripe\GraphQL\Scaffolding\Scaffolders\DeleteOperationScaffolder;
-// use SilverStripe\GraphQL\Scaffolding\Scaffolders\ReadOperationScaffolder;
-// use Doctrine\Instantiator\Exception\InvalidArgumentException;
-// use SilverStripe\GraphQL\Scaffolding\OperationList;
-// use SilverStripe\Core\Config\Config;
-// use SilverStripe\Security\Member;
-// use SilverStripe\Assets\File;
-// use ReflectionClass;
-// use SilverStripe\GraphQL\Scaffolding\Util\ArgsParser;
-// use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
-// use SilverStripe\GraphQL\Pagination\Connection;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
+use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\OperationScaffolderFake;
+use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
+use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
+use SilverStripe\GraphQL\Scaffolding\Util\ArgsParser;
+use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
+use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
+use SilverStripe\GraphQL\Manager;
+use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\StringType;
+use GraphQL\Type\Definition\NonNull;
+use GraphQL\Type\Definition\Type;
+use SilverStripe\CMS\Model\RedirectorPage;
+use SilverStripe\CMS\Model\SiteTree;
+use SilverStripe\Security\Member;
+use SilverStripe\Assets\File;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
+use Exception;
+use Page;
 
 class ScaffoldingTest extends SapphireTest
 {
 
-  //   public function testDataObjectTypeCreator()
-  //   {
-  //       $creator = new DataObjectTypeCreator(new Manager, 'test', ['Foo' => 'Bar']);
-
-  //       $this->assertEquals(['name' => 'test'], $creator->attributes());
-  //       $this->assertEquals(['Foo' => 'Bar'], $creator->fields());
-
-  //       $fake = new DataObjectFake([
-  //           'MyField' => 'test'
-  //       ]);
-  //       $info = new ResolveInfo(['fieldName' => 'MyField']);
-
-  //       $result = $creator->resolveField($fake, [], null, $info);
-
-  //       $this->assertInstanceOf('SilverStripe\ORM\FieldType\DBVarchar', $result);
-  //       $this->assertEquals('test', $result->getValue());
-  //   }
-
-  //   public function testMutationOperationCreator()
-  //   {
-  //       $managerMock = $this->getMockBuilder(Manager::class)
-  //           ->setMethods(['getType'])
-  //           ->getMock();
-  //       $managerMock
-  //           ->method('getType')
-  //           ->will($this->returnArgument(0));
-
-  //       $mutationCreator = new MutationOperationCreator($managerMock, 'testOperation', 'testType', 'testResolver');
-  //       $result = $mutationCreator->type();
-
-  //       $this->assertInstanceOf('\Closure', $result);
-  //       $this->assertEquals('testType', $result());
-
-  //   }
-
-  //   public function testQueryOperationCreator()
-  //   {
-  //       $managerMock = $this->getMockBuilder(Manager::class)
-  //           ->setMethods(['getType'])
-  //           ->getMock();
-  //       $managerMock
-  //           ->method('getType')
-  //           ->willReturn(new ObjectType(['name' => 'test']));
-
-  //       $mutationCreator = new QueryOperationCreator($managerMock, 'testOperation', 'testType','testResolver');
-  //       $result = $mutationCreator->type();
-
-  //       $this->assertInstanceOf('\Closure', $result);
-  //       $this->assertInstanceOf(ListOfType::class, $result());
-  //       $this->assertInstanceOf(ObjectType::class, $result()->getWrappedType());
-  //       $this->assertEquals('test', $result()->getWrappedType()->config['name']);
-
-  //   }
-
-  //   public function testOperationCreatorConstuctor()
-  //   {
-  //       $mutationCreator = $this->createOperationCreator();
-  //       $this->assertEquals(['name' => 'testOperation'], $mutationCreator->attributes());
-  //       $this->assertEquals(['foo' => 'bar'], $mutationCreator->args());
-
-  //       $this->assertInstanceOf('\Closure', $mutationCreator->toArray()['resolve']);
-  //   }
-
-  //   public function testOperationCreatorAcceptsClosureAsResolver()
-  //   {
-  //       // test resolvers
-  //       $mutationCreator = $this->createOperationCreator(function () {
-  //           return 'abc';
-  //       });
-  //       $field = $mutationCreator->toArray();
-  //       $this->assertEquals('abc', $field['resolve'](null, [], null, null));
-  //   }
-
-  //   public function testOperationCreatorAcceptsResolverInterfaceInstanceAsResolver()
-  //   {
-  //       $mutationCreator = $this->createOperationCreator(new FakeResolver());
-  //       $field = $mutationCreator->toArray();
-  //       $this->assertEquals('resolved', $field['resolve'](null, [], null, null));
-  //   }
-
-  //   public function testExceptionThrownOnBadResolver()
-  //   {
-  //       $this->setExpectedException(\Exception::class);
-  //       $mutationCreator = $this->createOperationCreator(FakeResolver::class);
-  //       $field = $mutationCreator->toArray();
-  //       $field['resolve'](null, [], null, null);
-  //   }
-
-  //   public function testMutationOperationScaffolderCore()
-  //   {
-  //       $scaffolder = new MutationScaffolder(
-  //           'testOperation',
-  //           'testType'
-  //       );
-
-  //       $this->assertEquals('testOperation', $scaffolder->getName());
-
-  //       $creator = $scaffolder->getCreator(new Manager());
-  //       $this->assertInstanceOf(MutationOperationCreator::class, $creator);
-  //       $this->assertEquals(['name' => 'testOperation'], $creator->attributes());
-  //   }
-
-  //   public function testQueryOperationScaffolderCore()
-  //   {
-  //       $scaffolder = new QueryScaffolder(
-  //           'testOperation',
-  //           'testType'
-  //       );
-
-  //       $this->assertEquals('testOperation', $scaffolder->getName());
-
-  //       $creator = $scaffolder->getCreator(new Manager());
-  //       $this->assertInstanceOf(PaginatedQueryOperationCreator::class, $creator);
-  //       $this->assertEquals(['name' => 'testOperation'], $creator->attributes());
-
-  //       $scaffolder->setUsePagination(false);
-  //       $creator = $scaffolder->getCreator(new Manager());
-  //       $this->assertInstanceOf(QueryOperationCreator::class, $creator);
-		// $this->assertEquals(['name' => 'testOperation'], $creator->attributes());        
-  //   }
-
-  //   public function testOperationScaffolderCreator()
-  //   {
-  //       $scaffolder = new MutationScaffolder(
-  //           'testOperation',
-  //           'testType'
-  //       );
-
-  //       $scaffolder->addArgs(['foo' => 'String']);
-  //       $creator = $scaffolder->getCreator(new Manager());
-  //       // only test the keys to isolate testing of ArgsParser
-  //       $this->assertEquals(['foo'], array_keys($creator->args()));
-  //       $scaffolder->addArgs(['qux' => 'Int']);
-  //       $creator = $scaffolder->getCreator(new Manager());
-  //       $this->assertEquals(['foo', 'qux'], array_keys($creator->args()));
-
-  //       $scaffolder->setResolver(function () {
-  //       });
-  //   }
-
-  //   public function testOperationScaffolderRejectsInvalidResolvers()
-  //   {
-  //       $this->setExpectedException(InvalidArgumentException::class);
-  //       $scaffolder = new MutationScaffolder(
-  //           'testOperation',
-  //           'testType',
-  //           'notAValidResover'
-  //       );
-  //   }
-
-  //   public function testOperationScaffolderAcceptsValidResolvers()
-  //   {
-  //       $m = new Manager();
-  //       $resolver = $this->getMockBuilder(FakeResolver::class)
-  //           ->setMethods(['resolve'])
-  //           ->getMock();
-  //       $resolver->expects($this->once())
-  //           ->method('resolve');
-
-
-  //       $scaffolder = new MutationScaffolder(
-  //           'testOperation',
-  //           'testType',
-  //           $resolver
-  //       );
-
-  //       $resolveMethod = $scaffolder->getCreator($m)->toArray()['resolve'];
-  //       $resolveMethod(null, null, null, null);
-
-  //       $scaffolder = new MutationScaffolder(
-  //           'testOperation',
-  //           'testType',
-  //           function () {
-  //           }
-  //       );
-
-  //       $this->assertInstanceOf('\Closure', $scaffolder->getCreator($m)->toArray()['resolve']);
-  //   }
-
-
-  //   public function testOperationScaffolderCreateFromConfig()
-  //   {
-  //       $exception = null;
-  //       $mockManager = $this->getMockBuilder(Manager::class)
-  //           ->setMethods(['getType'])
-  //           ->getMock();
-  //       $mockManager
-  //           ->expects($this->once())
-  //           ->method('getType')
-  //           ->willReturn('abc');
-
-  //       try {
-  //           MutationScaffolder::createFromConfig('test', []);
-  //       } catch (\Exception $e) {
-  //           $exception = $e;
-  //       }
-  //       $this->assertInstanceOf('\Exception', $e);
-
-  //       try {
-  //           MutationScaffolder::createFromConfig('test', [
-  //               'name' => 'testOperation',
-  //               'resolver' => 'not a resolver'
-  //           ]);
-  //       } catch (\Exception $e) {
-  //           $exception = $e;
-  //       }
-
-  //       $this->assertInstanceOf('\Exception', $e);
-
-  //       $result = MutationScaffolder::createFromConfig('test', [
-  //           'name' => 'testOperation',
-  //           'resolver' => FakeResolver::class
-  //       ]);
-
-  //       $this->assertInstanceOf(MutationScaffolder::class, $result);
-
-  //       $creator = $result->getCreator($mockManager);
-  //       $typeCreator = $creator->type();
-  //       $type = $typeCreator();
-  //       $this->assertEquals('abc', $type);
-  //   }
-
-  //   public function testDataObjectScaffolderConstructor()
-  //   {
-  //       $this->setExpectedException(InvalidArgumentException::class);
-  //       $scaffolder = new DataObjectScaffolder('Not\A\Real\Thing');
-  //   }
-
-  //   public function testDataObjectScaffolderQueriesAndMutations()
-  //   {
-  //       $scaffolder = new DataObjectScaffolder(DataObjectFake::class);
-
-  //       $this->assertInstanceOf(OperationList::class, $scaffolder->getQueries());
-  //       $this->assertInstanceOf(OperationList::class, $scaffolder->getMutations());
-
-  //       $query = $scaffolder->query('test');
-
-  //       $this->assertInstanceOf(QueryScaffolder::class, $query);
-  //       $this->assertEquals('test', $query->getName());
-
-  //       $mutation = $scaffolder->mutation('test');
-
-  //       $this->assertInstanceOf(MutationScaffolder::class, $mutation);
-  //       $this->assertEquals('test', $mutation->getName());
-
-  //       $query2 = $scaffolder->query('test');
-  //       $this->assertEquals(1, $scaffolder->getQueries()->count());
-
-  //       $mutation2 = $scaffolder->mutation('test');
-  //       $this->assertEquals(1, $scaffolder->getMutations()->count());
-
-  //       $this->assertSame($query, $query2);
-  //       $this->assertSame($mutation, $mutation2);
-
-  //       $query3 = $scaffolder->query('abc');
-  //       $mutation3 = $scaffolder->mutation('abc');
-
-  //       $this->assertEquals(2, $scaffolder->getQueries()->count());
-  //       $this->assertEquals(2, $scaffolder->getMutations()->count());
-
-  //       $scaffolder->removeQuery('test');
-  //       $scaffolder->removeMutation('test');
-
-  //       $this->assertEquals(1, $scaffolder->getQueries()->count());
-  //       $this->assertEquals(1, $scaffolder->getMutations()->count());
-
-  //   }
-
-
-  //   public function testDataObjectScaffolderThrowsIfNotDataObject()
-  //   {
-  //       $this->setExpectedException(InvalidArgumentException::class);
-  //       $scaffolder = new DataObjectScaffolder(Config::class);
-  //   }
-
-  //   public function testStockOperations()
-  //   {
-  //       // Create
-  //       $scaffolder = new DataObjectScaffolder(DataObjectFake::class);
-  //       $scaffolder->mutation(GraphQLScaffolder::CREATE);
-  //       $this->assertInstanceOf(CreateOperationScaffolder::class, $scaffolder->getMutations()->first());
-
-  //       // Read
-  //       $scaffolder = new DataObjectScaffolder(DataObjectFake::class);
-  //       $scaffolder->query(GraphQLScaffolder::READ);
-  //       $this->assertInstanceOf(ReadOperationScaffolder::class, $scaffolder->getQueries()->first());
-
-  //       // Update
-  //       $scaffolder = new DataObjectScaffolder(DataObjectFake::class);
-  //       $scaffolder->mutation(GraphQLScaffolder::UPDATE);
-  //       $this->assertInstanceOf(UpdateOperationScaffolder::class, $scaffolder->getMutations()->first());
-
-  //       // Delete
-  //       $scaffolder = new DataObjectScaffolder(DataObjectFake::class);
-  //       $scaffolder->mutation(GraphQLScaffolder::DELETE);
-  //       $this->assertInstanceOf(DeleteOperationScaffolder::class, $scaffolder->getMutations()->first());
-
-
-  //   }
-
-  //   public function testDataObjectScaffolderFields()
-  //   {
-  //       $scaffolder = new DataObjectScaffolder(DataObjectFake::class);
-  //       $scaffolder->addFields(['One', 'Two']);
-
-  //       $this->assertEquals(['One', 'Two'], $scaffolder->getFields()->toArray());
-
-  //       $scaffolder->addFields(['One', 'Two', 'Three']);
-
-  //       $this->assertCount(3, $scaffolder->getFields());
-  //       $this->assertEquals(['One', 'Two', 'Three'], $scaffolder->getFields()->toArray());
-
-  //       $scaffolder->removeField('Nothing');
-  //       $this->assertCount(3, $scaffolder->getFields());
-  //       $scaffolder->removeField('One');
-  //       $this->assertCount(2, $scaffolder->getFields());
-
-  //       $scaffolder->removeFields(['Two', 'Three']);
-  //       $this->assertCount(0, $scaffolder->getFields());
-  //   }
-
-  //   public function testDataObjectScaffolderUsesDefaultFields()
-  //   {
-  //   	Config::inst()->update(DataObjectScaffolder::class, 'default_fields', ['ID' => 'ID']);
-  //   	$scaffolder = new DataObjectScaffolder(DataObjectFake::class);
-  //   	$creator = $scaffolder->getCreator(new Manager());
-    	
-  //   	$this->assertEquals(
-  //   		['ID'],
-  //   		array_keys($creator->fields())
-  //   	);
-  //   }
-
-  //   public function testDataObjectTrait()
-  //   {
-  //       Config::inst()->update(DataObjectFake::class, 'table_name', 'Some\Namespaced\Table');
-  //       $scaffolder = new DataObjectScaffolder(DataObjectFake::class);
-  //       $inst = $scaffolder->getDataObjectInstance();
-  //       $this->assertInstanceOf(DataObjectFake::class, $inst);
-
-  //       $this->assertEquals('Some_Namespaced_Table', $scaffolder->typeName());
-
-  //       $scaffolder->setDataObjectClass('test');
-  //       $this->assertEquals('test', $scaffolder->getDataObjectClass());
-  //   }
-
-  //   public function testDataObjectScaffolderCreator()
-  //   {
-  //       $scaffolder = (new DataObjectScaffolder(DataObjectFake::class))
-  //           ->addFields(['MyField', 'NonExistentField', 'Author', 'Files']);
-
-  //       $extraDataObjects = $scaffolder->getExtraDataObjects();
-  //       $this->assertArrayHasKey('Author', $extraDataObjects);
-  //       $this->assertArrayHasKey('Files', $extraDataObjects);
-
-  //       $this->assertEquals($extraDataObjects['Author'], 'SilverStripe\Security\Member');
-  //       $this->assertEquals($extraDataObjects['Files'], 'SilverStripe\Assets\File');
-
-  //       $creator = $scaffolder->getCreator(new Manager());
-
-  //       $this->assertEquals($scaffolder->typeName(), $creator->attributes()['name']);
-  //       $fields = array_keys($creator->fields());
-  //       $this->assertEquals(['MyField', 'NonExistentField', 'Author', 'Files'], $fields);
-  //   }
-
-
-  //   public function testDataObjectScaffolderAddToManager()
-  //   {
-  //       $scaffolder = new DataObjectScaffolder(DataObjectFake::class);
-  //       $scaffolder->addFields(['MyField', 'NonExistentField', 'Author', 'Files']);
-  //       $scaffolder->mutation('myMutation', new FakeResolver());
-  //       $scaffolder->query('myQuery', new FakeResolver());
-
-  //       $managerMock = $this->getMockBuilder(Manager::class)
-  //           ->setMethods(['getType', 'addType', 'addQuery', 'addMutation'])
-  //           ->getMock();
-  //       $managerMock->expects($this->once())
-  //           ->method('addType')
-  //           ->with($scaffolder->typeName());
-  //       $managerMock->expects($this->once())
-  //           ->method('addMutation')
-  //           ->with(
-  //               $this->callback(function ($subject) {                	
-  //                   return (
-  //                       is_array($subject) && $subject['name'] == 'myMutation'
-  //                   );
-  //               }),
-  //               $this->equalTo('myMutation')
-  //           );
-
-  //       $managerMock->expects($this->once())
-  //           ->method('addQuery')
-  //           ->with(
-  //               $this->callback(function ($subject) {                
-  //                   return (
-  //                       is_array($subject) && $subject['name'] == 'myQuery'
-  //                   );
-  //               }),
-  //               $this->equalTo('myQuery')
-  //           );
-
-  //       $scaffolder->addToManager($managerMock);
-  //   }
-
-  //   public function testGraphQLScaffolderAddToManager()
-  //   {
-  //       $resolver = new FakeResolver();
-  //       $scaffolder = new GraphQLScaffolder();
-  //       $scaffolder->dataObject(DataObjectFake::class)
-  //           ->addFields(['MyField', 'MyInt', 'Author', 'Files'])
-  //           ->mutation('testMutation', $resolver)
-  //           ->addArgs(['Test' => 'String']);
-  //       $scaffolder->dataObject(DataObjectFake::class)
-  //           ->query('testQuery', $resolver)
-  //           ->addArgs(['Test' => 'String']);
-  //       $scaffolder->dataObject(DataObjectFake::class)
-  //           ->query('testQueryUnpaginated', $resolver)
-  //           ->addArgs(['Test' => 'String'])
-  //           ->setUsePagination(false);
-  //       $scaffolder->dataObject(Member::class)
-  //           ->addFields(['Surname']);
-  //       $scaffolder->dataObject(File::class)
-  //           ->addFields(['Filename']);
-  //       $managerMock = $this->getMockBuilder(Manager::class)
-  //           ->setMethods(['addType', 'addQuery', 'addMutation'])
-  //           ->getMock();
-
-  //       $doTypeName = $scaffolder->dataObject(DataObjectFake::class)->typeName();
-  //       $memberTypeName = $scaffolder->dataObject(Member::class)->typeName();
-  //       $fileTypeName = $scaffolder->dataObject(File::class)->typeName();
-
-  //       $createFieldCheckCallback = function ($fields, $typeName) {
-  //           return function ($subject) use ($fields, $typeName) {
-  //               if ($subject instanceof ObjectType) {
-  //                   $fieldFunc = $subject->config['fields'];
-  //                   $typeFields = $fieldFunc();
-  //                   return (
-  //                       ($subject->config['name'] == $typeName) &&
-  //                       (array_keys($typeFields) == $fields)
-  //                   );
-  //               }
-
-  //               return false;
-  //           };
-  //       };
-
-  //       $managerMock->expects($this->exactly(3))
-  //           ->method('addType')
-  //           ->withConsecutive(
-  //               [
-  //                   $this->callback($createFieldCheckCallback(
-  //                       ['MyField', 'MyInt', 'Author', 'Files'],
-  //                       $doTypeName
-  //                   )),
-  //                   $doTypeName
-  //               ],
-  //               [
-  //                   $this->callback($createFieldCheckCallback(['Surname'], $memberTypeName)),
-  //                   $memberTypeName
-  //               ],
-  //               [
-  //                   $this->callback($createFieldCheckCallback(['Filename'], $fileTypeName)),
-  //                   $fileTypeName
-  //               ]
-
-  //           );
-
-  //       $managerMock->expects($this->exactly(2))
-  //           ->method('addQuery')
-  //           ->withConsecutive(
-  //           	[
-  //           		$this->callback(function ($subject) {
-  //           			$connectionKeys = array_keys(Connection::create('dummy')->args());
-  //               		return (
-  //               			is_array($subject) &&
-  //               			$subject['name'] == 'testQuery' &&
-  //               			array_keys($subject['args']) == array_merge(['Test'], $connectionKeys)
-  //               		);
-  //           		})
-  //           	],
-  //           	[
-  //           		$this->callback(function ($subject) {
-  //               		return (
-  //               			is_array($subject) &&
-  //               			$subject['name'] == 'testQueryUnpaginated' &&
-  //               			array_keys($subject['args']) == ['Test']
-  //               		);
-  //           		})            	
-  //           	]
-  //           );
-
-  //       $managerMock->expects($this->once())
-  //           ->method('addMutation')
-  //           ->with($this->callback(function ($subject) {
-  //               return is_array($subject) &&
-  //               $subject['name'] == 'testMutation' &&
-  //               array_keys($subject['args']) == ['Test'];
-  //           }));
-
-  //       $scaffolder->addToManager($managerMock);
-  //   }
-
-  //   public function testGraphQLScaffolderCreateFromConfig()
-  //   {
-  //       $scaffolder = GraphQLScaffolder::createFromConfig([
-  //           DataObjectFake::class => [
-  //               'fields' => [
-  //                   'MyField',
-  //                   'MyInt',
-  //                   'Author',
-  //                   'Files'
-  //               ],
-  //               'operations' => ['CREATE', 'READ', 'UPDATE', 'DELETE']
-  //           ],
-
-  //           Member::class => [
-  //               'fields' => ['Surname'],
-  //               'operations' => 'all',
-  //               'queries' => [
-  //                   'myQuery' => [
-  //                       'args' => [
-  //                           'Test' => 'String'
-  //                       ],
-  //                       'resolver' => FakeResolver::class
-  //                   ],
-  //                   'myQueryUnpaginated' => [
-  //                   	'args' => [
-  //                   		'Test' => 'String'
-  //                   	],
-  //                   	'resolver' => FakeResolver::class
-  //                   ]
-  //               ]
-  //           ],
-
-  //           File::class => [
-  //               'fields' => ['Surname'],
-  //               'mutations' => [
-  //                   'myMutation' => [
-  //                       'args' => [
-  //                           'Test' => 'String'
-  //                       ],
-  //                       'resolver' => FakeResolver::class
-  //                   ]
-  //               ]
-  //           ]
-  //       ]);
-
-  //       $reflection = new ReflectionClass($scaffolder);
-  //       $property = $reflection->getProperty('scaffolds');
-  //       $property->setAccessible(true);
-  //       $scaffolds = $property->getValue($scaffolder);
-
-  //       $dataObjectClasses = [
-  //           DataObjectFake::class => true,
-  //           Member::class => true,
-  //           File::class => true
-  //       ];
-
-  //       foreach ($scaffolds as $scaffold) {
-  //           $name = $scaffold->getDataObjectClass();
-  //           $typeName = ucfirst($scaffold->typeName());
-  //           $pluralTypeName = $scaffold->getDataObjectInstance()->plural_name();
-  //           $pluralTypeName = str_replace(' ', '', $pluralTypeName);
-  //           $pluralTypeName = ucfirst($pluralTypeName);
-
-  //           $this->assertArrayHasKey($name, $dataObjectClasses);
-  //           unset($dataObjectClasses[$name]);
-            
-  //           if (in_array($name, [DataObjectFake::class, Member::class])) {
-  //               $this->assertInstanceOf(
-  //                   CreateOperationScaffolder::class,
-  //                   $scaffold->getMutations()->findByName('create' . $typeName)
-  //               );
-  //               $this->assertInstanceOf(
-  //                   UpdateOperationScaffolder::class,
-  //                   $scaffold->getMutations()->findByName('update' . $typeName)
-  //               );
-  //               $this->assertInstanceOf(
-  //                   DeleteOperationScaffolder::class,
-  //                   $scaffold->getMutations()->findByName('delete' . $typeName)
-  //               );
-  //               $this->assertInstanceOf(
-  //                   ReadOperationScaffolder::class,
-  //                   $scaffold->getQueries()->findByName('read' . $pluralTypeName)
-  //               );
-  //               if ($name == Member::class) {
-  //                   $op = $scaffold->getQueries()->findByName('myQuery');
-  //                   $this->assertInstanceOf(
-  //                       QueryScaffolder::class,
-  //                       $op
-  //                   );
-  //                   $args = $op->getCreator(new Manager())->args();
-  //                   foreach(Connection::create('dummy')->args() as $a => $config) {
-  //                   	$this->assertArrayHasKey($a, $args);
-  //                   }
-  //                   $this->assertArrayHasKey('Test', $args);
-
-  //                   $op = $scaffold->getQueries()->findByName('myQueryUnpaginated');
-  //                   $this->assertInstanceOf(
-  //                       QueryScaffolder::class,
-  //                       $op
-  //                   );
-  //                   $this->assertArrayHasKey('Test', $op->getCreator(new Manager())->args());
-
-  //               }
-
-  //           } else {
-  //               if ($name == File::class) {
-  //                   $op = $scaffold->getMutations()->findByName('myMutation');
-  //                   $this->assertInstanceOf(
-  //                       MutationScaffolder::class,
-  //                       $op
-  //                   );
-  //                   $this->assertArrayHasKey('Test', $op->getCreator(new Manager())->args());
-  //               }
-  //           }
-  //       }
-  //   }
-
-  //   public function testInputTypesAreCreated()
-  //   {
-  //       $create = (new CreateOperationScaffolder(DataObjectFake::class))
-  //           ->addArgs(['Test' => 'String']);
-  //       $creator = $create->getCreator(new Manager());
-
-  //       $this->assertArrayHasKey('Input', $creator->args());
-  //       $type = $creator->args()['Input']['type'];
-  //       $this->assertInstanceOf(NonNull::class, $type);
-  //       $this->assertInstanceOf(InputObjectType::class, $type->getWrappedType());
-
-  //       $create = (new UpdateOperationScaffolder(DataObjectFake::class))
-  //           ->addArgs(['Test' => 'String']);
-  //       $creator = $create->getCreator(new Manager());
-
-  //       $this->assertArrayHasKey('Input', $creator->args());
-  //       $this->assertArrayHasKey('ID', $creator->args());
-  //       $type = $creator->args()['Input']['type'];
-  //       $this->assertInstanceOf(NonNull::class, $type);
-  //       $this->assertInstanceOf(InputObjectType::class, $type->getWrappedType());
-  //   }
-
-  //   public function testTypeParser()
-  //   {
-  //       $parser = new TypeParser('String!=Test');
-  //       $this->assertTrue($parser->isRequired());
-  //       $this->assertEquals('String', $parser->getArgTypeName());
-  //       $this->assertEquals('Test', $parser->getDefaultValue());
-  //       $this->assertTrue(is_string($parser->toArray()['defaultValue']));
-
-  //       $parser = new TypeParser('String! = Test');
-  //       $this->assertTrue($parser->isRequired());
-  //       $this->assertEquals('String', $parser->getArgTypeName());
-  //       $this->assertEquals('Test', $parser->getDefaultValue());
-
-  //       $parser = new TypeParser('Int!');
-  //       $this->assertTrue($parser->isRequired());
-  //       $this->assertEquals('Int', $parser->getArgTypeName());
-  //       $this->assertNull($parser->getDefaultValue());
-
-  //       $parser = new TypeParser('Int!=23');
-  //       $this->assertTrue($parser->isRequired());
-  //       $this->assertEquals('Int', $parser->getArgTypeName());
-  //       $this->assertEquals('23', $parser->getDefaultValue());
-		// $this->assertTrue(is_int($parser->toArray()['defaultValue']));
-
-  //       $parser = new TypeParser('Boolean');
-  //       $this->assertFalse($parser->isRequired());
-  //       $this->assertEquals('Boolean', $parser->getArgTypeName());
-  //       $this->assertNull($parser->getDefaultValue());
-
-  //       $parser = new TypeParser('Boolean=1');
-  //       $this->assertFalse($parser->isRequired());
-  //       $this->assertEquals('Boolean', $parser->getArgTypeName());
-  //       $this->assertEquals('1', $parser->getDefaultValue());
-		// $this->assertTrue(is_bool($parser->toArray()['defaultValue']));
-
-  //       $parser = new TypeParser('String!=Test');
-  //       $arr = $parser->toArray();
-  //       $this->assertInstanceOf(NonNull::class, $arr['type']);
-  //       $this->assertInstanceOf(StringType::class, $arr['type']->getWrappedType());
-  //       $this->assertEquals('Test', $arr['defaultValue']);
-
-  //       $this->setExpectedException(InvalidArgumentException::class);
-  //       $parser = new TypeParser('  ... Nothing');
-
-  //       $this->setExpectedException(InvalidArgumentException::class);
-  //       $parser = (new TypeParser('Nothing'))->toArray();
-  //   }
-
-  //   public function testArgsParser()
-  //   {
-  //       $parsers = [
-  //           new ArgsParser([
-  //               'Test' => 'String'
-  //           ]),
-  //           new ArgsParser([
-  //               'Test' => Type::string()
-  //           ]),
-  //           new ArgsParser([
-  //               'Test' => ['type' => Type::string()]
-  //           ])
-  //       ];
-
-  //       foreach ($parsers as $parser) {
-  //           $arr = $parser->toArray();
-  //           $this->assertArrayHasKey('Test', $arr);
-  //           $this->assertArrayHasKey('type', $arr['Test']);
-  //           $this->assertInstanceOf(StringType::class, $arr['Test']['type']);
-  //       }
-  //   }
-
-
-  //   public function testOperationList()
-  //   {
-  //       $list = new OperationList();
-
-  //       $list->push(new MutationScaffolder('myMutation1', 'test1'));
-  //       $list->push(new MutationScaffolder('myMutation2', 'test2'));
-
-  //       $this->assertInstanceOf(
-  //           MutationScaffolder::class,
-  //           $list->findByName('myMutation1')
-  //       );
-  //       $this->assertFalse($list->findByName('myMutation3'));
-
-  //       $list->removeByName('myMutation2');
-  //       $this->assertEquals(1, $list->count());
-
-  //       $list->removeByName('nothing');
-  //       $this->assertEquals(1, $list->count());
-
-  //       $this->setExpectedException(InvalidArgumentException::class);
-  //       $list->push(new OperationList());
-  //   }
-
-  //   protected function createOperationCreator($resolver = null)
-  //   {
-  //       return new MutationOperationCreator(
-  //           new Manager(),
-  //           'testOperation',
-  //           'testType',
-  //           $resolver,
-  //           ['foo' => 'bar']
-  //       );
-  //   }
+	public function testDataObjectScaffolderConstructor()
+	{
+		$scaffolder = $this->getFakeScaffolder();
+		$this->assertEquals(DataObjectFake::class, $scaffolder->getDataObjectClass());
+		$this->assertInstanceOf(DataObjectFake::class, $scaffolder->getDataObjectInstance());
+
+		$this->setExpectedExceptionRegExp(
+			InvalidArgumentException::class,
+			'/non-existent classname/'
+		);
+		$scaffolder = new DataObjectScaffolder('fail');
+	}
+
+	public function testDataObjectScaffolderFields()
+	{
+		$scaffolder = $this->getFakeScaffolder();
+		
+		$scaffolder->addField('MyField');
+		$this->assertEquals(['MyField'], $scaffolder->getFields()->toArray());
+		
+		$scaffolder->addFields(['MyField','MyInt']);
+		$this->assertEquals(['MyField', 'MyInt'], $scaffolder->getFields()->toArray());
+
+		$scaffolder = $this->getFakeScaffolder();
+		$scaffolder->addAllFields();
+		$this->assertEquals(['ID','ClassName','LastEdited','Created','MyField','MyInt'], $scaffolder->getFields()->toArray());
+
+		$scaffolder = $this->getFakeScaffolder();
+		$scaffolder->addAllFields(true);
+		$this->assertEquals(['ID','ClassName','LastEdited','Created','MyField','MyInt', 'Author'], $scaffolder->getFields()->toArray());
+
+		$scaffolder = $this->getFakeScaffolder();
+		$scaffolder->addAllFieldsExcept('MyInt');
+		$this->assertEquals(['ID','ClassName','LastEdited','Created','MyField'], $scaffolder->getFields()->toArray());
+
+		$scaffolder = $this->getFakeScaffolder();
+		$scaffolder->addAllFieldsExcept('MyInt', true);
+		$this->assertEquals(['ID','ClassName','LastEdited','Created','MyField','Author'], $scaffolder->getFields()->toArray());
+
+		$scaffolder->removeField('ClassName');
+		$this->assertEquals(['ID','LastEdited','Created','MyField','Author'], $scaffolder->getFields()->toArray());
+		$scaffolder->removeFields(['LastEdited','Created']);
+		$this->assertEquals(['ID','MyField','Author'], $scaffolder->getFields()->toArray());
+	}
+
+
+	public function testDataObjectScaffolderOperations()
+	{
+		$scaffolder = $this->getFakeScaffolder();
+		$op = $scaffolder->operation(GraphQLScaffolder::CREATE);
+
+		$this->assertInstanceOf(CRUDInterface::class, $op);
+
+		// Ensure we get back the same reference
+		$op->Test = true;
+		$op = $scaffolder->operation(GraphQLScaffolder::CREATE);
+		$this->assertEquals(true, $op->Test);
+
+		// Ensure duplicates aren't created
+		$scaffolder->operation(GraphQLScaffolder::DELETE);
+		$this->assertEquals(2, $scaffolder->getOperations()->count());
+
+		$scaffolder->removeOperation(GraphQLScaffolder::DELETE);
+		$this->assertEquals(1, $scaffolder->getOperations()->count());
+
+		$this->setExpectedExceptionRegExp(
+			InvalidArgumentException::class,
+			'/Invalid operation/'
+		);
+		$scaffolder = $this->getFakeScaffolder();
+		$scaffolder->operation('fail');
+	}
+
+	public function testDataObjectScaffolderNestedQueries()
+	{
+		$scaffolder = $this->getFakeScaffolder();
+		$query = $scaffolder->nestedQuery('Files');
+
+		$this->assertInstanceOf(QueryScaffolder::class, $query);
+
+		// Ensure we get back the same reference
+		$query->Test = true;
+		$query = $scaffolder->nestedQuery('Files');
+		$this->assertEquals(true, $query->Test);
+
+		// Ensure duplicates aren't created
+		$this->assertEquals(1, $scaffolder->getNestedQueries()->count());
+
+		$this->setExpectedExceptionRegExp(
+			InvalidArgumentException::class,
+			'/returns a DataList or ArrayList/'
+		);
+		$scaffolder = $this->getFakeScaffolder();
+		$scaffolder->nestedQuery('MyField');
+
+	}
+
+	public function testDataObjectScaffolderDependentClasses()
+	{
+		$scaffolder = $this->getFakeScaffolder();
+		$this->assertEquals([], $scaffolder->getDependentClasses());
+		$scaffolder->nestedQuery('Files');
+		$this->assertEquals(
+			[$scaffolder->getDataObjectInstance()->Files()->dataClass()],
+			$scaffolder->getDependentClasses()
+		);
+
+		$scaffolder->addField('Author');
+		$this->assertEquals(
+			[
+				$scaffolder->getDataObjectInstance()->Author()->class,
+				$scaffolder->getDataObjectInstance()->Files()->dataClass()
+			],
+			$scaffolder->getDependentClasses()
+		);
+	}
+
+	public function testDataObjectScaffolderAncestralClasses()
+	{
+		$scaffolder = new DataObjectScaffolder(RedirectorPage::class);
+		$classes = $scaffolder->getAncestralClasses();
+
+		$this->assertEquals([
+			'Page','SilverStripe\CMS\Model\SiteTree'
+		], $classes);
+
+	}
+
+	public function testDataObjectScaffolderApplyConfig()
+	{
+		$observer = $this->getMockBuilder(DataObjectScaffolder::class)
+			->setConstructorArgs([DataObjectFake::class])
+			->setMethods(['addFields','addAllFieldsExcept','operation','nestedQuery'])
+			->getMock();
+
+		$observer->expects($this->once())
+			->method('addFields')
+			->with($this->equalTo(['MyField']));
+
+		$observer->expects($this->once())
+			->method('addAllFieldsExcept')
+			->with($this->equalTo(['MyField']));
+
+		$observer->expects($this->exactly(2))
+			->method('operation')
+			->withConsecutive(
+				[$this->equalTo(GraphQLScaffolder::CREATE)],
+				[$this->equalTo(GraphQLScaffolder::READ)]
+			)
+			->will($this->returnValue(
+				$this->getMockBuilder(Create::class)
+					->disableOriginalConstructor()
+					->getMock()
+			));
+
+		$observer->expects($this->once())
+			->method('nestedQuery')
+			->with($this->equalTo('Files'))
+			->will($this->returnValue(
+				$this->getMockBuilder(QueryScaffolder::class)
+					->disableOriginalConstructor()
+					->getMock()
+			));
+
+
+		$observer->applyConfig([
+			'fields' => ['MyField'],
+			'fieldsExcept' => ['MyField'],
+			'operations' => ['create' => true,'read' => true],
+			'nestedQueries' => ['Files' => true]
+		]);
+
+	}
+
+	public function testDataObjectScaffolderApplyConfigNoFieldsException()
+	{
+		$scaffolder = $this->getFakeScaffolder();
+
+		// Must have "fields" defined
+		$this->setExpectedExceptionRegExp(
+			Exception::class,
+			'/No array of fields/'
+		);
+		$scaffolder->applyConfig([
+			'operations' => ['create' => true]
+		]);
+	}
+
+	public function testDataObjectScaffolderApplyConfigInvalidFieldsException()
+	{
+		$scaffolder = $this->getFakeScaffolder();
+
+		// Invalid fields
+		$this->setExpectedExceptionRegExp(
+			Exception::class,
+			'/Fields must be an array/'
+		);
+		$scaffolder->applyConfig([
+			'fields' => 'fail'
+		]);
+	}
+
+	public function testDataObjectScaffolderApplyConfigInvalidFieldsExceptException()
+	{
+		$scaffolder = $this->getFakeScaffolder();
+
+		// Invalid fieldsExcept
+		$this->setExpectedExceptionRegExp(
+			InvalidArgumentException::class,
+			'/"fieldsExcept" must be an array/'
+		);
+		$scaffolder->applyConfig([
+			'fieldsExcept' => 'fail'
+		]);
+	}
+
+	public function testDataObjectScaffolderApplyConfigInvalidOperationsException()
+	{
+		$scaffolder = $this->getFakeScaffolder();
+
+		// Invalid operations
+		$this->setExpectedExceptionRegExp(
+			Exception::class,
+			'/Operations field must be a map/'
+		);
+		$scaffolder->applyConfig([
+			'fieldsExcept' => ['MyField'],
+			'operations' => ['create']
+		]);
+	}
+
+	public function testDataObjectScaffolderApplyConfigInvalidNestedQueriesException()
+	{
+		$scaffolder = $this->getFakeScaffolder();
+
+		// Invalid nested queries
+		$this->setExpectedExceptionRegExp(
+			Exception::class,
+			'/"nestedQueries" must be a map of relation name/'
+		);
+		$scaffolder->applyConfig([
+			'fields' => ['MyField'],
+			'nestedQueries' => ['Files']
+		]);
+	}
+
+
+
+	public function testDataObjectScaffolderWildcards()
+	{
+		$scaffolder = $this->getFakeScaffolder();
+		$scaffolder->applyConfig([
+			'fields' => '*',
+			'operations' => '*'
+		]);
+		$ops = $scaffolder->getOperations();
+
+		$this->assertInstanceOf(Create::class, $ops->findByIdentifier(GraphQLScaffolder::CREATE));
+		$this->assertInstanceOf(Delete::class, $ops->findByIdentifier(GraphQLScaffolder::DELETE));
+		$this->assertInstanceOf(Read::class, $ops->findByIdentifier(GraphQLScaffolder::READ));
+		$this->assertInstanceOf(Update::class, $ops->findByIdentifier(GraphQLScaffolder::UPDATE));
+
+		$this->assertEquals(
+			['ID','ClassName','LastEdited','Created','MyField','MyInt'],
+			$scaffolder->getFields()->toArray()
+		);
+	}
+
+	public function testDataObjectScaffolderScaffold()
+	{
+		$scaffolder = $this->getFakeScaffolder();
+		$scaffolder->addFields(['MyField', 'Author'])
+				   ->nestedQuery('Files');
+
+		$objectType = $scaffolder->scaffold(new Manager());
+
+		$this->assertInstanceof(ObjectType::class, $objectType);
+		$config = $objectType->config;
+
+		$this->assertEquals($scaffolder->typeName(), $config['name']);
+		$this->assertEquals(['MyField', 'Author', 'Files'], array_keys($config['fields']));
+	}
+
+	public function testDataObjectScaffolderScaffoldFieldException()
+	{
+		$this->setExpectedExceptionRegExp(
+			InvalidArgumentException::class,
+			'/Invalid field/'
+		);
+		$scaffolder = $this->getFakeScaffolder()
+			->addFields(['not a field'])
+			->scaffold(new Manager());		
+	}
+
+	public function testDataObjectScaffolderScaffoldNestedQueryException()
+	{
+		$this->setExpectedExceptionRegExp(
+			InvalidArgumentException::class,
+			'/returns a list/'
+		);
+		$scaffolder = $this->getFakeScaffolder()
+			->addFields(['Files'])
+			->scaffold(new Manager());
+	}
+
+	public function testDataObjectScaffolderAddToManager()
+	{
+		$manager = new Manager();
+		$scaffolder = $this->getFakeScaffolder()
+			->addFields(['MyField'])
+			->operation(GraphQLScaffolder::CREATE)
+				->end()
+			->operation(GraphQLScaffolder::READ)
+				->end();
+
+		$scaffolder->addToManager($manager);
+
+		$schema = $manager->schema();
+		$queryConfig = $schema->getQueryType()->config;
+		$mutationConfig = $schema->getMutationType()->config;
+		$types = $schema->getTypeMap();
+
+		$this->assertArrayHasKey(
+			(new Read(DataObjectFake::class))->getName(),
+			$queryConfig['fields']
+		);
+
+		$this->assertArrayHasKey(
+			(new Create(DataObjectFake::class))->getName(),
+			$mutationConfig['fields']
+		);
+
+		$this->assertTrue($manager->hasType($scaffolder->typeName()));
+
+	}
+
+
+	public function testGraphQLScaffolderTypes()
+	{
+
+		$scaffolder = new GraphQLScaffolder();
+		$type = $scaffolder->type(DataObjectFake::class);
+		$type->Test = true;
+		$type2 = $scaffolder->type(DataObjectFake::class);
+
+		$query = $scaffolder->query('testQuery', DataObjectFake::class);
+		$query->Test = true;
+		$query2 = $scaffolder->query('testQuery', DataObjectFake::class);
+
+		$mutation = $scaffolder->mutation('testMutation', DataObjectFake::class);
+		$mutation->Test = true;
+		$mutation2 = $scaffolder->mutation('testMutation', DataObjectFake::class);
+
+		$this->assertEquals(1, count($scaffolder->getTypes()));
+		$this->assertTrue($type2->Test);
+
+		$this->assertEquals(1, $scaffolder->getQueries()->count());
+		$this->assertTrue($query2->Test);
+
+		$this->assertEquals(1, $scaffolder->getMutations()->count());
+		$this->assertTrue($mutation2->Test);
+
+		$scaffolder->removeQuery('testQuery');
+		$this->assertEquals(0, $scaffolder->getQueries()->count());
+
+		$scaffolder->removeMutation('testMutation');
+		$this->assertEquals(0, $scaffolder->getMutations()->count());
+
+	}
+
+	public function testGraphQLScaffolderAddToManager()
+	{
+		Config::inst()->update('Page','db', [
+			'TestPageField' => 'Varchar'
+		]);
+
+		$manager = new Manager();
+		$scaffolder = (new GraphQLScaffolder())
+			->type(RedirectorPage::class)
+				->addFields(['Created','TestPageField', 'RedirectionType'])
+				->operation(GraphQLScaffolder::CREATE)
+					->end()
+				->operation(GraphQLScaffolder::READ)
+					->end()
+				->end()
+			->type(DataObjectFake::class)
+				->addFields(['Author'])
+				->nestedQuery('Files')
+					->end()
+				->end()
+			->query('testQuery', DataObjectFake::class)
+				->end()
+			->mutation('testMutation', DataObjectFake::class)
+				->end();
+
+		$scaffolder->addToManager($manager);
+		$queries = $scaffolder->getQueries();
+		$mutations = $scaffolder->getMutations();
+		$types = $scaffolder->getTypes();
+
+		$classNames = array_map(function($scaffold) {
+			return $scaffold->getDataObjectClass();
+		}, $types);
+
+		$this->assertEquals([
+			RedirectorPage::class,			
+			DataObjectFake::class,			
+			Page::class,
+			SiteTree::class,
+			Member::class,
+			File::class
+		], $classNames);
+
+		$this->assertEquals([
+			'Created', 'TestPageField', 'RedirectionType'
+		], $scaffolder->type(RedirectorPage::class)->getFields()->toArray());
+
+		$this->assertEquals([
+			'Created', 'TestPageField'
+		], $scaffolder->type(Page::class)->getFields()->toArray());
+
+		$this->assertEquals([
+			'Created'
+		], $scaffolder->type(SiteTree::class)->getFields()->toArray());
+
+
+		$this->assertEquals('testQuery', $scaffolder->getQueries()->first()->getName());
+		$this->assertEquals('testMutation', $scaffolder->getMutations()->first()->getName());
+
+		$this->assertInstanceof(
+			Read::class,			
+			$scaffolder->type(RedirectorPage::class)->getOperations()->findByIdentifier(GraphQLScaffolder::READ)
+		);
+		$this->assertInstanceof(
+			Read::class,			
+			$scaffolder->type(Page::class)->getOperations()->findByIdentifier(GraphQLScaffolder::READ)
+		);
+		$this->assertInstanceof(
+			Read::class,			
+			$scaffolder->type(SiteTree::class)->getOperations()->findByIdentifier(GraphQLScaffolder::READ)
+		);
+
+		$this->assertInstanceof(
+			Create::class,			
+			$scaffolder->type(RedirectorPage::class)->getOperations()->findByIdentifier(GraphQLScaffolder::CREATE)
+		);
+		$this->assertInstanceof(
+			Create::class,			
+			$scaffolder->type(Page::class)->getOperations()->findByIdentifier(GraphQLScaffolder::CREATE)
+		);
+		$this->assertInstanceof(
+			Create::class,			
+			$scaffolder->type(SiteTree::class)->getOperations()->findByIdentifier(GraphQLScaffolder::CREATE)
+		);
+	}
+
+	public function testGraphQLScaffolderCreateFromConfigThrowsIfBadTypes()
+	{
+		$this->setExpectedExceptionRegExp(
+			InvalidArgumentException::class,
+			'/"types" must be a map of class name to settings/'
+		);
+		GraphQLScaffolder::createFromConfig([
+			'types' => ['fail']
+		]);
+	}
+
+	public function testGraphQLScaffolderCreateFromConfigThrowsIfBadQueries()
+	{
+		$this->setExpectedExceptionRegExp(
+			InvalidArgumentException::class,
+			'/must be a map of operation name to settings/'
+		);
+		GraphQLScaffolder::createFromConfig([
+			'types' => [
+				DataObjectFake::class => [
+					'fields' => '*'
+				]
+			],
+			'queries' => ['fail']
+		]);
+	}
+
+	public function testGraphQLScaffolderCreateFromConfig()
+	{
+		$observer = $this->getMockBuilder(GraphQLScaffolder::class)
+			->setMethods(['query','mutation','type'])
+			->getMock();
+
+		$observer->expects($this->once())
+			->method('query')
+			->will($this->returnValue(new QueryScaffolder('test','test')));
+
+		$observer->expects($this->once())
+			->method('mutation')
+			->will($this->returnValue(new MutationScaffolder('test','test')));
+
+		$observer->expects($this->once())
+			->method('type')
+			->willReturn(
+				new DataObjectScaffolder(DataObjectFake::class)
+			);
+
+		Injector::inst()->registerService($observer, GraphQLScaffolder::class);
+
+		GraphQLScaffolder::createFromConfig([
+			'types' => [
+				DataObjectFake::class => [
+					'fields' => ['MyField']
+				]
+			],
+			'queries' => [
+				'testQuery' => [
+					'type' => DataObjectFake::class,
+					'resolver' => FakeResolver::class
+				]
+			],
+			'mutations' => [
+				'testMutation' => [
+					'type' => DataObjectFake::class,
+					'resolver' => FakeResolver::class
+				]
+			]
+		]);
+	}
+
+	public function testOperationIdentifiers()
+	{
+		$this->assertEquals(
+			Read::class, 
+			OperationScaffolder::getOperationScaffoldFromIdentifier(GraphQLScaffolder::READ)
+		);
+		$this->assertEquals(
+			Update::class, 
+			OperationScaffolder::getOperationScaffoldFromIdentifier(GraphQLScaffolder::UPDATE)
+		);
+		$this->assertEquals(
+			Delete::class, 
+			OperationScaffolder::getOperationScaffoldFromIdentifier(GraphQLScaffolder::DELETE)
+		);
+		$this->assertEquals(
+			Create::class, 
+			OperationScaffolder::getOperationScaffoldFromIdentifier(GraphQLScaffolder::CREATE)
+		);
+
+	}
+
+	public function testOperationScaffolderArgs()
+	{
+		$scaffolder = new OperationScaffolderFake('testOperation','testType');
+		
+		$this->assertEquals('testOperation', $scaffolder->getName());
+		$scaffolder->addArgs([
+			'One' => 'String',
+			'Two' => 'Boolean'
+		]);
+		$scaffolder->addArgs([
+			'One' => 'String'
+		]);
+
+		$this->assertEquals(['One','Two'], array_keys($scaffolder->getArgs()));
+	}
+
+	public function testOperationScaffolderResolver()
+	{
+		$scaffolder = new OperationScaffolderFake('testOperation','testType');
+
+		try {
+			$scaffolder->setResolver(function() {});
+			$scaffolder->setResolver(FakeResolver::class);
+			$scaffolder->setResolver(new FakeResolver());
+			$success = true;
+		} catch (Exception $e) {
+			$success = false;
+		}
+
+		$this->assertTrue($success);
+
+		$this->setExpectedExceptionRegExp(
+			InvalidArgumentException::class,
+			'/closures, instances of/'
+		);
+		$scaffolder->setResolver('fail');
+	}
+
+	public function testOperationScaffolderAppliesConfig()
+	{
+		$scaffolder = new OperationScaffolderFake('testOperation','testType');
+		
+		try {
+			$scaffolder->applyConfig([
+				'args' => [
+					'One' => 'String',
+					'Two' => 'Boolean'
+				],
+				'resolver' => FakeResolver::class
+			]);
+			$success = true;
+		} catch (Exception $e) {
+			$success = false;
+		}
+
+		$this->assertTrue($success);
+		$this->assertEquals(['One','Two'], array_keys($scaffolder->getArgs()));
+	}
+
+	public function testMutationScaffolder()
+	{
+		$observer = $this->getMockBuilder(Manager::class)
+			->setMethods(['addMutation'])
+			->getMock();
+		$scaffolder = new MutationScaffolder('testMutation', 'test');
+		$scaffolder->addArgs(['Test' => 'String']);
+		$scaffold = $scaffolder->scaffold($manager = new Manager());
+		$manager->addType($o = new ObjectType([
+			'name' => 'test',
+			'fields' => []
+		]));
+		$o->Test = true;
+
+		$this->assertEquals('testMutation', $scaffold['name']);
+		$this->assertArrayHasKey('Test', $scaffold['args']);
+		$this->assertTrue(is_callable($scaffold['resolve']));
+		$this->assertTrue($scaffold['type']()->Test);
+
+		$observer->expects($this->once())
+			->method('addMutation')
+			->with(
+				$this->equalTo($scaffold),
+				$this->equalTo('testMutation')
+			);
+
+		$scaffolder->addToManager($observer);
+	}
+
+	public function testQueryScaffolderUnpaginated()
+	{
+		$observer = $this->getMockBuilder(Manager::class)
+			->setMethods(['addQuery'])
+			->getMock();
+		$scaffolder = new QueryScaffolder('testQuery', 'test');
+		$scaffolder->setUsePagination(false);
+		$scaffolder->addArgs(['Test' => 'String']);
+		$scaffold = $scaffolder->scaffold($manager = new Manager());
+		
+		$manager->addType($o = new ObjectType([
+			'name' => 'test',
+			'fields' => []
+		]));
+		$o->Test = true;
+
+		$this->assertEquals('testQuery', $scaffold['name']);
+		$this->assertArrayHasKey('Test', $scaffold['args']);
+		$this->assertTrue(is_callable($scaffold['resolve']));
+		$this->assertTrue($scaffold['type']()->Test);
+
+		$observer->expects($this->once())
+			->method('addQuery')
+			->with(
+				$this->equalTo($scaffold),
+				$this->equalTo('testQuery')
+			);
+
+		$scaffolder->addToManager($observer);
+	}
+
+	public function testQueryScaffolderPaginated()
+	{
+		$scaffolder = new QueryScaffolder('testQuery', 'test');
+		$scaffolder->setUsePagination(true);
+		$scaffolder->addArgs(['Test' => 'String']);
+		$scaffolder->addSortableFields(['test']);
+		$scaffold = $scaffolder->scaffold($manager = new Manager());
+		$manager->addType($o = new ObjectType([
+			'name' => 'test',
+			'fields' => []
+		]));
+		$o->Test = true;
+		$config = $scaffold['type']()->config;
+
+		$this->assertEquals('testQueryConnection', $config['name']);
+		$this->assertArrayHasKey('pageInfo', $config['fields']);
+		$this->assertArrayHasKey('edges', $config['fields']);
+	}
+
+	public function testQueryScaffolderApplyConfig()
+	{
+		$mock = $this->getMockBuilder(QueryScaffolder::class)
+			->setConstructorArgs(['testQuery', 'testType'])
+			->setMethods(['addSortableFields','setUsePagination'])
+			->getMock();
+		$mock->expects($this->once())
+			->method('addSortableFields')
+			->with(['Test1','Test2']);
+		$mock->expects($this->once())
+			->method('setUsePagination')
+			->with(false);
+
+		$mock->applyConfig([
+			'sortableFields' => ['Test1','Test2'],
+			'paginate' => false
+		]);
+	}
+
+	public function testQueryScaffolderApplyConfigThrowsOnBadSortableFields()
+	{
+		$scaffolder = new QueryScaffolder('testQuery','testType');
+		$this->setExpectedExceptionRegExp(
+			InvalidArgumentException::class,
+			'/sortableFields must be an array/'
+		);
+		$scaffolder->applyConfig([
+			'sortableFields' => 'fail'			
+		]);
+	}
+
+    public function testTypeParser()
+    {
+        $parser = new TypeParser('String!=Test');
+        $this->assertTrue($parser->isRequired());
+        $this->assertEquals('String', $parser->getArgTypeName());
+        $this->assertEquals('Test', $parser->getDefaultValue());
+        $this->assertTrue(is_string($parser->toArray()['defaultValue']));
+
+        $parser = new TypeParser('String! = Test');
+        $this->assertTrue($parser->isRequired());
+        $this->assertEquals('String', $parser->getArgTypeName());
+        $this->assertEquals('Test', $parser->getDefaultValue());
+
+        $parser = new TypeParser('Int!');
+        $this->assertTrue($parser->isRequired());
+        $this->assertEquals('Int', $parser->getArgTypeName());
+        $this->assertNull($parser->getDefaultValue());
+
+        $parser = new TypeParser('Int!=23');
+        $this->assertTrue($parser->isRequired());
+        $this->assertEquals('Int', $parser->getArgTypeName());
+        $this->assertEquals('23', $parser->getDefaultValue());
+		$this->assertTrue(is_int($parser->toArray()['defaultValue']));
+
+        $parser = new TypeParser('Boolean');
+        $this->assertFalse($parser->isRequired());
+        $this->assertEquals('Boolean', $parser->getArgTypeName());
+        $this->assertNull($parser->getDefaultValue());
+
+        $parser = new TypeParser('Boolean=1');
+        $this->assertFalse($parser->isRequired());
+        $this->assertEquals('Boolean', $parser->getArgTypeName());
+        $this->assertEquals('1', $parser->getDefaultValue());
+		$this->assertTrue(is_bool($parser->toArray()['defaultValue']));
+
+        $parser = new TypeParser('String!=Test');
+        $arr = $parser->toArray();
+        $this->assertInstanceOf(NonNull::class, $arr['type']);
+        $this->assertInstanceOf(StringType::class, $arr['type']->getWrappedType());
+        $this->assertEquals('Test', $arr['defaultValue']);
+
+        $this->setExpectedException(InvalidArgumentException::class);
+        $parser = new TypeParser('  ... Nothing');
+
+        $this->setExpectedException(InvalidArgumentException::class);
+        $parser = (new TypeParser('Nothing'))->toArray();
+    }
+
+    public function testArgsParser()
+    {
+        $parsers = [
+            new ArgsParser([
+                'Test' => 'String'
+            ]),
+            new ArgsParser([
+                'Test' => Type::string()
+            ]),
+            new ArgsParser([
+                'Test' => ['type' => Type::string()]
+            ])
+        ];
+
+        foreach ($parsers as $parser) {
+            $arr = $parser->toArray();
+            $this->assertArrayHasKey('Test', $arr);
+            $this->assertArrayHasKey('type', $arr['Test']);
+            $this->assertInstanceOf(StringType::class, $arr['Test']['type']);
+        }
+    }
+
+
+    public function testOperationList()
+    {
+        $list = new OperationList();
+
+        $list->push(new MutationScaffolder('myMutation1', 'test1'));
+        $list->push(new MutationScaffolder('myMutation2', 'test2'));
+
+        $this->assertInstanceOf(
+            MutationScaffolder::class,
+            $list->findByName('myMutation1')
+        );
+        $this->assertFalse($list->findByName('myMutation3'));
+
+        $list->removeByName('myMutation2');
+        $this->assertEquals(1, $list->count());
+
+        $list->removeByName('nothing');
+        $this->assertEquals(1, $list->count());
+
+        $this->setExpectedExceptionRegExp(
+        	InvalidArgumentException::class,
+        	'/only accepts instances of/'
+        );
+        $list->push(new OperationList());
+    }
+
+	protected function getFakeScaffolder()
+	{
+		return new DataObjectScaffolder(DataObjectFake::class);
+	}
+
 
 }

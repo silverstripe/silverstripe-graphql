@@ -2,7 +2,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
-use SilverStripe\GraphQL\Scaffolding\ResolverInterface;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 
 class FakeResolver implements ResolverInterface
 {
