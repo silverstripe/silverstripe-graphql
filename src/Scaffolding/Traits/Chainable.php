@@ -4,17 +4,17 @@ namespace SilverStripe\GraphQL\Scaffolding\Traits;
 
 trait Chainable
 {
-	protected $chainableParent;
+    protected $chainableParent;
 
-	public function setChainableParent($parent)
-	{
-		$this->chainableParent = $parent;
+    public function setChainableParent($parent)
+    {
+        $this->chainableParent = $parent;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function end()
-	{
-		return $this->chainableParent;
-	}
+    public function end()
+    {
+        return $this->chainableParent;
+    }
 }

@@ -65,5 +65,4 @@ trait DataObjectTypeTrait
 
         return $this;
     }
-
 }

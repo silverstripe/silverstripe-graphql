@@ -15,5 +15,4 @@ interface ResolverInterface
      * @return mixed
      */
     public function resolve($object, $args, $context, $info);
-
 }

@@ -216,7 +216,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
      */
     public function getTypes()
     {
-    	return $this->types;
+        return $this->types;
     }
 
     /**
@@ -224,7 +224,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
      */
     public function getQueries()
     {
-    	return $this->queries;
+        return $this->queries;
     }
 
     /**
@@ -232,7 +232,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
      */
     public function getMutations()
     {
-    	return $this->mutations;
+        return $this->mutations;
     }
 
     /**

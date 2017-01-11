@@ -108,7 +108,7 @@ abstract class OperationScaffolder implements Configurable
      */
     public function getArgs()
     {
-    	return $this->args;
+        return $this->args;
     }
 
     /**

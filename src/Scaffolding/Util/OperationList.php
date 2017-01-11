@@ -52,9 +52,9 @@ class OperationList extends ArrayList
      */
     public function findByName($name)
     {
-    	return $this->findItemByCallback(function ($item) use ($name) {
-    		return $name === $item->getName();
-    	});
+        return $this->findItemByCallback(function ($item) use ($name) {
+            return $name === $item->getName();
+        });
     }
 
     /**
@@ -63,9 +63,9 @@ class OperationList extends ArrayList
      */
     public function findByIdentifier($id)
     {
-    	return $this->findItemByCallback(function ($item) use ($id) {
-    		return $id === $item->getIdentifier();
-    	});
+        return $this->findItemByCallback(function ($item) use ($id) {
+            return $id === $item->getIdentifier();
+        });
     }
 
     /**
@@ -74,7 +74,7 @@ class OperationList extends ArrayList
     public function removeByName($name)
     {
         $this->removeItemByCallback(function ($operation) use ($name) {
-        	return $operation->getName() === $name;
+            return $operation->getName() === $name;
         });
     }
 
@@ -84,7 +84,7 @@ class OperationList extends ArrayList
     public function removeByIdentifier($id)
     {
         $this->removeItemByCallback(function ($operation) use ($id) {
-        	return $operation->getIdentifier() === $id;
+            return $operation->getIdentifier() === $id;
         });
     }
 
@@ -94,7 +94,7 @@ class OperationList extends ArrayList
     public function removeItemByCallback($callback)
     {
         $renumberKeys = false;
-        foreach ($this->items as $key => $value) {        	
+        foreach ($this->items as $key => $value) {
             if ($callback($value)) {
                 $renumberKeys = true;
                 unset($this->items[$key]);
@@ -109,14 +109,15 @@ class OperationList extends ArrayList
     /**
      * @param \Closure
      */
-    public function findItemByCallback($callback) {
-    	foreach ($this->items as $key => $value) {
-    		if($callback($value)) {
-    			return $value;
-    		}
-    	}
+    public function findItemByCallback($callback)
+    {
+        foreach ($this->items as $key => $value) {
+            if ($callback($value)) {
+                return $value;
+            }
+        }
 
-    	return false;
+        return false;
 
     }
 }

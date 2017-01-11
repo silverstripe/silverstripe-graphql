@@ -124,8 +124,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function addAllFieldsExcept($exclusions, $includeHasOne = false)
     {
-        if(!is_array($exclusions)) {
-        	$exclusions = [$exclusions];
+        if (!is_array($exclusions)) {
+            $exclusions = [$exclusions];
         }
         $fields = $this->allFieldsFromDataObject($includeHasOne);
         $filteredFields = array_diff($fields, $exclusions);
@@ -180,7 +180,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function getNestedQueries()
     {
-    	return $this->nestedQueries;
+        return $this->nestedQueries;
     }
 
     /**
@@ -191,7 +191,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      * @return $this
      */
     public function removeOperation($identifier)
-    {        
+    {
         $this->operations->removeByIdentifier($identifier);
 
         return $this;
@@ -205,7 +205,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      * @return OperationScaffolder
      */
     public function operation($operation)
-    {	
+    {
         $scaffoldClass = OperationScaffolder::getOperationScaffoldFromIdentifier($operation);
 
         if (!$scaffoldClass) {
@@ -219,7 +219,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         $scaffolder = new $scaffoldClass($this->dataObjectClass);
         $existing = $this->operations->findByIdentifier($operation);
 
-        if ($existing) {        
+        if ($existing) {
             return $existing;
         }
 
@@ -295,8 +295,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         $ancestry = array_reverse(ClassInfo::ancestry($this->dataObjectClass));
 
         foreach ($ancestry as $class) {
-            if($class === $this->dataObjectClass) {
-            	continue;
+            if ($class === $this->dataObjectClass) {
+                continue;
             }
             if ($class == DataObject::class) {
                 break;
@@ -315,17 +315,17 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 "No array of fields defined for $dataObjectClass"
             );
         }
-        if(isset($config['fields'])) {
-	        if($config['fields'] === '*')  {        	
-	        	$this->addAllFields();
-	        } else if(is_array($config['fields'])) {
-	        	$this->addFields($config['fields']);	
-	        } else {
-	    		throw new \Exception(
-	    			"Fields must be an array, or '*' for all fields in $dataObjectClass"
-	    		);        	
-	        }
-    	}		
+        if (isset($config['fields'])) {
+            if ($config['fields'] === '*') {
+                $this->addAllFields();
+            } elseif (is_array($config['fields'])) {
+                $this->addFields($config['fields']);
+            } else {
+                throw new \Exception(
+                    "Fields must be an array, or '*' for all fields in $dataObjectClass"
+                );
+            }
+        }
 
         if (isset($config['fieldsExcept'])) {
             if (!is_array($config['fieldsExcept'])) {
@@ -338,31 +338,31 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             $this->addAllFieldsExcept($config['fieldsExcept']);
         }
 
-        if (isset($config['operations'])) {            
-	        if ($config['operations'] === '*') {
-	            $config['operations'] = [
-	                GraphQLScaffolder::CREATE => true,
-	                GraphQLScaffolder::READ => true,
-	                GraphQLScaffolder::UPDATE => true,
-	                GraphQLScaffolder::DELETE => true,
-	            ];
-	        }
+        if (isset($config['operations'])) {
+            if ($config['operations'] === '*') {
+                $config['operations'] = [
+                    GraphQLScaffolder::CREATE => true,
+                    GraphQLScaffolder::READ => true,
+                    GraphQLScaffolder::UPDATE => true,
+                    GraphQLScaffolder::DELETE => true,
+                ];
+            }
 
-	        if (!ArrayLib::is_associative($config['operations'])) {
-	            throw new \Exception(
-	                'Operations field must be a map of operation names to a map of settings, or true/false'
-	            );
-	        }
+            if (!ArrayLib::is_associative($config['operations'])) {
+                throw new \Exception(
+                    'Operations field must be a map of operation names to a map of settings, or true/false'
+                );
+            }
 
-	        foreach ($config['operations'] as $opID => $opSettings) {
-	            if ($opSettings === false) {
-	                continue;
-	            }
+            foreach ($config['operations'] as $opID => $opSettings) {
+                if ($opSettings === false) {
+                    continue;
+                }
 
-	            $this->operation($opID)
-	                ->applyConfig((array) $opSettings);
-	        }
-    	}
+                $this->operation($opID)
+                    ->applyConfig((array) $opSettings);
+            }
+        }
 
         if (isset($config['nestedQueries'])) {
             if (!ArrayLib::is_associative($config['nestedQueries'])) {

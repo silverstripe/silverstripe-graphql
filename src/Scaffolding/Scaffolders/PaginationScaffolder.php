@@ -9,14 +9,14 @@ use SilverStripe\GraphQL\Manager;
 class PaginationScaffolder extends PaginatedQueryCreator
 {
 
-	public function __construct(Manager $manager, Connection $connection)
-	{
-		$this->manager = $manager;
-		$this->connection = $connection;
-	}
+    public function __construct(Manager $manager, Connection $connection)
+    {
+        $this->manager = $manager;
+        $this->connection = $connection;
+    }
 
-	public function connection()
-	{
-		return $this->connection;
-	}
+    public function connection()
+    {
+        return $this->connection;
+    }
 }

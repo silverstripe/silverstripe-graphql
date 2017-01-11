@@ -12,7 +12,7 @@ class ScaffoldingUtil
     /**
      * Given a DataObject subclass name, transform it into a sanitised (and implicitly unique) type
      * name suitable for the GraphQL schema
-     * 
+     *
      * @param $class
      * @return mixed
      */
@@ -29,5 +29,4 @@ class ScaffoldingUtil
     {
         return ($instance->hasMethod($fieldName) || $instance->hasField($fieldName));
     }
-
 }
