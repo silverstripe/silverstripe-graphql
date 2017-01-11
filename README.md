@@ -513,7 +513,7 @@ The example code will show demonstrate both methods for each section.
 For these examples, we'll imagine we have the following model:
 
 ```php
-namespace MyProject\GraphQL;
+namespace MyProject;
 
 class Post extends DataObject {
 
@@ -527,7 +527,7 @@ class Post extends DataObject {
   ];
 
   private static $has_many = [
-  	'Comments' => 'MyProject\GraphQL\Comment'
+  	'Comments' => 'MyProject\Comment'
   ];
 
   private static $many_many = [
@@ -560,13 +560,13 @@ bootstrap itself with any scaffolders that are registered in its config. These s
 As a `ScaffoldingProvider`, the class must now offer the `provideGraphQLScaffolding()` method.
 
 ```php
-namespace MyProject\GraphQL;
+namespace MyProject;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 
 class Post extends DataObject implements ScaffoldingProvider {
 	//...
-    public function provideGraphQLScaffolding(GraphQLScaffolder $scaffolder)
+    public function provideGraphQLScaffolding(SchemaScaffolder $scaffolder)
     {
     	// update the scaffolder here
 	}
@@ -579,7 +579,7 @@ In order to register the scaffolding provider with the manager, we'll need to ma
 SilverStripe\GraphQL:
   schema:
     scaffolding_providers:
-      - MyProject\GraphQL\Post
+      - MyProject\Post
 ```
 
 
@@ -595,7 +595,7 @@ SilverStripe\GraphQL:
   schema:
     scaffolding:
       types:
-        MyProject\GraphQL\Post:
+        MyProject\Post:
           fields: [ID, Title, Content]
           operations:
             read: true
@@ -622,18 +622,18 @@ mutation UpdatePost($ID: ID!, $Input: PostUpdateInputType!)
 
 **...Or with code**:
 ```php
-namespace MyProject\GraphQL;
+namespace MyProject;
 
 class Post extends DataObject implements ScaffoldingProvider {
 	//...
-    public function provideGraphQLScaffolding(GraphQLScaffolder $scaffolder)
+    public function provideGraphQLScaffolding(SchemaScaffolder $scaffolder)
     {
     	$scaffolder
     		->type(Post::class)
 	    		->addFields(['ID','Title','Content'])
-	    		->operation(GraphQLScaffolder::READ)
+	    		->operation(SchemaScaffolder::READ)
 	    			->end()
-	    		->operation(GraphQLScaffolder::UPDATE)
+	    		->operation(SchemaScaffolder::UPDATE)
 	    			->end()
 	    		->end();
 
@@ -655,13 +655,13 @@ SilverStripe\GraphQL:
   schema:
     scaffolding:
       types:
-        MyProject\GraphQL\Post:
+        MyProject\Post:
           fields: [ID, Title, Content]
           operations:
             read:
               args:
                 StartingWith: String
-              resolver: MyProject\GraphQL\ReadPostResolver
+              resolver: MyProject\ReadPostResolver
             create: true
 ```
 
@@ -670,7 +670,7 @@ SilverStripe\GraphQL:
 	$scaffolder
 		->type(Post::class)
     		->addFields(['ID','Title','Content'])
-    		->operation(GraphQLScaffolder::READ)
+    		->operation(SchemaScaffolder::READ)
     			->addArgs([
     				'StartingWith' => 'String'
     			])
@@ -683,7 +683,7 @@ SilverStripe\GraphQL:
         			return $list;
         		})         	
     			->end()
-    		->operation(GraphQLScaffolder::UPDATE)
+    		->operation(SchemaScaffolder::UPDATE)
     			->end()
     		->end();
 ```
@@ -735,7 +735,7 @@ This resolver class may now be assigned as either an instance, or a string to th
 ```php
 	$scaffolder
 		->type(Post::class)
-			->operation(GraphQLScaffolder::UPDATE)
+			->operation(SchemaScaffolder::UPDATE)
 				->setResolver(MyResolver::class)
 				->end();
 ```
@@ -743,7 +743,7 @@ Or...
 ```php
 	$scaffolder
 		->type(Post::class)
-			->operation(GraphQLScaffolder::UPDATE)
+			->operation(SchemaScaffolder::UPDATE)
 				->setResolver(new MyResolver())
 				->end();
 ```
@@ -758,16 +758,16 @@ SilverStripe\GraphQL:
   schema:
     scaffolding:
       types:
-        MyProject\GraphQL\Post:
+        MyProject\Post:
           fields: [ID, Title, Content]
           operations:
             read:
               args:
                 StartingWith: String
-              resolver: MyProject\GraphQL\ReadPostResolver
+              resolver: MyProject\ReadPostResolver
               sortableFields: [Title]            
             create: true
-        MyProject\GraphQL\Comment:
+        MyProject\Comment:
           fields: [Comment, Author]
           operations:
             read:
@@ -779,7 +779,7 @@ SilverStripe\GraphQL:
 	$scaffolder
 		->type(Post::class)
     		->addFields(['ID','Title','Content'])
-    		->operation(GraphQLScaffolder::READ)
+    		->operation(SchemaScaffolder::READ)
     			->addArgs([
     				'StartingWith' => 'String'
     			])
@@ -793,12 +793,12 @@ SilverStripe\GraphQL:
         		})
         		->addSortableFields(['Title'])         	
     			->end()
-    		->operation(GraphQLScaffolder::UPDATE)
+    		->operation(SchemaScaffolder::UPDATE)
     			->end()
     		->end()
     	->type(Comment::class)
     		->addFields(['Comment','Author'])
-    		->operation(GraphQLScaffolder::READ)
+    		->operation(SchemaScaffolder::READ)
     			->setUsePagination(false)
     			->end();
 ```
@@ -836,19 +836,19 @@ SilverStripe\GraphQL:
   schema:
     scaffolding:
       types:
-        MyProject\GraphQL\Post:
+        MyProject\Post:
           fields: [ID, Title, Content, Author]
           operations:
             read:
               args:
                 StartingWith: String
-              resolver: MyProject\GraphQL\ReadPostResolver
+              resolver: MyProject\ReadPostResolver
               sortableFields: [Title]            
             create: true
           nestedQueries:
             Comments: true
             Files: true
-        MyProject\GraphQL\Comment:
+        MyProject\Comment:
           fields: [Comment, Author]
           operations:
             read:
@@ -861,7 +861,7 @@ SilverStripe\GraphQL:
 	$scaffolder
 		->type(Post::class)
     		->addFields(['ID','Title','Content', 'Author'])
-    		->operation(GraphQLScaffolder::READ)
+    		->operation(SchemaScaffolder::READ)
     			->addArgs([
     				'StartingWith' => 'String'
     			])
@@ -875,7 +875,7 @@ SilverStripe\GraphQL:
         		})
         		->addSortableFields(['Title'])         	
     			->end()    			
-    		->operation(GraphQLScaffolder::UPDATE)
+    		->operation(SchemaScaffolder::UPDATE)
     			->end()
     		->nestedQuery('Comments')
     			->end()
@@ -884,7 +884,7 @@ SilverStripe\GraphQL:
     		->end()
     	->type(Comment::class)
     		->addFields(['Comment','Author'])
-    		->operation(GraphQLScaffolder::READ)
+    		->operation(SchemaScaffolder::READ)
     			->setUsePagination(false)
     			->end();
 
@@ -936,9 +936,9 @@ SilverStripe\GraphQL:
   schema:
     scaffolding:
       types:
-        MyProject\GraphQL\Post:
+        MyProject\Post:
           ## ...
-        MyProject\GraphQL\Comment:
+        MyProject\Comment:
           ## ...
         SilverStripe\Security\Member
           fields: [FirstName, Surname, Name, Email]
@@ -969,13 +969,13 @@ SilverStripe\GraphQL:
   schema:
     scaffolding:
       types:
-        MyProject\GraphQL\Post:
+        MyProject\Post:
           ## ...
           nestedQueries:
             Comments:
               args:
                 OnlyToday: Boolean
-                resolver: MyProject\GraphQL\CommentResolver
+                resolver: MyProject\CommentResolver
           ##...
         ##...
 ```
@@ -1049,7 +1049,7 @@ SilverStripe\GraphQL:
   schema:
     scaffolding:
       types:
-        MyProject\GraphQL\Post:
+        MyProject\Post:
           fieldsExcept: [SecretThing]
 ```
 
@@ -1071,20 +1071,20 @@ SilverStripe\GraphQL:
   schema:
     scaffolding:
       types:
-        MyProject\GraphQL\Post:
+        MyProject\Post:
           ##...
       mutations:
         updatePostTitle:
-          type: MyProject\GraphQL\Post
+          type: MyProject\Post
           args:
             ID: ID!
             NewTitle: String!
-          resolver: MyProject\GraphQL\UpdatePostResolver
+          resolver: MyProject\UpdatePostResolver
       queries:
         latestPost:
-          type: MyProject\GraphQL\Post
+          type: MyProject\Post
           paginate: false
-          resolver: MyProject\GraphQL\LatestPostResolver
+          resolver: MyProject\LatestPostResolver
 ```
 
 **... Or with code**:
@@ -1140,7 +1140,7 @@ SilverStripe\GraphQL:
   schema:
     scaffolding:
       types:
-        MyProject\GraphQL\Post:
+        MyProject\Post:
           ##...
         SilverStripe\CMS\Model\RedirectorPage:
           fields: [ExternalURL, Content]
@@ -1156,9 +1156,9 @@ SilverStripe\GraphQL:
 	$scaffolder
         ->type('SilverStripe\CMS\Model\RedirectorPage')
         	->addFields(['ExternalURL','Content'])
-        	->operation(GraphQLScaffolder::READ)
+        	->operation(SchemaScaffolder::READ)
         		->end()
-        	->operation(GraphQLScaffolder::CREATE)
+        	->operation(SchemaScaffolder::CREATE)
         		->end()
         	->end()
         ->type('Page')
