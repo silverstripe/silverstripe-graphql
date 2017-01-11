@@ -104,6 +104,14 @@ abstract class OperationScaffolder implements Configurable
     }
 
     /**
+     * @return array
+     */
+    public function getArgs()
+    {
+    	return $this->args;
+    }
+
+    /**
      * @param $resolver
      *
      * @return $this
