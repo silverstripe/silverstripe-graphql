@@ -27,7 +27,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
     /**
      * @var array
      */
-    protected $scaffolds = [];
+    protected $types = [];
 
     /**
      * @var OperationList
@@ -114,7 +114,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
      */
     public function type($class)
     {
-        foreach ($this->scaffolds as $scaffold) {
+        foreach ($this->types as $scaffold) {
             if ($scaffold->getDataObjectClass() == $class) {
                 return $scaffold;
             }
@@ -122,7 +122,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
 
         $scaffold = (new DataObjectScaffolder($class))
                 ->setChainableParent($this);
-        $this->scaffolds[] = $scaffold;
+        $this->types[] = $scaffold;
 
         return $scaffold;
     }
@@ -212,13 +212,37 @@ class GraphQLScaffolder implements ManagerMutatorInterface
     }
 
     /**
+     * @return array
+     */
+    public function getTypes()
+    {
+    	return $this->types;
+    }
+
+    /**
+     * @return OperationList
+     */
+    public function getQueries()
+    {
+    	return $this->queries;
+    }
+
+    /**
+     * @return OperationList
+     */
+    public function getMutations()
+    {
+    	return $this->mutations;
+    }
+
+    /**
      * Adds every DataObject and its dependencies to the Manager.
      *
      * @param Manager $manager
      */
     public function addToManager(Manager $manager)
     {
-        foreach ($this->scaffolds as $scaffold) {
+        foreach ($this->types as $scaffold) {
             // Add dependent classes, e.g has_one, has_many nested queries
             foreach ($scaffold->getDependentClasses() as $class) {
                 $this->type($class);
@@ -243,7 +267,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
         }
 
         // Add all DataObjects to the manager
-        foreach ($this->scaffolds as $scaffold) {
+        foreach ($this->types as $scaffold) {
             $scaffold->addToManager($manager);
         }
 
