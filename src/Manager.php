@@ -12,7 +12,7 @@ use GraphQL\Error;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 
 class Manager
 {
@@ -53,10 +53,10 @@ class Manager
         /** @var Manager $manager */
         $manager = Injector::inst()->create(self::class);
 
-        if (isset($config['scaffolding'])) {
-            $scaffolder = GraphQLScaffolder::createFromConfig($config['scaffolding']);
+        if(isset($config['scaffolding'])) {
+        	$scaffolder = SchemaScaffolder::createFromConfig($config['scaffolding']);
         } else {
-            $scaffolder = new GraphQLScaffolder();
+        	$scaffolder = new SchemaScaffolder();
         }
 
         if (isset($config['scaffolding_providers'])) {

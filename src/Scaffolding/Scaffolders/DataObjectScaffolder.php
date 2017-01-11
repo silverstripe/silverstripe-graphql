@@ -341,10 +341,10 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         if (isset($config['operations'])) {
             if ($config['operations'] === '*') {
                 $config['operations'] = [
-                    GraphQLScaffolder::CREATE => true,
-                    GraphQLScaffolder::READ => true,
-                    GraphQLScaffolder::UPDATE => true,
-                    GraphQLScaffolder::DELETE => true,
+                    SchemaScaffolder::CREATE => true,
+                    SchemaScaffolder::READ => true,
+                    SchemaScaffolder::UPDATE => true,
+                    SchemaScaffolder::DELETE => true,
                 ];
             }
 

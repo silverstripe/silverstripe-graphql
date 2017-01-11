@@ -6,7 +6,7 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\ORM\DataList;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 
 /**
  * Scaffolds a generic read operation for DataObjects.
@@ -43,6 +43,6 @@ class Read extends QueryScaffolder implements CRUDInterface
      */
     public function getIdentifier()
     {
-        return GraphQLScaffolder::READ;
+        return SchemaScaffolder::READ;
     }
 }

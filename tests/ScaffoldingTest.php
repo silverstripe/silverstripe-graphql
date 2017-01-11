@@ -8,7 +8,7 @@ use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\OperationScaffolderFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
@@ -86,20 +86,20 @@ class ScaffoldingTest extends SapphireTest
 	public function testDataObjectScaffolderOperations()
 	{
 		$scaffolder = $this->getFakeScaffolder();
-		$op = $scaffolder->operation(GraphQLScaffolder::CREATE);
+		$op = $scaffolder->operation(SchemaScaffolder::CREATE);
 
 		$this->assertInstanceOf(CRUDInterface::class, $op);
 
 		// Ensure we get back the same reference
 		$op->Test = true;
-		$op = $scaffolder->operation(GraphQLScaffolder::CREATE);
+		$op = $scaffolder->operation(SchemaScaffolder::CREATE);
 		$this->assertEquals(true, $op->Test);
 
 		// Ensure duplicates aren't created
-		$scaffolder->operation(GraphQLScaffolder::DELETE);
+		$scaffolder->operation(SchemaScaffolder::DELETE);
 		$this->assertEquals(2, $scaffolder->getOperations()->count());
 
-		$scaffolder->removeOperation(GraphQLScaffolder::DELETE);
+		$scaffolder->removeOperation(SchemaScaffolder::DELETE);
 		$this->assertEquals(1, $scaffolder->getOperations()->count());
 
 		$this->setExpectedExceptionRegExp(
@@ -183,8 +183,8 @@ class ScaffoldingTest extends SapphireTest
 		$observer->expects($this->exactly(2))
 			->method('operation')
 			->withConsecutive(
-				[$this->equalTo(GraphQLScaffolder::CREATE)],
-				[$this->equalTo(GraphQLScaffolder::READ)]
+				[$this->equalTo(SchemaScaffolder::CREATE)],
+				[$this->equalTo(SchemaScaffolder::READ)]
 			)
 			->will($this->returnValue(
 				$this->getMockBuilder(Create::class)
@@ -294,10 +294,10 @@ class ScaffoldingTest extends SapphireTest
 		]);
 		$ops = $scaffolder->getOperations();
 
-		$this->assertInstanceOf(Create::class, $ops->findByIdentifier(GraphQLScaffolder::CREATE));
-		$this->assertInstanceOf(Delete::class, $ops->findByIdentifier(GraphQLScaffolder::DELETE));
-		$this->assertInstanceOf(Read::class, $ops->findByIdentifier(GraphQLScaffolder::READ));
-		$this->assertInstanceOf(Update::class, $ops->findByIdentifier(GraphQLScaffolder::UPDATE));
+		$this->assertInstanceOf(Create::class, $ops->findByIdentifier(SchemaScaffolder::CREATE));
+		$this->assertInstanceOf(Delete::class, $ops->findByIdentifier(SchemaScaffolder::DELETE));
+		$this->assertInstanceOf(Read::class, $ops->findByIdentifier(SchemaScaffolder::READ));
+		$this->assertInstanceOf(Update::class, $ops->findByIdentifier(SchemaScaffolder::UPDATE));
 
 		$this->assertEquals(
 			['ID','ClassName','LastEdited','Created','MyField','MyInt'],
@@ -347,9 +347,9 @@ class ScaffoldingTest extends SapphireTest
 		$manager = new Manager();
 		$scaffolder = $this->getFakeScaffolder()
 			->addFields(['MyField'])
-			->operation(GraphQLScaffolder::CREATE)
+			->operation(SchemaScaffolder::CREATE)
 				->end()
-			->operation(GraphQLScaffolder::READ)
+			->operation(SchemaScaffolder::READ)
 				->end();
 
 		$scaffolder->addToManager($manager);
@@ -374,10 +374,10 @@ class ScaffoldingTest extends SapphireTest
 	}
 
 
-	public function testGraphQLScaffolderTypes()
+	public function testSchemaScaffolderTypes()
 	{
 
-		$scaffolder = new GraphQLScaffolder();
+		$scaffolder = new SchemaScaffolder();
 		$type = $scaffolder->type(DataObjectFake::class);
 		$type->Test = true;
 		$type2 = $scaffolder->type(DataObjectFake::class);
@@ -407,19 +407,19 @@ class ScaffoldingTest extends SapphireTest
 
 	}
 
-	public function testGraphQLScaffolderAddToManager()
+	public function testSchemaScaffolderAddToManager()
 	{
 		Config::inst()->update('Page','db', [
 			'TestPageField' => 'Varchar'
 		]);
 
 		$manager = new Manager();
-		$scaffolder = (new GraphQLScaffolder())
+		$scaffolder = (new SchemaScaffolder())
 			->type(RedirectorPage::class)
 				->addFields(['Created','TestPageField', 'RedirectionType'])
-				->operation(GraphQLScaffolder::CREATE)
+				->operation(SchemaScaffolder::CREATE)
 					->end()
-				->operation(GraphQLScaffolder::READ)
+				->operation(SchemaScaffolder::READ)
 					->end()
 				->end()
 			->type(DataObjectFake::class)
@@ -468,49 +468,49 @@ class ScaffoldingTest extends SapphireTest
 
 		$this->assertInstanceof(
 			Read::class,			
-			$scaffolder->type(RedirectorPage::class)->getOperations()->findByIdentifier(GraphQLScaffolder::READ)
+			$scaffolder->type(RedirectorPage::class)->getOperations()->findByIdentifier(SchemaScaffolder::READ)
 		);
 		$this->assertInstanceof(
 			Read::class,			
-			$scaffolder->type(Page::class)->getOperations()->findByIdentifier(GraphQLScaffolder::READ)
+			$scaffolder->type(Page::class)->getOperations()->findByIdentifier(SchemaScaffolder::READ)
 		);
 		$this->assertInstanceof(
 			Read::class,			
-			$scaffolder->type(SiteTree::class)->getOperations()->findByIdentifier(GraphQLScaffolder::READ)
+			$scaffolder->type(SiteTree::class)->getOperations()->findByIdentifier(SchemaScaffolder::READ)
 		);
 
 		$this->assertInstanceof(
 			Create::class,			
-			$scaffolder->type(RedirectorPage::class)->getOperations()->findByIdentifier(GraphQLScaffolder::CREATE)
+			$scaffolder->type(RedirectorPage::class)->getOperations()->findByIdentifier(SchemaScaffolder::CREATE)
 		);
 		$this->assertInstanceof(
 			Create::class,			
-			$scaffolder->type(Page::class)->getOperations()->findByIdentifier(GraphQLScaffolder::CREATE)
+			$scaffolder->type(Page::class)->getOperations()->findByIdentifier(SchemaScaffolder::CREATE)
 		);
 		$this->assertInstanceof(
 			Create::class,			
-			$scaffolder->type(SiteTree::class)->getOperations()->findByIdentifier(GraphQLScaffolder::CREATE)
+			$scaffolder->type(SiteTree::class)->getOperations()->findByIdentifier(SchemaScaffolder::CREATE)
 		);
 	}
 
-	public function testGraphQLScaffolderCreateFromConfigThrowsIfBadTypes()
+	public function testSchemaScaffolderCreateFromConfigThrowsIfBadTypes()
 	{
 		$this->setExpectedExceptionRegExp(
 			InvalidArgumentException::class,
 			'/"types" must be a map of class name to settings/'
 		);
-		GraphQLScaffolder::createFromConfig([
+		SchemaScaffolder::createFromConfig([
 			'types' => ['fail']
 		]);
 	}
 
-	public function testGraphQLScaffolderCreateFromConfigThrowsIfBadQueries()
+	public function testSchemaScaffolderCreateFromConfigThrowsIfBadQueries()
 	{
 		$this->setExpectedExceptionRegExp(
 			InvalidArgumentException::class,
 			'/must be a map of operation name to settings/'
 		);
-		GraphQLScaffolder::createFromConfig([
+		SchemaScaffolder::createFromConfig([
 			'types' => [
 				DataObjectFake::class => [
 					'fields' => '*'
@@ -520,9 +520,9 @@ class ScaffoldingTest extends SapphireTest
 		]);
 	}
 
-	public function testGraphQLScaffolderCreateFromConfig()
+	public function testSchemaScaffolderCreateFromConfig()
 	{
-		$observer = $this->getMockBuilder(GraphQLScaffolder::class)
+		$observer = $this->getMockBuilder(SchemaScaffolder::class)
 			->setMethods(['query','mutation','type'])
 			->getMock();
 
@@ -540,9 +540,9 @@ class ScaffoldingTest extends SapphireTest
 				new DataObjectScaffolder(DataObjectFake::class)
 			);
 
-		Injector::inst()->registerService($observer, GraphQLScaffolder::class);
+		Injector::inst()->registerService($observer, SchemaScaffolder::class);
 
-		GraphQLScaffolder::createFromConfig([
+		SchemaScaffolder::createFromConfig([
 			'types' => [
 				DataObjectFake::class => [
 					'fields' => ['MyField']
@@ -567,19 +567,19 @@ class ScaffoldingTest extends SapphireTest
 	{
 		$this->assertEquals(
 			Read::class, 
-			OperationScaffolder::getOperationScaffoldFromIdentifier(GraphQLScaffolder::READ)
+			OperationScaffolder::getOperationScaffoldFromIdentifier(SchemaScaffolder::READ)
 		);
 		$this->assertEquals(
 			Update::class, 
-			OperationScaffolder::getOperationScaffoldFromIdentifier(GraphQLScaffolder::UPDATE)
+			OperationScaffolder::getOperationScaffoldFromIdentifier(SchemaScaffolder::UPDATE)
 		);
 		$this->assertEquals(
 			Delete::class, 
-			OperationScaffolder::getOperationScaffoldFromIdentifier(GraphQLScaffolder::DELETE)
+			OperationScaffolder::getOperationScaffoldFromIdentifier(SchemaScaffolder::DELETE)
 		);
 		$this->assertEquals(
 			Create::class, 
-			OperationScaffolder::getOperationScaffoldFromIdentifier(GraphQLScaffolder::CREATE)
+			OperationScaffolder::getOperationScaffoldFromIdentifier(SchemaScaffolder::CREATE)
 		);
 
 	}

@@ -47,13 +47,13 @@ abstract class OperationScaffolder implements Configurable
     public static function getOperationScaffoldFromIdentifier($name)
     {
         switch ($name) {
-            case GraphQLScaffolder::CREATE:
+            case SchemaScaffolder::CREATE:
                 return Create::class;
-            case GraphQLScaffolder::READ:
+            case SchemaScaffolder::READ:
                 return Read::class;
-            case GraphQLScaffolder::UPDATE:
+            case SchemaScaffolder::UPDATE:
                 return Update::class;
-            case GraphQLScaffolder::DELETE:
+            case SchemaScaffolder::DELETE:
                 return Delete::class;
         }
 

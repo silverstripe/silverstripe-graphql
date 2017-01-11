@@ -10,7 +10,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Exception;
 
 /**
@@ -55,7 +55,7 @@ class Create extends MutationScaffolder implements CRUDInterface
      */
     public function getIdentifier()
     {
-        return GraphQLScaffolder::CREATE;
+        return SchemaScaffolder::CREATE;
     }
 
     /**

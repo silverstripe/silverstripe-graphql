@@ -14,7 +14,7 @@ use SilverStripe\ORM\ArrayLib;
  * The entry point for a GraphQL scaffolding definition. Holds DataObject type definitions,
  * and their nested Mutation/Query definitions.
  */
-class GraphQLScaffolder implements ManagerMutatorInterface
+class SchemaScaffolder implements ManagerMutatorInterface
 {
     const CREATE = 'create';
 
