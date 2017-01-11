@@ -118,7 +118,6 @@ abstract class OperationScaffolder implements Configurable
             if (is_subclass_of($resolver, ResolverInterface::class)) {
                 $this->resolver = Injector::inst()->create($resolver);
             } else {
-                var_dump($resolver);
                 throw new InvalidArgumentException(sprintf(
                     '%s::setResolver() accepts closures, instances of %s or names of resolver subclasses.',
                     __CLASS__,
