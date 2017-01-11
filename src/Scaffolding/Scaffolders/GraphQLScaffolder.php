@@ -50,7 +50,7 @@ class GraphQLScaffolder implements ManagerMutatorInterface
      */
     public static function createFromConfig($config)
     {
-        $scaffolder = Injector::inst()->create(self::class);
+        $scaffolder = Injector::inst()->get(self::class);
         if (isset($config['types'])) {
             if (!ArrayLib::is_associative($config['types'])) {
                 throw new InvalidArgumentException(
