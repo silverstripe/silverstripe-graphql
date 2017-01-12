@@ -24,5 +24,8 @@
     "process-timeout": 600
   },
   "minimum-stability": "dev",
-  "prefer-stable": true
+  "prefer-stable": true,
+  "suggest": {
+    "silverstripe/graphql-devtools": "Adds in-browser tools for testing and debugging GraphQL queries"
+  }  
 }
