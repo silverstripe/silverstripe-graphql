@@ -1005,6 +1005,9 @@ SilverStripe\GraphQL:
 					'OnlyToday' => 'Boolean'
 				])
             	->setResolver(function($obj, $args, $context) {
+            		if(!singleton(Comment::class)->canView($context['currentMember'])) {
+            			throw new \Exception('Cannot view Comment');
+            		}
             		$comments = $obj->Comments();
             		if(isset($args['OnlyToday']) && $args['OnlyToday']) {
             			$comments = $comments->where('DATE(Created) = DATE(NOW())');
@@ -1113,9 +1116,9 @@ SilverStripe\GraphQL:
                 'ID' => 'ID!',
                 'NewTitle' => 'String!'
             ])
-            ->setResolver(function($obj, $args) {
+            ->setResolver(function($obj, $args, $context) {            	
                 $post = Post::get()->byID($args['ID']);
-                if($post->canEdit()) {
+                if($post->canEdit($context['currentMember'])) {
                     $post->Title = $args['NewTitle'];
                     $post->write();
                 }
@@ -1125,8 +1128,10 @@ SilverStripe\GraphQL:
             ->end()
 	    ->query('latestPost', Post::class)
         	->setUsePagination(false)
-        	->setResolver(function($obj, $args) {
-        		return Post::get()->sort('Date', 'DESC')->first();
+        	->setResolver(function($obj, $args, $context) {
+        		if(singleton(Post::class)->canView($context['currentMember'])) {
+        			return Post::get()->sort('Date', 'DESC')->first();
+        		}
         	})
         	->end()
 ```
