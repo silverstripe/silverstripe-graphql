@@ -602,6 +602,30 @@ SilverStripe\GraphQL:
             create: true
 ```
 
+
+**...Or with code**:
+
+```php
+namespace MyProject;
+
+class Post extends DataObject implements ScaffoldingProvider {
+	//...
+    public function provideGraphQLScaffolding(SchemaScaffolder $scaffolder)
+    {
+    	$scaffolder
+    		->type(Post::class)
+	    		->addFields(['ID','Title','Content'])
+	    		->operation(SchemaScaffolder::READ)
+	    			->end()
+	    		->operation(SchemaScaffolder::UPDATE)
+	    			->end()
+	    		->end();
+
+    	return $scaffolder;
+	}
+}
+```
+
 By declaring these two operations, we have automatically added a new query and 
 mutation to the GraphQL schema, using naming naming conventions derived from
 the operation type and the `singular_name` or `plural_name` of the DataObject.
@@ -627,27 +651,8 @@ mutation CreatePost($Input: PostCreateInputType!)
 }
 ```
 
-**...Or with code**:
-```php
-namespace MyProject;
-
-class Post extends DataObject implements ScaffoldingProvider {
-	//...
-    public function provideGraphQLScaffolding(SchemaScaffolder $scaffolder)
-    {
-    	$scaffolder
-    		->type(Post::class)
-	    		->addFields(['ID','Title','Content'])
-	    		->operation(SchemaScaffolder::READ)
-	    			->end()
-	    		->operation(SchemaScaffolder::UPDATE)
-	    			->end()
-	    		->end();
-
-    	return $scaffolder;
-	}
-}
-```
+Permission constraints (in this case `canView()` and `canCreate()`) are enforced
+by the operation resovlers.
 
 #### Adding arguments
 
@@ -747,16 +752,12 @@ This resolver class may now be assigned as either an instance, or a string to th
 		->type(Post::class)
 			->operation(SchemaScaffolder::UPDATE)
 				->setResolver(MyResolver::class)
-				->end();
-```
-Or...
-```php
-	$scaffolder
-		->type(Post::class)
-			->operation(SchemaScaffolder::UPDATE)
+				/* Or...
 				->setResolver(new MyResolver())
+				*/
 				->end();
 ```
+
 #### Configuring pagination and sorting
 
 By default, all queries are paginated and have no sortable fields. Both of these settings are
@@ -1138,7 +1139,7 @@ SilverStripe\GraphQL:
 
 **GraphQL**
 ```
-mutation updatePostTitle(ID: 123, NewTitle: 'Foo') {
+mutation updatePostTitle($ID: 123, $NewTitle: 'Foo') {
 	Title
 }
 ```
@@ -1164,7 +1165,7 @@ SilverStripe\GraphQL:
         MyProject\Post:
           ##...
         SilverStripe\CMS\Model\RedirectorPage:
-          fields: [ExternalURL, Content]
+          fields: [ID, ExternalURL, Content]
           operations:
             read: true
             create: true
@@ -1176,7 +1177,7 @@ SilverStripe\GraphQL:
 ```php
 	$scaffolder
         ->type('SilverStripe\CMS\Model\RedirectorPage')
-        	->addFields(['ExternalURL','Content'])
+        	->addFields(['ID','ExternalURL','Content'])
         	->operation(SchemaScaffolder::READ)
         		->end()
         	->operation(SchemaScaffolder::CREATE)
@@ -1191,21 +1192,39 @@ We now have the following added to our schema:
 
 ```
 type RedirectorPage {
-	ID
-	ExternalURL
-	Content
-	MyCustomField
+	ID: Int
+	ExternalURL: String
+	Content: String
+	MyCustomField: String
 }
 
 type Page {
-	ID
-	Content
-	MyCustomField
+	ID: Int
+	Content: String
+	MyCustomField: String
 }
 
 type SiteTree {
-	ID
-	Content
+	ID: Int
+	Content: String
+}
+
+input RedirectorPageCreateInputType {
+	ExternalURL: String
+	RedirectionType: String
+	MyCustomField: String
+	Content: String
+	# all other fields from RedirectorPage, Page and SiteTree
+}
+
+input PageCreateInputType {
+	MyCustomField: String
+	Content: String
+	# all other fields from Page and SiteTree
+}
+
+input SiteTreeCreateInputType {
+	# all fields from SiteTree
 }
 
 query readRedirectorPages {
