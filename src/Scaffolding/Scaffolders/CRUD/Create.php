@@ -36,7 +36,7 @@ class Create extends MutationScaffolder implements CRUDInterface
 
         // Todo: this is totally half baked
         $this->setResolver(function ($object, array $args, $context, $info) {
-            if (singleton($this->dataObjectClass)->canCreate()) {
+            if (singleton($this->dataObjectClass)->canCreate($context['currentMember'])) {
                 $newObject = Injector::inst()->createWithArgs(
                     $this->dataObjectClass,
                     $args

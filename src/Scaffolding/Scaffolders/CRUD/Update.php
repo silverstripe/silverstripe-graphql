@@ -47,7 +47,7 @@ class Update extends MutationScaffolder implements CRUDInterface
                 ));
             }
 
-            if ($obj->canEdit()) {
+            if ($obj->canEdit($context['currentMember'])) {
                 $obj->update($args['Input']);
                 $obj->write();
 

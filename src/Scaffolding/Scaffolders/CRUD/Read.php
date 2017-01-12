@@ -7,6 +7,7 @@ use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\ORM\DataList;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use Exception;
 
 /**
  * Scaffolds a generic read operation for DataObjects.
@@ -32,6 +33,13 @@ class Read extends QueryScaffolder implements CRUDInterface
         parent::__construct($operationName, $this->typeName());
 
         $this->setResolver(function ($object, array $args, $context, $info) {
+            if(!singleton($this->dataObjectClass)->canView($context['currentMember'])) {
+            	throw new Exception(sprintf(
+            		'Cannot create %s',
+            		$this->dataObjectClass
+            	));
+            }
+            
             $list = DataList::create($this->dataObjectClass);
 
             return $list;
