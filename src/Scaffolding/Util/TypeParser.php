@@ -37,7 +37,7 @@ class TypeParser
      */
     public function __construct($rawArg)
     {
-        if (!preg_match('/^([A-Za-z]+)(!?)(\s*=\s*(.*))?/', $rawArg, $matches)) {
+        if (!preg_match('/^([A-Za-z]+)(!?)(?:\s*=\s*(.*))?/', $rawArg, $matches)) {
             throw new InvalidArgumentException(
                 "Invalid argument: $rawArg"
             );
@@ -46,8 +46,8 @@ class TypeParser
         $this->rawArg = $rawArg;
         $this->argType = $matches[1];
         $this->required = isset($matches[2]) && $matches[2] == '!';
-        if (isset($matches[4])) {
-            $this->defaultValue = $matches[4];
+        if (isset($matches[3])) {
+            $this->defaultValue = $matches[3];
         }
 
     }
