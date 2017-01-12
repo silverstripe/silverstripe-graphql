@@ -701,7 +701,7 @@ SilverStripe\GraphQL:
 **GraphQL**
 ```
 query {
-  readPosts(StartingWith: "o") {
+  readPosts(Title: "Barcelona") {
     edges {
       node {
         Title
@@ -773,7 +773,7 @@ SilverStripe\GraphQL:
           operations:
             read:
               args:
-                StartingWith: String
+                Title: String
               resolver: MyProject\ReadPostResolver
               sortableFields: [Title]            
             create: true
@@ -791,12 +791,15 @@ SilverStripe\GraphQL:
     		->addFields(['ID','Title','Content'])
     		->operation(SchemaScaffolder::READ)
     			->addArgs([
-    				'StartingWith' => 'String'
+    				'Title' => 'String'
     			])
-        		->setResolver(function($obj, $args) {
+        		->setResolver(function($obj, $args, $context) {
+        			if(!singleton(Post::class)->canView($context['currentMember'])) {
+        				throw new \Exception('Cannot view Post');
+        			}
         			$list = Post::get();
-        			if(isset($args['StartingWith'])) {
-        				$list = $list->filter('Title:StartsWith', $args['StartingWith']);
+        			if(isset($args['Title'])) {
+        				$list = $list->filter('Title:PartialMatch', $args['Title']);
         			}
 
         			return $list;
@@ -815,7 +818,7 @@ SilverStripe\GraphQL:
 
 **GraphQL**
 ```
-query readPosts(StartingWith: "a", sortBy: [{field:Title, direction:DESC}]) {
+query readPosts(Title: "Japan", sortBy: [{field:Title, direction:DESC}]) {
 	edges {
 		node {
 			Title
@@ -851,7 +854,7 @@ SilverStripe\GraphQL:
           operations:
             read:
               args:
-                StartingWith: String
+                Title: String
               resolver: MyProject\ReadPostResolver
               sortableFields: [Title]            
             create: true
@@ -873,12 +876,15 @@ SilverStripe\GraphQL:
     		->addFields(['ID','Title','Content', 'Author'])
     		->operation(SchemaScaffolder::READ)
     			->addArgs([
-    				'StartingWith' => 'String'
+    				'Title' => 'String'
     			])
-        		->setResolver(function($obj, $args) {
+        		->setResolver(function($obj, $args, $context) {
+        			if(!singleton(Post::class)->canView($context['currentMember'])) {
+        				throw new \Exception('Cannot view Post');
+        			}        		
         			$list = Post::get();
-        			if(isset($args['StartingWith'])) {
-        				$list = $list->filter('Title:StartsWith', $args['StartingWith']);
+        			if(isset($args['Title'])) {
+        				$list = $list->filter('Title:PartialMatch', $args['Title']);
         			}
 
         			return $list;
@@ -904,7 +910,7 @@ SilverStripe\GraphQL:
 
 ```
 query {
-  readPosts(StartingWith: "a") {
+  readPosts(Title: "Texas") {
     edges {
       node {
         Title
@@ -1016,7 +1022,7 @@ SilverStripe\GraphQL:
 
 ```
 query {
-  readPosts(StartingWith: "a") {
+  readPosts(Title: "Sydney") {
     edges {
       node {
         Title
