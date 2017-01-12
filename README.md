@@ -499,15 +499,9 @@ TODO
 
 ## Testing/Debugging Queries and Mutations
 
-This module comes bundled with an implementation of
-[graphiql](https://github.com/graphql/graphiql), an in-browser IDE for GraphQL
-servers. It provides browse-able documentation of your schema, as  well as auto
-complete and syntax-checking of your queries.
+An in-browser IDE for the GraphQL server is available via the [silverstripe-graphql-devtools](https://github.com/silverstripe/silverstripe-graphql-devtools) module.
 
-This tool is available in **dev mode only**. It can be accessed at
-`/dev/graphiql/`.
-
-<img src="https://github.com/graphql/graphiql/raw/master/resources/graphiql.png">
+As an alternative, a [desktop version](https://github.com/skevy/graphiql-app) of this application is also available. (OSX only)
 
 ## Authentication
 
