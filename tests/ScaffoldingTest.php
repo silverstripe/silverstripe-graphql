@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\OperationScaffolderFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
@@ -24,7 +25,11 @@ use SilverStripe\GraphQL\Manager;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\StringType;
 use GraphQL\Type\Definition\NonNull;
+use GraphQL\Type\Definition\ListOfType;
+use GraphQL\Type\Definition\IntType;
+use GraphQL\Type\Definition\IDType;
 use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\CMS\Model\RedirectorPage;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Security\Member;
@@ -36,6 +41,11 @@ use Page;
 
 class ScaffoldingTest extends SapphireTest
 {
+
+    protected $extraDataObjects = [
+        'SilverStripe\GraphQL\Tests\Fake\DataObjectFake',
+        'SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake'
+    ];
 
 	public function testDataObjectScaffolderConstructor()
 	{
@@ -752,6 +762,233 @@ class ScaffoldingTest extends SapphireTest
 			'sortableFields' => 'fail'			
 		]);
 	}
+
+	public function testCreateOperationResolver()
+	{
+		$create = new Create(DataObjectFake::class);
+		$scaffold = $create->scaffold(new Manager());
+
+		$newRecord = $scaffold['resolve'](
+			null,
+			[
+				'Input' => ['MyField' => '__testing__']
+			],
+			[
+				'currentMember' => Member::create()
+			],
+			new ResolveInfo([])
+		);
+
+		$this->assertGreaterThan(0, $newRecord->ID);
+		$this->assertEquals('__testing__', $newRecord->MyField);
+	}
+
+	public function testCreateOperationInputType()
+	{
+		$create = new Create(DataObjectFake::class);
+		$scaffold = $create->scaffold(new Manager());
+
+		$this->assertArrayHasKey('Input', $scaffold['args']);
+		$this->assertInstanceof(NonNull::class, $scaffold['args']['Input']['type']);
+		
+		$config = $scaffold['args']['Input']['type']->getWrappedType()->config;
+
+		$this->assertEquals('Data_Object_FakeCreateInputType', $config['name']);
+		$fieldMap = [];
+		foreach($config['fields'] as $fieldData) {
+			$fieldMap[$fieldData['name']] = $fieldData['type'];
+		}
+		$this->assertArrayHasKey('MyField', $fieldMap);
+		$this->assertArrayHasKey('MyInt', $fieldMap);
+		$this->assertArrayNotHasKey('ID', $fieldMap);
+		$this->assertInstanceOf(StringType::class, $fieldMap['MyField']);
+		$this->assertInstanceOf(IntType::class, $fieldMap['MyInt']);
+	}
+
+	public function testCreateOperationPermissionCheck()
+	{
+		$create = new Create(RestrictedDataObjectFake::class);
+		$scaffold = $create->scaffold(new Manager());		
+
+		$this->setExpectedExceptionRegExp(
+			Exception::class,
+			'/Cannot create/'
+		);
+
+		$scaffold['resolve'](
+			null, 
+			[], 
+			['currentMember' => Member::create()], 
+			new ResolveInfo([])
+		);
+	}
+
+	public function testUpdateOperationResolver()
+	{
+		$update = new Update(DataObjectFake::class);
+		$scaffold = $update->scaffold(new Manager());
+
+		$record = DataObjectFake::create([
+			'MyField' => 'old'
+		]);
+		$ID = $record->write();
+
+		$scaffold['resolve'](
+			$record,
+			[
+				'ID' => $ID,
+				'Input' => ['MyField' => 'new']
+			],
+			[
+				'currentMember' => Member::create()
+			],
+			new ResolveInfo([])
+		);
+		$updatedRecord = DataObjectFake::get()->byID($ID);	
+		$this->assertEquals('new', $updatedRecord->MyField);
+	}
+
+	public function testUpdateOperationInputType()
+	{
+		$update = new Update(DataObjectFake::class);
+		$scaffold = $update->scaffold(new Manager());
+
+		$this->assertArrayHasKey('Input', $scaffold['args']);
+		$this->assertInstanceof(NonNull::class, $scaffold['args']['Input']['type']);
+		
+		$config = $scaffold['args']['Input']['type']->getWrappedType()->config;
+
+		$this->assertEquals('Data_Object_FakeUpdateInputType', $config['name']);
+		$fieldMap = [];
+		foreach($config['fields'] as $fieldData) {
+			$fieldMap[$fieldData['name']] = $fieldData['type'];
+		}
+		$this->assertArrayHasKey('MyField', $fieldMap);
+		$this->assertArrayHasKey('MyInt', $fieldMap);
+		$this->assertArrayNotHasKey('ID', $fieldMap);
+		$this->assertInstanceOf(StringType::class, $fieldMap['MyField']);
+		$this->assertInstanceOf(IntType::class, $fieldMap['MyInt']);
+	}
+
+	public function testUpdateOperationPermissionCheck()
+	{
+		$update = new Update(RestrictedDataObjectFake::class);
+		$restrictedDataobject = RestrictedDataObjectFake::create();
+		$ID = $restrictedDataobject->write();
+
+		$scaffold = $update->scaffold(new Manager());		
+
+		$this->setExpectedExceptionRegExp(
+			Exception::class,
+			'/Cannot edit/'
+		);
+
+		$scaffold['resolve'](
+			$restrictedDataobject, 
+			['ID' => $ID], 
+			['currentMember' => Member::create()], 
+			new ResolveInfo([])
+		);
+	}
+
+
+	public function testDeleteOperationResolver()
+	{
+		$delete = new Delete(DataObjectFake::class);
+		$scaffold = $delete->scaffold(new Manager());
+
+		$record = DataObjectFake::create();
+		$ID1 = $record->write();
+
+		$record = DataObjectFake::create();
+		$ID2 = $record->write();
+
+		$record = DataObjectFake::create();
+		$ID3 = $record->write();
+
+		$scaffold['resolve'](
+			$record,
+			[			
+				'IDs' => [$ID1, $ID2]
+			],
+			[
+				'currentMember' => Member::create()
+			],
+			new ResolveInfo([])
+		);
+		
+		$this->assertNull(DataObjectFake::get()->byID($ID1));
+		$this->assertNull(DataObjectFake::get()->byID($ID2));
+		$this->assertInstanceOf(DataObjectFake::class, DataObjectFake::get()->byID($ID3));
+	}
+
+	public function testDeleteOperationArgs()
+	{
+		$delete = new Delete(DataObjectFake::class);
+		$scaffold = $delete->scaffold(new Manager());
+
+		$this->assertArrayHasKey('IDs', $scaffold['args']);
+		$this->assertInstanceof(NonNull::class, $scaffold['args']['IDs']['type']);
+		
+		$listOf = $scaffold['args']['IDs']['type']->getWrappedType();
+
+		$this->assertInstanceOf(ListOfType::class, $listOf);
+
+		$idType = $listOf->getWrappedType();
+
+		$this->assertInstanceof(IDType::class, $idType);
+	}
+
+	public function testDeleteOperationPermissionCheck()
+	{
+		$delete = new Delete(RestrictedDataObjectFake::class);
+		$restrictedDataobject = RestrictedDataObjectFake::create();
+		$ID = $restrictedDataobject->write();
+
+		$scaffold = $delete->scaffold(new Manager());		
+
+		$this->setExpectedExceptionRegExp(
+			Exception::class,
+			'/Cannot delete/'
+		);
+
+		$scaffold['resolve'](
+			$restrictedDataobject, 
+			['IDs' => [$ID]], 
+			['currentMember' => Member::create()], 
+			new ResolveInfo([])
+		);
+	}
+
+	public function testReadOperationResolver()
+	{
+		$read = new Read(DataObjectFake::class);
+		$scaffold = $read->scaffold(new Manager());
+
+		DataObjectFake::get()->removeAll();
+		
+		$record = DataObjectFake::create();
+		$ID1 = $record->write();
+
+		$record = DataObjectFake::create();
+		$ID2 = $record->write();
+
+		$record = DataObjectFake::create();
+		$ID3 = $record->write();
+
+		$response = $scaffold['resolve'](
+			null,
+			[],
+			[
+				'currentMember' => Member::create()
+			],
+			new ResolveInfo([])
+		);
+
+		$this->assertArrayHasKey('edges', $response);
+		$this->assertEquals([$ID1, $ID2, $ID3], $response['edges']->column('ID'));
+	}
+
 
     public function testTypeParser()
     {
