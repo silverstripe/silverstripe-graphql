@@ -65,31 +65,72 @@ class ScaffoldingTest extends SapphireTest
 		$scaffolder = $this->getFakeScaffolder();
 		
 		$scaffolder->addField('MyField');
-		$this->assertEquals(['MyField'], $scaffolder->getFields()->toArray());
+		$this->assertEquals(['MyField'], $scaffolder->getFields()->column('Name'));
 		
-		$scaffolder->addFields(['MyField','MyInt']);
-		$this->assertEquals(['MyField', 'MyInt'], $scaffolder->getFields()->toArray());
+		$scaffolder->addField('MyField', 'Some description');
+		$this->assertEquals(
+			'Some description',
+			$scaffolder->getFieldDescription('MyField')
+		);
+
+		$scaffolder->addFields([
+			'MyField',
+			'MyInt' => 'Int description'
+		]);
+		
+		$this->assertEquals(['MyField', 'MyInt'], $scaffolder->getFields()->column('Name'));
+		$this->assertNull(
+			$scaffolder->getFieldDescription('MyField')
+		);
+		$this->assertEquals(
+			'Int description',
+			$scaffolder->getFieldDescription('MyInt')
+		);
+
+		$scaffolder->setFieldDescription('MyInt', 'New int description');
+		$this->assertEquals(
+			'New int description',
+			$scaffolder->getFieldDescription('MyInt')
+		);
 
 		$scaffolder = $this->getFakeScaffolder();
 		$scaffolder->addAllFields();
-		$this->assertEquals(['ID','ClassName','LastEdited','Created','MyField','MyInt'], $scaffolder->getFields()->toArray());
+		$this->assertEquals(
+			['ID','ClassName','LastEdited','Created','MyField','MyInt'],
+			$scaffolder->getFields()->column('Name')
+		);
 
 		$scaffolder = $this->getFakeScaffolder();
 		$scaffolder->addAllFields(true);
-		$this->assertEquals(['ID','ClassName','LastEdited','Created','MyField','MyInt', 'Author'], $scaffolder->getFields()->toArray());
+		$this->assertEquals(
+			['ID','ClassName','LastEdited','Created','MyField','MyInt', 'Author'],
+			$scaffolder->getFields()->column('Name')
+		);
 
 		$scaffolder = $this->getFakeScaffolder();
 		$scaffolder->addAllFieldsExcept('MyInt');
-		$this->assertEquals(['ID','ClassName','LastEdited','Created','MyField'], $scaffolder->getFields()->toArray());
+		$this->assertEquals(
+			['ID','ClassName','LastEdited','Created','MyField'],
+			$scaffolder->getFields()->column('Name')
+		);
 
 		$scaffolder = $this->getFakeScaffolder();
 		$scaffolder->addAllFieldsExcept('MyInt', true);
-		$this->assertEquals(['ID','ClassName','LastEdited','Created','MyField','Author'], $scaffolder->getFields()->toArray());
+		$this->assertEquals(
+			['ID','ClassName','LastEdited','Created','MyField','Author'],
+			$scaffolder->getFields()->column('Name')
+		);
 
 		$scaffolder->removeField('ClassName');
-		$this->assertEquals(['ID','LastEdited','Created','MyField','Author'], $scaffolder->getFields()->toArray());
+		$this->assertEquals(
+			['ID','LastEdited','Created','MyField','Author'],
+			$scaffolder->getFields()->column('Name')
+		);
 		$scaffolder->removeFields(['LastEdited','Created']);
-		$this->assertEquals(['ID','MyField','Author'], $scaffolder->getFields()->toArray());
+		$this->assertEquals(
+			['ID','MyField','Author'],
+			$scaffolder->getFields()->column('Name')
+		);
 	}
 
 
@@ -179,16 +220,16 @@ class ScaffoldingTest extends SapphireTest
 	{
 		$observer = $this->getMockBuilder(DataObjectScaffolder::class)
 			->setConstructorArgs([DataObjectFake::class])
-			->setMethods(['addFields','addAllFieldsExcept','operation','nestedQuery'])
+			->setMethods(['addFields','removeFields','operation','nestedQuery', 'setFieldDescription'])
 			->getMock();
 
 		$observer->expects($this->once())
 			->method('addFields')
-			->with($this->equalTo(['MyField']));
+			->with($this->equalTo(['ID','MyField','MyInt']));
 
 		$observer->expects($this->once())
-			->method('addAllFieldsExcept')
-			->with($this->equalTo(['MyField']));
+			->method('removeFields')
+			->with($this->equalTo(['ID']));
 
 		$observer->expects($this->exactly(2))
 			->method('operation')
@@ -211,12 +252,21 @@ class ScaffoldingTest extends SapphireTest
 					->getMock()
 			));
 
+		$observer->expects($this->once())
+			->method('setFieldDescription')
+			->with(
+				$this->equalTo('MyField'),
+				$this->equalTo('This is myfield')
+			);
 
 		$observer->applyConfig([
-			'fields' => ['MyField'],
-			'fieldsExcept' => ['MyField'],
+			'fields' => ['ID', 'MyField','MyInt'],
+			'excludeFields' => ['ID'],
 			'operations' => ['create' => true,'read' => true],
-			'nestedQueries' => ['Files' => true]
+			'nestedQueries' => ['Files' => true],
+			'fieldDescriptions' => [
+				'MyField' => 'This is myfield'
+			]
 		]);
 
 	}
@@ -256,10 +306,11 @@ class ScaffoldingTest extends SapphireTest
 		// Invalid fieldsExcept
 		$this->setExpectedExceptionRegExp(
 			InvalidArgumentException::class,
-			'/"fieldsExcept" must be an array/'
+			'/"excludeFields" must be an enumerated list/'
 		);
 		$scaffolder->applyConfig([
-			'fieldsExcept' => 'fail'
+			'fields' => ['MyField'],
+			'excludeFields' => 'fail'
 		]);
 	}
 
@@ -273,7 +324,7 @@ class ScaffoldingTest extends SapphireTest
 			'/Operations field must be a map/'
 		);
 		$scaffolder->applyConfig([
-			'fieldsExcept' => ['MyField'],
+			'fields' => ['MyField'],
 			'operations' => ['create']
 		]);
 	}
@@ -299,8 +350,8 @@ class ScaffoldingTest extends SapphireTest
 	{
 		$scaffolder = $this->getFakeScaffolder();
 		$scaffolder->applyConfig([
-			'fields' => '*',
-			'operations' => '*'
+			'fields' => SchemaScaffolder::ALL,
+			'operations' => SchemaScaffolder::ALL
 		]);
 		$ops = $scaffolder->getOperations();
 
@@ -310,8 +361,8 @@ class ScaffoldingTest extends SapphireTest
 		$this->assertInstanceOf(Update::class, $ops->findByIdentifier(SchemaScaffolder::UPDATE));
 
 		$this->assertEquals(
-			['ID','ClassName','LastEdited','Created','MyField','MyInt'],
-			$scaffolder->getFields()->toArray()
+			['ID','ClassName','LastEdited','Created','MyField','MyInt','Author'],
+			$scaffolder->getFields()->column('Name')
 		);
 	}
 
@@ -460,17 +511,20 @@ class ScaffoldingTest extends SapphireTest
 			File::class
 		], $classNames);
 
-		$this->assertEquals([
-			'Created', 'TestPageField', 'RedirectionType'
-		], $scaffolder->type(RedirectorPage::class)->getFields()->toArray());
+		$this->assertEquals(
+			['Created', 'TestPageField', 'RedirectionType'],
+			$scaffolder->type(RedirectorPage::class)->getFields()->column('Name')
+		);
 
-		$this->assertEquals([
-			'Created', 'TestPageField'
-		], $scaffolder->type(Page::class)->getFields()->toArray());
+		$this->assertEquals(
+			['Created', 'TestPageField'],
+			$scaffolder->type(Page::class)->getFields()->column('Name')
+		);
 
-		$this->assertEquals([
-			'Created'
-		], $scaffolder->type(SiteTree::class)->getFields()->toArray());
+		$this->assertEquals(
+			['Created'],
+			$scaffolder->type(SiteTree::class)->getFields()->column('Name')
+		);
 
 
 		$this->assertEquals('testQuery', $scaffolder->getQueries()->first()->getName());

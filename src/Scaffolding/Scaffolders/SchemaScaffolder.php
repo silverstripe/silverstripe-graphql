@@ -24,6 +24,8 @@ class SchemaScaffolder implements ManagerMutatorInterface
 
     const DELETE = 'delete';
 
+    const ALL = '*';
+
     /**
      * @var array
      */
@@ -256,8 +258,8 @@ class SchemaScaffolder implements ManagerMutatorInterface
                 $ancestorType = $this->type($class);
                 $inst = $ancestorType->getDataObjectInstance();
                 foreach ($exposedFields as $field) {
-                    if (ScaffoldingUtil::isValidFieldName($inst, $field)) {
-                        $ancestorType->addField($field);
+                    if (ScaffoldingUtil::isValidFieldName($inst, $field->Name)) {
+                        $ancestorType->addField($field->Name, $field->Description);
                     }
                 }
                 foreach ($exposedOperations as $op) {

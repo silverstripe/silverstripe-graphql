@@ -654,6 +654,80 @@ mutation CreatePost($Input: PostCreateInputType!)
 Permission constraints (in this case `canView()` and `canCreate()`) are enforced
 by the operation resovlers.
 
+#### Setting field descriptions
+
+Adding field descriptions is a great way to maintain a well-documented API. To do this,
+use a map of `FieldName: 'Your description'` instead of an enumerated list of field names.
+
+**Via YAML**:
+```yaml
+SilverStripe\GraphQL:
+  schema:
+    scaffolding:
+      types:
+        MyProject\Post:
+          fields:
+            ID: The unique identifier of the post
+            Title: The title of the post
+            Content: The main body of the post (HTML)
+          operations:
+            read: true
+            create: true
+```
+
+**...Or with code**:
+
+```php
+namespace MyProject;
+
+class Post extends DataObject implements ScaffoldingProvider {
+	//...
+    public function provideGraphQLScaffolding(SchemaScaffolder $scaffolder)
+    {
+    	$scaffolder
+    		->type(Post::class)
+	    		->addFields([
+	    			'ID' => 'The unique identidier of the post',
+	    			'Title' => 'The title of the post',
+	    			'Content' => 'The main body of the post (HTML)'
+	    		])
+	    		->operation(SchemaScaffolder::READ)
+	    			->end()
+	    		->operation(SchemaScaffolder::UPDATE)
+	    			->end()
+	    		->end();
+
+    	return $scaffolder;
+	}
+}
+```
+
+#### Wildcarding and whitelisting fields
+
+If you have a type you want to be fairly well exposed, it can be tedious to add each
+field piecemeal. As a shortcut, you can use `addAllFields()` (code) or `fields: *` (yaml). 
+If you have specific fields you want omitted from that list, you can use 
+`addAllFieldsExcept()` (code) or `excludeFields` (yaml).
+
+**Via YAML**:
+```yaml
+SilverStripe\GraphQL:
+  schema:
+    scaffolding:
+      types:
+        MyProject\Post:
+          fields: *
+          excludeFields: [SecretThing]
+```
+
+**... Or with code**:
+```php
+	$scaffolder
+		->type(Post::class)
+			->addAllFieldsExcept(['SecretThing'])
+```
+
+
 #### Adding arguments
 
 You can add arguments to basic crud operations, but keep in mind you'll need to use your own
@@ -1055,29 +1129,6 @@ query {
     }
   }
 }
-```
-
-
-#### Whitelisting fields in bulk
-
-If you have a type you want to be fairly well exposed, it can be tedious to add each
-field piecemeal. As a shortcut, you can use `addAllFieldsExcept()` (code) or `fieldsExcept` (yaml).
-
-**Via YAML**:
-```yaml
-SilverStripe\GraphQL:
-  schema:
-    scaffolding:
-      types:
-        MyProject\Post:
-          fieldsExcept: [SecretThing]
-```
-
-**... Or with code**:
-```php
-	$scaffolder
-		->type(Post::class)
-			->addAllFieldsExcept(['SecretThing'])
 ```
 
 #### Adding arbitrary queries and mutations

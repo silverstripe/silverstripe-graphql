@@ -12,7 +12,7 @@ class TypeParser
 {
 
     /**
-     * @var strign
+     * @var string
      */
     protected $rawArg;
 
