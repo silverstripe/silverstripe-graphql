@@ -6,6 +6,9 @@ use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\Director;
 use SilverStripe\View\Requirements;
 
+/**
+ * Controller endpoint for graphiql helper tool
+ */
 class GraphiQLController extends BaseController
 {
     /**

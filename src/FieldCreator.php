@@ -3,9 +3,16 @@
 namespace SilverStripe\GraphQL;
 
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\Core\Config\Configurable;
 use GraphQL\Type\Definition\Type;
 
+/**
+ * Base type for query types within graphql. I.e. mutations or queries
+ *
+ * @link https://github.com/webonyx/graphql-php#schema
+ *
+ * @see MutationCreator
+ * @see QueryCreator
+ */
 class FieldCreator
 {
     use Injectable;
@@ -25,6 +32,9 @@ class FieldCreator
     }
 
     /**
+     * Returns any fixed attributes for this type. E.g. 'name' or 'description'
+     *
+     * @link https://github.com/webonyx/graphql-php#schema
      * @return array
      */
     public function attributes()
@@ -33,7 +43,10 @@ class FieldCreator
     }
 
     /**
-     * @return Type
+     * Gets the type for elements within this query, or callback to lazy-load this type
+     *
+     * @link https://github.com/webonyx/graphql-php#type-system
+     * @return Type|callable
      */
     public function type()
     {
@@ -41,6 +54,9 @@ class FieldCreator
     }
 
     /**
+     * List of arguments this query accepts.
+     *
+     * @link https://github.com/webonyx/graphql-php#schema
      * @return array
      */
     public function args()
@@ -49,7 +65,7 @@ class FieldCreator
     }
 
     /**
-     * Get the attributes from the container.
+     * Merge all attributes for this query (type, attributes, resolvers, etc).
      *
      * @return array
      */
@@ -111,6 +127,14 @@ class FieldCreator
     }
 
     /**
+     * Returns a closure callback to the resolve method. This method
+     * will convert an invocation of this operation into a result or set of results.
+     *
+     * Either implement {@see OperationResolver}, or add a callback resolver within
+     * getAttributes() with the 'resolve' key.
+     *
+     * @link https://github.com/webonyx/graphql-php#query-resolution
+     * @see OperationResolver::resolve() for method signature.
      * @return \Closure|null
      */
     protected function getResolver()
