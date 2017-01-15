@@ -7,10 +7,3 @@ SilverStripe\Control\Director:
     graphql:
       Controller: 'SilverStripe\GraphQL\Controller'
       Stage: Stage
----
-only:
-  environment: 'dev'
----
-SilverStripe\Control\Director:
-  rules:
-    'dev/graphiql': 'SilverStripe\GraphQL\GraphiQLController'
