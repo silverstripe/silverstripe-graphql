@@ -41,6 +41,7 @@ class Controller extends BaseController
             $data = json_decode($rawBody ?: '', true);
         } else {
             $data = $request->requestVars();
+            unset($data['url']);
         }
 
         $query = isset($data['query']) ? $data['query'] : null;
