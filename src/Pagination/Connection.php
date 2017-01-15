@@ -237,7 +237,7 @@ class Connection implements OperationResolver
         if ($fields = $this->getSortableFields()) {
             $args['sortBy'] = [
                 'type' => Type::listOf(
-                    Injector::inst()->create(SortInputType::class, $this->connectionName)
+                    Injector::inst()->create(SortInputTypeCreator::class, $this->connectionName)
                         ->setSortableFields($fields)
                         ->toType()
                 )
@@ -255,7 +255,7 @@ class Connection implements OperationResolver
         return [
             'pageInfo' => [
                 'type' => Type::nonNull(
-                    Injector::inst()->get(PageInfoType::class)->toType()
+                    Injector::inst()->get(PageInfoTypeCreator::class)->toType()
                 ),
                 'description' => 'Pagination information'
             ],

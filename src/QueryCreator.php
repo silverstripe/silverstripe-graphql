@@ -3,8 +3,9 @@
 namespace SilverStripe\GraphQL;
 
 /**
- * Represents a GraphQL query in a way that allows customisation through
- * SilverStripe's {@link DataExtension} system.
+ * Represents a queryable entrypoint field in the top level graphql 'query' schema
+ *
+ * @link https://github.com/webonyx/graphql-php#schema
  */
 class QueryCreator extends FieldCreator
 {

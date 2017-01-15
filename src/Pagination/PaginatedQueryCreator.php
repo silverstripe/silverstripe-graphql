@@ -5,7 +5,6 @@ namespace SilverStripe\GraphQL\Pagination;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryCreator;
-use SilverStripe\Core\Injector;
 use GraphQL\Type\Definition\ResolveInfo;
 
 /**
@@ -45,9 +44,6 @@ abstract class PaginatedQueryCreator extends QueryCreator implements OperationRe
         return $this->connection->args();
     }
 
-    /**
-     * @return Callable
-     */
     public function type()
     {
         return function () {
@@ -55,9 +51,6 @@ abstract class PaginatedQueryCreator extends QueryCreator implements OperationRe
         };
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function resolve($value, array $args, $context, ResolveInfo $info)
     {
         return $this->connection->resolve(
