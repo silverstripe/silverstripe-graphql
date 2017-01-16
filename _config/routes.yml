@@ -7,3 +7,6 @@ SilverStripe\Control\Director:
     graphql:
       Controller: 'SilverStripe\GraphQL\Controller'
       Stage: Stage
+      Permissions:
+        CMS_ACCESS: CMS_ACCESS
+      Authenticator: SilverStripe\GraphQL\Auth\MemberAuthenticator

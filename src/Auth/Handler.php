@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Auth;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse_Exception;
 use SilverStripe\Core\ClassInfo;
-use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
@@ -18,6 +18,15 @@ use SilverStripe\Security\Member;
  */
 class Handler
 {
+    use Configurable;
+
+    private static $authenticators = [
+        [
+            'class' => BasicAuthAuthenticator::class,
+            'priority' => 10,
+        ]
+    ];
+
     /**
      * If required, enforce authentication for non-session authenticated requests. The Member returned from the
      * authentication method will returned for use in the OperationResolver context.
@@ -31,7 +40,7 @@ class Handler
      */
     public function requireAuthentication(HTTPRequest $request)
     {
-        $authenticator = $this->getAuthenticator();
+        $authenticator = $this->getAuthenticator($request);
         if (!$authenticator) {
             return false;
         }
@@ -47,29 +56,46 @@ class Handler
     /**
      * Returns the first configured authenticator by highest priority, or false if none are configured
      *
-     * @return AuthenticatorInterface|false
+     * @param HTTPRequest $request
+     * @return false|AuthenticatorInterface
+     * @throws ValidationException
      */
-    public function getAuthenticator()
+    public function getAuthenticator(HTTPRequest $request = null)
     {
-        $authenticators = Config::inst()->get('SilverStripe\GraphQL', 'authenticators');
+        // Request-specific authenticator
+        $authenticator = $request ? $request->param('Authenticator') : null;
+        if ($authenticator) {
+            return $this->buildAuthenticator($authenticator);
+        }
+
+        // Get list of default authenticators
+        $authenticators = $this->config()->get('authenticators');
         if (empty($authenticators)) {
             return false;
         }
 
+        // Build authenticator from first class
         $this->prioritiseAuthenticators($authenticators);
-
-        $authenticator = false;
         foreach ($authenticators as $authenticatorConfig) {
-            if (!ClassInfo::classImplements($authenticatorConfig['class'], AuthenticatorInterface::class)) {
-                throw new ValidationException(
-                    sprintf('%s must implement %s!', $authenticatorConfig['class'], AuthenticatorInterface::class)
-                );
-            }
-            $authenticator = Injector::inst()->get($authenticatorConfig['class']);
-            break;
+            return $this->buildAuthenticator($authenticatorConfig['class']);
         }
 
-        return $authenticator;
+        return false;
+    }
+
+    /**
+     * @param string $authenticator
+     * @return AuthenticatorInterface
+     * @throws ValidationException
+     */
+    protected function buildAuthenticator($authenticator)
+    {
+        if (!ClassInfo::classImplements($authenticator, AuthenticatorInterface::class)) {
+            throw new ValidationException(
+                sprintf('%s must implement %s!', $authenticator, AuthenticatorInterface::class)
+            );
+        }
+        return Injector::inst()->get($authenticator);
     }
 
     /**

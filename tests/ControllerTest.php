@@ -18,15 +18,12 @@ use Exception;
 
 class ControllerTest extends SapphireTest
 {
-    /**
-     * {@inheritDoc}
-     */
     public function setUp()
     {
         parent::setUp();
 
-        Config::inst()->nest();
-        Config::inst()->update('SilverStripe\\GraphQL', 'authenticators', null);
+        Handler::config()->remove('authenticators');
+        $this->logInWithPermission('CMS_ACCESS_CMSMain');
     }
 
     public function testIndex()
@@ -134,7 +131,7 @@ class ControllerTest extends SapphireTest
      */
     public function testAuthenticationProtectionOnQueries($authenticator, $shouldFail)
     {
-        Config::inst()->update('SilverStripe\\GraphQL', 'authenticators', [
+        Handler::config()->update('authenticators', [
             ['class' => $authenticator]
         ]);
 
@@ -165,15 +162,6 @@ class ControllerTest extends SapphireTest
                 true,
             ]
         ];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown()
-    {
-        Config::inst()->unnest();
-        parent::tearDown();
     }
 
     protected function getType(Manager $manager)

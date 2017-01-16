@@ -10,6 +10,8 @@ use SilverStripe\Control\Director;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\ORM\Versioning\Versioned;
 use Exception;
+use SilverStripe\Security\Permission;
+use SilverStripe\Security\Security;
 
 /**
  * Top level controller for handling graphql requests.
@@ -49,10 +51,25 @@ class Controller extends BaseController
         $this->setManager($manager = $this->getManager());
 
         try {
+            // Check authentication
             $member = $this->getAuthHandler()->requireAuthentication($request);
             if ($member) {
                 $manager->setMember($member);
             }
+
+            // Check authorisation
+            $permissions = $request->param('Permissions');
+            if ($permissions) {
+                if (!$member) {
+                    throw new \Exception("Authentication required");
+                }
+                $allowed = Permission::checkMember($member, $permissions);
+                if (!$allowed) {
+                    throw new \Exception("Not authorised");
+                }
+            }
+
+            // Run query
             $result = $manager->query($query, $variables);
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
