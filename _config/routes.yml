@@ -3,10 +3,11 @@ Name: graphqlroutes
 ---
 SilverStripe\Control\Director:
   rules:
-    # Default admin route stage is draft
     graphql:
       Controller: 'SilverStripe\GraphQL\Controller'
+      # @internal - Experimental config
+      # @todo - move this to a per-schema configuration, and simply register the named schema for this endpoint
+      # https://github.com/silverstripe/silverstripe-graphql/issues/52
       Stage: Stage
       Permissions:
         CMS_ACCESS: CMS_ACCESS
-      Authenticator: SilverStripe\GraphQL\Auth\MemberAuthenticator

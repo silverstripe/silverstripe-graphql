@@ -20,7 +20,20 @@ class Handler
 {
     use Configurable;
 
+    /**
+     * @config
+     * @var array
+     *
+     * @internal Experimental config:
+     * @todo Move this to a per-schema configuration and refer to this schema from the current endpoint
+     * @link https://github.com/silverstripe/silverstripe-graphql/issues/58
+     * @link https://github.com/silverstripe/silverstripe-graphql/issues/52
+     */
     private static $authenticators = [
+        [
+            'class' => MemberAuthenticator::class,
+            'priority' => 20,
+        ],
         [
             'class' => BasicAuthAuthenticator::class,
             'priority' => 10,
@@ -54,33 +67,29 @@ class Handler
     }
 
     /**
-     * Returns the first configured authenticator by highest priority, or false if none are configured
+     * Returns the first configured authenticator by highest priority, or null if none are configured
      *
      * @param HTTPRequest $request
-     * @return false|AuthenticatorInterface
-     * @throws ValidationException
+     * @return null|AuthenticatorInterface
      */
-    public function getAuthenticator(HTTPRequest $request = null)
+    public function getAuthenticator(HTTPRequest $request)
     {
-        // Request-specific authenticator
-        $authenticator = $request ? $request->param('Authenticator') : null;
-        if ($authenticator) {
-            return $this->buildAuthenticator($authenticator);
-        }
-
         // Get list of default authenticators
         $authenticators = $this->config()->get('authenticators');
         if (empty($authenticators)) {
-            return false;
+            return null;
         }
 
         // Build authenticator from first class
         $this->prioritiseAuthenticators($authenticators);
         foreach ($authenticators as $authenticatorConfig) {
-            return $this->buildAuthenticator($authenticatorConfig['class']);
+            $authenticator = $this->buildAuthenticator($authenticatorConfig['class']);
+            if ($authenticator->isApplicable($request)) {
+                return $authenticator;
+            }
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -116,7 +125,7 @@ class Handler
                 $b['priority'] = 10;
             }
 
-            return $a['priority'] < $b['priority'];
+            return $b['priority'] - $a['priority'];
         });
     }
 }

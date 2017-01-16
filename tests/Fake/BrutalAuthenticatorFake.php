@@ -12,4 +12,9 @@ class BrutalAuthenticatorFake implements AuthenticatorInterface, TestOnly
     {
         return false;
     }
+
+    public function isApplicable(HTTPRequest $request)
+    {
+        return true;
+    }
 }

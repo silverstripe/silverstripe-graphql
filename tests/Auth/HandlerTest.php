@@ -58,7 +58,7 @@ class HandlerTest extends SapphireTest
             ['class' => PushoverAuthenticatorFake::class]
         ]);
 
-        $result = $this->handler->getAuthenticator();
+        $result = $this->handler->getAuthenticator(new HTTPRequest('GET', '/'));
         $this->assertInstanceOf(PushoverAuthenticatorFake::class, $result);
     }
 
@@ -74,7 +74,7 @@ class HandlerTest extends SapphireTest
             ['class' => 'stdClass']
         ]);
 
-        $this->handler->getAuthenticator();
+        $this->handler->getAuthenticator(new HTTPRequest('GET', '/'));
     }
 
     /**
@@ -88,7 +88,7 @@ class HandlerTest extends SapphireTest
     {
         Handler::config()->update('authenticators', $authenticators);
 
-        $this->assertInstanceOf($expected, $this->handler->getAuthenticator());
+        $this->assertInstanceOf($expected, $this->handler->getAuthenticator(new HTTPRequest('GET', '/')));
     }
 
     /**
