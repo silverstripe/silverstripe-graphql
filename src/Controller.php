@@ -39,17 +39,11 @@ class Controller extends BaseController
         if ($isJson) {
             $rawBody = $request->getBody();
             $data = json_decode($rawBody ?: '', true);
+            $query = isset($data['query']) ? $data['query'] : null;
+            $variables = isset($data['variables']) ? $data['variables'] : null;
         } else {
-            $data = $request->requestVars();
-            unset($data['url']);
-        }
-
-        $query = isset($data['query']) ? $data['query'] : null;
-        $variables = isset($data['variables']) ? $data['variables'] : null;
-
-        // Some clients (e.g. GraphiQL) double encode as string
-        if (is_string($variables)) {
-            $variables = json_decode($variables, true);
+            $query = $request->requestVar('query');
+            $variables = json_decode($request->requestVar('variables'), true);
         }
 
         $this->setManager($manager = $this->getManager());
