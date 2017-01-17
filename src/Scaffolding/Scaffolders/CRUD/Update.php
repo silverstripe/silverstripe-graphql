@@ -77,7 +77,7 @@ class Update extends MutationScaffolder implements CRUDInterface
     protected function createArgs()
     {
         return [
-            'ID' => (new TypeParser('ID!'))->toArray(),
+            'ID' => Type::nonNull(Type::id()),
             'Input' => [
                 'type' => Type::nonNull($this->generateInputType()),
             ],
@@ -106,7 +106,9 @@ class Update extends MutationScaffolder implements CRUDInterface
         foreach ($db as $dbFieldName => $dbFieldType) {
             $result = $instance->obj($dbFieldName);
             $typeName = $result->config()->graphql_type;
-            $arr = (new TypeParser($typeName))->toArray();
+            $arr = [
+            	'type' => (new TypeParser($typeName))->getType()
+            ];
             $arr['name'] = $dbFieldName;
             $fields[] = $arr;
         }

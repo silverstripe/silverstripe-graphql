@@ -791,9 +791,71 @@ query {
 }
 ```
 
-> Argument definitions are expressed using a shorthand. Append `!` to the argument type to
-make it required, and `=SomeValue` to set it to a default value, e.g. `'Category' => 'String!'` or
-`'Answer' => 'Int=42'`.
+#### Argument definition shorthand
+
+You can make your scaffolding delcaration a bit more expressive by using argument shorthand.
+* `String!`: A required string
+* `Int!(50)`: A required integer with a default value of 50
+* `Boolean(0)`: A boolean defaulting to false
+* `String`: An optional string, defaulting to null
+
+#### Adding more definition to arguments
+
+To add descriptions, and to use a more granular level of control over your arguments,
+you can use a more long-form syntax.
+
+**Via YAML**
+```yaml
+SilverStripe\GraphQL:
+  schema:
+    scaffolding:
+      types:
+        MyProject\Post:
+          fields: [ID, Title, Content]
+          operations:
+            read:
+              args:
+                Title: String!
+                MinimumCommentCount:
+                  type: Int
+                  default: 5
+                  description: 'Use this parameter to specify the mimimum number of comments per post'
+              resolver: MyProject\ReadPostResolver
+            create: true
+```
+
+**... Or with code**
+```php
+	$scaffolder
+		->type(Post::class)
+    		->addFields(['ID','Title','Content'])
+    		->operation(SchemaScaffolder::READ)
+    			->addArgs([
+    				'Title' => 'String!',
+    				'MinimumCommentCount' => 'Int'
+    			])
+    			->setArgDefaults([
+    				'MinimumCommentCount' => 5
+    			])
+    			->setArgDescriptions([
+    				'MinimumCommentCount' => 'Use this parameter to specify the mimimum number of comments per post'
+    			])
+        		->setResolver(function($obj, $args, $context) {
+        			if(!singleton(Post::class)->canView($context['currentMember'])) {
+        				throw new \Exception('Cannot view Post');
+        			}
+        			$list = Post::get();
+        			if(isset($args['Title'])) {
+        				$list = $list->filter('Title:PartialMatch', $args['Title']);
+        			}
+
+        			return $list;
+        		})         	
+    			->end()
+    		->operation(SchemaScaffolder::UPDATE)
+    			->end()
+    		->end();
+```
 
 #### Using a custom resolver
 

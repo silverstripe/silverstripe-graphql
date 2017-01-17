@@ -11,6 +11,7 @@ use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\ArgumentScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
@@ -657,11 +658,74 @@ class ScaffoldingTest extends SapphireTest
 			'One' => 'String',
 			'Two' => 'Boolean'
 		]);
-		$scaffolder->addArgs([
-			'One' => 'String'
+		$scaffolder->addArg(
+			'One', 'String', 'One description', 'One default'
+		);
+
+		$this->assertEquals([], array_diff(
+			$scaffolder->getArgs()->column('argName'),
+			['One','Two']
+		));
+
+		$argument = $scaffolder->getArgs()->find('argName', 'One');
+		$this->assertInstanceOf(ArgumentScaffolder::class, $argument);
+		$arr = $argument->toArray();
+		$this->assertEquals('One description', $arr['description']);
+		$this->assertEquals('One default', $arr['defaultValue']);
+
+		$scaffolder->setArgDescriptions([
+			'One' => 'Foo',
+			'Two' => 'Bar'
 		]);
 
-		$this->assertEquals(['One','Two'], array_keys($scaffolder->getArgs()));
+		$scaffolder->setArgDefaults([
+			'One' => 'Feijoa',
+			'Two' => 'Kiwifruit'
+		]);
+
+		$argument = $scaffolder->getArgs()->find('argName', 'One');
+		$arr = $argument->toArray();
+		$this->assertEquals('Foo', $arr['description']);
+		$this->assertEquals('Feijoa', $arr['defaultValue']);
+
+		$argument = $scaffolder->getArgs()->find('argName', 'Two');
+		$arr = $argument->toArray();
+		$this->assertEquals('Bar', $arr['description']);
+		$this->assertEquals('Kiwifruit', $arr['defaultValue']);
+
+		$scaffolder->setArgDescription('One', 'Tui')
+			->setArgDefault('One', 'Moa');
+
+		$argument = $scaffolder->getArgs()->find('argName', 'One');
+		$arr = $argument->toArray();
+		$this->assertEquals('Tui', $arr['description']);
+		$this->assertEquals('Moa', $arr['defaultValue']);
+
+		$scaffolder->removeArg('One');
+		$this->assertEquals(['Two'], $scaffolder->getArgs()->column('argName'));
+		$scaffolder->addArg('Test', 'String');
+		$scaffolder->removeArgs(['Two','Test']);
+		$this->assertFalse($scaffolder->getArgs()->exists());
+
+		$ex = null;
+		try {
+			$scaffolder->setArgDescription('Nothing', 'Test');
+		} catch (Exception $e) {
+			$ex = $e;
+		}
+
+		$this->assertInstanceOf(InvalidArgumentException::class, $ex);
+		$this->assertRegExp('/Tried to set description/', $ex->getMessage());
+
+		$ex = null;
+		try {
+			$scaffolder->setArgDefault('Nothing', 'Test');
+		} catch (Exception $e) {
+			$ex = $e;
+		}
+
+		$this->assertInstanceOf(InvalidArgumentException::class, $ex);
+		$this->assertRegExp('/Tried to set default/', $ex->getMessage());
 	}
 
 	public function testOperationScaffolderResolver()
@@ -690,21 +754,101 @@ class ScaffoldingTest extends SapphireTest
 	{
 		$scaffolder = new OperationScaffolderFake('testOperation','testType');
 		
+		
+		$scaffolder->applyConfig([
+			'args' => [
+				'One' => 'String',
+				'Two' => [
+					'type' => 'String',
+					'default' => 'Foo',
+					'description' => 'Bar'
+				]
+			],
+			'resolver' => FakeResolver::class
+		]);
+
+		$this->assertEquals([], array_diff(
+			$scaffolder->getArgs()->column('argName'),
+			['One','Two']
+		));
+
+		$arg = $scaffolder->getArgs()->find('argName', 'Two');
+		$this->assertInstanceof(ArgumentScaffolder::class, $arg);
+		$arr = $arg->toArray();
+		$this->assertInstanceOf(StringType::class, $arr['type']);
+
+		$ex = null;
+		try {
+			$scaffolder->applyConfig([
+				'args' => 'fail'
+			]);
+		} catch (Exception $e) {
+			$ex = $e;
+		}
+
+		$this->assertInstanceof(Exception::class, $e);
+		$this->assertRegExp('/args must be an array/', $e->getMessage());
+
+		$ex = null;
 		try {
 			$scaffolder->applyConfig([
 				'args' => [
-					'One' => 'String',
-					'Two' => 'Boolean'
-				],
-				'resolver' => FakeResolver::class
+					'One' => [					
+						'default' => 'Foo',
+						'description' => 'Bar'
+					]
+				]
 			]);
-			$success = true;
 		} catch (Exception $e) {
-			$success = false;
+			$ex = $e;
 		}
 
-		$this->assertTrue($success);
-		$this->assertEquals(['One','Two'], array_keys($scaffolder->getArgs()));
+		$this->assertInstanceof(Exception::class, $e);
+		$this->assertRegExp('/must have a type/', $e->getMessage());
+
+		$ex = null;
+		try {
+			$scaffolder->applyConfig([
+				'args' => [
+					'One' => false
+				]
+			]);
+		} catch (Exception $e) {
+			$ex = $e;
+		}
+
+		$this->assertInstanceof(Exception::class, $e);
+		$this->assertRegExp('/should be mapped to a string or an array/', $e->getMessage());
+
+	}
+
+	public function testArgumentScaffolder()
+	{
+		$scaffolder = new ArgumentScaffolder('Test', 'String');
+		$scaffolder->setRequired(false)
+			->setDescription('Description')
+			->setDefaultValue('Default');
+
+		$this->assertEquals('Description', $scaffolder->getDescription());
+		$this->assertEquals('Default', $scaffolder->getDefaultValue());
+		$this->assertFalse($scaffolder->isRequired());
+
+		$scaffolder->applyConfig([
+			'description' => 'Foo',
+			'default' => 'Bar',
+			'required' => true
+		]);
+
+		$this->assertEquals('Foo', $scaffolder->getDescription());
+		$this->assertEquals('Bar', $scaffolder->getDefaultValue());
+		$this->assertTrue($scaffolder->isRequired());
+
+		$arr = $scaffolder->toArray();
+
+		$this->assertEquals('Foo', $arr['description']);
+		$this->assertEquals('Bar', $arr['defaultValue']);
+		$this->assertInstanceOf(NonNull::class, $arr['type']);
+		$this->assertInstanceOf(StringType::class, $arr['type']->getWrappedType());
 	}
 
 	public function testMutationScaffolder()
@@ -1046,13 +1190,13 @@ class ScaffoldingTest extends SapphireTest
 
     public function testTypeParser()
     {
-        $parser = new TypeParser('String!=Test');
+        $parser = new TypeParser('String!(Test)');
         $this->assertTrue($parser->isRequired());
         $this->assertEquals('String', $parser->getArgTypeName());
         $this->assertEquals('Test', $parser->getDefaultValue());
-        $this->assertTrue(is_string($parser->toArray()['defaultValue']));
+        $this->assertTrue(is_string($parser->getDefaultValue()));
 
-        $parser = new TypeParser('String! = Test');
+        $parser = new TypeParser('String! (Test)');
         $this->assertTrue($parser->isRequired());
         $this->assertEquals('String', $parser->getArgTypeName());
         $this->assertEquals('Test', $parser->getDefaultValue());
@@ -1062,58 +1206,41 @@ class ScaffoldingTest extends SapphireTest
         $this->assertEquals('Int', $parser->getArgTypeName());
         $this->assertNull($parser->getDefaultValue());
 
-        $parser = new TypeParser('Int!=23');
+        $parser = new TypeParser('Int!(23)');
         $this->assertTrue($parser->isRequired());
         $this->assertEquals('Int', $parser->getArgTypeName());
         $this->assertEquals('23', $parser->getDefaultValue());
-		$this->assertTrue(is_int($parser->toArray()['defaultValue']));
+		$this->assertTrue(is_int($parser->getDefaultValue()));
 
         $parser = new TypeParser('Boolean');
         $this->assertFalse($parser->isRequired());
         $this->assertEquals('Boolean', $parser->getArgTypeName());
         $this->assertNull($parser->getDefaultValue());
 
-        $parser = new TypeParser('Boolean=1');
+        $parser = new TypeParser('Boolean(1)');
         $this->assertFalse($parser->isRequired());
         $this->assertEquals('Boolean', $parser->getArgTypeName());
         $this->assertEquals('1', $parser->getDefaultValue());
-		$this->assertTrue(is_bool($parser->toArray()['defaultValue']));
+		$this->assertTrue(is_bool($parser->getDefaultValue()));
 
-        $parser = new TypeParser('String!=Test');
-        $arr = $parser->toArray();
-        $this->assertInstanceOf(NonNull::class, $arr['type']);
-        $this->assertInstanceOf(StringType::class, $arr['type']->getWrappedType());
-        $this->assertEquals('Test', $arr['defaultValue']);
+        $parser = new TypeParser('String!(Test)');        
+        $this->assertInstanceOf(StringType::class, $parser->getType());
+        $this->assertEquals('Test', $parser->getDefaultValue());
 
-        $this->setExpectedException(InvalidArgumentException::class);
+        $this->setExpectedExceptionRegExp(
+        	InvalidArgumentException::class,
+        	'/Invalid argument/'
+        );
+        
         $parser = new TypeParser('  ... Nothing');
 
-        $this->setExpectedException(InvalidArgumentException::class);
+        $this->setExpectedExceptionRegExp(
+        	InvalidArgumentException::class,
+        	'/Invalid type/'
+        );
+
         $parser = (new TypeParser('Nothing'))->toArray();
     }
-
-    public function testArgsParser()
-    {
-        $parsers = [
-            new ArgsParser([
-                'Test' => 'String'
-            ]),
-            new ArgsParser([
-                'Test' => Type::string()
-            ]),
-            new ArgsParser([
-                'Test' => ['type' => Type::string()]
-            ])
-        ];
-
-        foreach ($parsers as $parser) {
-            $arr = $parser->toArray();
-            $this->assertArrayHasKey('Test', $arr);
-            $this->assertArrayHasKey('type', $arr['Test']);
-            $this->assertInstanceOf(StringType::class, $arr['Test']['type']);
-        }
-    }
-
 
     public function testOperationList()
     {

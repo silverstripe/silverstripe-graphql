@@ -594,7 +594,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
             if ($result instanceof DBField) {
                 $typeName = $result->config()->graphql_type;
-                $fieldMap[$fieldName] = (new TypeParser($typeName))->toArray();
+                $fieldMap[$fieldName] = [];
+                $fieldMap[$fieldName]['type'] = (new TypeParser($typeName))->getType();
                 $fieldMap[$fieldName]['resolve'] = $resolver;
                 $fieldMap[$fieldName]['description'] = $fieldData->Description;
             }

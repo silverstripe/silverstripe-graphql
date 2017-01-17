@@ -6,7 +6,7 @@ use GraphQL\Type\Definition\Type;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 
 /**
- * Parses a type, e.g. String!=20 into an array defining the arg type
+ * Parses a type, e.g. Int!(20) into an array defining the arg type
  */
 class TypeParser
 {
@@ -19,7 +19,7 @@ class TypeParser
     /**
      * @var string
      */
-    protected $argType;
+    protected $typeStr;
 
     /**
      * @var bool
@@ -30,21 +30,21 @@ class TypeParser
      * @var null
      */
     protected $defaultValue = null;
-
+    
     /**
      * TypeParser constructor.
      * @param $rawArg
      */
     public function __construct($rawArg)
     {
-        if (!preg_match('/^([A-Za-z]+)(!?)(?:\s*=\s*(.*))?/', $rawArg, $matches)) {
+        if (!preg_match('/^([A-Za-z]+)(!?)(?:\s*\(\s*(.*)\))?/', $rawArg, $matches)) {
             throw new InvalidArgumentException(
                 "Invalid argument: $rawArg"
             );
         }
 
         $this->rawArg = $rawArg;
-        $this->argType = $matches[1];
+        $this->typeStr = $matches[1];
         $this->required = isset($matches[2]) && $matches[2] == '!';
         if (isset($matches[3])) {
             $this->defaultValue = $matches[3];
@@ -65,7 +65,7 @@ class TypeParser
      */
     public function getArgTypeName()
     {
-        return $this->argType;
+        return $this->typeStr;
     }
 
     /**
@@ -73,51 +73,43 @@ class TypeParser
      */
     public function getDefaultValue()
     {
-        return $this->defaultValue;
-    }
-
-    /**
-     * @return array
-     */
-    public function toArray()
-    {
-        $type = null;
-        $defaultValue = null;
-        switch ($this->argType) {
-            case Type::ID:
-                $type = Type::id();
-                $defaultValue = (int) $this->defaultValue;
-                break;
+        if($this->defaultValue === null) {
+        	return null;
+        }
+        
+        switch ($this->typeStr) {
+            case Type::ID:                
+                return (int) $this->defaultValue;                
             case Type::STRING:
-                $type = Type::string();
-                $defaultValue = (string) $this->defaultValue;
-                break;
-            case Type::BOOLEAN:
-                $type = Type::boolean();
-                $defaultValue = (boolean) $this->defaultValue;
-                break;
-            case Type::INT:
-                $type = Type::int();
-                $defaultValue = (int) $this->defaultValue;
-                break;
-            case Type::FLOAT:
-                $type = Type::float();
-                $defaultValue = (float) $this->defaultValue;
-                break;
-
+                return (string) $this->defaultValue;                
+            case Type::BOOLEAN:                
+                return (boolean) $this->defaultValue;                
+            case Type::INT:                
+                return (int) $this->defaultValue;                
+            case Type::FLOAT:                
+                return (float) $this->defaultValue;               
         }
 
-        if ($this->required) {
-            $type = Type::nonNull($type);
-        }
-
-        if (!$type) {
-            throw new InvalidArgumentException("Invalid GraphQL type: $this->argType");
-        }
-
-        return [
-            'type' => $type,
-            'defaultValue' => $defaultValue
-        ];
+        throw new InvalidArgumentException(sprintf(
+        	'Invalid type %s',
+        	$this->typeStr
+        ));
     }
+
+    public function getType()
+    {
+        switch ($this->typeStr) {
+            case Type::ID:
+                return Type::id();
+            case Type::STRING:
+                return Type::string();
+            case Type::BOOLEAN:
+                return Type::boolean();
+            case Type::INT:
+                return Type::int();
+            case Type::FLOAT:
+                return Type::float();
+        }    	
+    }
+
 }

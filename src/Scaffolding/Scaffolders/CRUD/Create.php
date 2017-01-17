@@ -90,7 +90,9 @@ class Create extends MutationScaffolder implements CRUDInterface
         foreach ($db as $dbFieldName => $dbFieldType) {
             $result = $instance->obj($dbFieldName);
             $typeName = $result->config()->graphql_type;
-            $arr = (new TypeParser($typeName))->toArray();
+            $arr = [
+            	'type' => (new TypeParser($typeName))->getType()
+            ];
             $arr['name'] = $dbFieldName;
             $fields[] = $arr;
         }
