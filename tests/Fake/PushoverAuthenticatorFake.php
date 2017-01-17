@@ -13,4 +13,9 @@ class PushoverAuthenticatorFake implements AuthenticatorInterface, TestOnly
     {
         return Member::create(['Email' => 'john@example.com']);
     }
+
+    public function isApplicable(HTTPRequest $request)
+    {
+        return true;
+    }
 }

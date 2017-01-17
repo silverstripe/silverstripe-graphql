@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Auth;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse_Exception;
 use SilverStripe\Core\ClassInfo;
-use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
@@ -18,6 +18,28 @@ use SilverStripe\Security\Member;
  */
 class Handler
 {
+    use Configurable;
+
+    /**
+     * @config
+     * @var array
+     *
+     * @internal Experimental config:
+     * @todo Move this to a per-schema configuration and refer to this schema from the current endpoint
+     * @link https://github.com/silverstripe/silverstripe-graphql/issues/58
+     * @link https://github.com/silverstripe/silverstripe-graphql/issues/52
+     */
+    private static $authenticators = [
+        [
+            'class' => MemberAuthenticator::class,
+            'priority' => 20,
+        ],
+        [
+            'class' => BasicAuthAuthenticator::class,
+            'priority' => 10,
+        ]
+    ];
+
     /**
      * If required, enforce authentication for non-session authenticated requests. The Member returned from the
      * authentication method will returned for use in the OperationResolver context.
@@ -31,7 +53,7 @@ class Handler
      */
     public function requireAuthentication(HTTPRequest $request)
     {
-        $authenticator = $this->getAuthenticator();
+        $authenticator = $this->getAuthenticator($request);
         if (!$authenticator) {
             return false;
         }
@@ -45,31 +67,44 @@ class Handler
     }
 
     /**
-     * Returns the first configured authenticator by highest priority, or false if none are configured
+     * Returns the first configured authenticator by highest priority, or null if none are configured
      *
-     * @return AuthenticatorInterface|false
+     * @param HTTPRequest $request
+     * @return null|AuthenticatorInterface
      */
-    public function getAuthenticator()
+    public function getAuthenticator(HTTPRequest $request)
     {
-        $authenticators = Config::inst()->get('SilverStripe\GraphQL', 'authenticators');
+        // Get list of default authenticators
+        $authenticators = $this->config()->get('authenticators');
         if (empty($authenticators)) {
-            return false;
+            return null;
         }
 
+        // Build authenticator from first class
         $this->prioritiseAuthenticators($authenticators);
-
-        $authenticator = false;
         foreach ($authenticators as $authenticatorConfig) {
-            if (!ClassInfo::classImplements($authenticatorConfig['class'], AuthenticatorInterface::class)) {
-                throw new ValidationException(
-                    sprintf('%s must implement %s!', $authenticatorConfig['class'], AuthenticatorInterface::class)
-                );
+            $authenticator = $this->buildAuthenticator($authenticatorConfig['class']);
+            if ($authenticator->isApplicable($request)) {
+                return $authenticator;
             }
-            $authenticator = Injector::inst()->get($authenticatorConfig['class']);
-            break;
         }
 
-        return $authenticator;
+        return null;
+    }
+
+    /**
+     * @param string $authenticator
+     * @return AuthenticatorInterface
+     * @throws ValidationException
+     */
+    protected function buildAuthenticator($authenticator)
+    {
+        if (!ClassInfo::classImplements($authenticator, AuthenticatorInterface::class)) {
+            throw new ValidationException(
+                sprintf('%s must implement %s!', $authenticator, AuthenticatorInterface::class)
+            );
+        }
+        return Injector::inst()->get($authenticator);
     }
 
     /**
@@ -90,7 +125,7 @@ class Handler
                 $b['priority'] = 10;
             }
 
-            return $a['priority'] < $b['priority'];
+            return $b['priority'] - $a['priority'];
         });
     }
 }

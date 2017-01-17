@@ -40,4 +40,12 @@ interface AuthenticatorInterface
      * @throws ValidationException  If authentication fails
      */
     public function authenticate(HTTPRequest $request);
+
+    /**
+     * Determine if this authenticator is applicable to the current request
+     *
+     * @param HTTPRequest $request
+     * @return bool
+     */
+    public function isApplicable(HTTPRequest $request);
 }

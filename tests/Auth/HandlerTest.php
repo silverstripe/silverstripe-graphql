@@ -3,13 +3,10 @@
 namespace SilverStripe\GraphQL\Tests\Auth;
 
 use SilverStripe\Control\HTTPRequest;
-use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Auth\Handler;
-use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Tests\Fake\BrutalAuthenticatorFake;
 use SilverStripe\GraphQL\Tests\Fake\PushoverAuthenticatorFake;
-use SilverStripe\Security\Member;
 
 /**
  * @package silverstripe-graphql
@@ -27,9 +24,7 @@ class HandlerTest extends SapphireTest
     public function setUp()
     {
         parent::setUp();
-        Config::inst()->nest();
-        Config::inst()->update('SilverStripe\\GraphQL', 'authenticators', null);
-
+        Handler::config()->remove('authenticators');
         $this->handler = new Handler;
     }
 
@@ -46,7 +41,7 @@ class HandlerTest extends SapphireTest
      */
     public function testRequireAuthenticationReturnsMember()
     {
-        Config::inst()->update('SilverStripe\\GraphQL', 'authenticators', [
+        Handler::config()->update('authenticators', [
             ['class' => PushoverAuthenticatorFake::class]
         ]);
 
@@ -59,11 +54,11 @@ class HandlerTest extends SapphireTest
      */
     public function testGetAuthenticator()
     {
-        Config::inst()->update('SilverStripe\\GraphQL', 'authenticators', [
+        Handler::config()->update('authenticators', [
             ['class' => PushoverAuthenticatorFake::class]
         ]);
 
-        $result = $this->handler->getAuthenticator();
+        $result = $this->handler->getAuthenticator(new HTTPRequest('GET', '/'));
         $this->assertInstanceOf(PushoverAuthenticatorFake::class, $result);
     }
 
@@ -75,11 +70,11 @@ class HandlerTest extends SapphireTest
      */
     public function testExceptionThrownWhenAuthenticatorDoesNotImplementAuthenticatorInterface()
     {
-        Config::inst()->update('SilverStripe\\GraphQL', 'authenticators', [
+        Handler::config()->update('authenticators', [
             ['class' => 'stdClass']
         ]);
 
-        $this->handler->getAuthenticator();
+        $this->handler->getAuthenticator(new HTTPRequest('GET', '/'));
     }
 
     /**
@@ -91,9 +86,9 @@ class HandlerTest extends SapphireTest
      */
     public function testAuthenticatorsCanBePrioritised($authenticators, $expected)
     {
-        Config::inst()->update('SilverStripe\\GraphQL', 'authenticators', $authenticators);
+        Handler::config()->update('authenticators', $authenticators);
 
-        $this->assertInstanceOf($expected, $this->handler->getAuthenticator());
+        $this->assertInstanceOf($expected, $this->handler->getAuthenticator(new HTTPRequest('GET', '/')));
     }
 
     /**
@@ -131,14 +126,5 @@ class HandlerTest extends SapphireTest
                 BrutalAuthenticatorFake::class
             ]
         ];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function tearDown()
-    {
-        Config::inst()->unnest();
-        parent::tearDown();
     }
 }
