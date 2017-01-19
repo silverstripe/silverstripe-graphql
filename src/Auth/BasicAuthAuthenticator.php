@@ -33,9 +33,6 @@ class BasicAuthAuthenticator implements AuthenticatorInterface
         if (isset($_SERVER['PHP_AUTH_USER']) && isset($_SERVER['PHP_AUTH_PW'])) {
             return true;
         }
-        if (Member::currentUserID()) {
-            return true;
-        }
         return false;
     }
 
