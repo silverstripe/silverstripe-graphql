@@ -77,7 +77,9 @@ class Update extends MutationScaffolder implements CRUDInterface
     protected function createArgs()
     {
         return [
-            'ID' => Type::nonNull(Type::id()),
+            'ID' => [
+            	'type' => Type::nonNull(Type::id())
+            ],
             'Input' => [
                 'type' => Type::nonNull($this->generateInputType()),
             ],
