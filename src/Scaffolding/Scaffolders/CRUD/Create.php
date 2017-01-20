@@ -93,8 +93,7 @@ class Create extends MutationScaffolder implements CRUDInterface
             $arr = [
             	'type' => (new TypeParser($typeName))->getType()
             ];
-            $arr['name'] = $dbFieldName;
-            $fields[] = $arr;
+            $fields[$dbFieldName] = $arr;
         }
 
         return new InputObjectType([
