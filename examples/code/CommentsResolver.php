@@ -1,6 +1,6 @@
 <?php
 
-namespace MyProject\GraphQL;
+namespace MyProject;
 
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 

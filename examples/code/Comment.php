@@ -1,6 +1,6 @@
 <?php
 
-namespace MyProject\GraphQL;
+namespace MyProject;
 
 use SilverStripe\ORM\DataObject;
 
@@ -12,7 +12,7 @@ class Comment extends DataObject
 	];
 
 	private static $has_one = [
-		'Post' => 'MyProject\GraphQL\Post'
+		'Post' => Post::class
 	];
 
 	public function canView($member = null, $context = []) { return true; }

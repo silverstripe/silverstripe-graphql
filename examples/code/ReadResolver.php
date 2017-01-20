@@ -1,6 +1,6 @@
 <?php
 
-namespace MyProject\GraphQL;
+namespace MyProject;
 
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 
@@ -10,8 +10,8 @@ class ReadResolver implements ResolverInterface
     {
 		$list = Post::get();
 		
-		if(isset($args['StartingWith'])) {
-			$list = $list->filter('Title:StartsWith', $args['StartingWith']);
+		if(isset($args['Title'])) {
+			$list = $list->filter('Title:PartialMatch', $args['Title']);
 		}
 
 		return $list;

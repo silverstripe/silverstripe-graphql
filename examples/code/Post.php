@@ -1,6 +1,6 @@
 <?php
 
-namespace MyProject\GraphQL;
+namespace MyProject;
 
 use SilverStripe\ORM\DataObject;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
@@ -18,15 +18,15 @@ class Post extends DataObject implements ScaffoldingProvider {
 	];
 
 	private static $has_one = [
-		'Author' => 'SilverStripe\Security\Member'
+		'Author' => Member::class
 	];
 
 	private static $many_many = [
-		'Files' => 'SilverStripe\Assets\File'
+		'Files' => File::class
 	];
 
 	private static $has_many = [
-		'Comments' => 'MyProject\GraphQL\Comment'
+		'Comments' => Comment::class
 	];
 
 	public function provideGraphQLScaffolding(GraphQLScaffolder $scaffolder)
