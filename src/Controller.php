@@ -38,11 +38,11 @@ class Controller extends BaseController
         }
         $contentType = $request->getHeader('Content-Type') ?: $request->getHeader('content-type');
         $isJson = preg_match('#^application/json\b#', $contentType);
-        if ($isJson) {
+        if ($isJson) {        	
             $rawBody = $request->getBody();
             $data = json_decode($rawBody ?: '', true);
             $query = isset($data['query']) ? $data['query'] : null;
-            $variables = isset($data['variables']) ? $data['variables'] : null;
+            $variables = isset($data['variables']) ? json_decode($data['variables'], true) : null;
         } else {
             $query = $request->requestVar('query');
             $variables = json_decode($request->requestVar('variables'), true);
