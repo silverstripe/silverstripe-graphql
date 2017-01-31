@@ -8,7 +8,9 @@ use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\OperationScaffolderFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
-use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage as RedirectorPage;
+use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
+use SilverStripe\GraphQL\Tests\Fake\FakePage;
+use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
@@ -32,13 +34,11 @@ use GraphQL\Type\Definition\IntType;
 use GraphQL\Type\Definition\IDType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ResolveInfo;
-use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Security\Member;
 use SilverStripe\Assets\File;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use Exception;
-use Page;
 
 class ScaffoldingTest extends SapphireTest
 {
@@ -208,11 +208,12 @@ class ScaffoldingTest extends SapphireTest
 
     public function testDataObjectScaffolderAncestralClasses()
     {
-        $scaffolder = new DataObjectScaffolder(RedirectorPage::class);
+        $scaffolder = new DataObjectScaffolder(FakeRedirectorPage::class);
         $classes = $scaffolder->getAncestralClasses();
 
         $this->assertEquals([
-            'Page','SilverStripe\CMS\Model\SiteTree'
+            FakePage::class,
+            FakeSiteTree::class
         ], $classes);
 
     }
@@ -471,13 +472,13 @@ class ScaffoldingTest extends SapphireTest
 
     public function testSchemaScaffolderAddToManager()
     {
-        Config::inst()->update('Page', 'db', [
+        Config::inst()->update(FakePage::class, 'db', [
             'TestPageField' => 'Varchar'
         ]);
 
         $manager = new Manager();
         $scaffolder = (new SchemaScaffolder())
-            ->type(RedirectorPage::class)
+            ->type(FakeRedirectorPage::class)
                 ->addFields(['Created','TestPageField', 'RedirectionType'])
                 ->operation(SchemaScaffolder::CREATE)
                     ->end()
@@ -504,27 +505,27 @@ class ScaffoldingTest extends SapphireTest
         }, $types);
 
         $this->assertEquals([
-            RedirectorPage::class,
+            FakeRedirectorPage::class,
             DataObjectFake::class,
-            Page::class,
-            SiteTree::class,
+            FakePage::class,
+            FakeSiteTree::class,
             Member::class,
             File::class
         ], $classNames);
 
         $this->assertEquals(
             ['Created', 'TestPageField', 'RedirectionType'],
-            $scaffolder->type(RedirectorPage::class)->getFields()->column('Name')
+            $scaffolder->type(FakeRedirectorPage::class)->getFields()->column('Name')
         );
 
         $this->assertEquals(
             ['Created', 'TestPageField'],
-            $scaffolder->type(Page::class)->getFields()->column('Name')
+            $scaffolder->type(FakePage::class)->getFields()->column('Name')
         );
 
         $this->assertEquals(
             ['Created'],
-            $scaffolder->type(SiteTree::class)->getFields()->column('Name')
+            $scaffolder->type(FakeSiteTree::class)->getFields()->column('Name')
         );
 
 
@@ -533,28 +534,28 @@ class ScaffoldingTest extends SapphireTest
 
         $this->assertInstanceof(
             Read::class,
-            $scaffolder->type(RedirectorPage::class)->getOperations()->findByIdentifier(SchemaScaffolder::READ)
+            $scaffolder->type(FakeRedirectorPage::class)->getOperations()->findByIdentifier(SchemaScaffolder::READ)
         );
         $this->assertInstanceof(
             Read::class,
-            $scaffolder->type(Page::class)->getOperations()->findByIdentifier(SchemaScaffolder::READ)
+            $scaffolder->type(FakePage::class)->getOperations()->findByIdentifier(SchemaScaffolder::READ)
         );
         $this->assertInstanceof(
             Read::class,
-            $scaffolder->type(SiteTree::class)->getOperations()->findByIdentifier(SchemaScaffolder::READ)
+            $scaffolder->type(FakeSiteTree::class)->getOperations()->findByIdentifier(SchemaScaffolder::READ)
         );
 
         $this->assertInstanceof(
             Create::class,
-            $scaffolder->type(RedirectorPage::class)->getOperations()->findByIdentifier(SchemaScaffolder::CREATE)
+            $scaffolder->type(FakeRedirectorPage::class)->getOperations()->findByIdentifier(SchemaScaffolder::CREATE)
         );
         $this->assertInstanceof(
             Create::class,
-            $scaffolder->type(Page::class)->getOperations()->findByIdentifier(SchemaScaffolder::CREATE)
+            $scaffolder->type(FakePage::class)->getOperations()->findByIdentifier(SchemaScaffolder::CREATE)
         );
         $this->assertInstanceof(
             Create::class,
-            $scaffolder->type(SiteTree::class)->getOperations()->findByIdentifier(SchemaScaffolder::CREATE)
+            $scaffolder->type(FakeSiteTree::class)->getOperations()->findByIdentifier(SchemaScaffolder::CREATE)
         );
     }
 
