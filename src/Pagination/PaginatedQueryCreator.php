@@ -21,6 +21,7 @@ abstract class PaginatedQueryCreator extends QueryCreator implements OperationRe
 
     /**
      * @param Manager $manager
+     * @param  Connection $connection
      */
     public function __construct(Manager $manager, Connection $connection = null)
     {
