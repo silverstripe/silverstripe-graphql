@@ -38,7 +38,7 @@ class Controller extends BaseController
         }
         $contentType = $request->getHeader('Content-Type') ?: $request->getHeader('content-type');
         $isJson = preg_match('#^application/json\b#', $contentType);
-        if ($isJson) {        	
+        if ($isJson) {
             $rawBody = $request->getBody();
             $data = json_decode($rawBody ?: '', true);
             $query = isset($data['query']) ? $data['query'] : null;

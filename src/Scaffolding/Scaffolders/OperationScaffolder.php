@@ -94,9 +94,9 @@ abstract class OperationScaffolder implements Configurable
     public function addArgs(array $argData)
     {
         $args = [];
-        foreach($argData as $argName => $typeStr) {
-        	$this->removeArg($argName);
-        	$this->args->add(new ArgumentScaffolder($argName, $typeStr));
+        foreach ($argData as $argName => $typeStr) {
+            $this->removeArg($argName);
+            $this->args->add(new ArgumentScaffolder($argName, $typeStr));
         }
 
         return $this;
@@ -120,73 +120,73 @@ abstract class OperationScaffolder implements Configurable
     /**
      * Sets descriptions of arguments
      * [
-     * 	'Email' => 'The email of the user'
+     *  'Email' => 'The email of the user'
      * ]
-     * @param array $argData 
+     * @param array $argData
      * @return  $this
      */
     public function setArgDescriptions(array $argData)
     {
-    	foreach($argData as $argName => $description) {
-    		$arg = $this->args->find('argName', $argName);
-    		if(!$arg) {
-    			throw new InvalidArgumentException(sprintf(
-    				'Tried to set description for %s, but it was not added to %s',
-    				$argName,
-    				$this->operationName
-    			));
-    		}
+        foreach ($argData as $argName => $description) {
+            $arg = $this->args->find('argName', $argName);
+            if (!$arg) {
+                throw new InvalidArgumentException(sprintf(
+                    'Tried to set description for %s, but it was not added to %s',
+                    $argName,
+                    $this->operationName
+                ));
+            }
 
-    		$arg->setDescription($description);
-    	}
+            $arg->setDescription($description);
+        }
 
-    	return $this;
+        return $this;
     }
 
     /**
      * Sets a single arg description
-     * @param string $argName     
-     * @param string $description 
+     * @param string $argName
+     * @param string $description
      */
     public function setArgDescription($argName, $description)
     {
-    	return $this->setArgDescriptions([$argName => $description]);
+        return $this->setArgDescriptions([$argName => $description]);
     }
 
     /**
      * Sets argument defaults
      * [
-     * 	'Featured' => true
+     *  'Featured' => true
      * ]
      * @param array $argData
      * @return  $this
      */
     public function setArgDefaults(array $argData)
     {
-    	foreach($argData as $argName => $default) {
-    		$arg = $this->args->find('argName', $argName);
-    		if(!$arg) {
-    			throw new InvalidArgumentException(sprintf(
-    				'Tried to set default for %s, but it was not added to %s',
-    				$argName,
-    				$this->operationName
-    			));
-    		}
+        foreach ($argData as $argName => $default) {
+            $arg = $this->args->find('argName', $argName);
+            if (!$arg) {
+                throw new InvalidArgumentException(sprintf(
+                    'Tried to set default for %s, but it was not added to %s',
+                    $argName,
+                    $this->operationName
+                ));
+            }
 
-    		$arg->setDefaultValue($default);
-    	}
+            $arg->setDefaultValue($default);
+        }
 
-    	return $this;    	
+        return $this;
     }
 
     /**
      * Sets a default for a single arg
-     * @param string $argName 
-     * @param mixed $default 
+     * @param string $argName
+     * @param mixed $default
      */
     public function setArgDefault($argName, $default)
     {
-    	return $this->setArgDefaults([$argName => $default]);
+        return $this->setArgDefaults([$argName => $default]);
     }
 
     /**
@@ -261,34 +261,34 @@ abstract class OperationScaffolder implements Configurable
     public function applyConfig(array $config)
     {
         if (isset($config['args'])) {
-        	if(!is_array($config['args'])) {
-        		throw new Exception(sprintf(
-        			'args must be an array on %s',
-        			$this->operationName
-        		));
-        	}
-        	foreach($config['args'] as $argName => $argData) {
-        		if(is_array($argData)) {
-					if(!isset($argData['type'])) {
-						throw new Exception(sprintf(
-							'Argument %s must have a type',
-							$argName
-						));
-					}
+            if (!is_array($config['args'])) {
+                throw new Exception(sprintf(
+                    'args must be an array on %s',
+                    $this->operationName
+                ));
+            }
+            foreach ($config['args'] as $argName => $argData) {
+                if (is_array($argData)) {
+                    if (!isset($argData['type'])) {
+                        throw new Exception(sprintf(
+                            'Argument %s must have a type',
+                            $argName
+                        ));
+                    }
 
-        			$scaffolder = new ArgumentScaffolder($argName, $argData['type']);
-        			$scaffolder->applyConfig($argData);
-        			$this->removeArg($argName);
-        			$this->args->add($scaffolder);
-        		} else if(is_string($argData)) {
-        			$this->addArg($argName, $argData);
-        		} else {
-        			throw new Exception(sprintf(
-        				'Arg %s should be mapped to a string or an array',
-        				$argName
-        			));
-        		}
-        	}            
+                    $scaffolder = new ArgumentScaffolder($argName, $argData['type']);
+                    $scaffolder->applyConfig($argData);
+                    $this->removeArg($argName);
+                    $this->args->add($scaffolder);
+                } elseif (is_string($argData)) {
+                    $this->addArg($argName, $argData);
+                } else {
+                    throw new Exception(sprintf(
+                        'Arg %s should be mapped to a string or an array',
+                        $argName
+                    ));
+                }
+            }
         }
         if (isset($config['resolver'])) {
             $this->setResolver($config['resolver']);
@@ -332,8 +332,8 @@ abstract class OperationScaffolder implements Configurable
     protected function createArgs()
     {
         $args = [];
-        foreach($this->args as $scaffolder) {
-        	$args[$scaffolder->argName] = $scaffolder->toArray();
+        foreach ($this->args as $scaffolder) {
+            $args[$scaffolder->argName] = $scaffolder->toArray();
         }
 
         return $args;

@@ -89,14 +89,14 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     public function addFields(array $fieldData)
     {
         $fields = [];
-        foreach($fieldData as $k => $data) {
-        	$assoc = !is_numeric($k);
-        	$field = ArrayData::create([
-        		'Name' => $assoc ? $k : $data,
-        		'Description' => $assoc ? $data : null
-        	]);
-        	$this->removeField($field->Name);        	
-        	$this->fields->add($field);        	
+        foreach ($fieldData as $k => $data) {
+            $assoc = !is_numeric($k);
+            $field = ArrayData::create([
+                'Name' => $assoc ? $k : $data,
+                'Description' => $assoc ? $data : null
+            ]);
+            $this->removeField($field->Name);
+            $this->fields->add($field);
         }
 
         return $this;
@@ -199,21 +199,21 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function setFieldDescription($field, $description)
     {
-    	$existing = $this->fields->find('Name', $field);
-    	if(!$existing) {
-    		throw new InvalidArgumentException(sprintf(
-    			'Cannot set description of %s. It has not been added to %s.',
-    			$field,
-    			$this->dataObjectClass
-    		));
-    	}
-    	
-    	$this->fields->replace($existing, ArrayData::create([
-    		'Name' => $field,
-    		'Description' => $description
-    	]));
+        $existing = $this->fields->find('Name', $field);
+        if (!$existing) {
+            throw new InvalidArgumentException(sprintf(
+                'Cannot set description of %s. It has not been added to %s.',
+                $field,
+                $this->dataObjectClass
+            ));
+        }
+        
+        $this->fields->replace($existing, ArrayData::create([
+            'Name' => $field,
+            'Description' => $description
+        ]));
 
-		return $this;
+        return $this;
     }
 
     /**
@@ -223,17 +223,17 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function getFieldDescription($field)
     {
-    	$item = $this->fields->find('Name', $field);
+        $item = $this->fields->find('Name', $field);
 
-    	if(!$item) {
-    		throw new \Exception(sprintf(
-    			'Tried to get field description for %s, but it has not been added to %s',
-    			$field,
-    			$this->dataObjectClass
-    		));
-    	}
+        if (!$item) {
+            throw new \Exception(sprintf(
+                'Tried to get field description for %s, but it has not been added to %s',
+                $field,
+                $this->dataObjectClass
+            ));
+        }
 
-    	return $item->Description;
+        return $item->Description;
     }
 
     /**
@@ -398,16 +398,16 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         if (isset($config['fieldDescriptions'])) {
-        	if(!ArrayLib::is_associative($config['fieldDescriptions'])) {
-        		throw new InvalidArgumentException(sprintf(
-        			'"fieldDescripions" must be a map of field name to description. See %s',
-        			$this->dataObjectClass
-        		));
-        	}
+            if (!ArrayLib::is_associative($config['fieldDescriptions'])) {
+                throw new InvalidArgumentException(sprintf(
+                    '"fieldDescripions" must be a map of field name to description. See %s',
+                    $this->dataObjectClass
+                ));
+            }
 
-        	foreach($config['fieldDescriptions'] as $fieldName => $description) {
-        		$this->setFieldDescription($fieldName, $description);
-        	}
+            foreach ($config['fieldDescriptions'] as $fieldName => $description) {
+                $this->setFieldDescription($fieldName, $description);
+            }
         }
 
         if (isset($config['operations'])) {
@@ -554,7 +554,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      * @return array
      */
     protected function createFields(Manager $manager)
-    {	
+    {
 
         $fieldMap = [];
         $instance = $this->getDataObjectInstance();
@@ -563,7 +563,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         if (!$this->fields->exists()) {
             $this->addFields(
-            	Config::inst()->get(self::class, 'default_fields')
+                Config::inst()->get(self::class, 'default_fields')
             );
         }
 
@@ -572,7 +572,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         };
 
         foreach ($this->fields as $fieldData) {
-        	$fieldName = $fieldData->Name;
+            $fieldName = $fieldData->Name;
             if (!ScaffoldingUtil::isValidFieldName($instance, $fieldName)) {
                 throw new InvalidArgumentException(sprintf(
                     'Invalid field "%s" on %s',
@@ -621,5 +621,4 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         return $fieldMap;
     }
-
 }

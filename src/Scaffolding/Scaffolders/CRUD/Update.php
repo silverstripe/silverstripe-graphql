@@ -78,7 +78,7 @@ class Update extends MutationScaffolder implements CRUDInterface
     {
         return [
             'ID' => [
-            	'type' => Type::nonNull(Type::id())
+                'type' => Type::nonNull(Type::id())
             ],
             'Input' => [
                 'type' => Type::nonNull($this->generateInputType()),
@@ -109,7 +109,7 @@ class Update extends MutationScaffolder implements CRUDInterface
             $result = $instance->obj($dbFieldName);
             $typeName = $result->config()->graphql_type;
             $arr = [
-            	'type' => (new TypeParser($typeName))->getType()
+                'type' => (new TypeParser($typeName))->getType()
             ];
             $fields[$dbFieldName] = $arr;
         }

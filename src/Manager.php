@@ -13,7 +13,6 @@ use GraphQL\Type\Definition\Type;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
-use SilverStripe\Security\Member;
 
 class Manager
 {
@@ -54,10 +53,10 @@ class Manager
         /** @var Manager $manager */
         $manager = Injector::inst()->create(self::class);
 
-        if(isset($config['scaffolding'])) {
-        	$scaffolder = SchemaScaffolder::createFromConfig($config['scaffolding']);
+        if (isset($config['scaffolding'])) {
+            $scaffolder = SchemaScaffolder::createFromConfig($config['scaffolding']);
         } else {
-        	$scaffolder = new SchemaScaffolder();
+            $scaffolder = new SchemaScaffolder();
         }
 
         if (isset($config['scaffolding_providers'])) {
@@ -68,7 +67,7 @@ class Manager
                         $provider
                     ));
                 }
-
+                
                 $provider = Injector::inst()->create($provider);
 
                 if (!$provider instanceof ScaffoldingProvider) {
@@ -225,12 +224,12 @@ class Manager
 
     /**
      * @param  string  $name
-     * 
+     *
      * @return boolean
      */
     public function hasType($name)
     {
-    	return isset($this->types[$name]);
+        return isset($this->types[$name]);
     }
 
     /**

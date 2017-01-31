@@ -993,8 +993,8 @@ class ScaffoldingTest extends SapphireTest
 
 		$this->assertEquals('Data_Object_FakeCreateInputType', $config['name']);
 		$fieldMap = [];
-		foreach($config['fields'] as $fieldData) {
-			$fieldMap[$fieldData['name']] = $fieldData['type'];
+		foreach($config['fields'] as $name => $fieldData) {
+			$fieldMap[$name] = $fieldData['type'];
 		}
 		$this->assertArrayHasKey('MyField', $fieldMap);
 		$this->assertArrayHasKey('MyInt', $fieldMap);
@@ -1058,8 +1058,8 @@ class ScaffoldingTest extends SapphireTest
 
 		$this->assertEquals('Data_Object_FakeUpdateInputType', $config['name']);
 		$fieldMap = [];
-		foreach($config['fields'] as $fieldData) {
-			$fieldMap[$fieldData['name']] = $fieldData['type'];
+		foreach($config['fields'] as $name => $fieldData) {
+			$fieldMap[$name] = $fieldData['type'];
 		}
 		$this->assertArrayHasKey('MyField', $fieldMap);
 		$this->assertArrayHasKey('MyInt', $fieldMap);

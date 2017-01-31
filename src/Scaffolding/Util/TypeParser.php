@@ -73,26 +73,26 @@ class TypeParser
      */
     public function getDefaultValue()
     {
-        if($this->defaultValue === null) {
-        	return null;
+        if ($this->defaultValue === null) {
+            return null;
         }
         
         switch ($this->typeStr) {
-            case Type::ID:                
-                return (int) $this->defaultValue;                
+            case Type::ID:
+                return (int) $this->defaultValue;
             case Type::STRING:
-                return (string) $this->defaultValue;                
-            case Type::BOOLEAN:                
-                return (boolean) $this->defaultValue;                
-            case Type::INT:                
-                return (int) $this->defaultValue;                
-            case Type::FLOAT:                
-                return (float) $this->defaultValue;               
+                return (string) $this->defaultValue;
+            case Type::BOOLEAN:
+                return (boolean) $this->defaultValue;
+            case Type::INT:
+                return (int) $this->defaultValue;
+            case Type::FLOAT:
+                return (float) $this->defaultValue;
         }
 
         throw new InvalidArgumentException(sprintf(
-        	'Invalid type %s',
-        	$this->typeStr
+            'Invalid type %s',
+            $this->typeStr
         ));
     }
 
@@ -109,7 +109,6 @@ class TypeParser
                 return Type::int();
             case Type::FLOAT:
                 return Type::float();
-        }    	
+        }
     }
-
 }
