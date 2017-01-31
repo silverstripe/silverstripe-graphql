@@ -8,7 +8,6 @@ class FakeResolver implements ResolverInterface
 {
     public function resolve($object, $args, $context, $info)
     {
-    	return 'resolved';
+        return 'resolved';
     }
-
 }

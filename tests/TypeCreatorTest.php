@@ -59,7 +59,9 @@ class TypeCreatorTest extends SapphireTest
         $mock->method('fields')->willReturn([
             'fieldA' => [
                 'type' => Type::string(),
-                'resolve' => function() {return 'config';},
+                'resolve' => function () {
+                    return 'config';
+                },
             ],
             'fieldB' => [
                 'type' => Type::string(),
@@ -126,7 +128,7 @@ class TypeCreatorTest extends SapphireTest
             ->setMethods(array_unique(array_merge(['fields', 'attributes'], $extraMethods)))
             ->getMock();
 
-        if(!in_array('fields', $extraMethods)) {
+        if (!in_array('fields', $extraMethods)) {
             $mock->method('fields')->willReturn([
                 'ID' => [
                     'type' => Type::nonNull(Type::id()),
@@ -134,7 +136,7 @@ class TypeCreatorTest extends SapphireTest
             ]);
         }
 
-        if(!in_array('attributes', $extraMethods)) {
+        if (!in_array('attributes', $extraMethods)) {
             $mock->method('attributes')
                 ->willReturn(['name' => 'myType']);
         }

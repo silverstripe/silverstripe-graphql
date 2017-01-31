@@ -13,11 +13,11 @@ class DataObjectFake extends DataObject implements TestOnly
     ];
 
     private static $has_one = [
-    	'Author' => 'SilverStripe\Security\Member'
+        'Author' => 'SilverStripe\Security\Member'
     ];
 
     private static $many_many = [
-    	'Files' => 'SilverStripe\Assets\File'
+        'Files' => 'SilverStripe\Assets\File'
     ];
 
     public $customSetterFieldResult;
@@ -44,12 +44,23 @@ class DataObjectFake extends DataObject implements TestOnly
         $this->customSetterMethodResult = $val;
     }
 
-	public function canCreate($member = null, $context = []) { return true; }
-	
-	public function canEdit($member = null) { return true; }
-	
-	public function canView($member = null) { return true; }
-	
-	public function canDelete($member = null) { return true; }
-
+    public function canCreate($member = null, $context = [])
+    {
+        return true;
+    }
+    
+    public function canEdit($member = null)
+    {
+        return true;
+    }
+    
+    public function canView($member = null)
+    {
+        return true;
+    }
+    
+    public function canDelete($member = null)
+    {
+        return true;
+    }
 }
