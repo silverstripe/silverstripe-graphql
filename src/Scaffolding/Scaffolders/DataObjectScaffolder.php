@@ -21,12 +21,12 @@ use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\ORM\ArrayLib;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\Configurable;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 
 /**
  * Scaffolds a DataObjectTypeCreator.
  */
-class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterface, Configurable
+class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterface, ConfigurationApplier
 {
     use DataObjectTypeTrait;
     use Chainable;

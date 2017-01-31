@@ -4,11 +4,11 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use GraphQL\Type\Definition\Type;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\Configurable;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use Exception;
 
-class ArgumentScaffolder implements Configurable
+class ArgumentScaffolder implements ConfigurationApplier
 {
 
     /**

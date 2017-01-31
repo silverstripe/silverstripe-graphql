@@ -11,7 +11,7 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\Configurable;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ArgumentScaffolder;
 use Exception;
@@ -20,7 +20,7 @@ use Exception;
  * Provides functionality common to both operation scaffolders. Cannot
  * be a subclass due to their distinct inheritance chains.
  */
-abstract class OperationScaffolder implements Configurable
+abstract class OperationScaffolder implements ConfigurationApplier
 {
     use Chainable;
 
