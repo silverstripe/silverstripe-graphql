@@ -14,7 +14,7 @@ class Post extends DataObject implements ScaffoldingProvider {
 	private static $db = [
 		'Title' => 'Varchar',
 		'Content' => 'HTMLText',
-		'Date' => 'SilverStripe\ORM\FieldType\DBDateTime'
+		'Date' => 'DateTime'
 	];
 
 	private static $has_one = [
