@@ -136,7 +136,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
      * @param string $class
      * @param null   $resolver
      *
-     * @return bool|QueryScaffolder
+     * @return QueryScaffolder
      */
     public function query($name, $class, $resolver = null)
     {

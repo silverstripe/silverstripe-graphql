@@ -46,6 +46,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
 
     /**
      * @param $name
+     * @return  string|null
      */
     public static function getOperationScaffoldFromIdentifier($name)
     {
@@ -66,8 +67,8 @@ abstract class OperationScaffolder implements ConfigurationApplier
     /**
      * OperationScaffolder constructor.
      *
-     * @param null $operationName
-     * @param null $resolver      Resolver|\Closure
+     * @param string $operationName
+     * @param Resolver|\Closure $resolver
      */
     public function __construct($operationName, $typeName, $resolver = null)
     {

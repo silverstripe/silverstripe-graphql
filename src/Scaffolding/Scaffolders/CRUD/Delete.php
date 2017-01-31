@@ -50,7 +50,7 @@ class Delete extends MutationScaffolder implements CRUDInterface
     }
 
     /**
-     * @return string`
+     * @return string
      */
     public function getIdentifier()
     {

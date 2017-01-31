@@ -10,7 +10,7 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 interface ScaffoldingProvider
 {
     /**
-     * @return mixed
+     * @param SchemaScaffolder $scaffolder
      */
     public function provideGraphQLScaffolding(SchemaScaffolder $scaffolder);
 }
