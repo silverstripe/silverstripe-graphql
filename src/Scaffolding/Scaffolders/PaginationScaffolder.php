@@ -9,13 +9,24 @@ use SilverStripe\GraphQL\Manager;
 class PaginationScaffolder extends PaginatedQueryCreator
 {
 
+    /**
+     * @param Manager $manager
+     * @param  Connection $connection
+     */
     public function __construct(Manager $manager, Connection $connection)
     {
-        $this->manager = $manager;
+        parent::__construct($manager);
+
         $this->connection = $connection;
     }
 
-    public function connection()
+    /**
+     * Connection is passed in through the constructor argument,
+     * to allow the instance to be created by the external scaffolding logic.
+     *
+     * @return Connection
+     */
+    public function createConnection()
     {
         return $this->connection;
     }

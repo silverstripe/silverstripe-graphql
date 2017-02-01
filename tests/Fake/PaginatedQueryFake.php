@@ -10,7 +10,7 @@ use SilverStripe\GraphQL\Pagination\Connection;
 
 class PaginatedQueryFake extends PaginatedQueryCreator
 {
-    public function connection()
+    public function createConnection()
     {
         return Connection::create('testPagination')
             ->setArgs([

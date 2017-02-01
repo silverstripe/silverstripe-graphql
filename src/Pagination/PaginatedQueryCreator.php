@@ -14,47 +14,46 @@ use GraphQL\Type\Definition\ResolveInfo;
  */
 abstract class PaginatedQueryCreator extends QueryCreator implements OperationResolver
 {
+
     /**
-     * @var Connection
+     * @var Connection Local instance created through `createConnection()`.
      */
     protected $connection;
-
-    /**
-     * @param Manager $manager
-     * @param  Connection $connection
-     */
-    public function __construct(Manager $manager, Connection $connection = null)
-    {
-        parent::__construct($manager);
-
-        $this->connection = $connection ?: $this->connection();
-    }
 
     /**
      * Get connection for this query
      *
      * @return Connection
      */
-    abstract public function connection();
+    abstract public function createConnection();
+
+    public function getConnection()
+    {
+        if (!$this->connection) {
+            $this->connection = $this->createConnection();
+        }
+
+        return $this->connection;
+    }
 
     /**
      * @return array
      */
     public function args()
     {
-        return $this->connection->args();
+        return $this->getConnection()->args();
     }
 
     public function type()
     {
         return function () {
-            return $this->connection->toType();
+            return $this->getConnection()->toType();
         };
     }
 
     public function resolve($value, array $args, $context, ResolveInfo $info)
     {
-        return $this->connection->resolve(
+        return $this->getConnection()->resolve(
             $value,
             $args,
             $context,

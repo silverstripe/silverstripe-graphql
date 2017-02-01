@@ -8,7 +8,7 @@ use SilverStripe\GraphQL\Pagination\PaginatedQueryCreator;
 
 class PaginatedReadMembersQueryCreator extends PaginatedQueryCreator
 {
-    public function connection()
+    public function createConnection()
     {
         return Connection::create('paginatedReadMembers')
             ->setConnectionType(function () {
