@@ -13,7 +13,7 @@ class Post extends DataObject implements ScaffoldingProvider {
 	private static $db = [
 		'Title' => 'Varchar',
 		'Content' => 'HTMLText',
-		'Date' => 'DateTime'
+		'Date' => 'Datetime'
 	];
 
 	private static $has_one = [
