@@ -9,6 +9,7 @@ use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Exception;
+use SilverStripe\ORM\DB;
 
 /**
  * A generic delete operation.
@@ -32,20 +33,22 @@ class Delete extends MutationScaffolder implements CRUDInterface
         );
 
         $this->setResolver(function ($object, array $args, $context, $info) {
-            $results = DataList::create($this->dataObjectClass)
-                ->byIDs($args['IDs']);
+            DB::get_conn()->withTransaction(function () use ($args, $context) {
+                $results = DataList::create($this->dataObjectClass)
+                    ->byIDs($args['IDs']);
 
-            foreach ($results as $obj) {
-                if ($obj->canDelete($context['currentMember'])) {
-                    $obj->delete();
-                } else {
-                    throw new Exception(sprintf(
-                        'Cannot delete %s with ID %s',
-                        $this->dataObjectClass,
-                        $obj->ID
-                    ));
+                foreach ($results as $obj) {
+                    if ($obj->canDelete($context['currentMember'])) {
+                        $obj->delete();
+                    } else {
+                        throw new Exception(sprintf(
+                            'Cannot delete %s with ID %s',
+                            $this->dataObjectClass,
+                            $obj->ID
+                        ));
+                    }
                 }
-            }
+            });
         });
     }
 
