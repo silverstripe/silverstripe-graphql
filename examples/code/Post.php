@@ -110,9 +110,6 @@ class Post extends DataObject implements ScaffoldingProvider
 			->end()
 			->operation(SchemaScaffolder::CREATE)
 			->end()
-			->end()
-			->type('Page')
-			->addFields(['BackwardsTitle'])
 			->end();
 
 
