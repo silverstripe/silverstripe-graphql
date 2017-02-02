@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use GraphQL\Type\Definition\InputObjectType;
@@ -13,6 +14,7 @@ use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Exception;
+use SilverStripe\ORM\DataObjectSchema;
 
 /**
  * Scaffolds a generic update operation for DataObjects.
@@ -97,11 +99,8 @@ class Update extends MutationScaffolder implements CRUDInterface
         $instance = $this->getDataObjectInstance();
 
         // Setup default input args.. Placeholder!
-        $db = (array) Config::inst()->get(
-            $this->dataObjectClass,
-            'db',
-            Config::INHERITED
-        );
+        $schema = Injector::inst()->get(DataObjectSchema::class);
+        $db = $schema->fieldSpecs($this->dataObjectClass);
 
         unset($db['ID']);
 

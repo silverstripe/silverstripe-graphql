@@ -12,6 +12,7 @@ use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Exception;
+use SilverStripe\ORM\DataObjectSchema;
 
 /**
  * A generic "create" operation for a DataObject.
@@ -77,11 +78,8 @@ class Create extends MutationScaffolder implements CRUDInterface
         $instance = $this->getDataObjectInstance();
 
         // Setup default input args.. Placeholder!
-        $db = (array) Config::inst()->get(
-            $this->dataObjectClass,
-            'db',
-            Config::INHERITED
-        );
+        $schema = Injector::inst()->get(DataObjectSchema::class);
+        $db = $schema->fieldSpecs($this->dataObjectClass);
 
         unset($db['ID']);
 
