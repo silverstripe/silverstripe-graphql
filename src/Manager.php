@@ -14,7 +14,8 @@ use GraphQL\Error;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
-
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 /**
  * Manager is the master container for a graphql endpoint, and contains
  * all queries, mutations, and types.
@@ -58,6 +59,32 @@ class Manager
     {
         /** @var Manager $manager */
         $manager = Injector::inst()->create(Manager::class);
+
+        if (isset($config['scaffolding'])) {
+            $scaffolder = SchemaScaffolder::createFromConfig($config['scaffolding']);
+        } else {
+            $scaffolder = new SchemaScaffolder();
+        }
+        if (isset($config['scaffolding_providers'])) {
+            foreach ($config['scaffolding_providers'] as $provider) {
+                if (!class_exists($provider)) {
+                    throw new InvalidArgumentException(sprintf(
+                        'Scaffolding provider %s does not exist.',
+                        $provider
+                    ));
+                }
+                
+                $provider = Injector::inst()->create($provider);
+                if (!$provider instanceof ScaffoldingProvider) {
+                    throw new InvalidArgumentException(sprintf(
+                        'All scaffolding providers must implement the %s interface',
+                        ScaffoldingProvider::class
+                    ));
+                }
+                $scaffolder = $provider->provideGraphQLScaffolding($scaffolder);
+            }
+        }
+        $scaffolder->addToManager($manager);
 
         // Types (incl. Interfaces and InputTypes)
         if ($config && array_key_exists('types', $config)) {
@@ -201,6 +228,16 @@ class Manager
         } else {
             throw new \InvalidArgumentException("Type '$name' is not a registered GraphQL type");
         }
+    }
+
+    /**
+     * @param  string  $name
+     *
+     * @return boolean
+     */
+    public function hasType($name)
+    {
+        return isset($this->types[$name]);
     }
 
     /**

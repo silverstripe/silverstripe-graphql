@@ -48,10 +48,10 @@ class ConnectionTest extends SapphireTest
 
         $this->manager = Manager::createFromConfig($config);
         $this->connection = Connection::create('testConnection')
-            ->setConnectionType(function() {
+            ->setConnectionType(function () {
                 return $this->manager->getType('TypeCreatorFake');
             })
-            ->setConnectionResolver(function() {
+            ->setConnectionResolver(function () {
                 $result = new ArrayList();
                 $result->push([
                     'ID' => 10,
@@ -80,7 +80,7 @@ class ConnectionTest extends SapphireTest
         $list = DataObjectFake::get();
 
         $connection = Connection::create('testFake')
-            ->setConnectionType(function() {
+            ->setConnectionType(function () {
                 return $this->manager->getType('TypeCreatorFake');
             });
 
@@ -108,7 +108,7 @@ class ConnectionTest extends SapphireTest
 
         $connection = Connection::create('testFake')
             ->setSortableFields(['MyField'])
-            ->setConnectionType(function() {
+            ->setConnectionType(function () {
                 return $this->manager->getType('TypeCreatorFake');
             });
 
@@ -135,7 +135,7 @@ class ConnectionTest extends SapphireTest
 
         $connection = Connection::create('testFake')
             ->setSortableFields(['MyFieldAlias' => 'MyField'])
-            ->setConnectionType(function() {
+            ->setConnectionType(function () {
                 return $this->manager->getType('TypeCreatorFake');
             });
 
@@ -164,7 +164,7 @@ class ConnectionTest extends SapphireTest
 
         $connection = Connection::create('testFake')
             ->setSortableFields(['MyField'])
-            ->setConnectionType(function() {
+            ->setConnectionType(function () {
                 return $this->manager->getType('TypeCreatorFake');
             });
 
@@ -206,7 +206,7 @@ class ConnectionTest extends SapphireTest
 
         $connection = Connection::create('testFakeConnection')
             ->setMaximumLimit(1)
-            ->setConnectionType(function() {
+            ->setConnectionType(function () {
                 return $this->manager->getType('TypeCreatorFake');
             });
 

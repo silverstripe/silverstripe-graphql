@@ -10,7 +10,7 @@ use SilverStripe\GraphQL\Pagination\Connection;
 
 class PaginatedQueryFake extends PaginatedQueryCreator
 {
-    public function connection()
+    public function createConnection()
     {
         return Connection::create('testPagination')
             ->setArgs([
@@ -18,10 +18,10 @@ class PaginatedQueryFake extends PaginatedQueryCreator
                     'type' => Type::string()
                 ]
             ])
-            ->setConnectionType(function()  {
+            ->setConnectionType(function () {
                 return $this->manager->getType('TypeCreatorFake');
             })
-            ->setConnectionResolver(function() {
+            ->setConnectionResolver(function () {
                 $list = DataObjectFake::get();
 
                 return $list;

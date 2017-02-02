@@ -8,7 +8,7 @@ class MutationCreatorFake extends MutationCreator
 {
     public function type()
     {
-        return function() {
+        return function () {
             return $this->manager->getType('mytype');
         };
     }
