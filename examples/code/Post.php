@@ -53,10 +53,10 @@ class Post extends DataObject implements ScaffoldingProvider
 			})
 			->end()
 			// basic crud operation, no options
-			->operation(GraphQLScaffolder::CREATE)
+			->operation(SchemaScaffolder::CREATE)
 			->end()
 			// complex crud operation, with custom args
-			->operation(GraphQLScaffolder::READ)
+			->operation(SchemaScaffolder::READ)
 			->addArgs([
 				'StartingWith' => 'String'
 			])
@@ -106,9 +106,9 @@ class Post extends DataObject implements ScaffoldingProvider
 			->end()
 			->type('SilverStripe\CMS\Model\RedirectorPage')
 			->addFields(['ExternalURL', 'Content'])
-			->operation(GraphQLScaffolder::READ)
+			->operation(SchemaScaffolder::READ)
 			->end()
-			->operation(GraphQLScaffolder::CREATE)
+			->operation(SchemaScaffolder::CREATE)
 			->end()
 			->end()
 			->type('Page')
