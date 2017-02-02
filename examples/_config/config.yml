@@ -10,10 +10,10 @@ SilverStripe\GraphQL:
       createMember: 'MyProject\GraphQL\CreateMemberMutationCreator'
   # Enforce HTTP basic authentication for GraphQL requests
   authenticators:
-    - class: SilverStripe\GraphQL\Auth\BasicAuthAuthenticator
-      priority: 10
+    class: SilverStripe\GraphQL\Auth\BasicAuthAuthenticator
+    priority: 10
     scaffolding_providers:
-     - My\Project\Post
+      - My\Project\Post
     scaffolding:
       types:
         My\Project\Post:

@@ -608,6 +608,9 @@ SilverStripe\GraphQL:
 ```php
 namespace MyProject;
 
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+
 class Post extends DataObject implements ScaffoldingProvider {
 	//...
     public function provideGraphQLScaffolding(SchemaScaffolder $scaffolder)

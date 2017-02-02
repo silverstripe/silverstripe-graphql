@@ -1,5 +1,5 @@
 <?php
-namespace MyProject;
+namespace MyProject\GraphQL;
 
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;

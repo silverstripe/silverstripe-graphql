@@ -4,8 +4,7 @@ namespace MyProject;
 
 use SilverStripe\ORM\DataObject;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\GraphQLScaffolder;
-use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\Security\Member;
 use SilverStripe\Assets\File;
 
@@ -29,7 +28,7 @@ class Post extends DataObject implements ScaffoldingProvider {
 		'Comments' => Comment::class
 	];
 
-	public function provideGraphQLScaffolding(GraphQLScaffolder $scaffolder)
+	public function provideGraphQLScaffolding(SchemaScaffolder $scaffolder)
 	{
         $scaffolder
         	->type(Post::class)
