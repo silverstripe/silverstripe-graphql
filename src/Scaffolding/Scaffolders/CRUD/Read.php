@@ -33,13 +33,13 @@ class Read extends QueryScaffolder implements CRUDInterface
         parent::__construct($operationName, $this->typeName());
 
         $this->setResolver(function ($object, array $args, $context, $info) {
-            if (!singleton($this->dataObjectClass)->canView($context['currentMember'])) {
+            if (!singleton($this->dataObjectClass)->canView($context['currentUser'])) {
                 throw new Exception(sprintf(
                     'Cannot create %s',
                     $this->dataObjectClass
                 ));
             }
-            
+
             $list = DataList::create($this->dataObjectClass);
 
             return $list;

@@ -38,7 +38,7 @@ class Delete extends MutationScaffolder implements CRUDInterface
                     ->byIDs($args['IDs']);
 
                 foreach ($results as $obj) {
-                    if ($obj->canDelete($context['currentMember'])) {
+                    if ($obj->canDelete($context['currentUser'])) {
                         $obj->delete();
                     } else {
                         throw new Exception(sprintf(

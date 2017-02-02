@@ -977,7 +977,7 @@ class ScaffoldingTest extends SapphireTest
                 'Input' => ['MyField' => '__testing__']
             ],
             [
-                'currentMember' => Member::create()
+                'currentUser' => Member::create()
             ],
             new ResolveInfo([])
         );
@@ -1021,7 +1021,7 @@ class ScaffoldingTest extends SapphireTest
         $scaffold['resolve'](
             null,
             [],
-            ['currentMember' => Member::create()],
+            ['currentUser' => Member::create()],
             new ResolveInfo([])
         );
     }
@@ -1043,7 +1043,7 @@ class ScaffoldingTest extends SapphireTest
                 'Input' => ['MyField' => 'new']
             ],
             [
-                'currentMember' => Member::create()
+                'currentUser' => Member::create()
             ],
             new ResolveInfo([])
         );
@@ -1089,7 +1089,7 @@ class ScaffoldingTest extends SapphireTest
         $scaffold['resolve'](
             $restrictedDataobject,
             ['ID' => $ID],
-            ['currentMember' => Member::create()],
+            ['currentUser' => Member::create()],
             new ResolveInfo([])
         );
     }
@@ -1115,7 +1115,7 @@ class ScaffoldingTest extends SapphireTest
                 'IDs' => [$ID1, $ID2]
             ],
             [
-                'currentMember' => Member::create()
+                'currentUser' => Member::create()
             ],
             new ResolveInfo([])
         );
@@ -1158,7 +1158,7 @@ class ScaffoldingTest extends SapphireTest
         $scaffold['resolve'](
             $restrictedDataobject,
             ['IDs' => [$ID]],
-            ['currentMember' => Member::create()],
+            ['currentUser' => Member::create()],
             new ResolveInfo([])
         );
     }
@@ -1183,7 +1183,7 @@ class ScaffoldingTest extends SapphireTest
             null,
             [],
             [
-                'currentMember' => Member::create()
+                'currentUser' => Member::create()
             ],
             new ResolveInfo([])
         );
