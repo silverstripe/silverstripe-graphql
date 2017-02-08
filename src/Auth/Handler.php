@@ -32,11 +32,11 @@ class Handler
     private static $authenticators = [
         [
             'class' => MemberAuthenticator::class,
-            'priority' => 20,
+            'priority' => 10,
         ],
         [
             'class' => BasicAuthAuthenticator::class,
-            'priority' => 10,
+            'priority' => 20,
         ]
     ];
 
