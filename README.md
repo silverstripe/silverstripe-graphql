@@ -1397,28 +1397,19 @@ Please note that when implementing GraphQL resources it is the developer's
 responsibility to ensure that permission checks are implemented wherever
 resources are accessed.
 
-### Basic Authentication
+### Default authentication
+
+The `MemberAuthenticator` class is configured as the default option for authentication,
+and will attempt to use the current CMS `Member` session for authentication context.
+
+### HTTP Basic Authentication
 
 Silverstripe has built in support for [HTTP basic authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
-It can be configured for GraphQL implementation with YAML configuration (see below).
-This is kept separate from the SilverStripe CMS authenticator because GraphQL needs
-to use the successfully authenticated member for CMS permission filtering, whereas
-the global `BasicAuth` does not log the member in or use it for model security.
-
-#### YAML configuration
-
-You will need to define the class under `SilverStripe\GraphQL.authenticators`.
-You can optionally provide a `priority` number if you want to control which
-Authenticator is used when multiple are defined (higher priority returns first).
-
-Here's an example for implementing HTTP basic authentication:
-
-```yaml
-SilverStripe\GraphQL:
-  authenticators:
-    - class: SilverStripe\GraphQL\Auth\BasicAuthAuthenticator
-      priority: 10
-```
+There is a `BasicAuthAuthenticator` which is configured for GraphQL by default, but
+will only activate when required. It is kept separate from the SilverStripe CMS
+authenticator because GraphQL needs to use the successfully authenticated member
+for CMS permission filtering, whereas the global `BasicAuth` does not log the
+member in or use it for model security.
 
 #### In GraphiQL
 
@@ -1447,6 +1438,26 @@ Example:
 ```shell
 php -r 'echo base64_encode("hello:world");'
 # aGVsbG86d29ybGQ=
+```
+
+### Defining your own authenticators
+
+You will need to define the class under `SilverStripe\GraphQL\Auth\Handlers.authenticators`.
+You can optionally provide a `priority` number if you want to control which
+Authenticator is used when multiple are defined (higher priority returns first).
+
+Authenticator classes will need to implement the `SilverStripe\GraphQL\Auth\AuthenticatorInterface`
+interface, which requires you to define an `authenticate` method to return a Member, or false, and
+and `isApplicable` method which tells the `Handler` whether or not this authentication method
+is applicable in the current request context (provided as an argument).
+
+Here's an example for implementing HTTP basic authentication:
+
+```yaml
+SilverStripe\GraphQL\Auth\Handler:
+  authenticators:
+    - class: SilverStripe\GraphQL\Auth\BasicAuthAuthenticator
+      priority: 10
 ```
 
 ## TODO
