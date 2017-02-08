@@ -42,7 +42,7 @@ class Controller extends BaseController
             $rawBody = $request->getBody();
             $data = json_decode($rawBody ?: '', true);
             $query = isset($data['query']) ? $data['query'] : null;
-            $variables = isset($data['variables']) ? json_decode($data['variables'], true) : null;
+            $variables = isset($data['variables']) ? $data['variables'] : null;
         } else {
             $query = $request->requestVar('query');
             $variables = json_decode($request->requestVar('variables'), true);
