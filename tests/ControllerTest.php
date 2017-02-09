@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Tests;
 
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Manager;
@@ -15,6 +16,7 @@ use GraphQL\Schema;
 use GraphQL\Type\Definition\ObjectType;
 use ReflectionClass;
 use Exception;
+use SilverStripe\Control\HTTPResponse_Exception;
 
 class ControllerTest extends SapphireTest
 {
@@ -145,6 +147,76 @@ class ControllerTest extends SapphireTest
 
         $assertion = ($shouldFail) ? 'assertContains' : 'assertNotContains';
         $this->{$assertion}('Authentication failed', $response->getBody());
+    }
+
+    /**
+     * @expectedException SilverStripe\Control\HTTPResponse_Exception
+     */
+    public function testAddCorsHeadersOriginDisallowed()
+    {
+        Config::inst()->remove('SilverStripe\GraphQL', 'cors');
+        Config::inst()->update('SilverStripe\GraphQL', 'cors', [
+            'Enabled' => true,
+            'Allow-Origin' => null,
+            'Allow-Headers' => 'Authorization, Content-Type',
+            'Allow-Methods' =>  'GET, POST, OPTIONS',
+            'Max-Age' => 86400
+        ]);
+
+        $controller = new Controller();
+        $request = new HTTPRequest('GET', '');
+        $request->addHeader('Origin', 'localhost');
+        $response = new HTTPResponse();
+        $response = $controller->addCorsHeaders($request, $response);
+
+        $this->assertTrue($response instanceof HTTPResponse);
+        $this->assertEquals($response->getStatusCode(), '403');
+    }
+
+    public function testAddCorsHeadersOriginAllowed()
+    {
+        Config::inst()->remove('SilverStripe\GraphQL', 'cors');
+        Config::inst()->update('SilverStripe\GraphQL', 'cors', [
+            'Enabled' => true,
+            'Allow-Origin' => 'localhost',
+            'Allow-Headers' => 'Authorization, Content-Type',
+            'Allow-Methods' =>  'GET, POST, OPTIONS',
+            'Max-Age' => 86400
+        ]);
+
+        $controller = new Controller();
+        $request = new HTTPRequest('GET', '');
+        $request->addHeader('Origin', 'localhost');
+        $response = new HTTPResponse();
+        $response = $controller->addCorsHeaders($request, $response);
+
+        $this->assertTrue($response instanceof HTTPResponse);
+        $this->assertEquals('200', $response->getStatusCode());
+
+        // Check returned headers.  A valid origin should return 4 headers.
+        $this->assertEquals('localhost', $response->getHeader('Access-Control-Allow-Origin'));
+        $this->assertEquals('Authorization, Content-Type', $response->getHeader('Access-Control-Allow-Headers'));
+        $this->assertEquals('GET, POST, OPTIONS', $response->getHeader('Access-Control-Allow-Methods'));
+        $this->assertEquals(86400, $response->getHeader('Access-Control-Max-Age'));
+    }
+
+    /**
+     * @expectedException SilverStripe\Control\HTTPResponse_Exception
+     */
+    public function testAddCorsHeadersResponseCORSDisabled()
+    {
+        Config::inst()->remove('SilverStripe\GraphQL', 'cors');
+        Config::inst()->update('SilverStripe\GraphQL', 'cors', [
+            'Enabled' => false
+        ]);
+
+        $controller = new Controller();
+        $request = new HTTPRequest('OPTIONS', '');
+        $request->addHeader('Origin', 'localhost');
+        $response = $controller->index($request);
+
+        $this->assertTrue($response instanceof HTTPResponse);
+        $this->assertEquals('405', $response->getStatusCode());
     }
 
     /**

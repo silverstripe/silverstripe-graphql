@@ -1431,7 +1431,7 @@ Authorization: Basic aGVsbG86d29ybGQ=
 combination of your username, colon and password. The above example is `hello:world`.
 
 **Note:** Authentication credentials are transferred in plain text when using HTTP
-basic authenticaiton. We strongly recommend using TLS for non-development use.
+basic authentication. We strongly recommend using TLS for non-development use.
 
 Example:
 
@@ -1458,6 +1458,106 @@ SilverStripe\GraphQL\Auth\Handler:
   authenticators:
     - class: SilverStripe\GraphQL\Auth\BasicAuthAuthenticator
       priority: 10
+```
+
+## Cross-Origin Resource Sharing (CORS)
+
+By default [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) is disabled in the GraphQL Server. This can be easily enabled via Yaml
+
+```yaml
+   SilverStripe\GraphQL:
+     cors:
+       Enabled: true
+```
+
+Once you have enabled CORS you can then control four new headers in the HTTP Response.
+
+1. **Access-Control-Allow-Origin.**
+
+ This lets you define which domains are allowed to access your GraphQL API. There are
+ 4 options:
+
+ * **Blank**:
+ Deny all domains (except localhost)
+
+ ```yaml
+      Allow-Origin:
+ ```
+
+ * **'\*'**:
+ Allow requests from all domains.
+
+ ```yaml
+      Allow-Origin: '*'
+ ```
+
+ * **Single Domain**:
+
+ Allow requests from one specific external domain.
+
+ ```yaml
+      Allow-Origin: 'my.domain.com'
+ ```
+
+ * **Multiple Domains**:
+
+ Allow requests from multiple specified external domains.
+
+ ```yaml
+      Allow-Origin:
+        - 'my.domain.com'
+        - 'your.domain.org'
+ ```
+
+2. **Access-Control-Allow-Headers.**
+
+ Access-Control-Allow-Headers is part of a CORS 'pre-flight' request to identify
+ what headers a CORS request may include.  By default, the GraphQL server enables the
+ `Authorization` and `Content-Type` headers. You can add extra allowed headers that
+ your GraphQL may need by adding them here. For example:
+
+ ```yaml
+      Allow-Headers: 'Authorization, Content-Type, Content-Language'
+ ```
+
+ **Note** If you add extra headers to your GraphQL server, you will need to write a
+ custom resolver function to handle the response.
+
+3. **Access-Control-Allow-Methods.**
+
+ This defines the HTTP request methods that the GraphQL server will handle.  By
+ default this is set to `GET, PUT, OPTIONS`. Again, if you need to support extra
+ methods you will need to write a custom resolver to handle this. For example:
+
+ ```yaml
+      Allow-Methods: 'GET, PUT, DELETE, OPTIONS'
+ ```
+
+4. **Access-Control-Max-Age.**
+
+ Sets the maximum cache age (in seconds) for the CORS pre-flight response. When
+ the client makes a successful OPTIONS request, it will cache the response
+ headers for this specified duration. If the time expires or the required
+ headers are different for a new CORS request, the client will send a new OPTIONS
+ pre-flight request to ensure it still has authorisation to make the request.
+ This is set to 86400 seconds (24 hours) by default but can be changed in YAML as
+ in this example:
+
+ ```yaml
+      Max-Age: 600
+ ```
+
+#### Sample Custom CORS Config
+
+```yaml
+  ## CORS Config
+  SilverStripe\GraphQL:
+    cors:
+      Enabled: true
+      Allow-Origin: 'silverstripe.org'
+      Allow-Headers: 'Authorization, Content-Type'
+      Allow-Methods:  'GET, POST, OPTIONS'
+      Max-Age:  600  # 600 seconds = 10 minutes.
 ```
 
 ## TODO
