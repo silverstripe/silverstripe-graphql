@@ -1001,6 +1001,7 @@ class ScaffoldingTest extends SapphireTest
         foreach ($config['fields'] as $name => $fieldData) {
             $fieldMap[$name] = $fieldData['type'];
         }
+        $this->assertArrayHasKey('Created', $fieldMap, 'Includes fixed_fields');
         $this->assertArrayHasKey('MyField', $fieldMap);
         $this->assertArrayHasKey('MyInt', $fieldMap);
         $this->assertArrayNotHasKey('ID', $fieldMap);
@@ -1066,6 +1067,7 @@ class ScaffoldingTest extends SapphireTest
         foreach ($config['fields'] as $name => $fieldData) {
             $fieldMap[$name] = $fieldData['type'];
         }
+        $this->assertArrayHasKey('Created', $fieldMap, 'Includes fixed_fields');
         $this->assertArrayHasKey('MyField', $fieldMap);
         $this->assertArrayHasKey('MyInt', $fieldMap);
         $this->assertArrayNotHasKey('ID', $fieldMap);
