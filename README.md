@@ -326,7 +326,7 @@ excessive load trying to load millions of records (default 100)
 return Connection::create('paginatedReadMembers')
     // ...
     ->setDefaultLimit(10)
-    ->setMaximumLimit(100); // previous users requesting more than 100 records
+    ->setMaximumLimit(100); // prevents users requesting more than 100 records
 ```
 
 #### Nested Connections
