@@ -181,8 +181,12 @@ class Controller extends BaseController
                 if (!$originAuthorised) {
                     return $this->httpError(403, "Access Forbidden");
                 }
+            } else {
+                // No Origin header present in Request.
+                return $this->httpError(403, "Access Forbidden");
             }
         } else {
+            // No allowed origins, ergo all origins forbidden.
             return $this->httpError(403, "Access Forbidden");
         }
 
