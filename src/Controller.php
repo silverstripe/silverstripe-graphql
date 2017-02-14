@@ -171,7 +171,7 @@ class Controller extends BaseController
             if ($origin) {
                 $originAuthorised = false;
                 foreach ($allowedOrigins as $allowedOrigin) {
-                    if ($allowedOrigin == $origin) {
+                    if ($allowedOrigin == $origin || $allowedOrigin === '*') {
                         $response->addHeader("Access-Control-Allow-Origin", $origin);
                         $originAuthorised = true;
                         break;
