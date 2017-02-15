@@ -7,6 +7,10 @@ use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\ORM\DataList;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\UnionScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\Core\ClassInfo;
 use Exception;
 
 /**
@@ -52,5 +56,34 @@ class Read extends QueryScaffolder implements CRUDInterface
     public function getIdentifier()
     {
         return SchemaScaffolder::READ;
+    }
+
+    /**
+     * Creates a thunk that lazily fetches the type
+     * @param  Manager $manager
+     * @return \Closure
+     */
+    protected function createTypeGetter(Manager $manager)
+    {
+        return function () use ($manager) {
+            // Create unions for exposed descendants
+            $descendants = ClassInfo::subclassesFor($this->dataObjectClass);
+            array_shift($descendants);
+            $union = [$this->typeName];
+            foreach ($descendants as $descendant) {
+                $typeName = ScaffoldingUtil::typeNameForDataObject($descendant);
+                if ($manager->hasType($typeName)) {
+                    $union[] = $typeName;
+                }
+            }
+            if (sizeof($union) > 1) {
+                return (new UnionScaffolder(
+                    $this->typeName.'WithDescendants',
+                    $union
+                ))->scaffold($manager);
+            }
+
+            return $manager->getType($this->typeName);
+        };
     }
 }
