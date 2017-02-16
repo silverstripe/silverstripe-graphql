@@ -1272,6 +1272,10 @@ Adding any given type will implicitly add all of its ancestors, all the way back
 Any fields you've listed on a descendant that are available on those ancestors will be exposed on the ancestors
 as well. For CRUD operations, each ancestor gets its own set of operations and input types.
 
+When reading types that have exposed descendants (e.g. reading Page, when RedirectorPage is also exposed),
+the return type is a *union* of the base type and all exposed descendants. This union type takes on the name
+`{BaseType}WithDescendants`. 
+
 **Via YAML**:
 ```yaml
 SilverStripe\GraphQL:
@@ -1325,6 +1329,14 @@ type SiteTree {
 	Content: String
 }
 
+type PageWithDescendants {
+	Page | RedirectorPage
+}
+
+type SiteTreeWithDescendants {
+	SiteTree | Page | RedirectorPage
+}
+
 input RedirectorPageCreateInputType {
 	ExternalURL: String
 	RedirectionType: String
@@ -1348,11 +1360,11 @@ query readRedirectorPages {
 }
 
 query readPages {
-	Page
+	PageWithDescendants
 }
 
 query readSiteTrees {
-	SiteTree
+	SiteTreeWithDescendants
 }
 
 mutation createRedirectorPage {
@@ -1365,6 +1377,30 @@ mutation createPage {
 
 mutation createSiteTree {
 	SiteTreeCreateInputType
+}
+```
+
+#### Querying types that have descendants
+
+Keep in mind that when querying a base class that has descendant types exposed (e.g. querying `Page`
+when `RedirectorPage` is also exposed), a union is returned, and you will need to resolve it
+with the `...on {type}` GraphQL syntax.
+
+```
+query readSiteTrees {
+  readSiteTrees {
+    edges {
+      node {
+        __typename
+        ...on Page {
+          ID
+        }
+        ...on RedirectorPage {
+          RedirectionType
+        }
+      }
+    }
+  }
 }
 ```
 
