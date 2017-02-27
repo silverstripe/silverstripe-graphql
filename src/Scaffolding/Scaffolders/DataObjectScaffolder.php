@@ -207,7 +207,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 $this->dataObjectClass
             ));
         }
-        
+
         $this->fields->replace($existing, ArrayData::create([
             'Name' => $field,
             'Description' => $description
@@ -495,7 +495,10 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         $fields = [];
         $db = DataObject::config()->fixed_fields;
-        $db = array_merge($db, Config::inst()->get($this->dataObjectClass, 'db', Config::INHERITED));
+        $extra = Config::inst()->get($this->dataObjectClass, 'db');
+        if ($extra) {
+            $db = array_merge($db, $extra);
+        }
 
         foreach ($db as $fieldName => $type) {
             $fields[] = $fieldName;
