@@ -4,7 +4,7 @@ Name: graphqlconfig
 SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder:
   default_fields:
     ID: ID
-    
+
 ## Map DB fields to GraphQL types
 SilverStripe\ORM\FieldType\DBField:
   # fallback
@@ -26,7 +26,7 @@ SilverStripe\ORM\FieldType\DBForeignKey:
   graphql_type: 'ID'
 
 ## CORS default config
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   cors:
     Enabled: false # Off by default
     Allow-Origin: # Deny all by default

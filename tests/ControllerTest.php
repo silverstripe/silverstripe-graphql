@@ -2,6 +2,8 @@
 
 namespace SilverStripe\GraphQL\Tests;
 
+use PHPUnit_Framework_MockObject_MockBuilder;
+use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Dev\SapphireTest;
@@ -11,21 +13,24 @@ use SilverStripe\GraphQL\Controller;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\Core\Config\Config;
-use SilverStripe\Security\Member;
-use GraphQL\Schema;
-use GraphQL\Type\Definition\ObjectType;
 use ReflectionClass;
 use Exception;
-use SilverStripe\Control\HTTPResponse_Exception;
 
 class ControllerTest extends SapphireTest
 {
     public function setUp()
     {
+        Director::set_environment_type('dev');
         parent::setUp();
 
         Handler::config()->remove('authenticators');
         $this->logInWithPermission('CMS_ACCESS_CMSMain');
+    }
+
+    public function tearDown()
+    {
+        Director::set_environment_type('dev');
+        parent::tearDown();
     }
 
     public function testIndex()
@@ -41,8 +46,7 @@ class ControllerTest extends SapphireTest
 
     public function testGetGetManagerPopulatesFromConfig()
     {
-        Config::inst()->remove('SilverStripe\GraphQL', 'schema');
-        Config::inst()->update('SilverStripe\GraphQL', 'schema', [
+        Config::modify()->set(Controller::class, 'schema', [
             'types' => [
                 'mytype' => TypeCreatorFake::class,
             ],
@@ -60,17 +64,12 @@ class ControllerTest extends SapphireTest
 
     public function testIndexWithException()
     {
-        Config::inst()->update('SilverStripe\\Control\\Director', 'environment_type', 'live');
+        Director::set_environment_type('live');
 
         $controller = new Controller();
-        $managerMock = $this->getMockBuilder(Schema::class)
+        /** @var Manager|PHPUnit_Framework_MockObject_MockBuilder $managerMock */
+        $managerMock = $this->getMockBuilder(Manager::class)
             ->setMethods(['query'])
-            ->setConstructorArgs([
-                ['query' => new ObjectType([
-                    'name' => 'Query',
-                    'fields' => []
-                ])]
-            ])
             ->getMock();
 
         $managerMock->method('query')
@@ -88,17 +87,12 @@ class ControllerTest extends SapphireTest
 
     public function testIndexWithExceptionIncludesTraceInDevMode()
     {
-        Config::inst()->update('SilverStripe\\Control\\Director', 'environment_type', 'dev');
+        Director::set_environment_type('dev');
 
         $controller = new Controller();
-        $managerMock = $this->getMockBuilder(Schema::class)
+        /** @var Manager|PHPUnit_Framework_MockObject_MockBuilder $managerMock */
+        $managerMock = $this->getMockBuilder(Manager::class)
             ->setMethods(['query'])
-            ->setConstructorArgs([
-                ['query' => new ObjectType([
-                    'name' => 'Query',
-                    'fields' => []
-                ])]
-            ])
             ->getMock();
 
         $managerMock->method('query')
@@ -150,12 +144,11 @@ class ControllerTest extends SapphireTest
     }
 
     /**
-     * @expectedException SilverStripe\Control\HTTPResponse_Exception
+     * @expectedException \SilverStripe\Control\HTTPResponse_Exception
      */
     public function testAddCorsHeadersOriginDisallowed()
     {
-        Config::inst()->remove('SilverStripe\GraphQL', 'cors');
-        Config::inst()->update('SilverStripe\GraphQL', 'cors', [
+        Config::modify()->set(Controller::class, 'cors', [
             'Enabled' => true,
             'Allow-Origin' => null,
             'Allow-Headers' => 'Authorization, Content-Type',
@@ -175,8 +168,7 @@ class ControllerTest extends SapphireTest
 
     public function testAddCorsHeadersOriginAllowed()
     {
-        Config::inst()->remove('SilverStripe\GraphQL', 'cors');
-        Config::inst()->update('SilverStripe\GraphQL', 'cors', [
+        Config::modify()->set(Controller::class, 'cors', [
             'Enabled' => true,
             'Allow-Origin' => 'localhost',
             'Allow-Headers' => 'Authorization, Content-Type',
@@ -201,12 +193,11 @@ class ControllerTest extends SapphireTest
     }
 
     /**
-     * @expectedException SilverStripe\Control\HTTPResponse_Exception
+     * @expectedException \SilverStripe\Control\HTTPResponse_Exception
      */
     public function testAddCorsHeadersResponseCORSDisabled()
     {
-        Config::inst()->remove('SilverStripe\GraphQL', 'cors');
-        Config::inst()->update('SilverStripe\GraphQL', 'cors', [
+        Config::modify()->set(Controller::class, 'cors', [
             'Enabled' => false
         ]);
 

@@ -11,7 +11,6 @@ use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\ORM\Versioning\Versioned;
 use Exception;
 use SilverStripe\Security\Permission;
-use SilverStripe\Security\Security;
 
 /**
  * Top level controller for handling graphql requests.
@@ -39,7 +38,7 @@ class Controller extends BaseController
 
         // Check for a possible CORS preflight request and handle if necessary
         // Refer issue 66:  https://github.com/silverstripe/silverstripe-graphql/issues/66
-        $corsConfig = Config::inst()->get('SilverStripe\GraphQL', 'cors');
+        $corsConfig = Config::inst()->get(self::class, 'cors');
         $corsEnabled = true; // Default to have CORS turned on.
 
         if ($corsConfig && isset($corsConfig['Enabled']) && !$corsConfig['Enabled']) {
@@ -121,7 +120,7 @@ class Controller extends BaseController
         }
 
         // Get a service rather than an instance (to allow procedural configuration)
-        $config = Config::inst()->get('SilverStripe\GraphQL', 'schema');
+        $config = Config::inst()->get(static::class, 'schema');
         $manager = Manager::createFromConfig($config);
 
         return $manager;
@@ -154,7 +153,7 @@ class Controller extends BaseController
      */
     public function addCorsHeaders(HTTPRequest $request, HTTPResponse $response)
     {
-        $corsConfig = Config::inst()->get('SilverStripe\GraphQL', 'cors');
+        $corsConfig = Config::inst()->get(static::class, 'cors');
         if (empty($corsConfig['Enabled'])) {
             // If CORS is disabled don't add the extra headers. Simply return the response untouched.
             return $response;
