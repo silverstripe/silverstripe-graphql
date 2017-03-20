@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL\Auth;
 
 use SilverStripe\Control\HTTPRequest;
-use SilverStripe\Control\HTTPResponse_Exception;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
@@ -13,8 +12,6 @@ use SilverStripe\Security\Member;
 /**
  * The authentication Handler is responsible for handling authentication requirements and providing a Member
  * to the Manager if required, so it can be used in request contexts.
- *
- * @package silverstripe-graphql
  */
 class Handler
 {
@@ -47,9 +44,9 @@ class Handler
      * Authenticators are defined in configuration. @see AuthenticatorInterface::authenticate.
      *
      * @param  HTTPRequest $request
-     * @return Member|false           If authentication was successful the Member is returned. False if no
-     *                                authenticators are configured.
-     * @throws HTTPResponse_Exception If authentication is attempted and fails
+     * @return Member|false         If authentication was successful the Member is returned. False if no
+     *                              authenticators are configured.
+     * @throws ValidationException  If authentication is attempted and fails
      */
     public function requireAuthentication(HTTPRequest $request)
     {
@@ -62,8 +59,8 @@ class Handler
         if ($member instanceof Member) {
             return $member;
         }
-        // Note: The authenticator class itself may also throw an exception
-        throw new HTTPResponse_Exception('Authentication failed.', 401);
+        // Note: The authenticator class itself may also throw an exception when called
+        throw new ValidationException('Authentication failed.', 401);
     }
 
     /**
@@ -88,8 +85,6 @@ class Handler
                 return $authenticator;
             }
         }
-
-        return null;
     }
 
     /**

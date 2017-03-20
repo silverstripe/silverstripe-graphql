@@ -140,7 +140,25 @@ class ControllerTest extends SapphireTest
         $response = $controller->index(new HTTPRequest('GET', ''));
 
         $assertion = ($shouldFail) ? 'assertContains' : 'assertNotContains';
-        $this->{$assertion}('Authentication failed', $response->getBody());
+        // See Fake\BrutalAuthenticatorFake::authenticate for failure message
+        $this->{$assertion}('Never!', $response->getBody());
+    }
+
+    /**
+     * @return array[]
+     */
+    public function authenticatorProvider()
+    {
+        return [
+            [
+                Fake\PushoverAuthenticatorFake::class,
+                false,
+            ],
+            [
+                Fake\BrutalAuthenticatorFake::class,
+                true
+            ]
+        ];
     }
 
     /**
@@ -208,23 +226,6 @@ class ControllerTest extends SapphireTest
 
         $this->assertTrue($response instanceof HTTPResponse);
         $this->assertEquals('405', $response->getStatusCode());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function authenticatorProvider()
-    {
-        return [
-            [
-                Fake\PushoverAuthenticatorFake::class,
-                false,
-            ],
-            [
-                Fake\BrutalAuthenticatorFake::class,
-                true,
-            ]
-        ];
     }
 
     protected function getType(Manager $manager)
