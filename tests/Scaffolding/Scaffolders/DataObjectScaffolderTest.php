@@ -1,0 +1,411 @@
+<?php
+
+namespace SilverStripe\GraphQL\Tests\Scaffolders;
+
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
+use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
+use SilverStripe\GraphQL\Tests\Fake\FakePage;
+use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
+use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
+use GraphQL\Type\Definition\ObjectType;
+use SilverStripe\Core\Config\Config;
+use Exception;
+
+class DataObjectScaffolderTest extends SapphireTest
+{
+    public function testDataObjectScaffolderConstructor()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+        $this->assertEquals(DataObjectFake::class, $scaffolder->getDataObjectClass());
+        $this->assertInstanceOf(DataObjectFake::class, $scaffolder->getDataObjectInstance());
+
+        $this->setExpectedExceptionRegExp(
+            InvalidArgumentException::class,
+            '/non-existent classname/'
+        );
+        $scaffolder = new DataObjectScaffolder('fail');
+    }
+
+    public function testDataObjectScaffolderFields()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+
+        $scaffolder->addField('MyField');
+        $this->assertEquals(['MyField'], $scaffolder->getFields()->column('Name'));
+
+        $scaffolder->addField('MyField', 'Some description');
+        $this->assertEquals(
+            'Some description',
+            $scaffolder->getFieldDescription('MyField')
+        );
+
+        $scaffolder->addFields([
+            'MyField',
+            'MyInt' => 'Int description',
+        ]);
+
+        $this->assertEquals(['MyField', 'MyInt'], $scaffolder->getFields()->column('Name'));
+        $this->assertNull(
+            $scaffolder->getFieldDescription('MyField')
+        );
+        $this->assertEquals(
+            'Int description',
+            $scaffolder->getFieldDescription('MyInt')
+        );
+
+        $scaffolder->setFieldDescription('MyInt', 'New int description');
+        $this->assertEquals(
+            'New int description',
+            $scaffolder->getFieldDescription('MyInt')
+        );
+
+        $scaffolder = $this->getFakeScaffolder();
+        $scaffolder->addAllFields();
+        $this->assertEquals(
+            ['ID', 'ClassName', 'LastEdited', 'Created', 'MyField', 'MyInt'],
+            $scaffolder->getFields()->column('Name')
+        );
+
+        $scaffolder = $this->getFakeScaffolder();
+        $scaffolder->addAllFields(true);
+        $this->assertEquals(
+            ['ID', 'ClassName', 'LastEdited', 'Created', 'MyField', 'MyInt', 'Author'],
+            $scaffolder->getFields()->column('Name')
+        );
+
+        $scaffolder = $this->getFakeScaffolder();
+        $scaffolder->addAllFieldsExcept('MyInt');
+        $this->assertEquals(
+            ['ID', 'ClassName', 'LastEdited', 'Created', 'MyField'],
+            $scaffolder->getFields()->column('Name')
+        );
+
+        $scaffolder = $this->getFakeScaffolder();
+        $scaffolder->addAllFieldsExcept('MyInt', true);
+        $this->assertEquals(
+            ['ID', 'ClassName', 'LastEdited', 'Created', 'MyField', 'Author'],
+            $scaffolder->getFields()->column('Name')
+        );
+
+        $scaffolder->removeField('ClassName');
+        $this->assertEquals(
+            ['ID', 'LastEdited', 'Created', 'MyField', 'Author'],
+            $scaffolder->getFields()->column('Name')
+        );
+        $scaffolder->removeFields(['LastEdited', 'Created']);
+        $this->assertEquals(
+            ['ID', 'MyField', 'Author'],
+            $scaffolder->getFields()->column('Name')
+        );
+    }
+
+    public function testDataObjectScaffolderOperations()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+        $op = $scaffolder->operation(SchemaScaffolder::CREATE);
+
+        $this->assertInstanceOf(CRUDInterface::class, $op);
+
+        // Ensure we get back the same reference
+        $op->Test = true;
+        $op = $scaffolder->operation(SchemaScaffolder::CREATE);
+        $this->assertEquals(true, $op->Test);
+
+        // Ensure duplicates aren't created
+        $scaffolder->operation(SchemaScaffolder::DELETE);
+        $this->assertEquals(2, $scaffolder->getOperations()->count());
+
+        $scaffolder->removeOperation(SchemaScaffolder::DELETE);
+        $this->assertEquals(1, $scaffolder->getOperations()->count());
+
+        $this->setExpectedExceptionRegExp(
+            InvalidArgumentException::class,
+            '/Invalid operation/'
+        );
+        $scaffolder = $this->getFakeScaffolder();
+        $scaffolder->operation('fail');
+    }
+
+    public function testDataObjectScaffolderNestedQueries()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+        $query = $scaffolder->nestedQuery('Files');
+
+        $this->assertInstanceOf(QueryScaffolder::class, $query);
+
+        // Ensure we get back the same reference
+        $query->Test = true;
+        $query = $scaffolder->nestedQuery('Files');
+        $this->assertEquals(true, $query->Test);
+
+        // Ensure duplicates aren't created
+        $this->assertEquals(1, $scaffolder->getNestedQueries()->count());
+
+        $this->setExpectedExceptionRegExp(
+            InvalidArgumentException::class,
+            '/returns a DataList or ArrayList/'
+        );
+        $scaffolder = $this->getFakeScaffolder();
+        $scaffolder->nestedQuery('MyField');
+    }
+
+    public function testDataObjectScaffolderDependentClasses()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+        $this->assertEquals([], $scaffolder->getDependentClasses());
+        $scaffolder->nestedQuery('Files');
+        $this->assertEquals(
+            [$scaffolder->getDataObjectInstance()->Files()->dataClass()],
+            $scaffolder->getDependentClasses()
+        );
+
+        $scaffolder->addField('Author');
+        $this->assertEquals(
+            [
+                $scaffolder->getDataObjectInstance()->Author()->class,
+                $scaffolder->getDataObjectInstance()->Files()->dataClass(),
+            ],
+            $scaffolder->getDependentClasses()
+        );
+    }
+
+    public function testDataObjectScaffolderAncestralClasses()
+    {
+        $scaffolder = new DataObjectScaffolder(FakeRedirectorPage::class);
+        $classes = $scaffolder->getAncestralClasses();
+
+        $this->assertEquals([
+            FakePage::class,
+            FakeSiteTree::class,
+        ], $classes);
+    }
+
+    public function testDataObjectScaffolderApplyConfig()
+    {
+        $observer = $this->getMockBuilder(DataObjectScaffolder::class)
+            ->setConstructorArgs([DataObjectFake::class])
+            ->setMethods(['addFields', 'removeFields', 'operation', 'nestedQuery', 'setFieldDescription'])
+            ->getMock();
+
+        $observer->expects($this->once())
+            ->method('addFields')
+            ->with($this->equalTo(['ID', 'MyField', 'MyInt']));
+
+        $observer->expects($this->once())
+            ->method('removeFields')
+            ->with($this->equalTo(['ID']));
+
+        $observer->expects($this->exactly(2))
+            ->method('operation')
+            ->withConsecutive(
+                [$this->equalTo(SchemaScaffolder::CREATE)],
+                [$this->equalTo(SchemaScaffolder::READ)]
+            )
+            ->will($this->returnValue(
+                $this->getMockBuilder(Create::class)
+                    ->disableOriginalConstructor()
+                    ->getMock()
+            ));
+
+        $observer->expects($this->once())
+            ->method('nestedQuery')
+            ->with($this->equalTo('Files'))
+            ->will($this->returnValue(
+                $this->getMockBuilder(QueryScaffolder::class)
+                    ->disableOriginalConstructor()
+                    ->getMock()
+            ));
+
+        $observer->expects($this->once())
+            ->method('setFieldDescription')
+            ->with(
+                $this->equalTo('MyField'),
+                $this->equalTo('This is myfield')
+            );
+
+        $observer->applyConfig([
+            'fields' => ['ID', 'MyField', 'MyInt'],
+            'excludeFields' => ['ID'],
+            'operations' => ['create' => true, 'read' => true],
+            'nestedQueries' => ['Files' => true],
+            'fieldDescriptions' => [
+                'MyField' => 'This is myfield',
+            ],
+        ]);
+    }
+
+    public function testDataObjectScaffolderApplyConfigNoFieldsException()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+
+        // Must have "fields" defined
+        $this->setExpectedExceptionRegExp(
+            Exception::class,
+            '/No array of fields/'
+        );
+        $scaffolder->applyConfig([
+            'operations' => ['create' => true],
+        ]);
+    }
+
+    public function testDataObjectScaffolderApplyConfigInvalidFieldsException()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+
+        // Invalid fields
+        $this->setExpectedExceptionRegExp(
+            Exception::class,
+            '/Fields must be an array/'
+        );
+        $scaffolder->applyConfig([
+            'fields' => 'fail',
+        ]);
+    }
+
+    public function testDataObjectScaffolderApplyConfigInvalidFieldsExceptException()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+
+        // Invalid fieldsExcept
+        $this->setExpectedExceptionRegExp(
+            InvalidArgumentException::class,
+            '/"excludeFields" must be an enumerated list/'
+        );
+        $scaffolder->applyConfig([
+            'fields' => ['MyField'],
+            'excludeFields' => 'fail',
+        ]);
+    }
+
+    public function testDataObjectScaffolderApplyConfigInvalidOperationsException()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+
+        // Invalid operations
+        $this->setExpectedExceptionRegExp(
+            Exception::class,
+            '/Operations field must be a map/'
+        );
+        $scaffolder->applyConfig([
+            'fields' => ['MyField'],
+            'operations' => ['create'],
+        ]);
+    }
+
+    public function testDataObjectScaffolderApplyConfigInvalidNestedQueriesException()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+
+        // Invalid nested queries
+        $this->setExpectedExceptionRegExp(
+            Exception::class,
+            '/"nestedQueries" must be a map of relation name/'
+        );
+        $scaffolder->applyConfig([
+            'fields' => ['MyField'],
+            'nestedQueries' => ['Files'],
+        ]);
+    }
+
+    public function testDataObjectScaffolderWildcards()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+        $scaffolder->applyConfig([
+            'fields' => SchemaScaffolder::ALL,
+            'operations' => SchemaScaffolder::ALL,
+        ]);
+        $ops = $scaffolder->getOperations();
+
+        $this->assertInstanceOf(Create::class, $ops->findByIdentifier(SchemaScaffolder::CREATE));
+        $this->assertInstanceOf(Delete::class, $ops->findByIdentifier(SchemaScaffolder::DELETE));
+        $this->assertInstanceOf(Read::class, $ops->findByIdentifier(SchemaScaffolder::READ));
+        $this->assertInstanceOf(Update::class, $ops->findByIdentifier(SchemaScaffolder::UPDATE));
+
+        $this->assertEquals(
+            ['ID', 'ClassName', 'LastEdited', 'Created', 'MyField', 'MyInt', 'Author'],
+            $scaffolder->getFields()->column('Name')
+        );
+    }
+
+    public function testDataObjectScaffolderScaffold()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+        $scaffolder->addFields(['MyField', 'Author'])
+                   ->nestedQuery('Files');
+
+        $objectType = $scaffolder->scaffold(new Manager());
+
+        $this->assertInstanceof(ObjectType::class, $objectType);
+        $config = $objectType->config;
+
+        $this->assertEquals($scaffolder->typeName(), $config['name']);
+        $this->assertEquals(['MyField', 'Author', 'Files'], array_keys($config['fields']));
+    }
+
+    public function testDataObjectScaffolderScaffoldFieldException()
+    {
+        $this->setExpectedExceptionRegExp(
+            InvalidArgumentException::class,
+            '/Invalid field/'
+        );
+        $scaffolder = $this->getFakeScaffolder()
+            ->addFields(['not a field'])
+            ->scaffold(new Manager());
+    }
+
+    public function testDataObjectScaffolderScaffoldNestedQueryException()
+    {
+        $this->setExpectedExceptionRegExp(
+            InvalidArgumentException::class,
+            '/returns a list/'
+        );
+        $scaffolder = $this->getFakeScaffolder()
+            ->addFields(['Files'])
+            ->scaffold(new Manager());
+    }
+
+    public function testDataObjectScaffolderAddToManager()
+    {
+        $manager = new Manager();
+        $scaffolder = $this->getFakeScaffolder()
+            ->addFields(['MyField'])
+            ->operation(SchemaScaffolder::CREATE)
+                ->end()
+            ->operation(SchemaScaffolder::READ)
+                ->end();
+
+        $scaffolder->addToManager($manager);
+
+        $schema = $manager->schema();
+        $queryConfig = $schema->getQueryType()->config;
+        $mutationConfig = $schema->getMutationType()->config;
+        $types = $schema->getTypeMap();
+
+        $this->assertArrayHasKey(
+            (new Read(DataObjectFake::class))->getName(),
+            $queryConfig['fields']
+        );
+
+        $this->assertArrayHasKey(
+            (new Create(DataObjectFake::class))->getName(),
+            $mutationConfig['fields']
+        );
+
+        $this->assertTrue($manager->hasType($scaffolder->typeName()));
+    }
+
+    protected function getFakeScaffolder()
+    {
+        return new DataObjectScaffolder(DataObjectFake::class);
+    }
+}
