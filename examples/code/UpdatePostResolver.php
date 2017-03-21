@@ -8,14 +8,13 @@ class UpdatePostResolver implements ResolverInterface
 {
     public function resolve($object, $args, $context, $info)
     {
-		$post = Post::get()->byID($args['ID']);
-		
-		if($post->canEdit()) {
-			$post->Title = $args['NewTitle'];
-			$post->write();
-		}
+        $post = Post::get()->byID($args['ID']);
+        
+        if ($post->canEdit()) {
+            $post->Title = $args['NewTitle'];
+            $post->write();
+        }
 
-		return $post;
+        return $post;
     }
-
 }

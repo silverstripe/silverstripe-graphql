@@ -8,13 +8,12 @@ class CommentsResolver implements ResolverInterface
 {
     public function resolve($object, $args, $context, $info)
     {
-		$comments = $object->Comments();
-		
-		if(isset($args['Today']) && $args['Today']) {
-			$comments = $comments->where('DATE(Created) = DATE(NOW())');
-		}
+        $comments = $object->Comments();
+        
+        if (isset($args['Today']) && $args['Today']) {
+            $comments = $comments->where('DATE(Created) = DATE(NOW())');
+        }
 
-		return $comments;
+        return $comments;
     }
-
 }
