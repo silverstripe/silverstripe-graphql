@@ -80,7 +80,7 @@ Each type class needs to be registered with a unique name against the schema
 through YAML configuration:
 
 ```yml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     types:
       member: 'MyProject\GraphQL\MemberTypeCreator'
@@ -155,7 +155,7 @@ class ReadMembersQueryCreator extends QueryCreator implements OperationResolver
 We'll register the query with a unique name through YAML configuration:
 
 ```yml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     queries:
       readMembers: 'MyProject\GraphQL\ReadMembersQueryCreator'
@@ -260,7 +260,7 @@ class PaginatedReadMembersQueryCreator extends PaginatedQueryCreator
 You will need to add a new unique query alias to your configuration:
 
 ```yml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     queries:
       paginatedReadMembers: 'MyProject\GraphQL\PaginatedReadMembersQueryCreator'
@@ -472,7 +472,7 @@ class CreateMemberMutationCreator extends MutationCreator implements OperationRe
 We'll register this mutation through YAML configuration:
 
 ```yml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     mutations:
       createMember: 'MyProject\GraphQL\CreateMemberMutationCreator'
@@ -544,7 +544,7 @@ scaffolding, using YAML is a simple approach to adding scaffolding.
 We'll need to define a `scaffolding` node in the `SilverStripe\GraphQL.schema` setting.
 
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding:      
       ## scaffolding will go here
@@ -576,7 +576,7 @@ class Post extends DataObject implements ScaffoldingProvider {
 In order to register the scaffolding provider with the manager, we'll need to make an update to the config.
 
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding_providers:
       - MyProject\Post
@@ -591,7 +591,7 @@ must implement the `SilverStripe\GraphQL\Scaffolding\ResolverInterface`. (More o
 
 **Via YAML**:
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding:
       types:
@@ -664,7 +664,7 @@ use a map of `FieldName: 'Your description'` instead of an enumerated list of fi
 
 **Via YAML**:
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding:
       types:
@@ -714,7 +714,7 @@ If you have specific fields you want omitted from that list, you can use
 
 **Via YAML**:
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding:
       types:
@@ -740,7 +740,7 @@ Using YAML, simply use a map of options instead of `true`.
 
 **Via YAML**
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding:
       types:
@@ -809,7 +809,7 @@ you can use a more long-form syntax.
 
 **Via YAML**
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding:
       types:
@@ -904,7 +904,7 @@ configurable.
 
 **Via YAML**
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding:
       types:
@@ -985,7 +985,7 @@ and any custom getter that returns a `DataList`, we can set up a nested query.
 
 **Via YAML**:
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding:
       types:
@@ -1088,7 +1088,7 @@ Let's add some more fields.
 
 **Via YAML*:
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding:
       types:
@@ -1121,7 +1121,7 @@ Nested queries can be configured just like operations.
 
 **Via YAML*:
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding:
       types:
@@ -1203,7 +1203,7 @@ in your schema, so long as they map to an existing type.
 
 **Via YAML**
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding:
       types:
@@ -1278,7 +1278,7 @@ the return type is a *union* of the base type and all exposed descendants. This 
 
 **Via YAML**:
 ```yaml
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     scaffolding:
       types:
@@ -1501,7 +1501,7 @@ SilverStripe\GraphQL\Auth\Handler:
 By default [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) is disabled in the GraphQL Server. This can be easily enabled via Yaml
 
 ```yaml
-   SilverStripe\GraphQL:
+   SilverStripe\GraphQL\Controller:
      cors:
        Enabled: true
 ```
@@ -1587,7 +1587,7 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
 
 ```yaml
   ## CORS Config
-  SilverStripe\GraphQL:
+  SilverStripe\GraphQL\Controller:
     cors:
       Enabled: true
       Allow-Origin: 'silverstripe.org'
