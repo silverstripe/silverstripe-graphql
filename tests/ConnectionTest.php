@@ -1,20 +1,21 @@
 <?php
 
-namespace SilverStripe\GraphQL;
+namespace SilverStripe\GraphQL\Tests;
 
-use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\FieldDefinition;
+use GraphQL\Type\Definition\InputObjectField;
 use GraphQL\Type\Definition\InputObjectType;
-use SilverStripe\Dev\SapphireTest;
-use SilverStripe\ORM\ArrayList;
+use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\Pagination\SortInputTypeCreator;
+use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
-use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
+use SilverStripe\GraphQL\Pagination\SortInputTypeCreator;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\PaginatedQueryFake;
-use GraphQL\Type\Definition\InputObjectField;
-use GraphQL\Type\Definition\FieldDefinition;
-use GraphQL\Type\Definition\ResolveInfo;
+use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
+use SilverStripe\ORM\ArrayList;
 use InvalidArgumentException;
 
 class ConnectionTest extends SapphireTest
