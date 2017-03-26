@@ -6,6 +6,7 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Tests\Fake\BrutalAuthenticatorFake;
+use SilverStripe\GraphQL\Tests\Fake\FalsyAuthenticatorFake;
 use SilverStripe\GraphQL\Tests\Fake\PushoverAuthenticatorFake;
 
 /**
@@ -126,5 +127,37 @@ class HandlerTest extends SapphireTest
                 BrutalAuthenticatorFake::class
             ]
         ];
+    }
+
+    /**
+     * Ensure that an failed authentication attempt throws an exception
+     *
+     * @expectedException \SilverStripe\ORM\ValidationException
+     * @expectedExceptionMessage Never!
+     */
+    public function testFailedAuthenticationThrowsException()
+    {
+        Handler::config()->update('authenticators', [
+            ['class' => BrutalAuthenticatorFake::class]
+        ]);
+
+        $this->handler->requireAuthentication(new HTTPRequest('/', 'GET'));
+    }
+
+    /**
+     * Ensure that when a falsy value is returned from an authenticator (when it should throw
+     * an exception on failure) that a sensible default message is used in a ValidationException
+     * instead.
+     *
+     * @expectedException \SilverStripe\ORM\ValidationException
+     * @expectedExceptionMessage Authentication failed.
+     */
+    public function testFailedAuthenticationWithFalsyReturnValueThrowsDefaultException()
+    {
+        Handler::config()->update('authenticators', [
+            ['class' => FalsyAuthenticatorFake::class]
+        ]);
+
+        $this->handler->requireAuthentication(new HTTPRequest('/', 'GET'));
     }
 }
