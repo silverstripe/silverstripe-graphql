@@ -2,7 +2,9 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
+use SilverStripe\Assets\File;
 use SilverStripe\Dev\TestOnly;
+use SilverStripe\Security\Member;
 use SilverStripe\ORM\DataObject;
 
 class DataObjectFake extends DataObject implements TestOnly
@@ -13,11 +15,11 @@ class DataObjectFake extends DataObject implements TestOnly
     ];
 
     private static $has_one = [
-        'Author' => 'SilverStripe\Security\Member'
+        'Author' => Member::class
     ];
 
     private static $many_many = [
-        'Files' => 'SilverStripe\Assets\File'
+        'Files' => File::class
     ];
 
     public $customSetterFieldResult;
@@ -48,17 +50,17 @@ class DataObjectFake extends DataObject implements TestOnly
     {
         return true;
     }
-    
+
     public function canEdit($member = null)
     {
         return true;
     }
-    
+
     public function canView($member = null)
     {
         return true;
     }
-    
+
     public function canDelete($member = null)
     {
         return true;

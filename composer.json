@@ -19,6 +19,11 @@
       "SilverStripe\\GraphQL\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "SilverStripe\\GraphQL\\Tests\\": "tests/"
+    }
+  },
   "config": {
     "process-timeout": 600
   },

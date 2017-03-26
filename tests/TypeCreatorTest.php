@@ -1,9 +1,10 @@
 <?php
 
-namespace SilverStripe\GraphQL;
+namespace SilverStripe\GraphQL\Tests;
 
 use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\TypeCreator;
 use GraphQL\Type\Definition\Type;
 
 class TypeCreatorTest extends SapphireTest

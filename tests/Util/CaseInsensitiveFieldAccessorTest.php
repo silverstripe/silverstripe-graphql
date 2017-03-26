@@ -8,7 +8,6 @@ use SilverStripe\Dev\SapphireTest;
 
 class CaseInsensitiveFieldAccessorTest extends SapphireTest
 {
-
     public function testGetValueWithOriginalCasing()
     {
         $fake = new DataObjectFake([

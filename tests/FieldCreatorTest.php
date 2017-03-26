@@ -1,8 +1,9 @@
 <?php
 
-namespace SilverStripe\GraphQL;
+namespace SilverStripe\GraphQL\Tests;
 
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\FieldCreator;
 
 class FieldCreatorTest extends SapphireTest
 {

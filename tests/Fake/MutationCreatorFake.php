@@ -2,9 +2,10 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
+use SilverStripe\Dev\TestOnly;
 use SilverStripe\GraphQL\MutationCreator;
 
-class MutationCreatorFake extends MutationCreator
+class MutationCreatorFake extends MutationCreator implements TestOnly
 {
     public function type()
     {
