@@ -3,7 +3,6 @@
   "description": "GraphQL server for SilverStripe models and other data",
   "type": "silverstripe-module",
   "require": {
-    "php": ">=5.5.0",
     "silverstripe/framework": "^4",
     "webonyx/graphql-php": "~0.7.2"
   },
@@ -20,6 +19,11 @@
       "SilverStripe\\GraphQL\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "SilverStripe\\GraphQL\\Tests\\": "tests/"
+    }
+  },
   "config": {
     "process-timeout": 600
   },
@@ -27,5 +31,5 @@
   "prefer-stable": true,
   "suggest": {
     "silverstripe/graphql-devtools": "Adds in-browser tools for testing and debugging GraphQL queries"
-  }  
+  }
 }

@@ -9,6 +9,8 @@ use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\ORM\ArrayLib;
+use SilverStripe\Core\ClassInfo;
+use \Exception;
 
 /**
  * The entry point for a GraphQL scaffolding definition. Holds DataObject type definitions,
@@ -219,6 +221,22 @@ class SchemaScaffolder implements ManagerMutatorInterface
     public function getTypes()
     {
         return $this->types;
+    }
+
+    /**
+     * Returns true if the type has been added to the scaffolder
+     * @param  string  $dataObjectClass
+     * @return boolean
+     */
+    public function hasType($dataObjectClass)
+    {
+        foreach ($this->types as $scaffold) {
+            if ($scaffold->getDataObjectClass() == $dataObjectClass) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

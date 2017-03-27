@@ -16,6 +16,7 @@ use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+
 /**
  * Manager is the master container for a graphql endpoint, and contains
  * all queries, mutations, and types.

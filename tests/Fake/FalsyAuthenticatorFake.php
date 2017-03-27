@@ -7,11 +7,11 @@ use SilverStripe\Dev\TestOnly;
 use SilverStripe\GraphQL\Auth\AuthenticatorInterface;
 use SilverStripe\ORM\ValidationException;
 
-class BrutalAuthenticatorFake implements AuthenticatorInterface, TestOnly
+class FalsyAuthenticatorFake implements AuthenticatorInterface, TestOnly
 {
     public function authenticate(HTTPRequest $request)
     {
-        throw new ValidationException('Never!');
+        return false;
     }
 
     public function isApplicable(HTTPRequest $request)

@@ -80,24 +80,6 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
     }
 
     /**
-     * Creates a Connection for pagination.
-     *
-     * @return Connection
-     */
-    protected function createConnection(Manager $manager)
-    {
-        $typeName = $this->typeName;
-
-        return Connection::create($this->operationName)
-            ->setConnectionType(function () use ($manager, $typeName) {
-                return $manager->getType($typeName);
-            })
-            ->setConnectionResolver($this->createResolverFunction())
-            ->setArgs($this->createArgs())
-            ->setSortableFields($this->sortableFields);
-    }
-
-    /**
      * @param Manager $manager
      *
      * @return array
@@ -114,10 +96,36 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
         return [
             'name' => $this->operationName,
             'args' => $this->createArgs(),
-            'type' => function () use ($manager) {
-                return $manager->getType($this->typeName);
-            },
+            'type' => $this->createTypeGetter($manager),
             'resolve' => $this->createResolverFunction(),
         ];
+    }
+
+    /**
+     * Creates a Connection for pagination.
+     *
+     * @return Connection
+     */
+    protected function createConnection(Manager $manager)
+    {
+        $typeName = $this->typeName;
+
+        return Connection::create($this->operationName)
+            ->setConnectionType($this->createTypeGetter($manager))
+            ->setConnectionResolver($this->createResolverFunction())
+            ->setArgs($this->createArgs())
+            ->setSortableFields($this->sortableFields);
+    }
+
+    /**
+     * Creates a thunk that lazily fetches the type
+     * @param  Manager $manager
+     * @return \Closure
+     */
+    protected function createTypeGetter(Manager $manager)
+    {
+        return function () use ($manager) {
+            return $manager->getType($this->typeName);
+        };
     }
 }

@@ -3,6 +3,8 @@
 namespace SilverStripe\GraphQL\Auth;
 
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Control\HTTPResponse_Exception;
+use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\BasicAuth;
 use SilverStripe\Security\Member;
 
@@ -13,14 +15,16 @@ use SilverStripe\Security\Member;
  */
 class BasicAuthAuthenticator implements AuthenticatorInterface
 {
-
     public function authenticate(HTTPRequest $request)
     {
-        $member = BasicAuth::requireLogin('Restricted resource');
-        if ($member instanceof Member) {
-            return $member;
+        $failureMessage = 'Authentication failed.';
+        try {
+            return BasicAuth::requireLogin('Restricted resource');
+        } catch (HTTPResponse_Exception $ex) {
+            // BasicAuth::requireLogin may throw its own exception with an HTTPResponse in it
+            $failureMessage = (string) $ex->getResponse()->getBody();
         }
-        return null;
+        throw new ValidationException($failureMessage, 401);
     }
 
     public function isApplicable(HTTPRequest $request)
@@ -39,7 +43,7 @@ class BasicAuthAuthenticator implements AuthenticatorInterface
     /**
      * Check for $_SERVERVAR with basic auth credentials
      *
-     * @param $servervar
+     * @param  string $servervar
      * @return bool
      */
     protected function hasAuthHandler($servervar)
