@@ -355,7 +355,7 @@ class MemberTypeCreator extends TypeCreator
     public function fields()
     {
         $groupsConnection = Connection::create('Groups')
-            ->setConnectionType(function() {
+            ->setConnectionType(function () {
                 return $this->manager->getType('group');
             })
             ->setDescription('A list of the users groups')
@@ -494,11 +494,11 @@ property of the created member.
 
 ## Scaffolding DataObjects into the Schema
 
-Making a DataObject accessible through the GraphQL API involves quite a bit of boilerplate. In the above example, we can 
-see that creating endpoints for a query and a mutation requires creating three new classes, along with an update to the 
-configuration, and we haven't even dealt with data relations yet. For applications that require a lot of business logic 
-and specific functionality, an architecture like this affords the developer a lot of control, but for developers who 
-just want to make a given model accessible through GraphQL with some basic create, read, update, and delete operations, 
+Making a DataObject accessible through the GraphQL API involves quite a bit of boilerplate. In the above example, we can
+see that creating endpoints for a query and a mutation requires creating three new classes, along with an update to the
+configuration, and we haven't even dealt with data relations yet. For applications that require a lot of business logic
+and specific functionality, an architecture like this affords the developer a lot of control, but for developers who
+just want to make a given model accessible through GraphQL with some basic create, read, update, and delete operations,
 scaffolding them can save a lot of time and reduce the clutter in your project.
 
 Scaffolding DataObjects can be achieved in two non-exclusive ways:
@@ -515,61 +515,68 @@ For these examples, we'll imagine we have the following model:
 ```php
 namespace MyProject;
 
-class Post extends DataObject {
+use MyProject\Comment;
+use SilverStripe\Assets\File;
+use SilverStripe\Security\Member;
 
-  private static $db = [
-  	'Title' => 'Varchar',
-  	'Content' => 'HTMLText'
-  ];
+class Post extends DataObject
+{
+    private static $db = [
+        'Title' => 'Varchar',
+        'Content' => 'HTMLText'
+    ];
 
-  private static $has_one = [
-  	'Author' => 'SilverStripe\Security\Member'
-  ];
+    private static $has_one = [
+        'Author' => Member::class
+    ];
 
-  private static $has_many = [
-  	'Comments' => 'MyProject\Comment'
-  ];
+    private static $has_many = [
+        'Comments' => Comment::class
+    ];
 
-  private static $many_many = [
-  	'Files' => 'SilverStripe\Assets\File'
-  ];
+    private static $many_many = [
+        'Files' => File::class
+    ];
 }
 ```
 
 ### Scaffolding DataObjects through the Config layer
 
-Many of the declarations you make through procedural code can be done via YAML. If you don't have any logic in your 
+Many of the declarations you make through procedural code can be done via YAML. If you don't have any logic in your
 scaffolding, using YAML is a simple approach to adding scaffolding.
 
-We'll need to define a `scaffolding` node in the `SilverStripe\GraphQL.schema` setting.
+We'll need to define a `scaffolding` node in the `SilverStripe\GraphQL\Controller.schema` setting.
 
 ```yaml
 SilverStripe\GraphQL\Controller:
   schema:
-    scaffolding:      
+    scaffolding:
       ## scaffolding will go here
 
 ```
 
 ### Scaffolding DataObjects through procedural code
 
-Alternatively, for more complex requirements, you can create the scaffolding with code. The GraphQL `Manager` class will 
-bootstrap itself with any scaffolders that are registered in its config. These scaffolders must implement the 
+Alternatively, for more complex requirements, you can create the scaffolding with code. The GraphQL `Manager` class will
+bootstrap itself with any scaffolders that are registered in its config. These scaffolders must implement the
 `ScaffoldingProvider` interface. A logical place to add this code may be in your DataObject, but it could be anywhere.
 
 As a `ScaffoldingProvider`, the class must now offer the `provideGraphQLScaffolding()` method.
 
 ```php
 namespace MyProject;
+
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use SilverStripe\ORM\DataObject;
 
-class Post extends DataObject implements ScaffoldingProvider {
-	//...
+class Post extends DataObject implements ScaffoldingProvider
+{
+    //...
     public function provideGraphQLScaffolding(SchemaScaffolder $scaffolder)
     {
-    	// update the scaffolder here
-	}
+        // update the scaffolder here
+    }
 }
 ```
 
@@ -581,7 +588,6 @@ SilverStripe\GraphQL\Controller:
     scaffolding_providers:
       - MyProject\Post
 ```
-
 
 ### Exposing a DataObject to GraphQL
 
@@ -610,52 +616,58 @@ namespace MyProject;
 
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use SilverStripe\ORM\DataObject;
 
-class Post extends DataObject implements ScaffoldingProvider {
-	//...
+class Post extends DataObject implements ScaffoldingProvider
+{
+    //...
     public function provideGraphQLScaffolding(SchemaScaffolder $scaffolder)
     {
-    	$scaffolder
-    		->type(Post::class)
-	    		->addFields(['ID','Title','Content'])
-	    		->operation(SchemaScaffolder::READ)
-	    			->end()
-	    		->operation(SchemaScaffolder::UPDATE)
-	    			->end()
-	    		->end();
+        $scaffolder
+            ->type(Post::class)
+                ->addFields(['ID', 'Title', 'Content'])
+                ->operation(SchemaScaffolder::READ)
+                    ->end()
+                ->operation(SchemaScaffolder::UPDATE)
+                    ->end()
+                ->end();
 
-    	return $scaffolder;
-	}
+        return $scaffolder;
+    }
 }
 ```
 
-By declaring these two operations, we have automatically added a new query and 
+By declaring these two operations, we have automatically added a new query and
 mutation to the GraphQL schema, using naming naming conventions derived from
 the operation type and the `singular_name` or `plural_name` of the DataObject.
 
-```
+```graphql
 query {
-	readPosts {
-		Title
-    	Content
+  readPosts {
+    Title
+    Content
   }
 }
 ```
 
-```
-mutation CreatePost($Input: PostCreateInputType!)
-	createPost(Input: $Input) {
-		Title
-	}
+```graphql
+mutation CreatePost($Input: PostCreateInputType!) {
+  createPost(Input: $Input) {
+    Title
+  }
 }
+```
 
+```json
 {
-	"Input": {Title: "My Title"}
+  "Input": {
+    "Title": "My Title"
+  }
 }
 ```
 
 Permission constraints (in this case `canView()` and `canCreate()`) are enforced
-by the operation resovlers.
+by the operation resolvers.
 
 #### Setting field descriptions
 
@@ -683,34 +695,39 @@ SilverStripe\GraphQL\Controller:
 ```php
 namespace MyProject;
 
-class Post extends DataObject implements ScaffoldingProvider {
-	//...
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use SilverStripe\ORM\DataObject;
+
+class Post extends DataObject implements ScaffoldingProvider
+{
+    //...
     public function provideGraphQLScaffolding(SchemaScaffolder $scaffolder)
     {
-    	$scaffolder
-    		->type(Post::class)
-	    		->addFields([
-	    			'ID' => 'The unique identidier of the post',
-	    			'Title' => 'The title of the post',
-	    			'Content' => 'The main body of the post (HTML)'
-	    		])
-	    		->operation(SchemaScaffolder::READ)
-	    			->end()
-	    		->operation(SchemaScaffolder::UPDATE)
-	    			->end()
-	    		->end();
+        $scaffolder
+            ->type(Post::class)
+                ->addFields([
+                    'ID' => 'The unique identifier of the post',
+                    'Title' => 'The title of the post',
+                    'Content' => 'The main body of the post (HTML)'
+                ])
+                ->operation(SchemaScaffolder::READ)
+                    ->end()
+                ->operation(SchemaScaffolder::UPDATE)
+                    ->end()
+                ->end();
 
-    	return $scaffolder;
-	}
+            return $scaffolder;
+    }
 }
 ```
 
 #### Wildcarding and whitelisting fields
 
 If you have a type you want to be fairly well exposed, it can be tedious to add each
-field piecemeal. As a shortcut, you can use `addAllFields()` (code) or `fields: *` (yaml). 
-If you have specific fields you want omitted from that list, you can use 
-`addAllFieldsExcept()` (code) or `excludeFields` (yaml).
+field piecemeal. As a shortcut, you can use `addAllFields()` (code) or `fields: *` (YAML).
+If you have specific fields you want omitted from that list, you can use
+`addAllFieldsExcept()` (code) or `excludeFields` (YAML).
 
 **Via YAML**:
 ```yaml
@@ -725,9 +742,9 @@ SilverStripe\GraphQL\Controller:
 
 **... Or with code**:
 ```php
-	$scaffolder
-		->type(Post::class)
-			->addAllFieldsExcept(['SecretThing'])
+$scaffolder
+    ->type(Post::class)
+        ->addAllFieldsExcept(['SecretThing'])
 ```
 
 
@@ -756,32 +773,32 @@ SilverStripe\GraphQL\Controller:
 
 **... Or with code**
 ```php
-	$scaffolder
-		->type(Post::class)
-    		->addFields(['ID','Title','Content'])
-    		->operation(SchemaScaffolder::READ)
-    			->addArgs([
-    				'Title' => 'String'
-    			])
-        		->setResolver(function($obj, $args, $context) {
-        			if(!singleton(Post::class)->canView($context['currentMember'])) {
-        				throw new \Exception('Cannot view Post');
-        			}
-        			$list = Post::get();
-        			if(isset($args['Title'])) {
-        				$list = $list->filter('Title:PartialMatch', $args['Title']);
-        			}
+$scaffolder
+    ->type(Post::class)
+        ->addFields(['ID', 'Title', 'Content'])
+        ->operation(SchemaScaffolder::READ)
+            ->addArgs([
+                'Title' => 'String'
+            ])
+            ->setResolver(function($obj, $args, $context) {
+                if (!singleton(Post::class)->canView($context['currentMember'])) {
+                    throw new \Exception('Cannot view Post');
+                }
+                $list = Post::get();
+                if (isset($args['Title'])) {
+                    $list = $list->filter('Title:PartialMatch', $args['Title']);
+                }
 
-        			return $list;
-        		})         	
-    			->end()
-    		->operation(SchemaScaffolder::UPDATE)
-    			->end()
-    		->end();
+                return $list;
+                })
+            ->end()
+        ->operation(SchemaScaffolder::UPDATE)
+            ->end()
+        ->end();
 ```
 
 **GraphQL**
-```
+```graphql
 query {
   readPosts(Title: "Barcelona") {
     edges {
@@ -822,79 +839,79 @@ SilverStripe\GraphQL\Controller:
                 MinimumCommentCount:
                   type: Int
                   default: 5
-                  description: 'Use this parameter to specify the mimimum number of comments per post'
+                  description: 'Use this parameter to specify the minimum number of comments per post'
               resolver: MyProject\ReadPostResolver
             create: true
 ```
 
 **... Or with code**
 ```php
-	$scaffolder
-		->type(Post::class)
-    		->addFields(['ID','Title','Content'])
-    		->operation(SchemaScaffolder::READ)
-    			->addArgs([
-    				'Title' => 'String!',
-    				'MinimumCommentCount' => 'Int'
-    			])
-    			->setArgDefaults([
-    				'MinimumCommentCount' => 5
-    			])
-    			->setArgDescriptions([
-    				'MinimumCommentCount' => 'Use this parameter to specify the mimimum number of comments per post'
-    			])
-        		->setResolver(function($obj, $args, $context) {
-        			if(!singleton(Post::class)->canView($context['currentMember'])) {
-        				throw new \Exception('Cannot view Post');
-        			}
-        			$list = Post::get();
-        			if(isset($args['Title'])) {
-        				$list = $list->filter('Title:PartialMatch', $args['Title']);
-        			}
+$scaffolder
+    ->type(Post::class)
+        ->addFields(['ID', 'Title', 'Content'])
+        ->operation(SchemaScaffolder::READ)
+            ->addArgs([
+                'Title' => 'String!',
+                'MinimumCommentCount' => 'Int'
+            ])
+            ->setArgDefaults([
+                'MinimumCommentCount' => 5
+            ])
+            ->setArgDescriptions([
+                'MinimumCommentCount' => 'Use this parameter to specify the minimum number of comments per post'
+            ])
+            ->setResolver(function($obj, $args, $context) {
+                if (!singleton(Post::class)->canView($context['currentMember'])) {
+                    throw new \Exception('Cannot view Post');
+                }
+                $list = Post::get();
+                if (isset($args['Title'])) {
+                    $list = $list->filter('Title:PartialMatch', $args['Title']);
+                }
 
-        			return $list;
-        		})         	
-    			->end()
-    		->operation(SchemaScaffolder::UPDATE)
-    			->end()
-    		->end();
+                return $list;
+            })
+            ->end()
+        ->operation(SchemaScaffolder::UPDATE)
+            ->end()
+        ->end();
 ```
 
 #### Using a custom resolver
 
 As seen in the code example above, the simplest way to add a resolver is via an anonymous function
-via the `setResolver()` method. In YAML, you can't define such functions, so resolvers be names or instances of classes thatt implement the 
+via the `setResolver()` method. In YAML, you can't define such functions, so resolvers be names or instances of classes that implement the
 `ResolverInterface`.
 
 **When using the YAML approach, custom resolver classes are compulsory**, since you can't define closures in YAML.
 
-
 ```php
 namespace MyProject\GraphQL;
+
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 
 class MyResolver implements ResolverInterface
 {
     public function resolve($object, $args, $context, $info)
     {
-		$post = Post::get()->byID($args['ID']);
-		$post->Title = $args['NewTitle'];
-		$post->write();    	
-	}
+        $post = Post::get()->byID($args['ID']);
+        $post->Title = $args['NewTitle'];
+        $post->write();
+    }
 }
 ```
 
 This resolver class may now be assigned as either an instance, or a string to the query or mutation definition.
 
 ```php
-	$scaffolder
-		->type(Post::class)
-			->operation(SchemaScaffolder::UPDATE)
-				->setResolver(MyResolver::class)
-				/* Or...
-				->setResolver(new MyResolver())
-				*/
-				->end();
+$scaffolder
+    ->type(Post::class)
+        ->operation(SchemaScaffolder::UPDATE)
+            ->setResolver(MyResolver::class)
+            /* Or...
+            ->setResolver(new MyResolver())
+            */
+            ->end();
 ```
 
 #### Configuring pagination and sorting
@@ -915,7 +932,7 @@ SilverStripe\GraphQL\Controller:
               args:
                 Title: String
               resolver: MyProject\ReadPostResolver
-              sortableFields: [Title]            
+              sortableFields: [Title]
             create: true
         MyProject\Comment:
           fields: [Comment, Author]
@@ -926,51 +943,51 @@ SilverStripe\GraphQL\Controller:
 
 **... Or with code**
 ```php
-	$scaffolder
-		->type(Post::class)
-    		->addFields(['ID','Title','Content'])
-    		->operation(SchemaScaffolder::READ)
-    			->addArgs([
-    				'Title' => 'String'
-    			])
-        		->setResolver(function($obj, $args, $context) {
-        			if(!singleton(Post::class)->canView($context['currentMember'])) {
-        				throw new \Exception('Cannot view Post');
-        			}
-        			$list = Post::get();
-        			if(isset($args['Title'])) {
-        				$list = $list->filter('Title:PartialMatch', $args['Title']);
-        			}
+$scaffolder
+    ->type(Post::class)
+        ->addFields(['ID', 'Title', 'Content'])
+        ->operation(SchemaScaffolder::READ)
+            ->addArgs([
+                'Title' => 'String'
+            ])
+            ->setResolver(function ($obj, $args, $context) {
+                if (!singleton(Post::class)->canView($context['currentMember'])) {
+                    throw new \Exception('Cannot view Post');
+                }
+                $list = Post::get();
+                if (isset($args['Title'])) {
+                    $list = $list->filter('Title:PartialMatch', $args['Title']);
+                }
 
-        			return $list;
-        		})
-        		->addSortableFields(['Title'])         	
-    			->end()
-    		->operation(SchemaScaffolder::UPDATE)
-    			->end()
-    		->end()
-    	->type(Comment::class)
-    		->addFields(['Comment','Author'])
-    		->operation(SchemaScaffolder::READ)
-    			->setUsePagination(false)
-    			->end();
+                return $list;
+            })
+            ->addSortableFields(['Title'])
+            ->end()
+        ->operation(SchemaScaffolder::UPDATE)
+            ->end()
+        ->end()
+    ->type(Comment::class)
+        ->addFields(['Comment', 'Author'])
+        ->operation(SchemaScaffolder::READ)
+            ->setUsePagination(false)
+            ->end();
 ```
 
 **GraphQL**
-```
+```graphql
 query readPosts(Title: "Japan", sortBy: [{field:Title, direction:DESC}]) {
-	edges {
-		node {
-			Title
-		}
-	}
+  edges {
+    node {
+      Title
+    }
+  }
 }
 ```
 
-```
+```graphql
 query readComments {
-	Author
-	Comment
+  Author
+  Comment
 }
 ```
 
@@ -996,7 +1013,7 @@ SilverStripe\GraphQL\Controller:
               args:
                 Title: String
               resolver: MyProject\ReadPostResolver
-              sortableFields: [Title]            
+              sortableFields: [Title]
             create: true
           nestedQueries:
             Comments: true
@@ -1011,44 +1028,43 @@ SilverStripe\GraphQL\Controller:
 
 **... Or with code**:
 ```php
-	$scaffolder
-		->type(Post::class)
-    		->addFields(['ID','Title','Content', 'Author'])
-    		->operation(SchemaScaffolder::READ)
-    			->addArgs([
-    				'Title' => 'String'
-    			])
-        		->setResolver(function($obj, $args, $context) {
-        			if(!singleton(Post::class)->canView($context['currentMember'])) {
-        				throw new \Exception('Cannot view Post');
-        			}        		
-        			$list = Post::get();
-        			if(isset($args['Title'])) {
-        				$list = $list->filter('Title:PartialMatch', $args['Title']);
-        			}
+$scaffolder
+    ->type(Post::class)
+        ->addFields(['ID', 'Title', 'Content', 'Author'])
+        ->operation(SchemaScaffolder::READ)
+            ->addArgs([
+                'Title' => 'String'
+            ])
+            ->setResolver(function ($obj, $args, $context) {
+                if (!singleton(Post::class)->canView($context['currentMember'])) {
+                    throw new \Exception('Cannot view Post');
+                }
+                $list = Post::get();
+                if (isset($args['Title'])) {
+                    $list = $list->filter('Title:PartialMatch', $args['Title']);
+                }
 
-        			return $list;
-        		})
-        		->addSortableFields(['Title'])         	
-    			->end()    			
-    		->operation(SchemaScaffolder::UPDATE)
-    			->end()
-    		->nestedQuery('Comments')
-    			->end()
-    		->nestedQuery('Files')
-    			->end()
-    		->end()
-    	->type(Comment::class)
-    		->addFields(['Comment','Author'])
-    		->operation(SchemaScaffolder::READ)
-    			->setUsePagination(false)
-    			->end();
-
+                return $list;
+            })
+            ->addSortableFields(['Title'])
+            ->end()
+        ->operation(SchemaScaffolder::UPDATE)
+            ->end()
+        ->nestedQuery('Comments')
+            ->end()
+        ->nestedQuery('Files')
+            ->end()
+        ->end()
+    ->type(Comment::class)
+        ->addFields(['Comment', 'Author'])
+        ->operation(SchemaScaffolder::READ)
+            ->setUsePagination(false)
+            ->end();
 ```
 
 **GraphQL**
 
-```
+```graphql
 query {
   readPosts(Title: "Texas") {
     edges {
@@ -1057,7 +1073,7 @@ query {
         Content
         Date
         Author {
-        	ID
+          ID
         }
         Comments {
           edges {
@@ -1069,7 +1085,7 @@ query {
         Files(limit: 2) {
           edges {
             node {
-            	ID
+              ID
             }
           }
         }
@@ -1104,15 +1120,15 @@ SilverStripe\GraphQL\Controller:
 
 **... Or with code**
 ```php
-	$scaffolder
-		->type(Post::class)
-		//...
-		->type(Member::class)
-			->addFields(['FirstName','Surname','Name','Email'])
-			->end()
-		->type(File::class)
-			->addFields(['Filename','URL'])
-			->end();
+$scaffolder
+    ->type(Post::class)
+    //...
+    ->type(Member::class)
+        ->addFields(['FirstName', 'Surname', 'Name', 'Email'])
+        ->end()
+    ->type(File::class)
+        ->addFields(['Filename', 'URL'])
+        ->end();
 ```
 
 Notice that we can freely use the custom getter `Name` on the `Member` record. Fields and `$db` are not one-to-one.
@@ -1138,32 +1154,32 @@ SilverStripe\GraphQL\Controller:
 
 **... Or with code**
 ```php
-	$scaffolder
-		->type(Post::class)
-			->nestedQuery('Comments')
-				->addArgs([
-					'OnlyToday' => 'Boolean'
-				])
-            	->setResolver(function($obj, $args, $context) {
-            		if(!singleton(Comment::class)->canView($context['currentMember'])) {
-            			throw new \Exception('Cannot view Comment');
-            		}
-            		$comments = $obj->Comments();
-            		if(isset($args['OnlyToday']) && $args['OnlyToday']) {
-            			$comments = $comments->where('DATE(Created) = DATE(NOW())');
-            		}
+$scaffolder
+    ->type(Post::class)
+        ->nestedQuery('Comments')
+            ->addArgs([
+                'OnlyToday' => 'Boolean'
+            ])
+            ->setResolver(function($obj, $args, $context) {
+                if (!singleton(Comment::class)->canView($context['currentMember'])) {
+                    throw new \Exception('Cannot view Comment');
+                }
+                $comments = $obj->Comments();
+                if (isset($args['OnlyToday']) && $args['OnlyToday']) {
+                    $comments = $comments->where('DATE(Created) = DATE(NOW())');
+                }
 
-            		return $comments;
-            	})
-			->end()
-			//...
-		//...
+                return $comments;
+            })
+        ->end()
+        //...
+    //...
 ```
 
 
 **GraphQL**
 
-```
+```graphql
 query {
   readPosts(Title: "Sydney") {
     edges {
@@ -1172,8 +1188,8 @@ query {
         Content
         Date
         Author {
-        	Name
-        	Email
+          Name
+          Email
         }
         Comments(OnlyToday: true) {
           edges {
@@ -1185,8 +1201,8 @@ query {
         Files(limit: 2) {
           edges {
             node {
-            	Filename
-            	URL
+              Filename
+              URL
             }
           }
         }
@@ -1225,48 +1241,48 @@ SilverStripe\GraphQL\Controller:
 
 **... Or with code**:
 ```php
-	$scaffolder
-		->type(Post::class)
-			//...            
-        ->mutation('updatePostTitle', Post::class)
-            ->addArgs([
-                'ID' => 'ID!',
-                'NewTitle' => 'String!'
-            ])
-            ->setResolver(function($obj, $args, $context) {            	
-                $post = Post::get()->byID($args['ID']);
-                if($post->canEdit($context['currentMember'])) {
-                    $post->Title = $args['NewTitle'];
-                    $post->write();
-                }
+$scaffolder
+    ->type(Post::class)
+        //...
+    ->mutation('updatePostTitle', Post::class)
+        ->addArgs([
+            'ID' => 'ID!',
+            'NewTitle' => 'String!'
+        ])
+        ->setResolver(function ($obj, $args, $context) {
+            $post = Post::get()->byID($args['ID']);
+            if ($post->canEdit($context['currentMember'])) {
+                $post->Title = $args['NewTitle'];
+                $post->write();
+            }
 
-                return $post;
-            })
-            ->end()
-	    ->query('latestPost', Post::class)
-        	->setUsePagination(false)
-        	->setResolver(function($obj, $args, $context) {
-        		if(singleton(Post::class)->canView($context['currentMember'])) {
-        			return Post::get()->sort('Date', 'DESC')->first();
-        		}
-        	})
-        	->end()
+            return $post;
+        })
+        ->end()
+    ->query('latestPost', Post::class)
+        ->setUsePagination(false)
+        ->setResolver(function ($obj, $args, $context) {
+            if (singleton(Post::class)->canView($context['currentMember'])) {
+                return Post::get()->sort('Date', 'DESC')->first();
+            }
+        })
+        ->end()
 ```
 
 **GraphQL**
-```
+```graphql
 mutation updatePostTitle($ID: 123, $NewTitle: 'Foo') {
-	Title
+  Title
 }
 ```
 
-```
+```graphql
 query latestPost {
-	Title
+  Title
 }
 ```
 
-#### Dealing with inheritence
+#### Dealing with inheritance
 
 Adding any given type will implicitly add all of its ancestors, all the way back to `DataObject`.
 Any fields you've listed on a descendant that are available on those ancestors will be exposed on the ancestors
@@ -1274,7 +1290,7 @@ as well. For CRUD operations, each ancestor gets its own set of operations and i
 
 When reading types that have exposed descendants (e.g. reading Page, when RedirectorPage is also exposed),
 the return type is a *union* of the base type and all exposed descendants. This union type takes on the name
-`{BaseType}WithDescendants`. 
+`{BaseType}WithDescendants`.
 
 **Via YAML**:
 ```yaml
@@ -1295,88 +1311,88 @@ SilverStripe\GraphQL\Controller:
 
 **... Or with code**:
 ```php
-	$scaffolder
-        ->type('SilverStripe\CMS\Model\RedirectorPage')
-        	->addFields(['ID','ExternalURL','Content'])
-        	->operation(SchemaScaffolder::READ)
-        		->end()
-        	->operation(SchemaScaffolder::CREATE)
-        		->end()
-        	->end()
-        ->type('Page')
-        	->addFields(['MyCustomField'])
-        	->end();
+$scaffolder
+    ->type('SilverStripe\CMS\Model\RedirectorPage')
+        ->addFields(['ID', 'ExternalURL', 'Content'])
+        ->operation(SchemaScaffolder::READ)
+            ->end()
+        ->operation(SchemaScaffolder::CREATE)
+            ->end()
+        ->end()
+    ->type('Page')
+        ->addFields(['MyCustomField'])
+        ->end();
 ```
 
 We now have the following added to our schema:
 
-```
+```graphql
 type RedirectorPage {
-	ID: Int
-	ExternalURL: String
-	Content: String
-	MyCustomField: String
+  ID: Int
+  ExternalURL: String
+  Content: String
+  MyCustomField: String
 }
 
 type Page {
-	ID: Int
-	Content: String
-	MyCustomField: String
+  ID: Int
+  Content: String
+  MyCustomField: String
 }
 
 type SiteTree {
-	ID: Int
-	Content: String
+  ID: Int
+  Content: String
 }
 
 type PageWithDescendants {
-	Page | RedirectorPage
+  Page | RedirectorPage
 }
 
 type SiteTreeWithDescendants {
-	SiteTree | Page | RedirectorPage
+  SiteTree | Page | RedirectorPage
 }
 
 input RedirectorPageCreateInputType {
-	ExternalURL: String
-	RedirectionType: String
-	MyCustomField: String
-	Content: String
-	# all other fields from RedirectorPage, Page and SiteTree
+  ExternalURL: String
+  RedirectionType: String
+  MyCustomField: String
+  Content: String
+  # all other fields from RedirectorPage, Page and SiteTree
 }
 
 input PageCreateInputType {
-	MyCustomField: String
-	Content: String
-	# all other fields from Page and SiteTree
+  MyCustomField: String
+  Content: String
+  # all other fields from Page and SiteTree
 }
 
 input SiteTreeCreateInputType {
-	# all fields from SiteTree
+  # all fields from SiteTree
 }
 
 query readRedirectorPages {
-	RedirectorPage
+  RedirectorPage
 }
 
 query readPages {
-	PageWithDescendants
+  PageWithDescendants
 }
 
 query readSiteTrees {
-	SiteTreeWithDescendants
+  SiteTreeWithDescendants
 }
 
 mutation createRedirectorPage {
-	RedirectorPageCreateInputType
+  RedirectorPageCreateInputType
 }
 
 mutation createPage {
-	PageCreateInputType
+  PageCreateInputType
 }
 
 mutation createSiteTree {
-	SiteTreeCreateInputType
+  SiteTreeCreateInputType
 }
 ```
 
@@ -1386,7 +1402,7 @@ Keep in mind that when querying a base class that has descendant types exposed (
 when `RedirectorPage` is also exposed), a union is returned, and you will need to resolve it
 with the `...on {type}` GraphQL syntax.
 
-```
+```graphql
 query readSiteTrees {
   readSiteTrees {
     edges {
@@ -1487,7 +1503,7 @@ interface, which requires you to define an `authenticate` method to return a Mem
 and `isApplicable` method which tells the `Handler` whether or not this authentication method
 is applicable in the current request context (provided as an argument).
 
-Here's an example for implementing HTTP basic authentication:
+Here's an example for implementing HTTP basic authentication (note that basic auth is enabled by default anyway):
 
 ```yaml
 SilverStripe\GraphQL\Auth\Handler:
@@ -1498,12 +1514,12 @@ SilverStripe\GraphQL\Auth\Handler:
 
 ## Cross-Origin Resource Sharing (CORS)
 
-By default [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) is disabled in the GraphQL Server. This can be easily enabled via Yaml
+By default [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) is disabled in the GraphQL Server. This can be easily enabled via YAML:
 
 ```yaml
-   SilverStripe\GraphQL\Controller:
-     cors:
-       Enabled: true
+SilverStripe\GraphQL\Controller:
+  cors:
+    Enabled: true
 ```
 
 Once you have enabled CORS you can then control four new headers in the HTTP Response.
@@ -1517,14 +1533,14 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  Deny all domains (except localhost)
 
  ```yaml
-      Allow-Origin:
+ Allow-Origin:
  ```
 
  * **'\*'**:
  Allow requests from all domains.
 
  ```yaml
-      Allow-Origin: '*'
+ Allow-Origin: '*'
  ```
 
  * **Single Domain**:
@@ -1532,7 +1548,7 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  Allow requests from one specific external domain.
 
  ```yaml
-      Allow-Origin: 'my.domain.com'
+ Allow-Origin: 'my.domain.com'
  ```
 
  * **Multiple Domains**:
@@ -1540,9 +1556,9 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  Allow requests from multiple specified external domains.
 
  ```yaml
-      Allow-Origin:
-        - 'my.domain.com'
-        - 'your.domain.org'
+ Allow-Origin:
+   - 'my.domain.com'
+   - 'your.domain.org'
  ```
 
 2. **Access-Control-Allow-Headers.**
@@ -1553,7 +1569,7 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  your GraphQL may need by adding them here. For example:
 
  ```yaml
-      Allow-Headers: 'Authorization, Content-Type, Content-Language'
+ Allow-Headers: 'Authorization, Content-Type, Content-Language'
  ```
 
  **Note** If you add extra headers to your GraphQL server, you will need to write a
@@ -1566,7 +1582,7 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  methods you will need to write a custom resolver to handle this. For example:
 
  ```yaml
-      Allow-Methods: 'GET, PUT, DELETE, OPTIONS'
+ Allow-Methods: 'GET, PUT, DELETE, OPTIONS'
  ```
 
 4. **Access-Control-Max-Age.**
@@ -1580,20 +1596,20 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  in this example:
 
  ```yaml
-      Max-Age: 600
+ Max-Age: 600
  ```
 
 #### Sample Custom CORS Config
 
 ```yaml
-  ## CORS Config
-  SilverStripe\GraphQL\Controller:
-    cors:
-      Enabled: true
-      Allow-Origin: 'silverstripe.org'
-      Allow-Headers: 'Authorization, Content-Type'
-      Allow-Methods:  'GET, POST, OPTIONS'
-      Max-Age:  600  # 600 seconds = 10 minutes.
+## CORS Config
+SilverStripe\GraphQL\Controller:
+  cors:
+    Enabled: true
+    Allow-Origin: 'silverstripe.org'
+    Allow-Headers: 'Authorization, Content-Type'
+    Allow-Methods:  'GET, POST, OPTIONS'
+    Max-Age:  600  # 600 seconds = 10 minutes.
 ```
 
 ## TODO

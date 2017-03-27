@@ -85,6 +85,5 @@ class ReadTest extends SapphireTest
             $redirectorScaffold->typeName(),
             $types[1]->config['name']
         );
-
     }
 }

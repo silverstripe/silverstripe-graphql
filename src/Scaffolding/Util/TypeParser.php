@@ -49,7 +49,6 @@ class TypeParser
         if (isset($matches[3])) {
             $this->defaultValue = $matches[3];
         }
-
     }
 
     /**
