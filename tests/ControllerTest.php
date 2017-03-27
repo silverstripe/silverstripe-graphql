@@ -212,8 +212,8 @@ class ControllerTest extends SapphireTest
 
     public function testAddCorsHeadersOriginAllowedWildcard()
     {
-        Config::inst()->remove('SilverStripe\GraphQL', 'cors');
-        Config::inst()->update('SilverStripe\GraphQL', 'cors', [
+        Config::inst()->remove(Controller::class, 'cors');
+        Config::inst()->update(Controller::class, 'cors', [
             'Enabled' => true,
             'Allow-Origin' => '*',
             'Allow-Headers' => 'Authorization, Content-Type',
