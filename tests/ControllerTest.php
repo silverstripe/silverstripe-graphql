@@ -210,6 +210,28 @@ class ControllerTest extends SapphireTest
         $this->assertEquals(86400, $response->getHeader('Access-Control-Max-Age'));
     }
 
+    public function testAddCorsHeadersOriginAllowedWildcard()
+    {
+        Config::inst()->remove('SilverStripe\GraphQL', 'cors');
+        Config::inst()->update('SilverStripe\GraphQL', 'cors', [
+            'Enabled' => true,
+            'Allow-Origin' => '*',
+            'Allow-Headers' => 'Authorization, Content-Type',
+            'Allow-Methods' =>  'GET, PUT, OPTIONS',
+            'Max-Age' => 600
+        ]);
+
+        $controller = new Controller();
+        $request = new HTTPRequest('GET', '');
+        $request->addHeader('Origin', 'localhost');
+        $response = new HTTPResponse();
+        $response = $controller->addCorsHeaders($request, $response);
+
+        $this->assertTrue($response instanceof HTTPResponse);
+        $this->assertEquals('200', $response->getStatusCode());
+        $this->assertEquals('localhost', $response->getHeader('Access-Control-Allow-Origin'));
+    }
+
     /**
      * @expectedException \SilverStripe\Control\HTTPResponse_Exception
      */
