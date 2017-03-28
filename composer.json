@@ -27,6 +27,9 @@
   "config": {
     "process-timeout": 600
   },
+  "scripts": {
+    "lint": "phpcs src/ tests/"
+  },
   "minimum-stability": "dev",
   "prefer-stable": true,
   "suggest": {
