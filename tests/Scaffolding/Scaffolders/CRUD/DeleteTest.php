@@ -18,7 +18,7 @@ use Exception;
 
 class DeleteTest extends SapphireTest
 {
-    protected $extraDataObjects = [
+    protected static $extra_dataobjects = [
         'SilverStripe\GraphQL\Tests\Fake\DataObjectFake',
         'SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake',
     ];

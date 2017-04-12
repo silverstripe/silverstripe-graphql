@@ -20,7 +20,7 @@ use InvalidArgumentException;
 
 class ConnectionTest extends SapphireTest
 {
-    protected $extraDataObjects = [
+    protected static $extra_dataobjects = [
         'SilverStripe\GraphQL\Tests\Fake\DataObjectFake'
     ];
 
