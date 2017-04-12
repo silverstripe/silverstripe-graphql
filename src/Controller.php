@@ -65,7 +65,7 @@ class Controller extends BaseController
             $variables = isset($data['variables']) ? (array) $data['variables'] : null;
         } else {
             $query = $request->requestVar('query');
-            $variables = json_decode($request->requestVar('variables'), true);
+            $variables = json_decode((array) $request->requestVar('variables'), true);
         }
 
         $this->setManager($manager = $this->getManager());
