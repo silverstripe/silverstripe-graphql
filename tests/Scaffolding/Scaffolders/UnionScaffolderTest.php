@@ -65,8 +65,5 @@ class UnionScaffolderTest extends SapphireTest
         }
         
         $this->assertRegExp('/no type defined/', $ex);
-
-
-
     }
 }

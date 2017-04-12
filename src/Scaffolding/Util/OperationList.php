@@ -118,6 +118,5 @@ class OperationList extends ArrayList
         }
 
         return false;
-
     }
 }
