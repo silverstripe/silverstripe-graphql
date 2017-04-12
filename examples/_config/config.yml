@@ -1,4 +1,4 @@
-SilverStripe\GraphQL:
+SilverStripe\GraphQL\Controller:
   schema:
     types:
       member: 'MyProject\GraphQL\MemberTypeCreator'
@@ -51,7 +51,7 @@ SilverStripe\GraphQL:
           type: MyProject\Post
           paginate: false
           resolver: MyProject\LatestPostResolver
-      
+
   # Enforce HTTP basic authentication for GraphQL requests
   authenticators:
     class: SilverStripe\GraphQL\Auth\BasicAuthAuthenticator
