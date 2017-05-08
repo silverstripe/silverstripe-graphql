@@ -9,7 +9,7 @@ This modules serves SilverStripe data as
 representations, with helpers to generate schemas based on SilverStripe model
 introspection. It layers a pluggable schema registration system on top of the
 [graphql-php](https://github.com/webonyx/graphql-php) library. The APIs are
-very similar, for example:
+very similar.
 
 ## Installation
 
@@ -19,6 +19,50 @@ Require the [composer](http://getcomposer.org) package in your `composer.json`
 composer require silverstripe/graphql
 ```
 
+## Table of contents
+
+ - [Usage](#usage)
+ - [Examples](#examples)
+ - [Configuration](#configuration)
+   - [Define types](#define-types)
+   - [Define queries](#define-queries)
+   - [Pagination](#pagination)
+     - [Setting pagination and sorting options 
+](#setting-pagination-and-sorting-options)
+   - [Nested connections](#nested-connections)
+   - [Define Mutations](#define-mutations)
+ - [Scaffolding DataObjects into the schema](#scaffolding-dataobjects-into-the-schema)
+   - [Our example](#our-example)
+   - [Scaffolding through the config layer](#scaffolding-through-the-config-layer)
+   - [Scaffolding through procedural code](#scaffolding-through-procedural-code)
+   - [Exposing a DataObject to GraphQL](#exposing-a-dataobject-to-graphql)
+     - [Setting field descriptions](#setting-field-descriptions)
+     - [Wildcarding and whitelisting fields](#wildcarding-and-whitelisting-fields)
+     - [Adding arguments](#adding-arguments)
+     - [Argument definition shorthand](#argument-definition-shorthand)
+     - [Adding more definition to arguments](#adding-more-definition-to-arguments)
+     - [Using a custom resolver](#using-a-custom-resolver)
+     - [Configuring pagination and sorting](#configuring-pagination-and-sorting)
+     - [Adding related objects](#adding-related-objects)
+     - [Adding arbitrary queries and mutations](#adding-arbitrary-queries-and-mutations)
+     - [Dealing with inheritance](#dealing-with-inheritance)
+     - [Querying types that have descendants](#querying-types-that-have-descendants)
+   - [Define interfaces](#define-interfaces)
+   - [Define input types](#define-input-types)
+ - [Testing/debugging queries and mutations](#testingdebugging-queries-and-mutations)
+ - [Authentication](#authentication)
+   - [Default authentication](#default-authentication)
+   - [HTTP basic authentication](#http-basic-authentication)
+     - [In GraphiQL](#in-graphiql)
+   - [Defining your own authenticators](#defining-your-own-authenticators)
+ - [Cross-Origin Resource Sharing (CORS)](#cross-origin-resource-sharing-cors)
+   - [Sample Custom CORS Config](#sample-custom-cors-config)
+ - [TODO](#todo)
+   
+   
+   
+ 
+ 
 ## Usage
 
 GraphQL is used through a single route which defaults to `/graphql`. You need
@@ -34,7 +78,7 @@ configuration docs below).
 
 ## Configuration
 
-### Define Types
+### Define types
 
 Types describe your data. While your data could be any arbitrary structure, in
 a SilverStripe project a GraphQL type usually relates to a `DataObject`.
@@ -87,7 +131,7 @@ SilverStripe\GraphQL\Controller:
 ```
 
 
-## Define Queries
+### Define queries
 
 Types can be exposed via "queries". These queries are in charge of retrieving
 data through the SilverStripe ORM. The response itself is handled by the
@@ -199,7 +243,7 @@ And add a query variable:
 }
 ```
 
-## Pagination
+### Pagination
 
 The GraphQL module also provides a wrapper to return paginated and sorted
 records using offset based pagination.
@@ -312,7 +356,7 @@ query Members {
 
 ```
 
-#### Setting Pagination and Sorting options
+#### Setting pagination and sorting options
 
 To limit the ability for users to perform searching and ordering as they wish,
 `Collection` instances can define their own limits and defaults.
@@ -329,7 +373,7 @@ return Connection::create('paginatedReadMembers')
     ->setMaximumLimit(100); // prevents users requesting more than 100 records
 ```
 
-#### Nested Connections
+### Nested connections
 
 `Connection` can be used to return related objects such as `has_many` and
 `many_many` models.
@@ -415,7 +459,7 @@ query Members {
 }
 ```
 
-### Define Mutations
+### Define mutations
 
 A "mutation" is a specialised GraphQL query which has side effects on your data,
 such as create, update or delete. Each of these operations would be expressed
@@ -492,7 +536,7 @@ This will create a new member with an email address, which you can pass in as
 query variables: `{"Email": "test@test.com"}`. It'll return the new `ID`
 property of the created member.
 
-## Scaffolding DataObjects into the Schema
+## Scaffolding DataObjects into the schema
 
 Making a DataObject accessible through the GraphQL API involves quite a bit of boilerplate. In the above example, we can
 see that creating endpoints for a query and a mutation requires creating three new classes, along with an update to the
@@ -540,7 +584,7 @@ class Post extends DataObject
 }
 ```
 
-### Scaffolding DataObjects through the Config layer
+### Scaffolding through the Config layer
 
 Many of the declarations you make through procedural code can be done via YAML. If you don't have any logic in your
 scaffolding, using YAML is a simple approach to adding scaffolding.
@@ -555,7 +599,7 @@ SilverStripe\GraphQL\Controller:
 
 ```
 
-### Scaffolding DataObjects through procedural code
+### Scaffolding through procedural code
 
 Alternatively, for more complex requirements, you can create the scaffolding with code. The GraphQL `Manager` class will
 bootstrap itself with any scaffolders that are registered in its config. These scaffolders must implement the
@@ -638,7 +682,7 @@ class Post extends DataObject implements ScaffoldingProvider
 ```
 
 By declaring these two operations, we have automatically added a new query and
-mutation to the GraphQL schema, using naming naming conventions derived from
+mutation to the GraphQL schema, using naming conventions derived from
 the operation type and the `singular_name` or `plural_name` of the DataObject.
 
 ```graphql
@@ -1421,15 +1465,15 @@ query readSiteTrees {
 ```
 
 
-### Define Interfaces
+### Define interfaces
 
 TODO
 
-### Define Input Types
+### Define input types
 
 TODO
 
-## Testing/Debugging Queries and Mutations
+## Testing/debugging queries and mutations
 
 An in-browser IDE for the GraphQL server is available via the [silverstripe-graphql-devtools](https://github.com/silverstripe/silverstripe-graphql-devtools) module.
 
@@ -1454,7 +1498,7 @@ resources are accessed.
 The `MemberAuthenticator` class is configured as the default option for authentication,
 and will attempt to use the current CMS `Member` session for authentication context.
 
-### HTTP Basic Authentication
+### HTTP basic authentication
 
 Silverstripe has built in support for [HTTP basic authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
 There is a `BasicAuthAuthenticator` which is configured for GraphQL by default, but
@@ -1599,7 +1643,7 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  Max-Age: 600
  ```
 
-#### Sample Custom CORS Config
+### Sample Custom CORS Config
 
 ```yaml
 ## CORS Config
