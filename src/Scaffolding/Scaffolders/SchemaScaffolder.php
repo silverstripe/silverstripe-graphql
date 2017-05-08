@@ -63,7 +63,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
             }
 
             foreach ($config['types'] as $dataObjectClass => $settings) {
-                $scaffold = $scaffolder->type($dataObjectClass)
+                $scaffolder->type($dataObjectClass)
                     ->applyConfig($settings);
             }
         }
@@ -87,7 +87,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
                         throw new InvalidArgumentException(sprintf(
                             '"%s" must have a "type" field. See %s',
                             $group,
-                            $queryName
+                            $fieldName
                         ));
                     }
 
