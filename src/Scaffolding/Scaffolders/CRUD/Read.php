@@ -39,7 +39,7 @@ class Read extends QueryScaffolder implements CRUDInterface
         $this->setResolver(function ($object, array $args, $context, $info) {
             if (!singleton($this->dataObjectClass)->canView($context['currentUser'])) {
                 throw new Exception(sprintf(
-                    'Cannot create %s',
+                    'Cannot view %s',
                     $this->dataObjectClass
                 ));
             }
