@@ -25,6 +25,12 @@ class ControllerTest extends SapphireTest
 
         Handler::config()->remove('authenticators');
         $this->logInWithPermission('CMS_ACCESS_CMSMain');
+
+        // Disable CORS Config by default.
+        Config::inst()->remove('SilverStripe\GraphQL', 'cors');
+        Config::inst()->update('SilverStripe\GraphQL', 'cors', [
+            'Enabled' => false
+        ]);
     }
 
     public function tearDown()
@@ -233,6 +239,30 @@ class ControllerTest extends SapphireTest
     }
 
     /**
+     * @expectedException SilverStripe\Control\HTTPResponse_Exception
+     */
+    public function testAddCorsHeadersOriginMissing()
+    {
+        Config::inst()->remove('SilverStripe\\GraphQL\\Controller', 'cors');
+        Config::inst()->update('SilverStripe\\GraphQL\\Controller', 'cors', [
+            'Enabled' => true,
+            'Allow-Origin' => 'localhost',
+            'Allow-Headers' => 'Authorization, Content-Type',
+            'Allow-Methods' =>  'GET, POST, OPTIONS',
+            'Max-Age' => 86400
+        ]);
+
+        $controller = new Controller();
+        $request = new HTTPRequest('GET', '');
+        $response = new HTTPResponse();
+        $response = $controller->addCorsHeaders($request, $response);
+
+        $this->assertTrue($response instanceof HTTPResponse);
+        $this->assertEquals('403', $response->getStatusCode());
+    }
+
+    /**
+     * {@inheritDoc}
      * @expectedException \SilverStripe\Control\HTTPResponse_Exception
      */
     public function testAddCorsHeadersResponseCORSDisabled()
