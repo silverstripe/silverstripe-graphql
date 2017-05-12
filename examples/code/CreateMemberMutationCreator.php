@@ -19,9 +19,7 @@ class CreateMemberMutationCreator extends MutationCreator implements OperationRe
 
     public function type()
     {
-        return function () {
-            return $this->manager->getType('member');
-        };
+        return $this->manager->getType('member');
     }
 
     public function args()

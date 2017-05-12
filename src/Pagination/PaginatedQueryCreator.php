@@ -46,9 +46,7 @@ abstract class PaginatedQueryCreator extends QueryCreator implements OperationRe
 
     public function type()
     {
-        return function () {
-            return $this->getConnection()->toType();
-        };
+        return $this->getConnection()->toType();
     }
 
     public function resolve($value, array $args, $context, ResolveInfo $info)

@@ -10,7 +10,7 @@ use GraphQL\GraphQL;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Error;
+use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;

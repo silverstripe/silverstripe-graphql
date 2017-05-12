@@ -9,8 +9,6 @@ class MutationCreatorFake extends MutationCreator implements TestOnly
 {
     public function type()
     {
-        return function () {
-            return $this->manager->getType('mytype');
-        };
+        return $this->manager->getType('mytype');
     }
 }
