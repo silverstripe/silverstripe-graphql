@@ -74,27 +74,29 @@ class Create extends MutationScaffolder implements CRUDInterface
      */
     protected function generateInputType()
     {
-        $fields = [];
-        $instance = $this->getDataObjectInstance();
-
-        // Setup default input args.. Placeholder!
-        $schema = Injector::inst()->get(DataObjectSchema::class);
-        $db = $schema->fieldSpecs($this->dataObjectClass);
-
-        unset($db['ID']);
-
-        foreach ($db as $dbFieldName => $dbFieldType) {
-            $result = $instance->obj($dbFieldName);
-            $typeName = $result->config()->graphql_type;
-            $arr = [
-                'type' => (new TypeParser($typeName))->getType()
-            ];
-            $fields[$dbFieldName] = $arr;
-        }
-
         return new InputObjectType([
             'name' => $this->typeName().'CreateInputType',
-            'fields' => $fields,
+            'fields' => function () {
+                $fields = [];
+                $instance = $this->getDataObjectInstance();
+    
+                // Setup default input args.. Placeholder!
+                $schema = Injector::inst()->get(DataObjectSchema::class);
+                $db = $schema->fieldSpecs($this->dataObjectClass);
+    
+                unset($db['ID']);
+    
+                foreach ($db as $dbFieldName => $dbFieldType) {
+                    $result = $instance->obj($dbFieldName);
+                    $typeName = $result->config()->graphql_type;
+                    $arr = [
+                        'type' => (new TypeParser($typeName))->getType()
+                    ];
+                    $fields[$dbFieldName] = $arr;
+                }
+    
+                return $fields;
+            },
         ]);
     }
 }

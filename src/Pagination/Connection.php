@@ -298,7 +298,9 @@ class Connection implements OperationResolver
         return new ObjectType([
             'name' => $this->connectionName . 'Connection',
             'description' => $this->description,
-            'fields' => $this->fields()
+            'fields' => function () {
+                return $this->fields();
+            },
         ]);
     }
 

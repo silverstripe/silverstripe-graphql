@@ -465,7 +465,9 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         return new ObjectType([
             'name' => $this->typeName(),
-            'fields' => $this->createFields($manager),
+            'fields' => function () use ($manager) {
+                return $this->createFields($manager);
+            },
         ]);
     }
 

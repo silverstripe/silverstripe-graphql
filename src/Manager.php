@@ -147,12 +147,16 @@ class Manager
     {
         $queryType = new ObjectType([
             'name' => 'Query',
-            'fields' => $this->queries,
+            'fields' => function () {
+                return $this->queries;
+            },
         ]);
 
         $mutationType = new ObjectType([
             'name' => 'Mutation',
-            'fields' => $this->mutations,
+            'fields' => function () {
+                return $this->mutations;
+            },
         ]);
 
         return new Schema([

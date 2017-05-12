@@ -31,7 +31,11 @@ class PageInfoTypeCreator extends TypeCreator
         // Don't wrap static fields in callback
         return array_merge(
             $this->attributes(),
-            [ 'fields' => $this->fields() ]
+            [
+                'fields' => function () {
+                    return $this->fields();
+                }
+            ]
         );
     }
 
