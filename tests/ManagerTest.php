@@ -83,12 +83,18 @@ class ManagerTest extends SapphireTest
     {
         $manager = new Manager();
         $type = $this->getType($manager);
-        $query = $this->getQuery($manager);
         $manager->addType($type, 'mytype');
+        
+        $query = $this->getQuery($manager);
         $manager->addQuery($query, 'myquery');
+        
         $this->assertEquals(
             $query,
             $manager->getQuery('myquery')
+        );
+        $this->assertEquals(
+            $type,
+            $manager->getType('mytype')
         );
     }
 

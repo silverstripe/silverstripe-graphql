@@ -55,7 +55,7 @@ class QueryScaffolderTest extends SapphireTest
             'fields' => [],
         ]));
         $o->Test = true;
-        $config = $scaffold['type']()->config;
+        $config = $scaffold['type']->config;
 
         $this->assertEquals('testQueryConnection', $config['name']);
         $this->assertArrayHasKey('pageInfo', $config['fields']);

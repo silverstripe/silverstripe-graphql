@@ -36,7 +36,7 @@ class UnionScaffolderTest extends SapphireTest
         $this->assertEquals($scaffolder1->typeName(), $types[0]->config['name']);
         $this->assertEquals($scaffolder2->typeName(), $types[1]->config['name']);
 
-        $typeResolver = $unionType->getResolveTypeFn();
+        $typeResolver = $unionType->resolveType();
         $result = $typeResolver(new FakeRedirectorPage());
 
         $this->assertEquals($scaffolder1->typeName(), $result->config['name']);

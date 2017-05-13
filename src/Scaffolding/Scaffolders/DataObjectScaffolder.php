@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
@@ -573,7 +574,12 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         $resolver = function ($obj, $args, $context, $info) {
-            return $obj->obj($info->fieldName);
+            $field = $obj->obj($info->fieldName);
+            // return the raw field value, or checks like `is_numeric()` fail
+            if ($field instanceof DBField) {
+                return $field->getValue();
+            }
+            return $field;
         };
 
         foreach ($this->fields as $fieldData) {
@@ -607,13 +613,10 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         foreach ($extraDataObjects as $fieldName => $className) {
-            $result = $instance->obj($fieldName);
             $typeName = ScaffoldingUtil::typeNameForDataObject($className);
             $description = $this->getFieldDescription($fieldName);
             $fieldMap[$fieldName] = [
-                'type' => function () use ($manager, $typeName, $description) {
-                    return $manager->getType($typeName);
-                },
+                'type' => $manager->getType($typeName),
                 'description' => $description,
                 'resolve' => $resolver,
             ];
