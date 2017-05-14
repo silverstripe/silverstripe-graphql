@@ -10,10 +10,8 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
 use GraphQL\Type\Definition\StringType;
 use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\IntType;
-use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Security\Member;
-use SilverStripe\Core\Config\Config;
 use Exception;
 
 class CreateTest extends SapphireTest

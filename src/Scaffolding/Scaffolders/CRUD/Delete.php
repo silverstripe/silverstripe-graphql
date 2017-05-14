@@ -67,8 +67,13 @@ class Delete extends MutationScaffolder implements CRUDInterface
     {
         return [
             'IDs' => [
-                'type' => Type::nonNull(Type::listOf(Type::id())),
+                'type' => Type::nonNull($this->generateInputType()),
             ],
         ];
+    }
+    
+    protected function generateInputType()
+    {
+        return Type::listOf(Type::id());
     }
 }

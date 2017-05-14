@@ -7,7 +7,6 @@ use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\Core\Config\Config;
 use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
@@ -32,21 +31,20 @@ class Create extends MutationScaffolder implements CRUDInterface
 
         parent::__construct(
             'create'.ucfirst($this->typeName()),
-            $this->typeName()
-        );
-
-        // Todo: this is totally half baked
-        $this->setResolver(function ($object, array $args, $context, $info) {
-            if (singleton($this->dataObjectClass)->canCreate($context['currentUser'])) {
-                $newObject = Injector::inst()->create($this->dataObjectClass);
-                $newObject->update($args['Input']);
-                $newObject->write();
-
-                return $newObject;
-            } else {
-                throw new Exception("Cannot create {$this->dataObjectClass}");
+            $this->typeName(),
+            function ($object, array $args, $context, $info) {
+                // Todo: this is totally half baked
+                if (singleton($this->dataObjectClass)->canCreate($context['currentUser'], $context)) {
+                    $newObject = Injector::inst()->create($this->dataObjectClass);
+                    $newObject->update($args['Input']);
+                    $newObject->write();
+            
+                    return $newObject;
+                } else {
+                    throw new Exception("Cannot create {$this->dataObjectClass}");
+                }
             }
-        });
+        );
     }
 
     /**
