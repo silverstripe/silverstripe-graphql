@@ -104,16 +104,15 @@ class Connection implements OperationResolver
     }
 
     /**
-     * Pass in the lazy-evaluated {@link ObjectType} via a thunk function. This
-     * will be evaluated when the edge is generated.
+     * Pass in the {@link ObjectType}.
      *
-     * @param Callable
+     * @param ObjectType
      *
      * @return $this
      */
-    public function setConnectionType($func)
+    public function setConnectionType($type)
     {
-        $this->connectedType = $func;
+        $this->connectedType = $type;
 
         return $this;
     }
@@ -280,7 +279,7 @@ class Connection implements OperationResolver
             'description' => 'The collections edge',
             'fields' => [
                 'node' => [
-                    'type' => call_user_func($this->connectedType),
+                    'type' => $this->connectedType,
                     'description' => 'The node at the end of the collections edge',
                     'resolve' => function ($obj) {
                         return $obj;

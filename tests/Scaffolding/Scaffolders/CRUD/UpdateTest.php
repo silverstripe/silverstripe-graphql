@@ -6,15 +6,13 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
 use GraphQL\Type\Definition\StringType;
 use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\IntType;
-use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Security\Member;
-use SilverStripe\Core\Config\Config;
 use Exception;
 
 class UpdateTest extends SapphireTest
@@ -27,7 +25,10 @@ class UpdateTest extends SapphireTest
     public function testUpdateOperationResolver()
     {
         $update = new Update(DataObjectFake::class);
-        $scaffold = $update->scaffold(new Manager());
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+
+        $scaffold = $update->scaffold($manager);
 
         $record = DataObjectFake::create([
             'MyField' => 'old',
@@ -52,7 +53,10 @@ class UpdateTest extends SapphireTest
     public function testUpdateOperationInputType()
     {
         $update = new Update(DataObjectFake::class);
-        $scaffold = $update->scaffold(new Manager());
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+
+        $scaffold = $update->scaffold($manager);
 
         $this->assertArrayHasKey('Input', $scaffold['args']);
         $this->assertInstanceof(NonNull::class, $scaffold['args']['Input']['type']);
@@ -61,7 +65,7 @@ class UpdateTest extends SapphireTest
 
         $this->assertEquals('Data_Object_FakeUpdateInputType', $config['name']);
         $fieldMap = [];
-        foreach ($config['fields'] as $name => $fieldData) {
+        foreach ($config['fields']() as $name => $fieldData) {
             $fieldMap[$name] = $fieldData['type'];
         }
         $this->assertArrayHasKey('Created', $fieldMap, 'Includes fixed_fields');
@@ -78,7 +82,10 @@ class UpdateTest extends SapphireTest
         $restrictedDataobject = RestrictedDataObjectFake::create();
         $ID = $restrictedDataobject->write();
 
-        $scaffold = $update->scaffold(new Manager());
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'Restricted_Data_Object_Fake']), 'Restricted_Data_Object_Fake');
+
+        $scaffold = $update->scaffold($manager);
 
         $this->setExpectedExceptionRegExp(
             Exception::class,

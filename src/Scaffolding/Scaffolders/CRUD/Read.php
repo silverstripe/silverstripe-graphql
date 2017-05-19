@@ -63,27 +63,26 @@ class Read extends QueryScaffolder implements CRUDInterface
      * @param  Manager $manager
      * @return \Closure
      */
-    protected function createTypeGetter(Manager $manager)
+    protected function getType(Manager $manager)
     {
-        return function () use ($manager) {
-            // Create unions for exposed descendants
-            $descendants = ClassInfo::subclassesFor($this->dataObjectClass);
-            array_shift($descendants);
-            $union = [$this->typeName];
-            foreach ($descendants as $descendant) {
-                $typeName = ScaffoldingUtil::typeNameForDataObject($descendant);
-                if ($manager->hasType($typeName)) {
-                    $union[] = $typeName;
-                }
+        // Create unions for exposed descendants
+        $descendants = ClassInfo::subclassesFor($this->dataObjectClass);
+        array_shift($descendants);
+        $union = [$this->typeName];
+        foreach ($descendants as $descendant) {
+            $typeName = ScaffoldingUtil::typeNameForDataObject($descendant);
+            if ($manager->hasType($typeName)) {
+                $union[] = $typeName;
             }
-            if (sizeof($union) > 1) {
-                return (new UnionScaffolder(
-                    $this->typeName.'WithDescendants',
-                    $union
-                ))->scaffold($manager);
-            }
+        }
+        if (sizeof($union) > 1) {
+            return (new UnionScaffolder(
+                $this->typeName.'WithDescendants',
+                $union
+            ))->scaffold($manager);
+        }
 
-            return $manager->getType($this->typeName);
-        };
+        return $manager->getType($this->typeName);
+
     }
 }

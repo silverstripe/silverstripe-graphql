@@ -33,12 +33,12 @@ class ManagerTest extends SapphireTest
             Type::class,
             $manager->getType('mytype')
         );
-        $this->assertInternalType(
-            'array',
+        $this->assertInstanceOf(
+            'Closure',
             $manager->getQuery('myquery')
         );
-        $this->assertInternalType(
-            'array',
+        $this->assertInstanceOf(
+            'Closure',
             $manager->getMutation('mymutation')
         );
     }

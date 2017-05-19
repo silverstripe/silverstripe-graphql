@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders\CRUD;
 
+use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
@@ -24,7 +25,9 @@ class CreateTest extends SapphireTest
     public function testCreateOperationResolver()
     {
         $create = new Create(DataObjectFake::class);
-        $scaffold = $create->scaffold(new Manager());
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+        $scaffold = $create->scaffold($manager);
 
         $newRecord = $scaffold['resolve'](
             null,
@@ -44,7 +47,9 @@ class CreateTest extends SapphireTest
     public function testCreateOperationInputType()
     {
         $create = new Create(DataObjectFake::class);
-        $scaffold = $create->scaffold(new Manager());
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+        $scaffold = $create->scaffold($manager);
 
         $this->assertArrayHasKey('Input', $scaffold['args']);
         $this->assertInstanceof(NonNull::class, $scaffold['args']['Input']['type']);
@@ -53,7 +58,7 @@ class CreateTest extends SapphireTest
 
         $this->assertEquals('Data_Object_FakeCreateInputType', $config['name']);
         $fieldMap = [];
-        foreach ($config['fields'] as $name => $fieldData) {
+        foreach ($config['fields']() as $name => $fieldData) {
             $fieldMap[$name] = $fieldData['type'];
         }
         $this->assertArrayHasKey('Created', $fieldMap, 'Includes fixed_fields');
@@ -67,7 +72,10 @@ class CreateTest extends SapphireTest
     public function testCreateOperationPermissionCheck()
     {
         $create = new Create(RestrictedDataObjectFake::class);
-        $scaffold = $create->scaffold(new Manager());
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'Restricted_Data_Object_Fake']), 'Restricted_Data_Object_Fake');
+
+        $scaffold = $create->scaffold($manager);
 
         $this->setExpectedExceptionRegExp(
             Exception::class,

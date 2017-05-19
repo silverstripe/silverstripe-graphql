@@ -339,17 +339,23 @@ class DataObjectScaffolderTest extends SapphireTest
 
     public function testDataObjectScaffolderScaffold()
     {
+        $manager = $this->getMockBuilder(Manager::class)
+            ->setMethods(['getType'])
+            ->getMock();
+        $manager->method('getType')
+            ->will($this->returnValue([]));
         $scaffolder = $this->getFakeScaffolder();
         $scaffolder->addFields(['MyField', 'Author'])
                    ->nestedQuery('Files');
 
-        $objectType = $scaffolder->scaffold(new Manager());
+        $objectType = $scaffolder->scaffold($manager);
 
         $this->assertInstanceof(ObjectType::class, $objectType);
         $config = $objectType->config;
 
         $this->assertEquals($scaffolder->typeName(), $config['name']);
-        $this->assertEquals(['MyField', 'Author', 'Files'], array_keys($config['fields']));
+        $this->assertEquals(['MyField', 'Author', 'Files'], array_keys($config['fields']()));
+
     }
 
     public function testDataObjectScaffolderScaffoldFieldException()
@@ -361,6 +367,7 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder = $this->getFakeScaffolder()
             ->addFields(['not a field'])
             ->scaffold(new Manager());
+        $scaffolder->config['fields']();
     }
 
     public function testDataObjectScaffolderScaffoldNestedQueryException()
@@ -372,6 +379,7 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder = $this->getFakeScaffolder()
             ->addFields(['Files'])
             ->scaffold(new Manager());
+        $scaffolder->config['fields']();
     }
 
     public function testDataObjectScaffolderAddToManager()
@@ -393,12 +401,12 @@ class DataObjectScaffolderTest extends SapphireTest
 
         $this->assertArrayHasKey(
             (new Read(DataObjectFake::class))->getName(),
-            $queryConfig['fields']
+            $queryConfig['fields']()
         );
 
         $this->assertArrayHasKey(
             (new Create(DataObjectFake::class))->getName(),
-            $mutationConfig['fields']
+            $mutationConfig['fields']()
         );
 
         $this->assertTrue($manager->hasType($scaffolder->typeName()));
