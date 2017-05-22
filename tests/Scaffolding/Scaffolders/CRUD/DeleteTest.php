@@ -18,15 +18,15 @@ use Exception;
 class DeleteTest extends SapphireTest
 {
     protected static $extra_dataobjects = [
-        'SilverStripe\GraphQL\Tests\Fake\DataObjectFake',
-        'SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake',
+        DataObjectFake::class,
+        RestrictedDataObjectFake::class,
     ];
 
     public function testDeleteOperationResolver()
     {
         $delete = new Delete(DataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
         $scaffold = $delete->scaffold($manager);
 
         $record = DataObjectFake::create();
@@ -58,7 +58,7 @@ class DeleteTest extends SapphireTest
     {
         $delete = new Delete(DataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
 
         $scaffold = $delete->scaffold($manager);
 
@@ -80,14 +80,12 @@ class DeleteTest extends SapphireTest
         $restrictedDataobject = RestrictedDataObjectFake::create();
         $ID = $restrictedDataobject->write();
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'Restricted_Data_Object_Fake']), 'Restricted_Data_Object_Fake');
+        $manager->addType(new ObjectType(['name' => 'GraphQL_RestrictedDataObjectFake']), 'GraphQL_RestrictedDataObjectFake');
 
         $scaffold = $delete->scaffold($manager);
 
-        $this->setExpectedExceptionRegExp(
-            Exception::class,
-            '/Cannot delete/'
-        );
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageRegExp('/Cannot delete/');
 
         $scaffold['resolve'](
             $restrictedDataobject,

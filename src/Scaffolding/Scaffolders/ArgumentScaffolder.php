@@ -3,10 +3,8 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use GraphQL\Type\Definition\Type;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
-use Exception;
 
 class ArgumentScaffolder implements ConfigurationApplier
 {
@@ -22,12 +20,12 @@ class ArgumentScaffolder implements ConfigurationApplier
     protected $description;
 
     /**
-     * @var GraphQL\Definition\Type\Type;
+     * @var Type;
      */
     protected $type;
 
     /**
-     * @var scalar
+     * @var mixed
      */
     protected $defaultValue;
 
@@ -39,12 +37,12 @@ class ArgumentScaffolder implements ConfigurationApplier
     /**
      * ArgumentScaffolder constructor
      * @param string $argName      Name of the argument
-     * @param strint $typeStr      A string describing the type (see TypeParser)
+     * @param string $typeStr      A string describing the type (see TypeParser)
      */
     public function __construct($argName, $typeStr)
     {
         $this->argName = $argName;
-        
+
         $parser = new TypeParser($typeStr);
         $this->defaultValue = $parser->getDefaultValue();
         $this->type = $parser->getType();
@@ -53,7 +51,9 @@ class ArgumentScaffolder implements ConfigurationApplier
 
     /**
      * Sets the argument as required
+     *
      * @param boolean $bool
+     * @return $this
      */
     public function setRequired($bool)
     {
@@ -64,7 +64,9 @@ class ArgumentScaffolder implements ConfigurationApplier
 
     /**
      * Sets the argument description
+     *
      * @param string $description
+     * @return $this
      */
     public function setDescription($description)
     {
@@ -75,7 +77,9 @@ class ArgumentScaffolder implements ConfigurationApplier
 
     /**
      * Sets the default value of the argument
+     *
      * @param mixed $value
+     * @return $this
      */
     public function setDefaultValue($value)
     {
@@ -93,7 +97,7 @@ class ArgumentScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @return scalar
+     * @return mixed
      */
     public function getDefaultValue()
     {

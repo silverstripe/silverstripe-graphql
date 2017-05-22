@@ -5,7 +5,6 @@ namespace SilverStripe\GraphQL\Pagination;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\EnumType;
 use SilverStripe\GraphQL\TypeCreator;
 

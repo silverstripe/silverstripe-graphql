@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
-use SilverStripe\GraphQL\Scaffolding\Util\ArgsParser;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
@@ -13,7 +12,6 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\ORM\ArrayList;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\ArgumentScaffolder;
 use Exception;
 
 /**
@@ -35,7 +33,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     protected $operationName;
 
     /**
-     * @var \Closure|SilverStripe\GraphQL\ResolverInterface
+     * @var ResolverInterface|callable
      */
     protected $resolver;
 
@@ -45,7 +43,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     protected $args = [];
 
     /**
-     * @param $name
+     * @param string $name
      * @return  string|null
      */
     public static function getOperationScaffoldFromIdentifier($name)
@@ -68,7 +66,8 @@ abstract class OperationScaffolder implements ConfigurationApplier
      * OperationScaffolder constructor.
      *
      * @param string $operationName
-     * @param Resolver|\Closure $resolver
+     * @param string $typeName
+     * @param ResolverInterface|callable|null $resolver
      */
     public function __construct($operationName, $typeName, $resolver = null)
     {
@@ -90,11 +89,11 @@ abstract class OperationScaffolder implements ConfigurationApplier
      *    'MyOtherField' // No description
      * ]
      *
-     * @param array $fields
+     * @param array $argData
+     * @return $this
      */
     public function addArgs(array $argData)
     {
-        $args = [];
         foreach ($argData as $argName => $typeStr) {
             $this->removeArg($argName);
             $this->args->add(new ArgumentScaffolder($argName, $typeStr));
@@ -104,10 +103,11 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @param $field
-     * @param  $description
-     *
-     * @return mixed
+     * @param string $argName
+     * @param string $typeStr
+     * @param string $description
+     * @param mixed $defaultValue
+     * @return $this
      */
     public function addArg($argName, $typeStr, $description = null, $defaultValue = null)
     {
@@ -146,8 +146,10 @@ abstract class OperationScaffolder implements ConfigurationApplier
 
     /**
      * Sets a single arg description
+     *
      * @param string $argName
      * @param string $description
+     * @return $this
      */
     public function setArgDescription($argName, $description)
     {
@@ -182,8 +184,10 @@ abstract class OperationScaffolder implements ConfigurationApplier
 
     /**
      * Sets a default for a single arg
+     *
      * @param string $argName
      * @param mixed $default
+     * @return $this
      */
     public function setArgDefault($argName, $default)
     {
@@ -199,7 +203,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @return array
+     * @return ArrayList
      */
     public function getArgs()
     {
@@ -207,8 +211,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @param $arg
-     *
+     * @param string $arg
      * @return $this
      */
     public function removeArg($arg)
@@ -217,8 +220,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @param array $fields
-     *
+     * @param array $args
      * @return $this
      */
     public function removeArgs(array $args)
@@ -229,10 +231,8 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @param $resolver
-     *
+     * @param callable|ResolverInterface $resolver
      * @return $this
-     *
      * @throws InvalidArgumentException
      */
     public function setResolver($resolver)
@@ -256,8 +256,8 @@ abstract class OperationScaffolder implements ConfigurationApplier
 
     /**
      * @param array $config
-     *
-     * @return OperationScaffolder
+     * @return $this
+     * @throws Exception
      */
     public function applyConfig(array $config)
     {
@@ -301,7 +301,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     /**
      * Based on the type of resolver, create a function that invokes it.
      *
-     * @return Closure
+     * @return callable
      */
     protected function createResolverFunction()
     {

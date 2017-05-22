@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Tests\Scaffolders;
 
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\OperationScaffolderFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
@@ -14,14 +15,14 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
 use GraphQL\Type\Definition\StringType;
-use GraphQL\Type\Definition\Type;
 use Exception;
+use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 
 class OperationScaffolderTest extends SapphireTest
 {
     protected static $extra_dataobjects = [
-        'SilverStripe\GraphQL\Tests\Fake\DataObjectFake',
-        'SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake',
+        DataObjectFake::class,
+        RestrictedDataObjectFake::class,
     ];
 
     public function testOperationIdentifiers()
@@ -142,10 +143,8 @@ class OperationScaffolderTest extends SapphireTest
 
         $this->assertTrue($success);
 
-        $this->setExpectedExceptionRegExp(
-            InvalidArgumentException::class,
-            '/closures, instances of/'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/closures, instances of/');
         $scaffolder->setResolver('fail');
     }
 
@@ -184,8 +183,8 @@ class OperationScaffolderTest extends SapphireTest
             $ex = $e;
         }
 
-        $this->assertInstanceof(Exception::class, $e);
-        $this->assertRegExp('/args must be an array/', $e->getMessage());
+        $this->assertInstanceof(Exception::class, $ex);
+        $this->assertRegExp('/args must be an array/', $ex->getMessage());
 
         $ex = null;
         try {
@@ -201,8 +200,8 @@ class OperationScaffolderTest extends SapphireTest
             $ex = $e;
         }
 
-        $this->assertInstanceof(Exception::class, $e);
-        $this->assertRegExp('/must have a type/', $e->getMessage());
+        $this->assertInstanceof(Exception::class, $ex);
+        $this->assertRegExp('/must have a type/', $ex->getMessage());
 
         $ex = null;
         try {
@@ -215,7 +214,7 @@ class OperationScaffolderTest extends SapphireTest
             $ex = $e;
         }
 
-        $this->assertInstanceof(Exception::class, $e);
-        $this->assertRegExp('/should be mapped to a string or an array/', $e->getMessage());
+        $this->assertInstanceof(Exception::class, $ex);
+        $this->assertRegExp('/should be mapped to a string or an array/', $ex->getMessage());
     }
 }

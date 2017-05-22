@@ -4,8 +4,7 @@ namespace SilverStripe\GraphQL\Scaffolding\Util;
 
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\ORM\DataObjectInterface;
-use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\ORM\DataObject;
 
 class ScaffoldingUtil
 {
@@ -13,8 +12,8 @@ class ScaffoldingUtil
      * Given a DataObject subclass name, transform it into a sanitised (and implicitly unique) type
      * name suitable for the GraphQL schema
      *
-     * @param $class
-     * @return mixed
+     * @param string $class
+     * @return string
      */
     public static function typeNameForDataObject($class)
     {
@@ -25,7 +24,7 @@ class ScaffoldingUtil
     }
 
 
-    public static function isValidFieldName(DataObjectInterface $instance, $fieldName)
+    public static function isValidFieldName(DataObject $instance, $fieldName)
     {
         return ($instance->hasMethod($fieldName) || $instance->hasField($fieldName));
     }

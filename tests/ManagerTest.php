@@ -84,10 +84,10 @@ class ManagerTest extends SapphireTest
         $manager = new Manager();
         $type = $this->getType($manager);
         $manager->addType($type, 'mytype');
-        
+
         $query = $this->getQuery($manager);
         $manager->addQuery($query, 'myquery');
-        
+
         $this->assertEquals(
             $query,
             $manager->getQuery('myquery')
@@ -103,10 +103,10 @@ class ManagerTest extends SapphireTest
         $manager = new Manager();
         $type = $this->getType($manager);
         $manager->addType($type, 'mytype');
-        
+
         $mutation = $this->getMutation($manager);
         $manager->addMutation($mutation, 'mymutation');
-        
+
         $this->assertEquals(
             $mutation,
             $manager->getMutation('mymutation')
@@ -115,6 +115,7 @@ class ManagerTest extends SapphireTest
 
     public function testQueryWithError()
     {
+        /** @var Manager $mock */
         $mock = $this->getMockBuilder(Manager::class)
             ->setMethods(['queryAndReturnResult'])
             ->getMock();

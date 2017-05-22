@@ -4,11 +4,20 @@ namespace SilverStripe\GraphQL\Tests\Fake;
 
 use SilverStripe\Assets\File;
 use SilverStripe\Dev\TestOnly;
+use SilverStripe\ORM\ManyManyList;
 use SilverStripe\Security\Member;
 use SilverStripe\ORM\DataObject;
 
+/**
+ * @property string $MyField
+ * @property int $MyInt
+ * @method Member Author()
+ * @method ManyManyList Files()
+ */
 class DataObjectFake extends DataObject implements TestOnly
 {
+    private static $table_name = 'GraphQL_DataObjectFake';
+
     private static $db = [
         'MyField' => 'Varchar',
         'MyInt' => 'Int'
@@ -21,6 +30,8 @@ class DataObjectFake extends DataObject implements TestOnly
     private static $many_many = [
         'Files' => File::class
     ];
+
+    private static $default_sort = '"GraphQL_DataObjectFake"."MyField" ASC';
 
     public $customSetterFieldResult;
 

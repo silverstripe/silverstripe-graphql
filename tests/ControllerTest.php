@@ -6,6 +6,7 @@ use PHPUnit_Framework_MockObject_MockBuilder;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\HTTPResponse_Exception;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Manager;
@@ -27,10 +28,7 @@ class ControllerTest extends SapphireTest
         $this->logInWithPermission('CMS_ACCESS_CMSMain');
 
         // Disable CORS Config by default.
-        Config::inst()->remove('SilverStripe\GraphQL', 'cors');
-        Config::inst()->update('SilverStripe\GraphQL', 'cors', [
-            'Enabled' => false
-        ]);
+        Controller::config()->set('cors', [ 'Enabled' => false ]);
     }
 
     public function tearDown()
@@ -218,8 +216,7 @@ class ControllerTest extends SapphireTest
 
     public function testAddCorsHeadersOriginAllowedWildcard()
     {
-        Config::inst()->remove(Controller::class, 'cors');
-        Config::inst()->update(Controller::class, 'cors', [
+        Controller::config()->set('cors', [
             'Enabled' => true,
             'Allow-Origin' => '*',
             'Allow-Headers' => 'Authorization, Content-Type',
@@ -238,13 +235,11 @@ class ControllerTest extends SapphireTest
         $this->assertEquals('localhost', $response->getHeader('Access-Control-Allow-Origin'));
     }
 
-    /**
-     * @expectedException SilverStripe\Control\HTTPResponse_Exception
-     */
     public function testAddCorsHeadersOriginMissing()
     {
-        Config::inst()->remove('SilverStripe\\GraphQL\\Controller', 'cors');
-        Config::inst()->update('SilverStripe\\GraphQL\\Controller', 'cors', [
+        $this->expectException(HTTPResponse_Exception::class);
+        
+        Controller::config()->set('cors', [
             'Enabled' => true,
             'Allow-Origin' => 'localhost',
             'Allow-Headers' => 'Authorization, Content-Type',

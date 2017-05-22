@@ -11,7 +11,6 @@ interface ManagerMutatorInterface
 {
     /**
      * @param Manager $manager
-     * @return mixed
      */
     public function addToManager(Manager $manager);
 }

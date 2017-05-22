@@ -30,10 +30,11 @@ class TypeParser
      * @var null
      */
     protected $defaultValue = null;
-    
+
     /**
      * TypeParser constructor.
-     * @param $rawArg
+     *
+     * @param string $rawArg
      */
     public function __construct($rawArg)
     {
@@ -75,7 +76,7 @@ class TypeParser
         if ($this->defaultValue === null) {
             return null;
         }
-        
+
         switch ($this->typeStr) {
             case Type::ID:
                 return (int) $this->defaultValue;
@@ -95,6 +96,9 @@ class TypeParser
         ));
     }
 
+    /**
+     * @return Type
+     */
     public function getType()
     {
         switch ($this->typeStr) {
@@ -108,6 +112,8 @@ class TypeParser
                 return Type::int();
             case Type::FLOAT:
                 return Type::float();
+            default:
+                return null;
         }
     }
 }

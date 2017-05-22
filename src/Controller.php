@@ -81,11 +81,11 @@ class Controller extends BaseController
             $permissions = $request->param('Permissions');
             if ($permissions) {
                 if (!$member) {
-                    throw new \Exception("Authentication required");
+                    throw new Exception("Authentication required");
                 }
                 $allowed = Permission::checkMember($member, $permissions);
                 if (!$allowed) {
-                    throw new \Exception("Not authorised");
+                    throw new Exception("Not authorised");
                 }
             }
 

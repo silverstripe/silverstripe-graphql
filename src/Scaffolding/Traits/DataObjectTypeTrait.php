@@ -3,8 +3,8 @@
 namespace SilverStripe\GraphQL\Scaffolding\Traits;
 
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\Core\Config\Config;
 use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
+use SilverStripe\ORM\DataObject;
 
 /**
  * Offers a few helper methods for classes that are DataObject subclass bound.
@@ -56,8 +56,8 @@ trait DataObjectTypeTrait
 
     /**
      * Sets the DataObject name
-     * @param string $name
-     * @return  $this
+     * @param string $class
+     * @return $this
      */
     public function setDataObjectClass($class)
     {

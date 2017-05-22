@@ -7,13 +7,12 @@ use SilverStripe\Dev\SapphireTest;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\Type;
-use SilverStripe\Core\Config\Config;
 
 class QueryScaffolderTest extends SapphireTest
 {
     public function testQueryScaffolderUnpaginated()
     {
+        /** @var Manager $observer */
         $observer = $this->getMockBuilder(Manager::class)
             ->setMethods(['addQuery'])
             ->getMock();
@@ -69,6 +68,7 @@ class QueryScaffolderTest extends SapphireTest
 
     public function testQueryScaffolderApplyConfig()
     {
+        /** @var QueryScaffolder $mock */
         $mock = $this->getMockBuilder(QueryScaffolder::class)
             ->setConstructorArgs(['testQuery', 'testType'])
             ->setMethods(['addSortableFields', 'setUsePagination'])
@@ -88,11 +88,9 @@ class QueryScaffolderTest extends SapphireTest
 
     public function testQueryScaffolderApplyConfigThrowsOnBadSortableFields()
     {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/sortableFields must be an array/');
         $scaffolder = new QueryScaffolder('testQuery', 'testType');
-        $this->setExpectedExceptionRegExp(
-            InvalidArgumentException::class,
-            '/sortableFields must be an array/'
-        );
         $scaffolder->applyConfig([
             'sortableFields' => 'fail',
         ]);

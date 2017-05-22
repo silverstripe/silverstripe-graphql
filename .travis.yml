@@ -10,26 +10,30 @@ matrix:
   fast_finish: true
   include:
     - php: 5.6
-      env: DB=MYSQL PHPUNIT_TEST=1 PHPCS_TEST=1
+      env: DB=PGSQL PHPUNIT_TEST=1 PHPCS_TEST=1
     - php: 7.0
       env: DB=MYSQL PHPUNIT_TEST=1
-    - php: 7.1
+    - php: 7.1.2
       env: DB=MYSQL PDO=1 PHPUNIT_COVERAGE_TEST=1
 
 before_script:
+# Init PHP
   - composer self-update || true
-  - "if [ \"$PHPCS_TEST\" = \"1\" ]; then pyrus install pear/PHP_CodeSniffer; fi"
+  - if [[ $PHPCS_TEST ]]; then pyrus install pear/PHP_CodeSniffer; fi
   - phpenv rehash
   - phpenv config-rm xdebug.ini
+
+# Install composer dependencies
   - composer validate
   - composer install --prefer-dist
-  - composer require --update-with-dependencies --no-update symfony/config:^3.2 silverstripe/framework:4.0.x-dev silverstripe/versioned:1.0.x-dev silverstripe/config:1.0.x-dev --prefer-dist
+  - composer require --prefer-dist --no-update symfony/config:^3.2 silverstripe/framework:4.0.x-dev silverstripe/versioned:1.0.x-dev silverstripe/config:1.0.x-dev --prefer-dist
   - composer update
+  - if [[ $DB == PGSQL ]]; then composer require silverstripe/postgresql:2.0.x-dev --prefer-dist; fi
 
 script:
-  - "if [ \"$PHPUNIT_TEST\" = \"1\" ]; then vendor/bin/phpunit; fi"
-  - "if [ \"$PHPCS_TEST\" = \"1\" ]; then composer run-script lint; fi"
-  - "if [ \"$PHPUNIT_COVERAGE_TEST\" = \"1\" ]; then phpdbg -qrr vendor/bin/phpunit --coverage-clover=coverage.xml; fi"
+  - if [[ $PHPUNIT_TEST ]]; then vendor/bin/phpunit; fi
+  - if [[ $PHPCS_TEST ]]; then composer run-script lint; fi
+  - if [[ $PHPUNIT_COVERAGE_TEST ]]; then vendor/bin/phpunit --coverage-clover=coverage.xml; fi
 
 after_success:
-  - "if [ \"$PHPUNIT_COVERAGE_TEST\" = \"1\" ]; then bash <(curl -s https://codecov.io/bash) -f coverage.xml; fi"
+  - if [[ $PHPUNIT_COVERAGE_TEST ]]; then bash <(curl -s https://codecov.io/bash) -f coverage.xml; fi

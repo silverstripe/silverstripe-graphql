@@ -5,12 +5,12 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 use SilverStripe\Core\Injector\Injector;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\ORM\ArrayLib;
-use SilverStripe\Core\ClassInfo;
-use \Exception;
 
 /**
  * The entry point for a GraphQL scaffolding definition. Holds DataObject type definitions,
@@ -29,7 +29,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
     const ALL = '*';
 
     /**
-     * @var array
+     * @var DataObjectScaffolder[]
      */
     protected $types = [];
 
@@ -46,10 +46,8 @@ class SchemaScaffolder implements ManagerMutatorInterface
     /**
      * Create from an array, e.g. derived from YAML.
      *
-     * @param $config
-     *
-     * @return mixed
-     *
+     * @param array $config
+     * @return self
      * @throws InvalidArgumentException
      */
     public static function createFromConfig($config)
@@ -112,8 +110,8 @@ class SchemaScaffolder implements ManagerMutatorInterface
     /**
      * Finds or makes a DataObject definition.
      *
-     * @param DataObjectScaffold $scaffold
-     *
+     * @param string $class
+     * @return DataObjectScaffolder
      * @throws InvalidArgumentException
      */
     public function type($class)
@@ -136,14 +134,13 @@ class SchemaScaffolder implements ManagerMutatorInterface
      *
      * @param string $name
      * @param string $class
-     * @param null   $resolver
-     *
+     * @param callable|ResolverInterface $resolver
      * @return QueryScaffolder
      */
     public function query($name, $class, $resolver = null)
     {
+        /** @var QueryScaffolder $query */
         $query = $this->queries->findByName($name);
-
         if ($query) {
             return $query;
         }
@@ -164,8 +161,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
      *
      * @param string $name
      * @param string $class
-     * @param null   $resolver
-     *
+     * @param callable|ResolverInterface $resolver
      * @return bool|MutationScaffolder
      */
     public function mutation($name, $class, $resolver = null)
@@ -190,8 +186,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
     /**
      * Removes a mutation.
      *
-     * @param $name
-     *
+     * @param string $name
      * @return $this
      */
     public function removeMutation($name)
@@ -204,7 +199,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
     /**
      * Removes a query.
      *
-     * @param $name
+     * @param string $name
      *
      * @return $this
      */
@@ -216,7 +211,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
     }
 
     /**
-     * @return array
+     * @return DataObjectScaffolder[]
      */
     public function getTypes()
     {
@@ -225,8 +220,8 @@ class SchemaScaffolder implements ManagerMutatorInterface
 
     /**
      * Returns true if the type has been added to the scaffolder
-     * @param  string  $dataObjectClass
-     * @return boolean
+     * @param string $dataObjectClass
+     * @return bool
      */
     public function hasType($dataObjectClass)
     {
@@ -281,7 +276,9 @@ class SchemaScaffolder implements ManagerMutatorInterface
                     }
                 }
                 foreach ($exposedOperations as $op) {
-                    $ancestorType->operation($op->getIdentifier());
+                    if ($op instanceof CRUDInterface) {
+                        $ancestorType->operation($op->getIdentifier());
+                    }
                 }
             }
         }

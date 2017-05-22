@@ -85,6 +85,7 @@ class Handler
                 return $authenticator;
             }
         }
+        return null;
     }
 
     /**
