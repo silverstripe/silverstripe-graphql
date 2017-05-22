@@ -16,10 +16,9 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
      */
     public function addToManager(Manager $manager)
     {
-        $manager->addMutation(
-            $this->scaffold($manager),
-            $this->getName()
-        );
+        $manager->addMutation(function () use ($manager) {
+            return $this->scaffold($manager);
+        }, $this->getName());
     }
 
     /**
@@ -32,9 +31,7 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
         return [
             'name' => $this->operationName,
             'args' => $this->createArgs(),
-            'type' => function () use ($manager) {
-                return $manager->getType($this->typeName);
-            },
+            'type' => $manager->getType($this->typeName),
             'resolve' => $this->createResolverFunction(),
         ];
     }

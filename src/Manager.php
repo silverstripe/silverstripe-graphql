@@ -10,12 +10,13 @@ use GraphQL\GraphQL;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Error;
+use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use Closure;
 
 /**
  * Manager is the master container for a graphql endpoint, and contains
@@ -114,8 +115,9 @@ class Manager
                     ));
                 }
 
-                $query = $queryCreator->toArray();
-                $manager->addQuery($query, $name);
+                $manager->addQuery(function () use ($queryCreator) {
+                    return $queryCreator->toArray();
+                }, $name);
             }
         }
 
@@ -130,8 +132,9 @@ class Manager
                     ));
                 }
 
-                $mutation = $mutationCreator->toArray();
-                $manager->addMutation($mutation, $name);
+                $manager->addMutation(function () use ($mutationCreator) {
+                    return $mutationCreator->toArray();
+                }, $name);
             }
         }
 
@@ -147,12 +150,20 @@ class Manager
     {
         $queryType = new ObjectType([
             'name' => 'Query',
-            'fields' => $this->queries,
+            'fields' => function () {
+                return array_map(function ($query) {
+                    return is_callable($query) ? $query() : $query;
+                }, $this->queries);
+            },
         ]);
 
         $mutationType = new ObjectType([
             'name' => 'Mutation',
-            'fields' => $this->mutations,
+            'fields' => function () {
+                return array_map(function ($mutation) {
+                    return is_callable($mutation) ? $mutation() : $mutation;
+                }, $this->mutations);
+            },
         ]);
 
         return new Schema([
@@ -242,9 +253,10 @@ class Manager
     }
 
     /**
-     * Register a new Query
+     * Register a new Query. Query can be defined as a closure to ensure
+     * dependent types are lazy loaded.
      *
-     * @param array $query
+     * @param array|Closure $query
      * @param string $name Identifier for this query (unique in schema)
      */
     public function addQuery($query, $name)
@@ -264,9 +276,10 @@ class Manager
     }
 
     /**
-     * Register a new mutation
+     * Register a new mutation. Mutations can be callbacks to ensure
+     * dependent types are lazy-loaded.
      *
-     * @param array $mutation
+     * @param array|Closure $mutation
      * @param string $name Identifier for this mutation (unique in schema)
      */
     public function addMutation($mutation, $name)

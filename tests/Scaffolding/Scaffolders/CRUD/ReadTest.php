@@ -7,9 +7,8 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
-use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
+use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Security\Member;
@@ -24,7 +23,10 @@ class ReadTest extends SapphireTest
     public function testReadOperationResolver()
     {
         $read = new Read(DataObjectFake::class);
-        $scaffold = $read->scaffold(new Manager());
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+
+        $scaffold = $read->scaffold($manager);
 
         DataObjectFake::get()->removeAll();
 
@@ -58,7 +60,7 @@ class ReadTest extends SapphireTest
         $read->setUsePagination(false);
 
         $scaffold = $read->scaffold($manager);
-        $type = $scaffold['type']();
+        $type = $scaffold['type'];
         $this->assertEquals(
             $redirectorScaffold->typeName(),
             $type->config['name']
@@ -71,7 +73,7 @@ class ReadTest extends SapphireTest
         $read->setUsePagination(false);
 
         $scaffold = $read->scaffold($manager);
-        $unionType = $scaffold['type']();
+        $unionType = $scaffold['type'];
         $this->assertEquals(
             $pageScaffold->typeName().'WithDescendants',
             $unionType->name

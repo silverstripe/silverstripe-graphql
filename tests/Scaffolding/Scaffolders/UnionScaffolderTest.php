@@ -10,6 +10,7 @@ use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
+use GraphQL\Type\Definition\ResolveInfo;
 use Exception;
 
 class UnionScaffolderTest extends SapphireTest
@@ -36,21 +37,22 @@ class UnionScaffolderTest extends SapphireTest
         $this->assertEquals($scaffolder1->typeName(), $types[0]->config['name']);
         $this->assertEquals($scaffolder2->typeName(), $types[1]->config['name']);
 
-        $typeResolver = $unionType->getResolveTypeFn();
-        $result = $typeResolver(new FakeRedirectorPage());
+        $fakeRedirector = new FakeRedirectorPage();
+        $result = $unionType->resolveType($fakeRedirector, [], new ResolveInfo([]));
+        //$result = $typeResolver(new FakeRedirectorPage());
 
         $this->assertEquals($scaffolder1->typeName(), $result->config['name']);
 
-        $result = $typeResolver(new FakeSiteTree());
+        $result = $unionType->resolveType(new FakeSiteTree(), [], new ResolveInfo([]));
         $this->assertEquals($scaffolder2->typeName(), $result->config['name']);
 
         // FakePage was never added. Should fall back on the parent type (FakeSiteTree)
-        $result = $typeResolver(new FakePage());
+        $result = $unionType->resolveType(new FakePage(), [], new ResolveInfo([]));
         $this->assertEquals($scaffolder2->typeName(), $result->config['name']);
 
         $ex = null;
         try {
-            $typeResolver(new Manager());
+            $unionType->resolveType(new Manager(), [], new ResolveInfo([]));
         } catch (Exception $e) {
             $ex = $e->getMessage();
         }
@@ -59,7 +61,7 @@ class UnionScaffolderTest extends SapphireTest
 
         $ex = null;
         try {
-            $typeResolver(new RestrictedDataObjectFake());
+            $unionType->resolveType(new RestrictedDataObjectFake(), [], new ResolveInfo([]));
         } catch (Exception $e) {
             $ex = $e->getMessage();
         }

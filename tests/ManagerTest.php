@@ -9,7 +9,7 @@ use SilverStripe\GraphQL\Tests\Fake\MutationCreatorFake;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Security\Member;
-use GraphQL\Error;
+use GraphQL\Error\Error;
 use GraphQL\Schema;
 use GraphQL\Language\SourceLocation;
 
@@ -33,12 +33,12 @@ class ManagerTest extends SapphireTest
             Type::class,
             $manager->getType('mytype')
         );
-        $this->assertInternalType(
-            'array',
+        $this->assertInstanceOf(
+            'Closure',
             $manager->getQuery('myquery')
         );
-        $this->assertInternalType(
-            'array',
+        $this->assertInstanceOf(
+            'Closure',
             $manager->getMutation('mymutation')
         );
     }
@@ -83,22 +83,30 @@ class ManagerTest extends SapphireTest
     {
         $manager = new Manager();
         $type = $this->getType($manager);
-        $query = $this->getQuery($manager);
         $manager->addType($type, 'mytype');
+        
+        $query = $this->getQuery($manager);
         $manager->addQuery($query, 'myquery');
+        
         $this->assertEquals(
             $query,
             $manager->getQuery('myquery')
+        );
+        $this->assertEquals(
+            $type,
+            $manager->getType('mytype')
         );
     }
 
     public function testAddMutation()
     {
         $manager = new Manager();
-        $mutation = $this->getMutation($manager);
         $type = $this->getType($manager);
-        $manager->addMutation($mutation, 'mymutation');
         $manager->addType($type, 'mytype');
+        
+        $mutation = $this->getMutation($manager);
+        $manager->addMutation($mutation, 'mymutation');
+        
         $this->assertEquals(
             $mutation,
             $manager->getMutation('mymutation')

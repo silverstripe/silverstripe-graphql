@@ -42,11 +42,9 @@ class UnionScaffolder implements ScaffolderInterface
         $types = $this->types;
         return new UnionType([
             'name' => $this->name,
-            'types' => function () use ($manager, $types) {
-                return array_map(function ($item) use ($manager) {
-                    return $manager->getType($item);
-                }, $types);
-            },
+            'types' => array_map(function ($item) use ($manager) {
+                return $manager->getType($item);
+            }, $types),
             'resolveType' => function ($obj) use ($manager) {
                 if (!$obj instanceof DataObject) {
                     throw new Exception(sprintf(

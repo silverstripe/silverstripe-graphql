@@ -10,8 +10,6 @@ class QueryCreatorFake extends QueryCreator implements TestOnly
 {
     public function type()
     {
-        return function () {
-            return Type::listOf($this->manager->getType('mytype'));
-        };
+        return Type::listOf($this->manager->getType('mytype'));
     }
 }

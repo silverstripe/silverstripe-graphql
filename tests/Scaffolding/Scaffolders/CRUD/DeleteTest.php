@@ -6,12 +6,11 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
 use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ListOfType;
 use GraphQL\Type\Definition\IDType;
-use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Security\Member;
 use Exception;
@@ -26,7 +25,9 @@ class DeleteTest extends SapphireTest
     public function testDeleteOperationResolver()
     {
         $delete = new Delete(DataObjectFake::class);
-        $scaffold = $delete->scaffold(new Manager());
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+        $scaffold = $delete->scaffold($manager);
 
         $record = DataObjectFake::create();
         $ID1 = $record->write();
@@ -56,7 +57,10 @@ class DeleteTest extends SapphireTest
     public function testDeleteOperationArgs()
     {
         $delete = new Delete(DataObjectFake::class);
-        $scaffold = $delete->scaffold(new Manager());
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+
+        $scaffold = $delete->scaffold($manager);
 
         $this->assertArrayHasKey('IDs', $scaffold['args']);
         $this->assertInstanceof(NonNull::class, $scaffold['args']['IDs']['type']);
@@ -75,8 +79,10 @@ class DeleteTest extends SapphireTest
         $delete = new Delete(RestrictedDataObjectFake::class);
         $restrictedDataobject = RestrictedDataObjectFake::create();
         $ID = $restrictedDataobject->write();
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'Restricted_Data_Object_Fake']), 'Restricted_Data_Object_Fake');
 
-        $scaffold = $delete->scaffold(new Manager());
+        $scaffold = $delete->scaffold($manager);
 
         $this->setExpectedExceptionRegExp(
             Exception::class,

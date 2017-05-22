@@ -26,10 +26,7 @@ class ReadMembersQueryCreator extends QueryCreator implements OperationResolver
 
     public function type()
     {
-        // Return a "thunk" to lazy load types
-        return function () {
-            return Type::listOf($this->manager->getType('member'));
-        };
+        return Type::listOf($this->manager->getType('member'));
     }
 
     public function resolve($object, array $args, $context, ResolveInfo $info)

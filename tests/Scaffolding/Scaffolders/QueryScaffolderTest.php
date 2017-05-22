@@ -20,23 +20,27 @@ class QueryScaffolderTest extends SapphireTest
         $scaffolder = new QueryScaffolder('testQuery', 'test');
         $scaffolder->setUsePagination(false);
         $scaffolder->addArgs(['Test' => 'String']);
-        $scaffold = $scaffolder->scaffold($manager = new Manager());
-
+        $manager = new Manager();
         $manager->addType($o = new ObjectType([
             'name' => 'test',
             'fields' => [],
         ]));
         $o->Test = true;
 
+        $scaffold = $scaffolder->scaffold($manager);
+
+
         $this->assertEquals('testQuery', $scaffold['name']);
         $this->assertArrayHasKey('Test', $scaffold['args']);
         $this->assertTrue(is_callable($scaffold['resolve']));
-        $this->assertTrue($scaffold['type']()->Test);
+        $this->assertTrue($scaffold['type']->Test);
 
         $observer->expects($this->once())
             ->method('addQuery')
             ->with(
-                $this->equalTo($scaffold),
+                function ($arg) use ($scaffold) {
+                    return $arg() === $scaffold;
+                },
                 $this->equalTo('testQuery')
             );
 
@@ -49,17 +53,18 @@ class QueryScaffolderTest extends SapphireTest
         $scaffolder->setUsePagination(true);
         $scaffolder->addArgs(['Test' => 'String']);
         $scaffolder->addSortableFields(['test']);
-        $scaffold = $scaffolder->scaffold($manager = new Manager());
+        $manager = new Manager();
         $manager->addType($o = new ObjectType([
             'name' => 'test',
             'fields' => [],
         ]));
         $o->Test = true;
-        $config = $scaffold['type']()->config;
+        $scaffold = $scaffolder->scaffold($manager);
+        $config = $scaffold['type']->config;
 
         $this->assertEquals('testQueryConnection', $config['name']);
-        $this->assertArrayHasKey('pageInfo', $config['fields']);
-        $this->assertArrayHasKey('edges', $config['fields']);
+        $this->assertArrayHasKey('pageInfo', $config['fields']());
+        $this->assertArrayHasKey('edges', $config['fields']());
     }
 
     public function testQueryScaffolderApplyConfig()
