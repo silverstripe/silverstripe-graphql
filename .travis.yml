@@ -23,7 +23,8 @@ before_script:
   - phpenv config-rm xdebug.ini
   - composer validate
   - composer install --prefer-dist
-  - composer require --update-with-dependencies symfony/config:^3.2 silverstripe/framework:4.0.x-dev silverstripe/versioned:1.0.x-dev silverstripe/config:1.0.x-dev --prefer-dist
+  - composer require --update-with-dependencies --no-update symfony/config:^3.2 silverstripe/framework:4.0.x-dev silverstripe/versioned:1.0.x-dev silverstripe/config:1.0.x-dev --prefer-dist
+  - composer update
 
 script:
   - "if [ \"$PHPUNIT_TEST\" = \"1\" ]; then vendor/bin/phpunit; fi"

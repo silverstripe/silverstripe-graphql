@@ -115,7 +115,7 @@ class Manager
                     ));
                 }
 
-                $manager->addQuery(function() use ($queryCreator) {
+                $manager->addQuery(function () use ($queryCreator) {
                     return $queryCreator->toArray();
                 }, $name);
             }

@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
+use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\ORM\DataList;
@@ -61,7 +62,7 @@ class Read extends QueryScaffolder implements CRUDInterface
     /**
      * Creates a thunk that lazily fetches the type
      * @param  Manager $manager
-     * @return \Closure
+     * @return Type
      */
     protected function getType(Manager $manager)
     {
@@ -83,6 +84,5 @@ class Read extends QueryScaffolder implements CRUDInterface
         }
 
         return $manager->getType($this->typeName);
-
     }
 }
