@@ -9,6 +9,7 @@ use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Exception;
+use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
 
 /**
@@ -38,6 +39,7 @@ class Delete extends MutationScaffolder implements CRUDInterface
                     ->byIDs($args['IDs']);
 
                 foreach ($results as $obj) {
+                    /** @var DataObject $obj */
                     if ($obj->canDelete($context['currentUser'])) {
                         $obj->delete();
                     } else {
@@ -71,7 +73,7 @@ class Delete extends MutationScaffolder implements CRUDInterface
             ],
         ];
     }
-    
+
     protected function generateInputType()
     {
         return Type::listOf(Type::id());

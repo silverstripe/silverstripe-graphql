@@ -6,7 +6,6 @@ use SilverStripe\Dev\SapphireTest;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use GraphQL\Type\Definition\StringType;
-use GraphQL\Type\Definition\Type;
 
 class TypeParserTest extends SapphireTest
 {
@@ -48,19 +47,20 @@ class TypeParserTest extends SapphireTest
         $parser = new TypeParser('String!(Test)');
         $this->assertInstanceOf(StringType::class, $parser->getType());
         $this->assertEquals('Test', $parser->getDefaultValue());
+    }
 
-        $this->setExpectedExceptionRegExp(
-            InvalidArgumentException::class,
-            '/Invalid argument/'
-        );
+    public function testTypeInvalid()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/Invalid argument/');
+        new TypeParser('  ... Nothing');
+    }
 
-        $parser = new TypeParser('  ... Nothing');
-
-        $this->setExpectedExceptionRegExp(
-            InvalidArgumentException::class,
-            '/Invalid type/'
-        );
-
-        $parser = (new TypeParser('Nothing'))->toArray();
+    public function testTypeInvalidDefault()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/Invalid type/');
+        $type = new TypeParser('Nothing!(bob)');
+        $type->getDefaultValue();
     }
 }

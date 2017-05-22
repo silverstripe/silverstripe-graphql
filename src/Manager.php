@@ -29,7 +29,9 @@ class Manager
     use Injectable;
 
     /**
-     * @var array Map of named {@link Type}
+     * Map of named {@link Type}
+     *
+     * @var Type[]
      */
     protected $types = [];
 
@@ -75,7 +77,7 @@ class Manager
                         $provider
                     ));
                 }
-                
+
                 $provider = Injector::inst()->create($provider);
                 if (!$provider instanceof ScaffoldingProvider) {
                     throw new InvalidArgumentException(sprintf(

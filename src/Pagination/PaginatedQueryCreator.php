@@ -2,7 +2,6 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
-use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryCreator;
 use GraphQL\Type\Definition\ResolveInfo;

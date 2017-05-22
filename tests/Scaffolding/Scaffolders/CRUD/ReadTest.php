@@ -11,33 +11,37 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
 use GraphQL\Type\Definition\ResolveInfo;
+use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 use SilverStripe\Security\Member;
 
 class ReadTest extends SapphireTest
 {
     protected static $extra_dataobjects = [
-        'SilverStripe\GraphQL\Tests\Fake\DataObjectFake',
-        'SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake',
+        DataObjectFake::class,
+        RestrictedDataObjectFake::class,
     ];
 
     public function testReadOperationResolver()
     {
         $read = new Read(DataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
 
         $scaffold = $read->scaffold($manager);
 
         DataObjectFake::get()->removeAll();
 
-        $record = DataObjectFake::create();
-        $ID1 = $record->write();
+        $record1 = DataObjectFake::create();
+        $record1->MyField = 'AA First';
+        $ID1 = $record1->write();
 
-        $record = DataObjectFake::create();
-        $ID2 = $record->write();
+        $record2 = DataObjectFake::create();
+        $record2->MyField = 'ZZ Last';
+        $ID2 = $record2->write();
 
-        $record = DataObjectFake::create();
-        $ID3 = $record->write();
+        $record3 = DataObjectFake::create();
+        $record3->MyField = 'BB Middle';
+        $ID3 = $record3->write();
 
         $response = $scaffold['resolve'](
             null,
@@ -49,7 +53,7 @@ class ReadTest extends SapphireTest
         );
 
         $this->assertArrayHasKey('edges', $response);
-        $this->assertEquals([$ID1, $ID2, $ID3], $response['edges']->column('ID'));
+        $this->assertEquals([$ID1, $ID3, $ID2], $response['edges']->column('ID'));
     }
 
     public function testUnionInheritance()

@@ -18,15 +18,15 @@ use Exception;
 class UpdateTest extends SapphireTest
 {
     protected static $extra_dataobjects = [
-        'SilverStripe\GraphQL\Tests\Fake\DataObjectFake',
-        'SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake',
+        DataObjectFake::class,
+        RestrictedDataObjectFake::class,
     ];
 
     public function testUpdateOperationResolver()
     {
         $update = new Update(DataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
 
         $scaffold = $update->scaffold($manager);
 
@@ -54,7 +54,7 @@ class UpdateTest extends SapphireTest
     {
         $update = new Update(DataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
 
         $scaffold = $update->scaffold($manager);
 
@@ -63,7 +63,7 @@ class UpdateTest extends SapphireTest
 
         $config = $scaffold['args']['Input']['type']->getWrappedType()->config;
 
-        $this->assertEquals('Data_Object_FakeUpdateInputType', $config['name']);
+        $this->assertEquals('GraphQL_DataObjectFakeUpdateInputType', $config['name']);
         $fieldMap = [];
         foreach ($config['fields']() as $name => $fieldData) {
             $fieldMap[$name] = $fieldData['type'];
@@ -83,14 +83,12 @@ class UpdateTest extends SapphireTest
         $ID = $restrictedDataobject->write();
 
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'Restricted_Data_Object_Fake']), 'Restricted_Data_Object_Fake');
+        $manager->addType(new ObjectType(['name' => 'GraphQL_RestrictedDataObjectFake']), 'GraphQL_RestrictedDataObjectFake');
 
         $scaffold = $update->scaffold($manager);
 
-        $this->setExpectedExceptionRegExp(
-            Exception::class,
-            '/Cannot edit/'
-        );
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageRegExp('/Cannot edit/');
 
         $scaffold['resolve'](
             $restrictedDataobject,

@@ -18,15 +18,15 @@ use Exception;
 class CreateTest extends SapphireTest
 {
     protected static $extra_dataobjects = [
-        'SilverStripe\GraphQL\Tests\Fake\DataObjectFake',
-        'SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake',
+        DataObjectFake::class,
+        RestrictedDataObjectFake::class,
     ];
 
     public function testCreateOperationResolver()
     {
         $create = new Create(DataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
         $scaffold = $create->scaffold($manager);
 
         $newRecord = $scaffold['resolve'](
@@ -48,7 +48,7 @@ class CreateTest extends SapphireTest
     {
         $create = new Create(DataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'Data_Object_Fake']), 'Data_Object_Fake');
+        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
         $scaffold = $create->scaffold($manager);
 
         $this->assertArrayHasKey('Input', $scaffold['args']);
@@ -56,7 +56,7 @@ class CreateTest extends SapphireTest
 
         $config = $scaffold['args']['Input']['type']->getWrappedType()->config;
 
-        $this->assertEquals('Data_Object_FakeCreateInputType', $config['name']);
+        $this->assertEquals('GraphQL_DataObjectFakeCreateInputType', $config['name']);
         $fieldMap = [];
         foreach ($config['fields']() as $name => $fieldData) {
             $fieldMap[$name] = $fieldData['type'];
@@ -73,14 +73,12 @@ class CreateTest extends SapphireTest
     {
         $create = new Create(RestrictedDataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'Restricted_Data_Object_Fake']), 'Restricted_Data_Object_Fake');
+        $manager->addType(new ObjectType(['name' => 'GraphQL_RestrictedDataObjectFake']), 'GraphQL_RestrictedDataObjectFake');
 
         $scaffold = $create->scaffold($manager);
 
-        $this->setExpectedExceptionRegExp(
-            Exception::class,
-            '/Cannot create/'
-        );
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageRegExp('/Cannot create/');
 
         $scaffold['resolve'](
             null,

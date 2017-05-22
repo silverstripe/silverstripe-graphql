@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
+use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
@@ -25,6 +26,7 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
 
     /**
      * @param bool $bool
+     * @return $this
      */
     public function setUsePagination($bool)
     {
@@ -45,6 +47,7 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
 
     /**
      * @param array $fields
+     * @return $this
      */
     public function addSortableFields($fields)
     {
@@ -103,12 +106,11 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
     /**
      * Creates a Connection for pagination.
      *
+     * @param Manager $manager
      * @return Connection
      */
     protected function createConnection(Manager $manager)
     {
-        $typeName = $this->typeName;
-
         return Connection::create($this->operationName)
             ->setConnectionType($this->getType($manager))
             ->setConnectionResolver($this->createResolverFunction())
@@ -118,11 +120,14 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
 
     /**
      * Creates a thunk that lazily fetches the type
-     * @param  Manager $manager
+     *
+     * @param Manager $manager
      * @return ObjectType
      */
     protected function getType(Manager $manager)
     {
-        return $manager->getType($this->typeName);
+        /** @var ObjectType $type */
+        $type = $manager->getType($this->typeName);
+        return $type;
     }
 }

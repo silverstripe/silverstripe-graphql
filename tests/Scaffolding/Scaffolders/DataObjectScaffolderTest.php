@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Tests\Scaffolders;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
@@ -16,9 +17,7 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use GraphQL\Type\Definition\ObjectType;
-use SilverStripe\Core\Config\Config;
 use Exception;
 
 class DataObjectScaffolderTest extends SapphireTest
@@ -29,11 +28,9 @@ class DataObjectScaffolderTest extends SapphireTest
         $this->assertEquals(DataObjectFake::class, $scaffolder->getDataObjectClass());
         $this->assertInstanceOf(DataObjectFake::class, $scaffolder->getDataObjectInstance());
 
-        $this->setExpectedExceptionRegExp(
-            InvalidArgumentException::class,
-            '/non-existent classname/'
-        );
-        $scaffolder = new DataObjectScaffolder('fail');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/non-existent classname/');
+        new DataObjectScaffolder('fail');
     }
 
     public function testDataObjectScaffolderFields()
@@ -114,7 +111,7 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder = $this->getFakeScaffolder();
         $op = $scaffolder->operation(SchemaScaffolder::CREATE);
 
-        $this->assertInstanceOf(CRUDInterface::class, $op);
+        $this->assertInstanceOf(OperationScaffolder::class, $op);
 
         // Ensure we get back the same reference
         $op->Test = true;
@@ -128,10 +125,8 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder->removeOperation(SchemaScaffolder::DELETE);
         $this->assertEquals(1, $scaffolder->getOperations()->count());
 
-        $this->setExpectedExceptionRegExp(
-            InvalidArgumentException::class,
-            '/Invalid operation/'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/Invalid operation/');
         $scaffolder = $this->getFakeScaffolder();
         $scaffolder->operation('fail');
     }
@@ -151,10 +146,8 @@ class DataObjectScaffolderTest extends SapphireTest
         // Ensure duplicates aren't created
         $this->assertEquals(1, $scaffolder->getNestedQueries()->count());
 
-        $this->setExpectedExceptionRegExp(
-            InvalidArgumentException::class,
-            '/returns a DataList or ArrayList/'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/returns a DataList or ArrayList/');
         $scaffolder = $this->getFakeScaffolder();
         $scaffolder->nestedQuery('MyField');
     }
@@ -192,6 +185,7 @@ class DataObjectScaffolderTest extends SapphireTest
 
     public function testDataObjectScaffolderApplyConfig()
     {
+        /** @var DataObjectScaffolder $observer */
         $observer = $this->getMockBuilder(DataObjectScaffolder::class)
             ->setConstructorArgs([DataObjectFake::class])
             ->setMethods(['addFields', 'removeFields', 'operation', 'nestedQuery', 'setFieldDescription'])
@@ -249,10 +243,8 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder = $this->getFakeScaffolder();
 
         // Must have "fields" defined
-        $this->setExpectedExceptionRegExp(
-            Exception::class,
-            '/No array of fields/'
-        );
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageRegExp('/No array of fields/');
         $scaffolder->applyConfig([
             'operations' => ['create' => true],
         ]);
@@ -263,10 +255,8 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder = $this->getFakeScaffolder();
 
         // Invalid fields
-        $this->setExpectedExceptionRegExp(
-            Exception::class,
-            '/Fields must be an array/'
-        );
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageRegExp('/Fields must be an array/');
         $scaffolder->applyConfig([
             'fields' => 'fail',
         ]);
@@ -277,10 +267,8 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder = $this->getFakeScaffolder();
 
         // Invalid fieldsExcept
-        $this->setExpectedExceptionRegExp(
-            InvalidArgumentException::class,
-            '/"excludeFields" must be an enumerated list/'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/"excludeFields" must be an enumerated list/');
         $scaffolder->applyConfig([
             'fields' => ['MyField'],
             'excludeFields' => 'fail',
@@ -292,10 +280,8 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder = $this->getFakeScaffolder();
 
         // Invalid operations
-        $this->setExpectedExceptionRegExp(
-            Exception::class,
-            '/Operations field must be a map/'
-        );
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageRegExp('/Operations field must be a map/');
         $scaffolder->applyConfig([
             'fields' => ['MyField'],
             'operations' => ['create'],
@@ -307,10 +293,8 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder = $this->getFakeScaffolder();
 
         // Invalid nested queries
-        $this->setExpectedExceptionRegExp(
-            Exception::class,
-            '/"nestedQueries" must be a map of relation name/'
-        );
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageRegExp('/"nestedQueries" must be a map of relation name/');
         $scaffolder->applyConfig([
             'fields' => ['MyField'],
             'nestedQueries' => ['Files'],
@@ -359,10 +343,8 @@ class DataObjectScaffolderTest extends SapphireTest
 
     public function testDataObjectScaffolderScaffoldFieldException()
     {
-        $this->setExpectedExceptionRegExp(
-            InvalidArgumentException::class,
-            '/Invalid field/'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/Invalid field/');
         $scaffolder = $this->getFakeScaffolder()
             ->addFields(['not a field'])
             ->scaffold(new Manager());
@@ -371,10 +353,8 @@ class DataObjectScaffolderTest extends SapphireTest
 
     public function testDataObjectScaffolderScaffoldNestedQueryException()
     {
-        $this->setExpectedExceptionRegExp(
-            InvalidArgumentException::class,
-            '/returns a list/'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/returns a list/');
         $scaffolder = $this->getFakeScaffolder()
             ->addFields(['Files'])
             ->scaffold(new Manager());
@@ -384,6 +364,7 @@ class DataObjectScaffolderTest extends SapphireTest
     public function testDataObjectScaffolderAddToManager()
     {
         $manager = new Manager();
+        /** @var DataObjectScaffolder $scaffolder */
         $scaffolder = $this->getFakeScaffolder()
             ->addFields(['MyField'])
             ->operation(SchemaScaffolder::CREATE)
@@ -396,7 +377,6 @@ class DataObjectScaffolderTest extends SapphireTest
         $schema = $manager->schema();
         $queryConfig = $schema->getQueryType()->config;
         $mutationConfig = $schema->getMutationType()->config;
-        $types = $schema->getTypeMap();
 
         $this->assertArrayHasKey(
             (new Read(DataObjectFake::class))->getName(),

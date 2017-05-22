@@ -16,8 +16,6 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
-use GraphQL\Type\Definition\Type;
 use SilverStripe\Security\Member;
 use SilverStripe\Assets\File;
 use SilverStripe\Core\Config\Config;
@@ -58,11 +56,12 @@ class SchemaScaffolderTest extends SapphireTest
 
     public function testSchemaScaffolderAddToManager()
     {
-        Config::inst()->update(FakePage::class, 'db', [
+        Config::modify()->merge(FakePage::class, 'db', [
             'TestPageField' => 'Varchar',
         ]);
 
         $manager = new Manager();
+        /** @var SchemaScaffolder $scaffolder */
         $scaffolder = (new SchemaScaffolder())
             ->type(FakeRedirectorPage::class)
                 ->addFields(['Created', 'TestPageField', 'RedirectionType'])
@@ -86,7 +85,7 @@ class SchemaScaffolderTest extends SapphireTest
         $mutations = $scaffolder->getMutations();
         $types = $scaffolder->getTypes();
 
-        $classNames = array_map(function ($scaffold) {
+        $classNames = array_map(function (DataObjectScaffolder $scaffold) {
             return $scaffold->getDataObjectClass();
         }, $types);
 
@@ -114,8 +113,8 @@ class SchemaScaffolderTest extends SapphireTest
             $scaffolder->type(FakeSiteTree::class)->getFields()->column('Name')
         );
 
-        $this->assertEquals('testQuery', $scaffolder->getQueries()->first()->getName());
-        $this->assertEquals('testMutation', $scaffolder->getMutations()->first()->getName());
+        $this->assertEquals('testQuery', $queries->first()->getName());
+        $this->assertEquals('testMutation', $mutations->first()->getName());
 
         $this->assertInstanceof(
             Read::class,
@@ -146,10 +145,8 @@ class SchemaScaffolderTest extends SapphireTest
 
     public function testSchemaScaffolderCreateFromConfigThrowsIfBadTypes()
     {
-        $this->setExpectedExceptionRegExp(
-            InvalidArgumentException::class,
-            '/"types" must be a map of class name to settings/'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/"types" must be a map of class name to settings/');
         SchemaScaffolder::createFromConfig([
             'types' => ['fail'],
         ]);
@@ -157,10 +154,8 @@ class SchemaScaffolderTest extends SapphireTest
 
     public function testSchemaScaffolderCreateFromConfigThrowsIfBadQueries()
     {
-        $this->setExpectedExceptionRegExp(
-            InvalidArgumentException::class,
-            '/must be a map of operation name to settings/'
-        );
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/must be a map of operation name to settings/');
         SchemaScaffolder::createFromConfig([
             'types' => [
                 DataObjectFake::class => [

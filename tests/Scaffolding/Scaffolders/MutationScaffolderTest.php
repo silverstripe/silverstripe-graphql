@@ -6,12 +6,12 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\Type;
 
 class MutationScaffolderTest extends SapphireTest
 {
     public function testMutationScaffolder()
     {
+        /** @var Manager $observer */
         $observer = $this->getMockBuilder(Manager::class)
             ->setMethods(['addMutation','getType'])
             ->getMock();

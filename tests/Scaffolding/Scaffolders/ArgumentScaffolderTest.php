@@ -6,7 +6,6 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ArgumentScaffolder;
 use GraphQL\Type\Definition\StringType;
 use GraphQL\Type\Definition\NonNull;
-use GraphQL\Type\Definition\Type;
 
 class ArgumentScaffolderTest extends SapphireTest
 {

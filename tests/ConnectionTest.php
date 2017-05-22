@@ -4,7 +4,6 @@ namespace SilverStripe\GraphQL\Tests;
 
 use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\InputObjectField;
-use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
@@ -21,7 +20,7 @@ use InvalidArgumentException;
 class ConnectionTest extends SapphireTest
 {
     protected static $extra_dataobjects = [
-        'SilverStripe\GraphQL\Tests\Fake\DataObjectFake'
+        DataObjectFake::class
     ];
 
     /**
@@ -159,7 +158,7 @@ class ConnectionTest extends SapphireTest
 
     public function testSortByInvalidColumnThrowsException()
     {
-        $this->setExpectedException(InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $list = DataObjectFake::get();
 
@@ -170,7 +169,7 @@ class ConnectionTest extends SapphireTest
             });
 
         // test a resolution with the limit
-        $result = $connection->resolveList(
+        $connection->resolveList(
             $list,
             ['sortBy' => [['field' => 'ID', 'direction' => 'DESC']]]
         );

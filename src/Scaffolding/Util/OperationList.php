@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Util;
 
+use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
 use SilverStripe\ORM\ArrayList;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
@@ -18,11 +19,11 @@ class OperationList extends ArrayList
     public function __construct($items = [])
     {
         foreach ($items as $item) {
-            if (!$item instanceof OperationScaffold) {
+            if (!$item instanceof OperationScaffolder) {
                 throw new InvalidArgumentException(
                     '%s only accepts instances of %s',
                     __CLASS__,
-                    OperationScaffold::class
+                    OperationScaffolder::class
                 );
             }
         }
@@ -47,49 +48,50 @@ class OperationList extends ArrayList
     }
 
     /**
-     * @param $name
-     * @return bool|OperationScaffold
+     * @param string $name
+     * @return bool|OperationScaffolder
      */
     public function findByName($name)
     {
-        return $this->findItemByCallback(function ($item) use ($name) {
+        return $this->findItemByCallback(function (OperationScaffolder $item) use ($name) {
             return $name === $item->getName();
         });
     }
 
     /**
      * @param  string $id
-     * @return bool|OperationScaffold
+     * @return bool|OperationScaffolder
      */
     public function findByIdentifier($id)
     {
-        return $this->findItemByCallback(function ($item) use ($id) {
-            return $id === $item->getIdentifier();
+        return $this->findItemByCallback(function (OperationScaffolder $item) use ($id) {
+            return $item instanceof CRUDInterface && $id === $item->getIdentifier();
         });
     }
 
     /**
-     * @param $name
+     * @param string $name
      */
     public function removeByName($name)
     {
-        $this->removeItemByCallback(function ($operation) use ($name) {
+        $this->removeItemByCallback(function (OperationScaffolder $operation) use ($name) {
             return $operation->getName() === $name;
         });
     }
 
     /**
-     * @param $name
+     * @param string $id
      */
     public function removeByIdentifier($id)
     {
-        $this->removeItemByCallback(function ($operation) use ($id) {
-            return $operation->getIdentifier() === $id;
+        $this->removeItemByCallback(function (OperationScaffolder $operation) use ($id) {
+            return $operation instanceof CRUDInterface
+                && $operation->getIdentifier() === $id;
         });
     }
 
     /**
-     * @param \Closure
+     * @param callable $callback
      */
     public function removeItemByCallback($callback)
     {
@@ -107,7 +109,8 @@ class OperationList extends ArrayList
     }
 
     /**
-     * @param \Closure
+     * @param callable $callback
+     * @return OperationScaffolder|false
      */
     public function findItemByCallback($callback)
     {
