@@ -165,7 +165,7 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder->addField('Author');
         $this->assertEquals(
             [
-                $scaffolder->getDataObjectInstance()->Author()->class,
+                get_class($scaffolder->getDataObjectInstance()->Author()),
                 $scaffolder->getDataObjectInstance()->Files()->dataClass(),
             ],
             $scaffolder->getDependentClasses()
