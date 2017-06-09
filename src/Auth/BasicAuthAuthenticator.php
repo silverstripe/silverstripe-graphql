@@ -17,7 +17,7 @@ class BasicAuthAuthenticator implements AuthenticatorInterface
     public function authenticate(HTTPRequest $request)
     {
         try {
-            return BasicAuth::requireLogin('Restricted resource');
+            return BasicAuth::requireLogin($request, 'Restricted resource');
         } catch (HTTPResponse_Exception $ex) {
             // BasicAuth::requireLogin may throw its own exception with an HTTPResponse in it
             $failureMessage = (string) $ex->getResponse()->getBody();

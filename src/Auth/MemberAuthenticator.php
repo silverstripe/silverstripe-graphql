@@ -3,7 +3,7 @@
 namespace SilverStripe\GraphQL\Auth;
 
 use SilverStripe\Control\HTTPRequest;
-use SilverStripe\Security\Member;
+use SilverStripe\Security\Security;
 
 /**
  * SilverStripe default member authenticator
@@ -21,7 +21,7 @@ class MemberAuthenticator implements AuthenticatorInterface
 {
     public function authenticate(HTTPRequest $request)
     {
-        return Member::currentUser();
+        return Security::getCurrentUser();
     }
 
     /**
@@ -32,6 +32,7 @@ class MemberAuthenticator implements AuthenticatorInterface
      */
     public function isApplicable(HTTPRequest $request)
     {
-        return Member::currentUserID() > 0;
+        $user = Security::getCurrentUser();
+        return !empty($user);
     }
 }

@@ -2,19 +2,32 @@
 
 namespace SilverStripe\GraphQL\Tests;
 
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\MutationCreatorFake;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Member;
 use GraphQL\Error\Error;
 use GraphQL\Schema;
 use GraphQL\Language\SourceLocation;
+use SilverStripe\Security\Security;
 
 class ManagerTest extends SapphireTest
 {
+
+    protected function setUp()
+    {
+        parent::setUp();
+        /** @var IdentityStore $store */
+        $store = Injector::inst()->get(IdentityStore::class);
+        $store->logOut();
+    }
+
+
     public function testCreateFromConfig()
     {
         $config = [

@@ -17,6 +17,7 @@ use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Closure;
+use SilverStripe\Security\Security;
 
 /**
  * Manager is the master container for a graphql endpoint, and contains
@@ -346,7 +347,7 @@ class Manager
      */
     public function getMember()
     {
-        return $this->member ?: Member::currentUser();
+        return $this->member ?: Security::getCurrentUser();
     }
 
     /**
