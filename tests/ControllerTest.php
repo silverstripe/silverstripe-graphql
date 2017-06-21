@@ -2,26 +2,26 @@
 
 namespace SilverStripe\GraphQL\Tests;
 
+use Exception;
 use PHPUnit_Framework_MockObject_MockBuilder;
-use SilverStripe\Control\Director;
+use ReflectionClass;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Control\HTTPResponse_Exception;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Kernel;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Auth\Handler;
-use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Controller;
-use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
-use SilverStripe\Core\Config\Config;
-use ReflectionClass;
-use Exception;
+use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 
 class ControllerTest extends SapphireTest
 {
     public function setUp()
     {
-        Director::set_environment_type('dev');
         parent::setUp();
 
         Handler::config()->remove('authenticators');
@@ -29,12 +29,6 @@ class ControllerTest extends SapphireTest
 
         // Disable CORS Config by default.
         Controller::config()->set('cors', [ 'Enabled' => false ]);
-    }
-
-    public function tearDown()
-    {
-        Director::set_environment_type('dev');
-        parent::tearDown();
     }
 
     public function testIndex()
@@ -68,7 +62,9 @@ class ControllerTest extends SapphireTest
 
     public function testIndexWithException()
     {
-        Director::set_environment_type('live');
+        /** @var Kernel $kernel */
+        $kernel = Injector::inst()->get(Kernel::class);
+        $kernel->setEnvironment(Kernel::LIVE);
 
         $controller = new Controller();
         /** @var Manager|PHPUnit_Framework_MockObject_MockBuilder $managerMock */
@@ -91,8 +87,6 @@ class ControllerTest extends SapphireTest
 
     public function testIndexWithExceptionIncludesTraceInDevMode()
     {
-        Director::set_environment_type('dev');
-
         $controller = new Controller();
         /** @var Manager|PHPUnit_Framework_MockObject_MockBuilder $managerMock */
         $managerMock = $this->getMockBuilder(Manager::class)
@@ -238,7 +232,7 @@ class ControllerTest extends SapphireTest
     public function testAddCorsHeadersOriginMissing()
     {
         $this->expectException(HTTPResponse_Exception::class);
-        
+
         Controller::config()->set('cors', [
             'Enabled' => true,
             'Allow-Origin' => 'localhost',
