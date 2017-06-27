@@ -77,7 +77,7 @@ class Connection implements OperationResolver
 
     /**
      * The maximum limit supported for the connection. Used to prevent excessive
-     * load on the server. To override the default limit, use {@link setLimits}
+     * load on the server. To override the default limit, use {@link setLimits()}
      *
      * @var int
      */
@@ -328,9 +328,9 @@ class Connection implements OperationResolver
     }
 
     /**
-     * Wraps an {@link SS_List} with the required data in order to return it as
+     * Wraps an {@link SilverStripe\ORM\SS_List} with the required data in order to return it as
      * a response. If you wish to resolve a standard array as a list use
-     * {@link ArrayList}.
+     * {@link SilverStripe\ORM\ArrayList}.
      *
      * @param SS_List $list
      * @param array $args

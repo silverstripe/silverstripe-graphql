@@ -9,7 +9,7 @@ use GraphQL\Type\Definition\InputObjectType;
 
 /**
  * Represents a GraphQL type in a way that allows customization through
- * SilverStripe's {@link DataExtension} system.
+ * SilverStripe's {@link SilverStripe\ORM\DataExtension} system.
  *
  * @link https://github.com/webonyx/graphql-php#type-system
  */

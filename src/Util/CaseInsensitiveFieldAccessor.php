@@ -9,7 +9,7 @@ use InvalidArgumentException;
 
 /**
  * Infer original field name casing from case insensitive field comparison.
- * Useful counterpart to {@link \Convert::upperCamelToLowerCamel()}.
+ * Useful counterpart to {@link Convert::upperCamelToLowerCamel()}.
  *
  * SilverStripe is using a mix of case sensitive and case insensitive checks,
  * due to the nature of PHP (case sensitive for properties and array keys,

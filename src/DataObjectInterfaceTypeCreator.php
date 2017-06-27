@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL;
 use GraphQL\Type\Definition\Type;
 
 /**
- * Base interface for any {@link DataObject} passed back as a node.
+ * Base interface for any {@link SilverStripe\ORM\DataObject} passed back as a node.
  */
 class DataObjectInterfaceTypeCreator extends InterfaceTypeCreator
 {
