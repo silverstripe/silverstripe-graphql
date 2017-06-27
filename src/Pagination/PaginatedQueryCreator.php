@@ -8,7 +8,7 @@ use GraphQL\Type\Definition\ResolveInfo;
 
 /**
  * A helper class for making a paginated query. A paginated query uses the
- * {@link Connection} object type to encapsulate the edges, nodes and page
+ * {@link SilverStripe\GraphQL\Pagination\Connection} object type to encapsulate the edges, nodes and page
  * information.
  */
 abstract class PaginatedQueryCreator extends QueryCreator implements OperationResolver
