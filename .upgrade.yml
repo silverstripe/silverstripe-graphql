@@ -1,0 +1,3 @@
+excludedPaths:
+  - '*/graphql/_config/*'
+  - '*/graphql/examples/*'

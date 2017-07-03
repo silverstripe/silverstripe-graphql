@@ -7,6 +7,9 @@ use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use GraphQL\Type\Definition\StringType;
 
+/**
+ * @skipUpgrade
+ */
 class TypeParserTest extends SapphireTest
 {
     public function testTypeParser()
