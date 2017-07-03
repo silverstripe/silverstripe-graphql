@@ -18,6 +18,9 @@ use GraphQL\Type\Definition\StringType;
 use Exception;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 
+/**
+ * @skipUpgrade
+ */
 class OperationScaffolderTest extends SapphireTest
 {
     protected static $extra_dataobjects = [

@@ -15,6 +15,7 @@ use SilverStripe\Security\Permission;
 /**
  * Top level controller for handling graphql requests.
  * @todo CSRF protection (or token-based auth)
+ * @skipUpgrade
  */
 class Controller extends BaseController
 {

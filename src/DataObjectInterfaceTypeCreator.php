@@ -12,6 +12,7 @@ class DataObjectInterfaceTypeCreator extends InterfaceTypeCreator
 
     public function attributes()
     {
+        /** @skipUpgrade */
         return [
             'name' => 'DataObject',
             'description' => 'Base Interface',
