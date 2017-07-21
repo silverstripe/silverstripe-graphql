@@ -11,6 +11,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Exception;
+use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
 
@@ -36,10 +37,12 @@ class Create extends MutationScaffolder implements CRUDInterface
             function ($object, array $args, $context, $info) {
                 // Todo: this is totally half baked
                 if (singleton($this->dataObjectClass)->canCreate($context['currentUser'], $context)) {
+                    /** @var DataObject $newObject */
                     $newObject = Injector::inst()->create($this->dataObjectClass);
                     $newObject->update($args['Input']);
                     $newObject->write();
-                    return $newObject;
+                    
+                    return DataObject::get_by_id($this->dataObjectClass, $newObject->ID);
                 } else {
                     throw new Exception("Cannot create {$this->dataObjectClass}");
                 }
