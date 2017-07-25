@@ -64,7 +64,7 @@ class ReadTest extends SapphireTest
         $read->setUsePagination(false);
 
         $scaffold = $read->scaffold($manager);
-        $type = $scaffold['type'];
+        $type = $scaffold['type']->getWrappedType();
         $this->assertEquals(
             $redirectorScaffold->typeName(),
             $type->config['name']
@@ -77,7 +77,7 @@ class ReadTest extends SapphireTest
         $read->setUsePagination(false);
 
         $scaffold = $read->scaffold($manager);
-        $unionType = $scaffold['type'];
+        $unionType = $scaffold['type']->getWrappedType();
         $this->assertEquals(
             $pageScaffold->typeName().'WithDescendants',
             $unionType->name

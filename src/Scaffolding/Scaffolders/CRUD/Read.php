@@ -35,20 +35,20 @@ class Read extends QueryScaffolder implements CRUDInterface
         $typeName = ucfirst($typeName);
         $operationName = 'read'.$typeName;
 
-        parent::__construct($operationName, $this->typeName());
-
-        $this->setResolver(function ($object, array $args, $context, $info) {
+        $resolver = function ($object, array $args, $context, $info) {
             if (!singleton($this->dataObjectClass)->canView($context['currentUser'])) {
                 throw new Exception(sprintf(
                     'Cannot view %s',
                     $this->dataObjectClass
                 ));
             }
-
+    
             $list = DataList::create($this->dataObjectClass);
-
+    
             return $list;
-        });
+        };
+        
+        parent::__construct($operationName, $this->typeName(), $resolver);
     }
 
     /**

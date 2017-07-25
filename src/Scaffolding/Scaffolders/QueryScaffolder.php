@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
@@ -98,7 +99,7 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
         return [
             'name' => $this->operationName,
             'args' => $this->createArgs(),
-            'type' => $this->getType($manager),
+            'type' => Type::listOf($this->getType($manager)),
             'resolve' => $this->createResolverFunction(),
         ];
     }
