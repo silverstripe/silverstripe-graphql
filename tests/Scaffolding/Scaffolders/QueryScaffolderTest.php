@@ -32,7 +32,7 @@ class QueryScaffolderTest extends SapphireTest
         $this->assertEquals('testQuery', $scaffold['name']);
         $this->assertArrayHasKey('Test', $scaffold['args']);
         $this->assertTrue(is_callable($scaffold['resolve']));
-        $this->assertTrue($scaffold['type']->Test);
+        $this->assertTrue($scaffold['type']->getWrappedType()->Test);
 
         $observer->expects($this->once())
             ->method('addQuery')
