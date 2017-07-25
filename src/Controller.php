@@ -2,14 +2,12 @@
 
 namespace SilverStripe\GraphQL;
 
+use Exception;
 use SilverStripe\Control\Controller as BaseController;
+use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Config\Config;
-use SilverStripe\Control\Director;
-use SilverStripe\GraphQL\Auth\Handler;
-use SilverStripe\Versioned\Versioned;
-use Exception;
 use SilverStripe\Security\Permission;
 
 /**
@@ -32,11 +30,6 @@ class Controller extends BaseController
      */
     public function index(HTTPRequest $request)
     {
-        $stage = $request->param('Stage');
-        if ($stage && in_array($stage, [Versioned::DRAFT, Versioned::LIVE])) {
-            Versioned::set_stage($stage);
-        }
-
         // Check for a possible CORS preflight request and handle if necessary
         // Refer issue 66:  https://github.com/silverstripe/silverstripe-graphql/issues/66
         $corsConfig = Config::inst()->get(self::class, 'cors');
@@ -69,18 +62,13 @@ class Controller extends BaseController
             $variables = json_decode($request->requestVar('variables'), true);
         }
 
-        $this->setManager($manager = $this->getManager());
-
         try {
-            // Check authentication
-            $member = $this->getAuthHandler()->requireAuthentication($request);
-            if ($member) {
-                $manager->setMember($member);
-            }
+            $manager = Manager::singleton();
 
             // Check authorisation
             $permissions = $request->param('Permissions');
             if ($permissions) {
+                $member = $manager->getMember();
                 if (!$member) {
                     throw new Exception("Authentication required");
                 }
@@ -109,40 +97,6 @@ class Controller extends BaseController
 
         $response = $this->addCorsHeaders($request, new HTTPResponse(json_encode($result)));
         return $response->addHeader('Content-Type', 'application/json');
-    }
-
-    /**
-     * @return Manager
-     */
-    public function getManager()
-    {
-        if ($this->manager) {
-            return $this->manager;
-        }
-
-        // Get a service rather than an instance (to allow procedural configuration)
-        $config = Config::inst()->get(static::class, 'schema');
-        $manager = Manager::createFromConfig($config);
-
-        return $manager;
-    }
-
-    /**
-     * @param Manager $manager
-     */
-    public function setManager($manager)
-    {
-        $this->manager = $manager;
-    }
-
-    /**
-     * Get an instance of the authorization Handler to manage any authentication requirements
-     *
-     * @return Handler
-     */
-    public function getAuthHandler()
-    {
-        return new Handler;
     }
 
     /**

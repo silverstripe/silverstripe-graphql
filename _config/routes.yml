@@ -4,7 +4,7 @@ Name: graphqlroutes
 SilverStripe\Control\Director:
   rules:
     graphql:
-      Controller: 'SilverStripe\GraphQL\Controller'
+      Controller: GraphQLController
       # @internal - Experimental config
       # @todo - move this to a per-schema configuration, and simply register the named schema for this endpoint
       # https://github.com/silverstripe/silverstripe-graphql/issues/52

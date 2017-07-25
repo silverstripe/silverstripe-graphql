@@ -33,3 +33,15 @@ SilverStripe\GraphQL\Controller:
     Allow-Headers: 'Authorization, Content-Type'
     Allow-Methods:  'GET, POST, OPTIONS'
     Max-Age:  86400  # 86,400 seconds = 1 day.
+
+SilverStripe\Core\Injector\Injector:
+  GraphQLController:
+    class: SilverStripe\Control\Middleware\RequestHandlerMiddlewareAdapter
+    properties:
+      RequestHandler: %$SilverStripe\GraphQL\Controller
+      Middlewares:
+        - %$SilverStripe\GraphQL\Middleware\RegisterManagerMiddleware
+        - %$SilverStripe\GraphQL\Middleware\SessionAuthenticationMiddleware
+        # Enable in mysite configuration to allow basic authentication
+        # - %$SilverStripe\GraphQL\Middleware\BasicAuthenticationMiddleware
+        - %$SilverStripe\GraphQL\Middleware\VersionedMiddleware

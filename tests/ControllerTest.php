@@ -12,7 +12,6 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Kernel;
 use SilverStripe\Dev\SapphireTest;
-use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Controller;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
@@ -24,7 +23,6 @@ class ControllerTest extends SapphireTest
     {
         parent::setUp();
 
-        Handler::config()->remove('authenticators');
         $this->logInWithPermission('CMS_ACCESS_CMSMain');
 
         // Disable CORS Config by default.
@@ -37,12 +35,12 @@ class ControllerTest extends SapphireTest
         $manager = new Manager();
         $manager->addType($this->getType($manager), 'mytype');
         $manager->addQuery($this->getQuery($manager), 'myquery');
-        $controller->setManager($manager);
+        Injector::inst()->registerService($manager);
         $response = $controller->index(new HTTPRequest('GET', ''));
         $this->assertFalse($response->isError());
     }
 
-    public function testGetGetManagerPopulatesFromConfig()
+    public function testManagerIsPopulatedFromConfig()
     {
         Config::modify()->set(Controller::class, 'schema', [
             'types' => [
@@ -50,11 +48,9 @@ class ControllerTest extends SapphireTest
             ],
         ]);
 
-        $controller = new Controller();
-        $reflection = new ReflectionClass($controller);
-        $method = $reflection->getMethod('getManager');
-        $method->setAccessible(true);
-        $manager = $method->invoke($controller);
+        $manager = Manager::createFromConfig(
+            Config::inst()->get(Controller::class, 'schema')
+        );
         $this->assertNotNull(
             $manager->getType('mytype')
         );
@@ -75,7 +71,7 @@ class ControllerTest extends SapphireTest
         $managerMock->method('query')
             ->will($this->throwException(new Exception('Failed')));
 
-        $controller->setManager($managerMock);
+        Injector::inst()->registerService($managerMock, Manager::class);
         $response = $controller->index(new HTTPRequest('GET', ''));
         $this->assertFalse($response->isError());
         $responseObj = json_decode($response->getBody(), true);
@@ -96,7 +92,8 @@ class ControllerTest extends SapphireTest
         $managerMock->method('query')
             ->will($this->throwException(new Exception('Failed')));
 
-        $controller->setManager($managerMock);
+        Injector::inst()->registerService($managerMock, Manager::class);
+
         $response = $controller->index(new HTTPRequest('GET', ''));
         $this->assertFalse($response->isError());
         $responseObj = json_decode($response->getBody(), true);
@@ -104,59 +101,6 @@ class ControllerTest extends SapphireTest
         $this->assertArrayHasKey('errors', $responseObj);
         $this->assertEquals('Failed', $responseObj['errors'][0]['message']);
         $this->assertArrayHasKey('trace', $responseObj['errors'][0]);
-    }
-
-    /**
-     * Test that an instance of the authentication handler is returned
-     */
-    public function testGetAuthHandler()
-    {
-        $controller = new Controller;
-        $controller->setManager(new Manager);
-        $this->assertInstanceOf(Handler::class, $controller->getAuthHandler());
-    }
-
-    /**
-     * Test that authentication can work or not, but that a response is still given to the client
-     *
-     * @param string $authenticator
-     * @param string $shouldFail
-     * @dataProvider authenticatorProvider
-     */
-    public function testAuthenticationProtectionOnQueries($authenticator, $shouldFail)
-    {
-        Handler::config()->update('authenticators', [
-            ['class' => $authenticator]
-        ]);
-
-        $controller = new Controller;
-        $manager = new Manager;
-        $controller->setManager($manager);
-        $manager->addType($this->getType($manager), 'mytype');
-        $manager->addQuery($this->getQuery($manager), 'myquery');
-
-        $response = $controller->index(new HTTPRequest('GET', ''));
-
-        $assertion = ($shouldFail) ? 'assertContains' : 'assertNotContains';
-        // See Fake\BrutalAuthenticatorFake::authenticate for failure message
-        $this->{$assertion}('Never!', $response->getBody());
-    }
-
-    /**
-     * @return array[]
-     */
-    public function authenticatorProvider()
-    {
-        return [
-            [
-                Fake\PushoverAuthenticatorFake::class,
-                false,
-            ],
-            [
-                Fake\BrutalAuthenticatorFake::class,
-                true
-            ]
-        ];
     }
 
     /**
@@ -229,10 +173,11 @@ class ControllerTest extends SapphireTest
         $this->assertEquals('localhost', $response->getHeader('Access-Control-Allow-Origin'));
     }
 
+    /**
+     * @expectedException \SilverStripe\Control\HTTPResponse_Exception
+     */
     public function testAddCorsHeadersOriginMissing()
     {
-        $this->expectException(HTTPResponse_Exception::class);
-
         Controller::config()->set('cors', [
             'Enabled' => true,
             'Allow-Origin' => 'localhost',
@@ -251,7 +196,6 @@ class ControllerTest extends SapphireTest
     }
 
     /**
-     * {@inheritDoc}
      * @expectedException \SilverStripe\Control\HTTPResponse_Exception
      */
     public function testAddCorsHeadersResponseCORSDisabled()
