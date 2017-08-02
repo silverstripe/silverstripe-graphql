@@ -7,7 +7,6 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use GraphQL\Type\Definition\InputObjectType;
-use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use SilverStripe\ORM\DataList;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
@@ -109,9 +108,8 @@ class Update extends MutationScaffolder implements CRUDInterface
                 foreach ($db as $dbFieldName => $dbFieldType) {
                     /** @var DBField $result */
                     $result = $instance->obj($dbFieldName);
-                    $typeName = $result->config()->get('graphql_type');
                     $arr = [
-                        'type' => (new TypeParser($typeName))->getType()
+                        'type' => $result->getGraphQLType(),
                     ];
                     $fields[$dbFieldName] = $arr;
                 }

@@ -14,7 +14,7 @@ use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\GraphQL\Manager;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
-use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
+use SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser;
 use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\Core\Config\Config;
@@ -583,7 +583,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             /** @var DataObject $obj */
             $field = $obj->obj($info->fieldName);
             // return the raw field value, or checks like `is_numeric()` fail
-            if ($field instanceof DBField) {
+            if ($field instanceof DBField && $field->isInternalGraphQLType()) {
                 return $field->getValue();
             }
             return $field;
@@ -611,9 +611,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             }
 
             if ($result instanceof DBField) {
-                $typeName = $result->config()->graphql_type;
                 $fieldMap[$fieldName] = [];
-                $fieldMap[$fieldName]['type'] = (new TypeParser($typeName))->getType();
+                $fieldMap[$fieldName]['type'] = $result->getGraphQLType($manager);
                 $fieldMap[$fieldName]['resolve'] = $resolver;
                 $fieldMap[$fieldName]['description'] = $fieldData->Description;
             }

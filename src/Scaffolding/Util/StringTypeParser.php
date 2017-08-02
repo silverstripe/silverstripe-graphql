@@ -4,12 +4,16 @@ namespace SilverStripe\GraphQL\Scaffolding\Util;
 
 use GraphQL\Type\Definition\Type;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
+use SilverStripe\Core\Injector\Injectable;
+
 
 /**
  * Parses a type, e.g. Int!(20) into an array defining the arg type
  */
-class TypeParser
+class StringTypeParser implements TypeParserInterface
 {
+    use Injectable;
 
     /**
      * @var string
@@ -32,9 +36,22 @@ class TypeParser
     protected $defaultValue = null;
 
     /**
+     * Returns true if the given type is an internal GraphQL type, e.g. "String" or "Int"
+     *
+     * @param $type
+     * @return bool
+     */
+    public static function isInternalType($type)
+    {
+        $types = array_keys(Type::getInternalTypes());
+
+        return in_array($type, $types);
+    }
+
+    /**
      * TypeParser constructor.
      *
-     * @param string $rawArg
+     * @param string|array $rawArg
      */
     public function __construct($rawArg)
     {
@@ -42,6 +59,10 @@ class TypeParser
             throw new InvalidArgumentException(
                 "Invalid argument: $rawArg"
             );
+        }
+
+        if (!static::isInternalType($matches[1])) {
+            throw new InvalidArgumentException("Invalid type: " . $matches[1]);
         }
 
         $this->rawArg = $rawArg;
@@ -79,21 +100,18 @@ class TypeParser
 
         switch ($this->typeStr) {
             case Type::ID:
-                return (int) $this->defaultValue;
+                return (int)$this->defaultValue;
             case Type::STRING:
-                return (string) $this->defaultValue;
+                return (string)$this->defaultValue;
             case Type::BOOLEAN:
-                return (boolean) $this->defaultValue;
+                return (boolean)$this->defaultValue;
             case Type::INT:
-                return (int) $this->defaultValue;
+                return (int)$this->defaultValue;
             case Type::FLOAT:
-                return (float) $this->defaultValue;
+                return (float)$this->defaultValue;
+            default:
+                return null;
         }
-
-        throw new InvalidArgumentException(sprintf(
-            'Invalid type %s',
-            $this->typeStr
-        ));
     }
 
     /**

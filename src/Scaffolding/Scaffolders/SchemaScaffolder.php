@@ -2,15 +2,21 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
+use League\Flysystem\Exception;
 use SilverStripe\Core\Injector\Injector;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\ORM\ArrayLib;
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\View\ViewableData;
 
 /**
  * The entry point for a GraphQL scaffolding definition. Holds DataObject type definitions,
@@ -257,6 +263,31 @@ class SchemaScaffolder implements ManagerMutatorInterface
      */
     public function addToManager(Manager $manager)
     {
+        // Auto registration
+        $autoRegister = Config::inst()->get(self::class, 'auto_register');
+        if ($autoRegister && is_array($autoRegister)) {
+            foreach($autoRegister as $className) {
+                $instance = Injector::inst()->get($className);
+                if (!$instance instanceof ViewableData) {
+                    throw new Exception(sprintf(
+                        'Cannot auto register class %s. It is not a subclass of %s',
+                        $className,
+                        ViewableData::class
+                    ));
+                }
+                if (!$instance->hasExtension(TypeCreatorExtension::class)) {
+                    throw new Exception(sprintf(
+                        'Cannot auto register class %s. Is does not have the extension %s.',
+                        $className,
+                        TypeCreatorExtension::class
+                    ));
+                }
+                if (!$instance->isInternalGraphQLType()) {
+                    $manager->addType($instance->createTypeParser()->getType());
+                }
+            }
+        }
+
         foreach ($this->types as $scaffold) {
             // Add dependent classes, e.g has_one, has_many nested queries
             foreach ($scaffold->getDependentClasses() as $class) {
