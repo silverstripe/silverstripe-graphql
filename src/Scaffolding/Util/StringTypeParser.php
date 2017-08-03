@@ -7,7 +7,6 @@ use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
 use SilverStripe\Core\Injector\Injectable;
 
-
 /**
  * Parses a type, e.g. Int!(20) into an array defining the arg type
  */
@@ -84,7 +83,7 @@ class StringTypeParser implements TypeParserInterface
     /**
      * @return mixed
      */
-    public function getArgTypeName()
+    public function getName()
     {
         return $this->typeStr;
     }

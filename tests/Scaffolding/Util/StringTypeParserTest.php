@@ -10,40 +10,40 @@ use GraphQL\Type\Definition\StringType;
 /**
  * @skipUpgrade
  */
-class TypeParserTest extends SapphireTest
+class StringTypeParserTest extends SapphireTest
 {
-    public function testTypeParser()
+    public function testStringTypeParser()
     {
         $parser = new StringTypeParser('String!(Test)');
         $this->assertTrue($parser->isRequired());
-        $this->assertEquals('String', $parser->getArgTypeName());
+        $this->assertEquals('String', $parser->getName());
         $this->assertEquals('Test', $parser->getDefaultValue());
         $this->assertTrue(is_string($parser->getDefaultValue()));
 
         $parser = new StringTypeParser('String! (Test)');
         $this->assertTrue($parser->isRequired());
-        $this->assertEquals('String', $parser->getArgTypeName());
+        $this->assertEquals('String', $parser->getName());
         $this->assertEquals('Test', $parser->getDefaultValue());
 
         $parser = new StringTypeParser('Int!');
         $this->assertTrue($parser->isRequired());
-        $this->assertEquals('Int', $parser->getArgTypeName());
+        $this->assertEquals('Int', $parser->getName());
         $this->assertNull($parser->getDefaultValue());
 
         $parser = new StringTypeParser('Int!(23)');
         $this->assertTrue($parser->isRequired());
-        $this->assertEquals('Int', $parser->getArgTypeName());
+        $this->assertEquals('Int', $parser->getName());
         $this->assertEquals('23', $parser->getDefaultValue());
         $this->assertTrue(is_int($parser->getDefaultValue()));
 
         $parser = new StringTypeParser('Boolean');
         $this->assertFalse($parser->isRequired());
-        $this->assertEquals('Boolean', $parser->getArgTypeName());
+        $this->assertEquals('Boolean', $parser->getName());
         $this->assertNull($parser->getDefaultValue());
 
         $parser = new StringTypeParser('Boolean(1)');
         $this->assertFalse($parser->isRequired());
-        $this->assertEquals('Boolean', $parser->getArgTypeName());
+        $this->assertEquals('Boolean', $parser->getName());
         $this->assertEquals('1', $parser->getDefaultValue());
         $this->assertTrue(is_bool($parser->getDefaultValue()));
 

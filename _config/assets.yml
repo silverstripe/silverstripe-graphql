@@ -6,7 +6,7 @@ Only:
 ## Define a custom type for DBFile
 SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.dbfile:
-    class: SilverStripe\GraphQL\Scaffolding\Util\ObjectTypeParser
+    class: SilverStripe\GraphQL\Scaffolding\Util\ArrayTypeParser
     constructor:
       name: DBFile
       fields:
@@ -24,5 +24,5 @@ SilverStripe\Assets\Storage\DBFile:
 
 ## Register the types to the manager
 SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder:
-  auto_register:
+  fixed_types:
     - SilverStripe\Assets\Storage\DBFile

@@ -11,8 +11,8 @@ SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder:
 SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.string:
     class: SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser
-  SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.object:
-    class: SilverStripe\GraphQL\Scaffolding\Util\ObjectTypeParser
+  SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.array:
+    class: SilverStripe\GraphQL\Scaffolding\Util\ArrayTypeParser
 
 # Assign each DBField subclass with an associated internal type
 SilverStripe\ORM\FieldType\DBField:

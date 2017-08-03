@@ -11,7 +11,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
 /**
  * Parses a map of type, e.g. Int!(20) into an array defining the arg type
  */
-class ObjectTypeParser implements TypeParserInterface
+class ArrayTypeParser implements TypeParserInterface
 {
 
     /**
@@ -45,7 +45,7 @@ class ObjectTypeParser implements TypeParserInterface
     /**
      * @return mixed
      */
-    public function getArgTypeName()
+    public function getName()
     {
         return $this->name;
     }
@@ -57,7 +57,7 @@ class ObjectTypeParser implements TypeParserInterface
     public function getType()
     {
         $fields = [];
-        foreach($this->fields as $field => $type) {
+        foreach ($this->fields as $field => $type) {
             $fields[$field] = [
                 'type' => StringTypeParser::create($type)->getType(),
             ];
@@ -68,5 +68,4 @@ class ObjectTypeParser implements TypeParserInterface
             'fields' => $fields,
         ]);
     }
-
 }

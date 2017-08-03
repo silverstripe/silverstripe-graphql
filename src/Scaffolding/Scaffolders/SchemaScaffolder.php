@@ -263,10 +263,10 @@ class SchemaScaffolder implements ManagerMutatorInterface
      */
     public function addToManager(Manager $manager)
     {
-        // Auto registration
-        $autoRegister = Config::inst()->get(self::class, 'auto_register');
-        if ($autoRegister && is_array($autoRegister)) {
-            foreach($autoRegister as $className) {
+        // Register fixed types
+        $fixedTypes = Config::inst()->get(self::class, 'fixed_types');
+        if ($fixedTypes && is_array($fixedTypes)) {
+            foreach ($fixedTypes as $className) {
                 $instance = Injector::inst()->get($className);
                 if (!$instance instanceof ViewableData) {
                     throw new Exception(sprintf(
