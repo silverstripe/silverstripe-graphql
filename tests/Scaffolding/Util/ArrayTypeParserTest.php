@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Util;
 
+use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\IntType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\StringType;
@@ -16,7 +17,7 @@ class ArrayTypeParserTest extends SapphireTest
 {
     public function testConstructor()
     {
-        $parser = new ArrayTypeParser('test', []);
+        $parser = new ArrayTypeParser('test', ['test' => 'String']);
         $this->assertEquals('test', $parser->getType()->name);
     }
 
@@ -29,15 +30,19 @@ class ArrayTypeParserTest extends SapphireTest
         $type = $parser->getType();
 
         $this->assertInstanceOf(ObjectType::class, $type);
-        $this->assertInstanceOf(StringType::class, $type->getField('FieldOne'));
-        $this->assertInstanceOf(IntType::class, $type->getField('FieldTwo'));
+        
+        $this->assertInstanceOf(FieldDefinition::class, $type->getField('FieldOne'));
+        $this->assertInstanceOf(FieldDefinition::class, $type->getField('FieldTwo'));
+
+        $this->assertInstanceOf(StringType::class, $type->getField('FieldOne')->getType());
+        $this->assertInstanceOf(IntType::class, $type->getField('FieldTwo')->getType());
     }
 
     public function testInvalidConstructorNotArray()
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageRegExp('/second parameter must be an associative array/');
-        new ArrayTypeParser('String');
+        new ArrayTypeParser('test', 'String');
     }
 
     public function testInvalidConstructorNotAssociative()
@@ -46,5 +51,4 @@ class ArrayTypeParserTest extends SapphireTest
         $this->expectExceptionMessageRegExp('/second parameter must be an associative array/');
         new ArrayTypeParser('test', ['oranges', 'apples']);
     }
-
 }

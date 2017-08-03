@@ -34,7 +34,8 @@ class ArrayTypeParser implements TypeParserInterface
         if (!ArrayLib::is_associative($fields)) {
             throw new InvalidArgumentException(sprintf(
                 '%s::__construct() second parameter must be an associative array
-                of field names to field types'
+                of field names to field types',
+                __CLASS__
             ));
         }
 
