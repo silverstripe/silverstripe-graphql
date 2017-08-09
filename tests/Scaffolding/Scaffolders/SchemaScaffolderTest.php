@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders;
 
+use League\Flysystem\Exception;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
@@ -10,16 +11,19 @@ use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
+use SilverStripe\GraphQL\Tests\Fake\FakeInt;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
+use SilverStripe\ORM\ArrayList;
 use SilverStripe\Security\Member;
 use SilverStripe\Assets\File;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 
 class SchemaScaffolderTest extends SapphireTest
 {
@@ -207,5 +211,34 @@ class SchemaScaffolderTest extends SapphireTest
                 ],
             ],
         ]);
+    }
+
+    public function testSchemaScaffolderFixedTypes()
+    {
+        Config::modify()->merge(SchemaScaffolder::class, 'fixed_types', [FakeInt::class]);
+        Config::modify()->merge(FakeInt::class, 'graphql_type', [
+            'FieldOne' => 'String',
+            'FieldTwo' => 'Int'
+        ]);
+        $typeName = ScaffoldingUtil::typeName(FakeInt::class);
+        $manager = new Manager();
+        (new SchemaScaffolder())->addToManager($manager);
+        $this->assertTrue($manager->hasType($typeName));
+    }
+
+    public function testSchemaScaffolderFixedTypeMustBeViewableData()
+    {
+        Config::modify()->merge(SchemaScaffolder::class, 'fixed_types', ['stdclass']);
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageRegExp('/Cannot auto register/');
+        (new SchemaScaffolder())->addToManager(new Manager());
+    }
+
+    public function testSchemaScaffolderFixedTypeMustHaveTypeCreatorExtension()
+    {
+        Config::modify()->merge(SchemaScaffolder::class, 'fixed_types', [ArrayList::class]);
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageRegExp('/Cannot auto register/');
+        (new SchemaScaffolder())->addToManager(new Manager());
     }
 }

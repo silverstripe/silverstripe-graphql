@@ -3,24 +3,15 @@ Name: graphqlassets
 Only:
   moduleexists: 'silverstripe/assets'
 ---
-## Define a custom type for DBFile
-SilverStripe\Core\Injector\Injector:
-  SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.dbfile:
-    class: SilverStripe\GraphQL\Scaffolding\Util\ArrayTypeParser
-    constructor:
-      name: DBFile
-      fields:
-        Filename: String
-        Hash: String
-        Variant: String
-        URL: String
-        Width: Int
-        Height: Int
-
 ## Assign the type to DBFile as a dependency
 SilverStripe\Assets\Storage\DBFile:
-  dependencies:
-    typeParser: %$SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.dbfile
+  graphql_type:
+    Filename: String
+    Hash: String
+    Variant: String
+    URL: String
+    Width: Int
+    Height: Int
 
 ## Register the types to the manager
 SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder:

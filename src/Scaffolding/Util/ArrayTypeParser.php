@@ -32,11 +32,13 @@ class ArrayTypeParser implements TypeParserInterface
     public function __construct($name, $fields)
     {
         if (!ArrayLib::is_associative($fields)) {
-            throw new InvalidArgumentException(sprintf(
-                '%s::__construct() second parameter must be an associative array
+            throw new InvalidArgumentException(
+                sprintf(
+                    '%s::__construct() second parameter must be an associative array
                 of field names to field types',
-                __CLASS__
-            ));
+                    __CLASS__
+                )
+            );
         }
 
         $this->name = $name;
@@ -64,9 +66,11 @@ class ArrayTypeParser implements TypeParserInterface
             ];
         }
 
-        return new ObjectType([
+        return new ObjectType(
+            [
             'name' => $this->name,
             'fields' => $fields,
-        ]);
+            ]
+        );
     }
 }
