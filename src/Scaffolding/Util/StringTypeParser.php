@@ -98,18 +98,18 @@ class StringTypeParser implements TypeParserInterface
         }
 
         switch ($this->typeStr) {
-        case Type::ID:
-            return (int)$this->defaultValue;
-        case Type::STRING:
-            return (string)$this->defaultValue;
-        case Type::BOOLEAN:
-            return (boolean)$this->defaultValue;
-        case Type::INT:
-            return (int)$this->defaultValue;
-        case Type::FLOAT:
-            return (float)$this->defaultValue;
-        default:
-            return null;
+            case Type::ID:
+                return (int)$this->defaultValue;
+            case Type::STRING:
+                return (string)$this->defaultValue;
+            case Type::BOOLEAN:
+                return (boolean)$this->defaultValue;
+            case Type::INT:
+                return (int)$this->defaultValue;
+            case Type::FLOAT:
+                return (float)$this->defaultValue;
+            default:
+                return null;
         }
     }
 
@@ -119,18 +119,18 @@ class StringTypeParser implements TypeParserInterface
     public function getType()
     {
         switch ($this->typeStr) {
-        case Type::ID:
-            return Type::id();
-        case Type::STRING:
-            return Type::string();
-        case Type::BOOLEAN:
-            return Type::boolean();
-        case Type::INT:
-            return Type::int();
-        case Type::FLOAT:
-            return Type::float();
-        default:
-            return null;
+            case Type::ID:
+                return Type::id();
+            case Type::STRING:
+                return Type::string();
+            case Type::BOOLEAN:
+                return Type::boolean();
+            case Type::INT:
+                return Type::int();
+            case Type::FLOAT:
+                return Type::float();
+            default:
+                return null;
         }
     }
 }

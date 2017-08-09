@@ -100,8 +100,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             $name = $assoc ? $k : $data;
             $field = ArrayData::create(
                 [
-                'Name' => $name,
-                'Description' => $assoc ? $data : null,
+                    'Name' => $name,
+                    'Description' => $assoc ? $data : null,
                 ]
             );
             $this->removeField($name);
@@ -139,7 +139,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      * Adds fields against a blacklist.
      *
      * @param array|string $exclusions
-     * @param bool         $includeHasOne
+     * @param bool $includeHasOne
      *
      * @return $this
      */
@@ -219,10 +219,11 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         $this->fields->replace(
-            $existing, ArrayData::create(
+            $existing,
+            ArrayData::create(
                 [
-                'Name' => $field,
-                'Description' => $description
+                    'Name' => $field,
+                    'Description' => $description
                 ]
             )
         );
@@ -289,8 +290,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         /**
- * @var OperationScaffolder $scaffolder 
-*/
+         * @var OperationScaffolder $scaffolder
+         */
         $scaffolder = new $scaffoldClass($this->dataObjectClass);
         $existing = $this->operations->findByIdentifier($operation);
 
@@ -340,8 +341,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             $typeName,
             function ($obj) use ($fieldName) {
                 /**
-            * @var DataObject $obj 
-            */
+                 * @var DataObject $obj
+                 */
                 return $obj->obj($fieldName);
             }
         ))->setChainableParent($this);
@@ -467,7 +468,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 }
 
                 $this->operation($opID)
-                    ->applyConfig((array) $opSettings);
+                    ->applyConfig((array)$opSettings);
             }
         }
 
@@ -486,7 +487,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                     continue;
                 }
                 $this->nestedQuery($relationName)
-                    ->applyConfig((array) $settings);
+                    ->applyConfig((array)$settings);
             }
         }
 
@@ -502,10 +503,10 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         return new ObjectType(
             [
-            'name' => $this->typeName(),
-            'fields' => function () use ($manager) {
-                return $this->createFields($manager);
-            },
+                'name' => $this->typeName(),
+                'fields' => function () use ($manager) {
+                    return $this->createFields($manager);
+                },
             ]
         );
     }
@@ -614,8 +615,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         $resolver = function ($obj, $args, $context, $info) {
             /**
- * @var DataObject $obj 
-*/
+             * @var DataObject $obj
+             */
             $field = $obj->obj($info->fieldName);
             // return the raw field value, or checks like `is_numeric()` fail
             if ($field instanceof DBField && $field->isInternalGraphQLType()) {

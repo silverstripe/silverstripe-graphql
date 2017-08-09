@@ -73,5 +73,4 @@ class TypeCreatorExtensionTest extends SapphireTest
         $extension->addToManager($manager);
         $this->assertTrue($manager->hasType($typeName));
     }
-
 }
