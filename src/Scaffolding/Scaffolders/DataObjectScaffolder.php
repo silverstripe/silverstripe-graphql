@@ -14,7 +14,6 @@ use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\GraphQL\Manager;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
-use SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser;
 use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\Core\Config\Config;

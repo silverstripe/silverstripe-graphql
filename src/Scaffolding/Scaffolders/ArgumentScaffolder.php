@@ -4,7 +4,8 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
-use SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
+use SilverStripe\Core\Injector\Injector;
 
 class ArgumentScaffolder implements ConfigurationApplier
 {
@@ -42,8 +43,10 @@ class ArgumentScaffolder implements ConfigurationApplier
     public function __construct($argName, $typeStr)
     {
         $this->argName = $argName;
-
-        $parser = new StringTypeParser($typeStr);
+        $parser = Injector::inst()->createWithArgs(
+            TypeParserInterface::class . '.string',
+            [$typeStr]
+        );
         $this->defaultValue = $parser->getDefaultValue();
         $this->type = $parser->getType();
         $this->required = $parser->isRequired();

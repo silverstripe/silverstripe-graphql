@@ -7,6 +7,7 @@ use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\ORM\ArrayLib;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
+use SilverStripe\Core\Injector\Injector;
 
 /**
  * Parses a map of type, e.g. Int!(20) into an array defining the arg type
@@ -62,7 +63,10 @@ class ArrayTypeParser implements TypeParserInterface
         $fields = [];
         foreach ($this->fields as $field => $type) {
             $fields[$field] = [
-                'type' => StringTypeParser::create($type)->getType(),
+                'type' => Injector::inst()->createWithArgs(
+                    TypeParserInterface::class . '.string',
+                    [$type]
+                )->getType(),
             ];
         }
 
