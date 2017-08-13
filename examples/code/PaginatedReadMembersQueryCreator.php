@@ -11,9 +11,7 @@ class PaginatedReadMembersQueryCreator extends PaginatedQueryCreator
     public function createConnection()
     {
         return Connection::create('paginatedReadMembers')
-            ->setConnectionType(function () {
-                return $this->manager->getType('member');
-            })
+            ->setConnectionType($this->manager->getType('member'))
             ->setArgs([
                 'Email' => [
                     'type' => Type::string()

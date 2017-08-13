@@ -267,9 +267,7 @@ class PaginatedReadMembersQueryCreator extends PaginatedQueryCreator
     public function createConnection()
     {
         return Connection::create('paginatedReadMembers')
-            ->setConnectionType(function () {
-                return $this->manager->getType('member');
-            })
+            ->setConnectionType($this->manager->getType('member'))
             ->setArgs([
                 'Email' => [
                     'type' => Type::string()
@@ -396,9 +394,7 @@ class MemberTypeCreator extends TypeCreator
     public function fields()
     {
         $groupsConnection = Connection::create('Groups')
-            ->setConnectionType(function () {
-                return $this->manager->getType('group');
-            })
+            ->setConnectionType($this->manager->getType('group'))
             ->setDescription('A list of the users groups')
             ->setSortableFields(['ID', 'Title']);
 
