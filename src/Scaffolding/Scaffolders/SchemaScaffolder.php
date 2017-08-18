@@ -272,7 +272,15 @@ class SchemaScaffolder implements ManagerMutatorInterface
     {
         // Register fixed types
         $fixedTypes = Config::inst()->get(self::class, 'fixed_types');
-        if ($fixedTypes && is_array($fixedTypes)) {
+        if ($fixedTypes) {
+            if (!is_array($fixedTypes)) {
+                throw new Exception(
+                    sprintf(
+                        '%s.fixed_types must be an array',
+                        __CLASS__
+                    )
+                );
+            }
             foreach ($fixedTypes as $className) {
                 $instance = Injector::inst()->get($className);
                 if (!$instance instanceof ViewableData) {

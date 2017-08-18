@@ -50,10 +50,19 @@ class StringTypeParser implements TypeParserInterface
     /**
      * TypeParser constructor.
      *
-     * @param string|array $rawArg
+     * @param string $rawArg
      */
     public function __construct($rawArg)
     {
+        if (!is_string($rawArg)) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    '%s::__construct() must be passed a string',
+                    __CLASS__
+                )
+            );
+        }
+
         if (!preg_match('/^([A-Za-z]+)(!?)(?:\s*\(\s*(.*)\))?/', $rawArg, $matches)) {
             throw new InvalidArgumentException(
                 "Invalid argument: $rawArg"

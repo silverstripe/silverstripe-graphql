@@ -241,4 +241,12 @@ class SchemaScaffolderTest extends SapphireTest
         $this->expectExceptionMessageRegExp('/Cannot auto register/');
         (new SchemaScaffolder())->addToManager(new Manager());
     }
+
+    public function testSchemaScaffolderFixedTypeMustBeAnArray()
+    {
+        Config::modify()->merge(SchemaScaffolder::class, 'fixed_types', 'fail');
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessageRegExp('/must be an array/');
+        (new SchemaScaffolder())->addToManager(new Manager());
+    }
 }
