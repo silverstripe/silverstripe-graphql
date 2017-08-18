@@ -14,7 +14,6 @@ use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\GraphQL\Manager;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
-use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\Core\Config\Config;
@@ -56,18 +55,22 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     public function __construct($dataObjectClass)
     {
         if (!class_exists($dataObjectClass)) {
-            throw new InvalidArgumentException(sprintf(
-                'DataObjectScaffold instantiated with non-existent classname "%s"',
-                $dataObjectClass
-            ));
+            throw new InvalidArgumentException(
+                sprintf(
+                    'DataObjectScaffold instantiated with non-existent classname "%s"',
+                    $dataObjectClass
+                )
+            );
         }
 
         if (!is_subclass_of($dataObjectClass, DataObject::class)) {
-            throw new InvalidArgumentException(sprintf(
-                'DataObjectScaffold must instantiate with a classname that is a subclass of %s (%s given)',
-                DataObject::class,
-                $dataObjectClass
-            ));
+            throw new InvalidArgumentException(
+                sprintf(
+                    'DataObjectScaffold must instantiate with a classname that is a subclass of %s (%s given)',
+                    DataObject::class,
+                    $dataObjectClass
+                )
+            );
         }
 
         $this->fields = ArrayList::create([]);
@@ -86,7 +89,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      *    'MyOtherField' // No description
      * ]
      *
-     * @param array $fieldData
+     * @param  array $fieldData
      * @return $this
      */
     public function addFields(array $fieldData)
@@ -94,10 +97,12 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         foreach ($fieldData as $k => $data) {
             $assoc = !is_numeric($k);
             $name = $assoc ? $k : $data;
-            $field = ArrayData::create([
-                'Name' => $name,
-                'Description' => $assoc ? $data : null,
-            ]);
+            $field = ArrayData::create(
+                [
+                    'Name' => $name,
+                    'Description' => $assoc ? $data : null,
+                ]
+            );
             $this->removeField($name);
             $this->fields->add($field);
         }
@@ -133,7 +138,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      * Adds fields against a blacklist.
      *
      * @param array|string $exclusions
-     * @param bool  $includeHasOne
+     * @param bool $includeHasOne
      *
      * @return $this
      */
@@ -195,25 +200,32 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     /**
      * Sets the description to an existing field.
      *
-     * @param string $field
-     * @param string $description
+     * @param  string $field
+     * @param  string $description
      * @return $this
      */
     public function setFieldDescription($field, $description)
     {
         $existing = $this->fields->find('Name', $field);
         if (!$existing) {
-            throw new InvalidArgumentException(sprintf(
-                'Cannot set description of %s. It has not been added to %s.',
-                $field,
-                $this->dataObjectClass
-            ));
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Cannot set description of %s. It has not been added to %s.',
+                    $field,
+                    $this->dataObjectClass
+                )
+            );
         }
 
-        $this->fields->replace($existing, ArrayData::create([
-            'Name' => $field,
-            'Description' => $description
-        ]));
+        $this->fields->replace(
+            $existing,
+            ArrayData::create(
+                [
+                    'Name' => $field,
+                    'Description' => $description
+                ]
+            )
+        );
 
         return $this;
     }
@@ -230,11 +242,13 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         $item = $this->fields->find('Name', $field);
 
         if (!$item) {
-            throw new Exception(sprintf(
-                'Tried to get field description for %s, but it has not been added to %s',
-                $field,
-                $this->dataObjectClass
-            ));
+            throw new Exception(
+                sprintf(
+                    'Tried to get field description for %s, but it has not been added to %s',
+                    $field,
+                    $this->dataObjectClass
+                )
+            );
         }
 
         return $item->Description;
@@ -243,7 +257,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     /**
      * Removes an operation.
      *
-     * @param string $identifier
+     * @param  string $identifier
      * @return $this
      */
     public function removeOperation($identifier)
@@ -265,14 +279,18 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         $scaffoldClass = OperationScaffolder::getOperationScaffoldFromIdentifier($operation);
 
         if (!$scaffoldClass) {
-            throw new InvalidArgumentException(sprintf(
-                'Invalid operation: %s added to %s',
-                $operation,
-                $this->dataObjectClass
-            ));
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Invalid operation: %s added to %s',
+                    $operation,
+                    $this->dataObjectClass
+                )
+            );
         }
 
-        /** @var OperationScaffolder $scaffolder */
+        /**
+         * @var OperationScaffolder $scaffolder
+         */
         $scaffolder = new $scaffoldClass($this->dataObjectClass);
         $existing = $this->operations->findByIdentifier($operation);
 
@@ -306,11 +324,13 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         $result = $this->getDataObjectInstance()->obj($fieldName);
 
         if (!$result instanceof DataList && !$result instanceof ArrayList) {
-            throw new InvalidArgumentException(sprintf(
-                '%s::addNestedQuery() tried to add %s, but must be passed a method name or relation that returns a DataList or ArrayList',
-                __CLASS__,
-                $fieldName
-            ));
+            throw new InvalidArgumentException(
+                sprintf(
+                    '%s::addNestedQuery() tried to add %s, but must be passed a method name or relation that returns a DataList or ArrayList',
+                    __CLASS__,
+                    $fieldName
+                )
+            );
         }
 
         $typeName = ScaffoldingUtil::typeNameForDataObject($result->dataClass());
@@ -319,7 +339,9 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             $fieldName,
             $typeName,
             function ($obj) use ($fieldName) {
-                /** @var DataObject $obj */
+                /**
+                 * @var DataObject $obj
+                 */
                 return $obj->obj($fieldName);
             }
         ))->setChainableParent($this);
@@ -368,7 +390,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     /**
      * Applies settings from an array, i.e. YAML
      *
-     * @param array $config
+     * @param  array $config
      * @return $this
      * @throws Exception
      */
@@ -386,19 +408,23 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             } elseif (is_array($config['fields'])) {
                 $this->addFields($config['fields']);
             } else {
-                throw new Exception(sprintf(
-                    "Fields must be an array, or '%s' for all fields in $dataObjectClass",
-                    SchemaScaffolder::ALL
-                ));
+                throw new Exception(
+                    sprintf(
+                        "Fields must be an array, or '%s' for all fields in $dataObjectClass",
+                        SchemaScaffolder::ALL
+                    )
+                );
             }
         }
 
         if (isset($config['excludeFields'])) {
             if (!is_array($config['excludeFields']) || ArrayLib::is_associative($config['excludeFields'])) {
-                throw new InvalidArgumentException(sprintf(
-                    '"excludeFields" must be an enumerated list of fields. See %s',
-                    $this->dataObjectClass
-                ));
+                throw new InvalidArgumentException(
+                    sprintf(
+                        '"excludeFields" must be an enumerated list of fields. See %s',
+                        $this->dataObjectClass
+                    )
+                );
             }
 
             $this->removeFields($config['excludeFields']);
@@ -406,10 +432,12 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         if (isset($config['fieldDescriptions'])) {
             if (!ArrayLib::is_associative($config['fieldDescriptions'])) {
-                throw new InvalidArgumentException(sprintf(
-                    '"fieldDescripions" must be a map of field name to description. See %s',
-                    $this->dataObjectClass
-                ));
+                throw new InvalidArgumentException(
+                    sprintf(
+                        '"fieldDescripions" must be a map of field name to description. See %s',
+                        $this->dataObjectClass
+                    )
+                );
             }
 
             foreach ($config['fieldDescriptions'] as $fieldName => $description) {
@@ -439,16 +467,18 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 }
 
                 $this->operation($opID)
-                    ->applyConfig((array) $opSettings);
+                    ->applyConfig((array)$opSettings);
             }
         }
 
         if (isset($config['nestedQueries'])) {
             if (!ArrayLib::is_associative($config['nestedQueries'])) {
-                throw new InvalidArgumentException(sprintf(
-                    '"nestedQueries" must be a map of relation name to a map of settings, or true/false. See %s',
-                    $this->dataObjectClass
-                ));
+                throw new InvalidArgumentException(
+                    sprintf(
+                        '"nestedQueries" must be a map of relation name to a map of settings, or true/false. See %s',
+                        $this->dataObjectClass
+                    )
+                );
             }
 
             foreach ($config['nestedQueries'] as $relationName => $settings) {
@@ -456,7 +486,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                     continue;
                 }
                 $this->nestedQuery($relationName)
-                    ->applyConfig((array) $settings);
+                    ->applyConfig((array)$settings);
             }
         }
 
@@ -470,12 +500,14 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function scaffold(Manager $manager)
     {
-        return new ObjectType([
-            'name' => $this->typeName(),
-            'fields' => function () use ($manager) {
-                return $this->createFields($manager);
-            },
-        ]);
+        return new ObjectType(
+            [
+                'name' => $this->typeName(),
+                'fields' => function () use ($manager) {
+                    return $this->createFields($manager);
+                },
+            ]
+        );
     }
 
     /**
@@ -546,6 +578,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
     /**
      * Gets the list of class names that are in nested queries
+     *
      * @return array
      */
     protected function nestedConnections()
@@ -563,7 +596,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     /**
      * Validates the raw field map and creates a map suitable for ObjectType
      *
-     * @param Manager $manager
+     * @param  Manager $manager
      * @return array
      */
     protected function createFields(Manager $manager)
@@ -580,10 +613,12 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         $resolver = function ($obj, $args, $context, $info) {
-            /** @var DataObject $obj */
+            /**
+             * @var DataObject $obj
+             */
             $field = $obj->obj($info->fieldName);
             // return the raw field value, or checks like `is_numeric()` fail
-            if ($field instanceof DBField) {
+            if ($field instanceof DBField && $field->isInternalGraphQLType()) {
                 return $field->getValue();
             }
             return $field;
@@ -592,28 +627,31 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         foreach ($this->fields as $fieldData) {
             $fieldName = $fieldData->Name;
             if (!ScaffoldingUtil::isValidFieldName($instance, $fieldName)) {
-                throw new InvalidArgumentException(sprintf(
-                    'Invalid field "%s" on %s',
-                    $fieldName,
-                    $this->dataObjectClass
-                ));
+                throw new InvalidArgumentException(
+                    sprintf(
+                        'Invalid field "%s" on %s',
+                        $fieldName,
+                        $this->dataObjectClass
+                    )
+                );
             }
 
             $result = $instance->obj($fieldName);
 
             if ($result instanceof SS_List) {
-                throw new InvalidArgumentException(sprintf(
-                    'Fieldname %s added to %s returns a list. This should be defined as a nested query using addNestedQuery(%s)',
-                    $fieldName,
-                    $this->dataObjectClass,
-                    $fieldName
-                ));
+                throw new InvalidArgumentException(
+                    sprintf(
+                        'Fieldname %s added to %s returns a list. This should be defined as a nested query using addNestedQuery(%s)',
+                        $fieldName,
+                        $this->dataObjectClass,
+                        $fieldName
+                    )
+                );
             }
 
             if ($result instanceof DBField) {
-                $typeName = $result->config()->graphql_type;
                 $fieldMap[$fieldName] = [];
-                $fieldMap[$fieldName]['type'] = (new TypeParser($typeName))->getType();
+                $fieldMap[$fieldName]['type'] = $result->getGraphQLType($manager);
                 $fieldMap[$fieldName]['resolve'] = $resolver;
                 $fieldMap[$fieldName]['description'] = $fieldData->Description;
             }

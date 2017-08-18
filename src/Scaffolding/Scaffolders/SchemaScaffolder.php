@@ -2,15 +2,21 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
+use League\Flysystem\Exception;
 use SilverStripe\Core\Injector\Injector;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\ORM\ArrayLib;
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\View\ViewableData;
 
 /**
  * The entry point for a GraphQL scaffolding definition. Holds DataObject type definitions,
@@ -46,7 +52,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
     /**
      * Create from an array, e.g. derived from YAML.
      *
-     * @param array $config
+     * @param  array $config
      * @return self
      * @throws InvalidArgumentException
      */
@@ -74,19 +80,23 @@ class SchemaScaffolder implements ManagerMutatorInterface
         foreach ($queryMap as $group => $method) {
             if (isset($config[$group])) {
                 if (!ArrayLib::is_associative($config[$group])) {
-                    throw new InvalidArgumentException(sprintf(
-                        '"%s" must be a map of operation name to settings.',
-                        $group
-                    ));
+                    throw new InvalidArgumentException(
+                        sprintf(
+                            '"%s" must be a map of operation name to settings.',
+                            $group
+                        )
+                    );
                 }
 
                 foreach ($config[$group] as $fieldName => $fieldSettings) {
                     if (!isset($fieldSettings['type'])) {
-                        throw new InvalidArgumentException(sprintf(
-                            '"%s" must have a "type" field. See %s',
-                            $group,
-                            $fieldName
-                        ));
+                        throw new InvalidArgumentException(
+                            sprintf(
+                                '"%s" must have a "type" field. See %s',
+                                $group,
+                                $fieldName
+                            )
+                        );
                     }
 
                     $scaffolder->$method($fieldName, $fieldSettings['type'])
@@ -110,7 +120,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
     /**
      * Finds or makes a DataObject definition.
      *
-     * @param string $class
+     * @param  string $class
      * @return DataObjectScaffolder
      * @throws InvalidArgumentException
      */
@@ -132,14 +142,16 @@ class SchemaScaffolder implements ManagerMutatorInterface
     /**
      * Find or make a query.
      *
-     * @param string $name
-     * @param string $class
-     * @param callable|ResolverInterface $resolver
+     * @param  string                     $name
+     * @param  string                     $class
+     * @param  callable|ResolverInterface $resolver
      * @return QueryScaffolder
      */
     public function query($name, $class, $resolver = null)
     {
-        /** @var QueryScaffolder $query */
+        /**
+         * @var QueryScaffolder $query
+        */
         $query = $this->queries->findByName($name);
         if ($query) {
             return $query;
@@ -159,9 +171,9 @@ class SchemaScaffolder implements ManagerMutatorInterface
     /**
      * Find or make a mutation.
      *
-     * @param string $name
-     * @param string $class
-     * @param callable|ResolverInterface $resolver
+     * @param  string                     $name
+     * @param  string                     $class
+     * @param  callable|ResolverInterface $resolver
      * @return bool|MutationScaffolder
      */
     public function mutation($name, $class, $resolver = null)
@@ -186,7 +198,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
     /**
      * Removes a mutation.
      *
-     * @param string $name
+     * @param  string $name
      * @return $this
      */
     public function removeMutation($name)
@@ -220,7 +232,8 @@ class SchemaScaffolder implements ManagerMutatorInterface
 
     /**
      * Returns true if the type has been added to the scaffolder
-     * @param string $dataObjectClass
+     *
+     * @param  string $dataObjectClass
      * @return bool
      */
     public function hasType($dataObjectClass)
@@ -257,6 +270,41 @@ class SchemaScaffolder implements ManagerMutatorInterface
      */
     public function addToManager(Manager $manager)
     {
+        // Register fixed types
+        $fixedTypes = Config::inst()->get(self::class, 'fixed_types');
+        if ($fixedTypes) {
+            if (!is_array($fixedTypes)) {
+                throw new Exception(
+                    sprintf(
+                        '%s.fixed_types must be an array',
+                        __CLASS__
+                    )
+                );
+            }
+            foreach ($fixedTypes as $className) {
+                $instance = Injector::inst()->get($className);
+                if (!$instance instanceof ViewableData) {
+                    throw new Exception(
+                        sprintf(
+                            'Cannot auto register class %s. It is not a subclass of %s',
+                            $className,
+                            ViewableData::class
+                        )
+                    );
+                }
+                if (!$instance->hasExtension(TypeCreatorExtension::class)) {
+                    throw new Exception(
+                        sprintf(
+                            'Cannot auto register class %s. Is does not have the extension %s.',
+                            $className,
+                            TypeCreatorExtension::class
+                        )
+                    );
+                }
+                $instance->addToManager($manager);
+            }
+        }
+
         foreach ($this->types as $scaffold) {
             // Add dependent classes, e.g has_one, has_many nested queries
             foreach ($scaffold->getDependentClasses() as $class) {

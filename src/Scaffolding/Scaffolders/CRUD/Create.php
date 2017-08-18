@@ -8,7 +8,6 @@ use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Exception;
 use SilverStripe\ORM\DataObject;
@@ -90,9 +89,8 @@ class Create extends MutationScaffolder implements CRUDInterface
                 foreach ($db as $dbFieldName => $dbFieldType) {
                     /** @var DBField $result */
                     $result = $instance->obj($dbFieldName);
-                    $typeName = $result->config()->get('graphql_type');
                     $arr = [
-                        'type' => (new TypeParser($typeName))->getType()
+                        'type' => $result->getGraphQLType(),
                     ];
                     $fields[$dbFieldName] = $arr;
                 }

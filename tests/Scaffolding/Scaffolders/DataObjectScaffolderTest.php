@@ -2,6 +2,8 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders;
 
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
@@ -18,7 +20,9 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
 use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\ResolveInfo;
 use Exception;
+use SilverStripe\ORM\FieldType\DBInt;
 
 class DataObjectScaffolderTest extends SapphireTest
 {
@@ -389,6 +393,46 @@ class DataObjectScaffolderTest extends SapphireTest
         );
 
         $this->assertTrue($manager->hasType($scaffolder->typeName()));
+    }
+
+    public function testDataObjectScaffolderSimpleFieldTypes()
+    {
+        $scaffolder = $this->getFakeScaffolder();
+        $scaffolder->addField('MyInt');
+        $manager = new Manager();
+        $result = $scaffolder->scaffold($manager);
+        $fields = $result->config['fields']();
+        $myIntResolver = $fields['MyInt']['resolve'];
+        $fake = new DataObjectFake(['MyInt' => 5]);
+        $value = $myIntResolver($fake, [], null, new ResolveInfo(['fieldName' => 'MyInt']));
+
+        $this->assertEquals(5, $value);
+        Config::modify()->merge(DBInt::class, 'graphql_type', [
+            'FieldOne' => 'String',
+            'FieldTwo' => 'Int',
+        ]);
+    }
+
+    public function testDataObjectScaffolderComplexFieldTypes()
+    {
+        Config::modify()->merge(DBInt::class, 'graphql_type', [
+            'FieldOne' => 'String',
+            'FieldTwo' => 'Int',
+        ]);
+        $fake = new DataObjectFake(['MyInt' => 5]);
+        $manager = new Manager();
+        (new DBInt(0))->addToManager($manager);
+
+        $this->assertInstanceOf(ObjectType::class, $fake->obj('MyInt')->getGraphQLType($manager));
+        $scaffolder = $this->getFakeScaffolder();
+        $scaffolder->addField('MyInt');
+        $result = $scaffolder->scaffold($manager);
+        $fields = $result->config['fields']();
+        $myIntResolver = $fields['MyInt']['resolve'];
+
+        $value = $myIntResolver($fake, [], null, new ResolveInfo(['fieldName' => 'MyInt']));
+
+        $this->assertInstanceOf(DBInt::class, $value);
     }
 
     protected function getFakeScaffolder()

@@ -4,50 +4,50 @@ namespace SilverStripe\GraphQL\Tests\Util;
 
 use SilverStripe\Dev\SapphireTest;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
-use SilverStripe\GraphQL\Scaffolding\Util\TypeParser;
+use SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser;
 use GraphQL\Type\Definition\StringType;
 
 /**
  * @skipUpgrade
  */
-class TypeParserTest extends SapphireTest
+class StringTypeParserTest extends SapphireTest
 {
-    public function testTypeParser()
+    public function testStringTypeParser()
     {
-        $parser = new TypeParser('String!(Test)');
+        $parser = new StringTypeParser('String!(Test)');
         $this->assertTrue($parser->isRequired());
-        $this->assertEquals('String', $parser->getArgTypeName());
+        $this->assertEquals('String', $parser->getName());
         $this->assertEquals('Test', $parser->getDefaultValue());
         $this->assertTrue(is_string($parser->getDefaultValue()));
 
-        $parser = new TypeParser('String! (Test)');
+        $parser = new StringTypeParser('String! (Test)');
         $this->assertTrue($parser->isRequired());
-        $this->assertEquals('String', $parser->getArgTypeName());
+        $this->assertEquals('String', $parser->getName());
         $this->assertEquals('Test', $parser->getDefaultValue());
 
-        $parser = new TypeParser('Int!');
+        $parser = new StringTypeParser('Int!');
         $this->assertTrue($parser->isRequired());
-        $this->assertEquals('Int', $parser->getArgTypeName());
+        $this->assertEquals('Int', $parser->getName());
         $this->assertNull($parser->getDefaultValue());
 
-        $parser = new TypeParser('Int!(23)');
+        $parser = new StringTypeParser('Int!(23)');
         $this->assertTrue($parser->isRequired());
-        $this->assertEquals('Int', $parser->getArgTypeName());
+        $this->assertEquals('Int', $parser->getName());
         $this->assertEquals('23', $parser->getDefaultValue());
         $this->assertTrue(is_int($parser->getDefaultValue()));
 
-        $parser = new TypeParser('Boolean');
+        $parser = new StringTypeParser('Boolean');
         $this->assertFalse($parser->isRequired());
-        $this->assertEquals('Boolean', $parser->getArgTypeName());
+        $this->assertEquals('Boolean', $parser->getName());
         $this->assertNull($parser->getDefaultValue());
 
-        $parser = new TypeParser('Boolean(1)');
+        $parser = new StringTypeParser('Boolean(1)');
         $this->assertFalse($parser->isRequired());
-        $this->assertEquals('Boolean', $parser->getArgTypeName());
+        $this->assertEquals('Boolean', $parser->getName());
         $this->assertEquals('1', $parser->getDefaultValue());
         $this->assertTrue(is_bool($parser->getDefaultValue()));
 
-        $parser = new TypeParser('String!(Test)');
+        $parser = new StringTypeParser('String!(Test)');
         $this->assertInstanceOf(StringType::class, $parser->getType());
         $this->assertEquals('Test', $parser->getDefaultValue());
     }
@@ -56,14 +56,21 @@ class TypeParserTest extends SapphireTest
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageRegExp('/Invalid argument/');
-        new TypeParser('  ... Nothing');
+        new StringTypeParser('  ... Nothing');
+    }
+
+    public function testTypeNotAString()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/must be passed a string/');
+        new StringTypeParser(['fail']);
     }
 
     public function testTypeInvalidDefault()
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageRegExp('/Invalid type/');
-        $type = new TypeParser('Nothing!(bob)');
+        $type = new StringTypeParser('Nothing!(bob)');
         $type->getDefaultValue();
     }
 }

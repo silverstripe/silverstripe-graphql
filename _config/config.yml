@@ -1,29 +1,34 @@
 ---
 Name: graphqlconfig
 ---
+# Minimum fields that any type will expose. Useful for implicitly
+# created types, e.g. exposing a has_one.
 SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder:
   default_fields:
     ID: ID
 
-## Map DB fields to GraphQL types
+# Define the type parsers
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.string:
+    class: SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser
+  SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.array:
+    class: SilverStripe\GraphQL\Scaffolding\Util\ArrayTypeParser
+
+# Assign each DBField subclass with an associated internal type
 SilverStripe\ORM\FieldType\DBField:
-  # fallback
-  graphql_type: 'String'
-
+  extensions:
+    - SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension
+  graphql_type: String
 SilverStripe\ORM\FieldType\DBInt:
-  graphql_type: 'Int'
-
+  graphql_type: Int
 SilverStripe\ORM\FieldType\DBBoolean:
-  graphql_type: 'Boolean'
-
+  graphql_type: Boolean
 SilverStripe\ORM\FieldType\DBFloat:
-  graphql_type: 'Float'
-
+  graphql_type: Float
 SilverStripe\ORM\FieldType\DBPrimaryKey:
-  graphql_type: 'ID'
-
+  graphql_type: ID
 SilverStripe\ORM\FieldType\DBForeignKey:
-  graphql_type: 'ID'
+  graphql_type: ID
 
 ## CORS default config
 SilverStripe\GraphQL\Controller:

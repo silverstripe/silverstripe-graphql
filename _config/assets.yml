@@ -1,0 +1,19 @@
+---
+Name: graphqlassets
+Only:
+  moduleexists: 'silverstripe/assets'
+---
+## Assign the type to DBFile as a dependency
+SilverStripe\Assets\Storage\DBFile:
+  graphql_type:
+    Filename: String
+    Hash: String
+    Variant: String
+    URL: String
+    Width: Int
+    Height: Int
+
+## Register the types to the manager
+SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder:
+  fixed_types:
+    - SilverStripe\Assets\Storage\DBFile
