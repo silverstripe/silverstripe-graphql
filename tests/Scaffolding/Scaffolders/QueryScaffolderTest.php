@@ -50,6 +50,8 @@ class QueryScaffolderTest extends SapphireTest
     {
         $scaffolder = new QueryScaffolder('testQuery', 'test');
         $scaffolder->setUsePagination(true);
+        $scaffolder->setPaginationLimit(25);
+        $scaffolder->setMaximumPaginationLimit(110);
         $scaffolder->addArgs(['Test' => 'String']);
         $scaffolder->addSortableFields(['test']);
         $manager = new Manager();
@@ -71,18 +73,35 @@ class QueryScaffolderTest extends SapphireTest
         /** @var QueryScaffolder $mock */
         $mock = $this->getMockBuilder(QueryScaffolder::class)
             ->setConstructorArgs(['testQuery', 'testType'])
-            ->setMethods(['addSortableFields', 'setUsePagination'])
+            ->setMethods(['addSortableFields', 'setUsePagination', 'setPaginationLimit', 'setMaximumPaginationLimit'])
             ->getMock();
         $mock->expects($this->once())
             ->method('addSortableFields')
             ->with(['Test1', 'Test2']);
-        $mock->expects($this->once())
+        $mock->expects($this->exactly(2))
             ->method('setUsePagination')
-            ->with(false);
+            ->withConsecutive([false], [true]);
 
         $mock->applyConfig([
             'sortableFields' => ['Test1', 'Test2'],
             'paginate' => false,
+        ]);
+
+        $mock->expects($this->once())
+            ->method('setUsePagination')
+            ->with(true);
+        $mock->expects($this->once())
+            ->method('setPaginationLimit')
+            ->with(25);
+        $mock->expects($this->once())
+            ->method('setMaximumPaginationLimit')
+            ->with(110);
+
+        $mock->applyConfig([
+            'paginate' => [
+                'limit' => 25,
+                'maximumLimit' => 110
+            ],
         ]);
     }
 

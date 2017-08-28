@@ -21,6 +21,16 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
     protected $usePagination = true;
 
     /**
+     * @var int
+     */
+    protected $defaultLimit = 100;
+
+    /**
+     * @var int
+     */
+    protected $maximumLimit = 100;
+
+    /**
      * @var array
      */
     protected $sortableFields = [];
@@ -32,6 +42,31 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
     public function setUsePagination($bool)
     {
         $this->usePagination = (bool) $bool;
+
+        return $this;
+    }
+
+    /**
+     * @param $int
+     * @return $this
+     */
+    public function setPaginationLimit($int)
+    {
+        if ((int) $int > $this->maximumLimit) {
+            $int = $this->maximumLimit;
+        }
+        $this->defaultLimit = (int) $int;
+
+        return $this;
+    }
+
+    /**
+     * @param $int
+     * @return $this
+     */
+    public function setMaximumPaginationLimit($int)
+    {
+        $this->maximumLimit = (int) $int;
 
         return $this;
     }
@@ -77,6 +112,16 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
         }
         if (isset($config['paginate'])) {
             $this->setUsePagination((bool) $config['paginate']);
+
+            if (isset($config['paginate']['maximumLimit'])) {
+                $this->setMaximumPaginationLimit((int) $config['paginate']['maximumLimit']);
+            }
+
+            if (isset($config['paginate']['limit'])) {
+                $this->setPaginationLimit((int) $config['paginate']['limit']);
+            } else if (isset($config['paginate']['defaultLimit'])) {
+                $this->setPaginationLimit((int) $config['paginate']['defaultLimit']);
+            }
         }
 
         return $this;
@@ -116,7 +161,9 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
             ->setConnectionType($this->getType($manager))
             ->setConnectionResolver($this->createResolverFunction())
             ->setArgs($this->createArgs())
-            ->setSortableFields($this->sortableFields);
+            ->setSortableFields($this->sortableFields)
+            ->setDefaultLimit($this->defaultLimit)
+            ->setMaximumLimit($this->maximumLimit);
     }
 
     /**
