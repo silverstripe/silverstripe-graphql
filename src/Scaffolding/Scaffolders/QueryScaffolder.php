@@ -119,7 +119,7 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
 
             if (isset($config['paginate']['limit'])) {
                 $this->setPaginationLimit((int) $config['paginate']['limit']);
-            } else if (isset($config['paginate']['defaultLimit'])) {
+            } elseif (isset($config['paginate']['defaultLimit'])) {
                 $this->setPaginationLimit((int) $config['paginate']['defaultLimit']);
             }
         }
