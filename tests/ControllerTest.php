@@ -269,6 +269,101 @@ class ControllerTest extends SapphireTest
         $this->assertEquals('405', $response->getStatusCode());
     }
 
+    /**
+     * IE and Edge are a bit weird, so we check CORS headers differently on the same domain
+     * despite CORS being enabled. This checks if our IE exception plays nice
+     */
+    public function testIECorsHeadersResponseCORSEnabledOnSameDomain()
+    {
+        Controller::config()->set('cors', [
+            'Enabled' => true,
+            'Allow-Origin' => 'localhost',
+            'Allow-Headers' => 'Authorization, Content-Type',
+            'Allow-Methods' =>  'GET, POST, OPTIONS',
+            'Max-Age' => 86400
+        ]);
+
+        $controller = new Controller();
+        $request = new HTTPRequest('OPTIONS', '');
+        $request->addHeader('referer', 'http://localhost/admin/tests');
+        $request->addHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; Touch; rv:11.0) like Gecko');
+        $response = $controller->index($request);
+
+        $this->assertTrue($response instanceof HTTPResponse);
+        $this->assertEquals('200', $response->getStatusCode());
+        $this->assertNotEmpty($response->getHeader('Access-Control-Allow-Origin'));
+    }
+
+    /**
+     * IE and Edge are a bit weird, so we check CORS headers differently on the same domain
+     * despite CORS being enabled. This checks if our IE exception plays not nice without the user agent
+     * @expectedException \SilverStripe\Control\HTTPResponse_Exception
+     */
+    public function testIECorsHeadersResponseCORSEnabledNoReferer()
+    {
+        Controller::config()->set('cors', [
+            'Enabled' => true,
+            'Allow-Origin' => 'localhost',
+            'Allow-Headers' => 'Authorization, Content-Type',
+            'Allow-Methods' =>  'GET, POST, OPTIONS',
+            'Max-Age' => 86400
+        ]);
+
+        $controller = new Controller();
+        $request = new HTTPRequest('OPTIONS', '');
+        $request->addHeader('referer', 'http://localhost/admin/tests');
+        $controller->index($request);
+    }
+
+    /**
+     * IE and Edge are a bit weird, so we check CORS headers differently on the same domain
+     * despite CORS being enabled. This checks if our IE exception plays nice
+     */
+    public function testEdgeCorsHeadersResponseCORSEnabledOnSameDomain()
+    {
+        Controller::config()->set('cors', [
+            'Enabled' => true,
+            'Allow-Origin' => 'localhost',
+            'Allow-Headers' => 'Authorization, Content-Type',
+            'Allow-Methods' =>  'GET, POST, OPTIONS',
+            'Max-Age' => 86400
+        ]);
+
+        $controller = new Controller();
+        $request = new HTTPRequest('OPTIONS', '');
+        $request->addHeader('referer', 'http://localhost/admin/tests');
+        // Yes, that is a real Edge user agent string!
+        $request->addHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36 Edge/15.15063');
+        $response = $controller->index($request);
+
+        $this->assertTrue($response instanceof HTTPResponse);
+        $this->assertEquals('200', $response->getStatusCode());
+        $this->assertNotEmpty($response->getHeader('Access-Control-Allow-Origin'));
+    }
+
+    /**
+     * IE and Edge are a bit weird, so we check CORS headers differently on the same domain
+     * despite CORS being enabled. This checks if our IE exception plays nice
+     * @expectedException \SilverStripe\Control\HTTPResponse_Exception
+     */
+    public function testEdgeCorsHeadersResponseCORSEnabledNoReferer()
+    {
+        Controller::config()->set('cors', [
+            'Enabled' => true,
+            'Allow-Origin' => 'localhost',
+            'Allow-Headers' => 'Authorization, Content-Type',
+            'Allow-Methods' =>  'GET, POST, OPTIONS',
+            'Max-Age' => 86400
+        ]);
+
+        $controller = new Controller();
+        $request = new HTTPRequest('OPTIONS', '');
+        // Yes, that is a real Edge user agent string!
+        $request->addHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36 Edge/15.15063');
+        $controller->index($request);
+    }
+
+
     protected function getType(Manager $manager)
     {
         return (new TypeCreatorFake($manager))->toType();

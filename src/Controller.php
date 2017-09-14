@@ -7,6 +7,7 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Control\Director;
+use SilverStripe\Dev\Debug;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\Versioned\Versioned;
 use Exception;
@@ -182,8 +183,41 @@ class Controller extends BaseController
                     return $this->httpError(403, "Access Forbidden");
                 }
             } else {
-                // No Origin header present in Request.
-                return $this->httpError(403, "Access Forbidden");
+                /**
+                 * IE 11 and Edge fix. When CORS is enabled but we are on the same domain,
+                 * IE refuses to send the Origin header, causing a lot of pain.
+                 * The next best thing, is to validate it's IE or Edge and check the referrer.
+                 * This is not the best way to go, but it's something
+                 * Note, when it's an actual CORS request, IE does add the header, so we only end up here
+                 * only when it is not an actual CORS request
+                 * @link https://connect.microsoft.com/IE/feedback/details/781303/origin-header-is-not-added-to-cors-requests-to-same-domain-but-different-port
+                 * This fault also happens when the port is the same!
+                 */
+                $isIE = strpos($request->getHeader('User-Agent'), 'Trident') !== false;
+                $isEdge = strpos($request->getHeader('User-Agent'), 'Edge') !== false;
+                // Only go in here if we have a referer and a Microsoft browser
+                if (
+                    ($isEdge || $isIE) &&
+                    $request->getHeader('referer')
+                ) {
+                    $refererURL = parse_url($request->getHeader('referer'));
+                    // We only take the host, as the http(s) part _may_ be omitted
+                    if (
+                        in_array('*', $allowedOrigins, true) ||
+                        // Check if either with or without scheme is in the allowed origins
+                        (in_array($refererURL['host'], $allowedOrigins, true) ||
+                            // Strict checking on scheme, for security
+                            in_array($refererURL['scheme'] . '://' . $refererURL['host'], $allowedOrigins, true))
+                    ) {
+                        // It's IE/Edge, referer matches or it's "allow all", so set the origin
+                        $response->addHeader('Access-Control-Allow-Origin', $refererURL['scheme'] . '://' . $refererURL['host']);
+                    }
+                }
+                // The needs parsing to get the base URL
+                else {
+                    // No Origin or IE plus valid Referer header present in Request.
+                    return $this->httpError(403, "Access Forbidden");
+                }
             }
         } else {
             // No allowed origins, ergo all origins forbidden.

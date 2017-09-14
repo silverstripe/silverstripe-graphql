@@ -1634,6 +1634,21 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  Max-Age: 600
  ```
 
+5. **CORS exception for Internet Explorer and Edge**
+
+ IE 11 and Edge fix. When CORS is enabled but we are on the same domain,
+ IE refuses to send the Origin header, causing a lot of pain.
+ 
+ The next best thing, is to validate it's IE or Edge and check the referrer.
+ This is not the safest solution, but it's a workaround.
+ 
+ Note, when it's an actual CORS request, IE does add the header, 
+ so we only use this when it is not an actual CORS request.
+ 
+ [Bug on Microsoft.com](https://connect.microsoft.com/IE/feedback/details/781303/origin-header-is-not-added-to-cors-requests-to-same-domain-but-different-port)
+ 
+ Observed is that this also happens when the port is the same. 
+
 ### Sample Custom CORS Config
 
 ```yaml
