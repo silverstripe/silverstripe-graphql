@@ -1,9 +1,10 @@
 {
   "name": "silverstripe/graphql",
   "description": "GraphQL server for SilverStripe models and other data",
-  "type": "silverstripe-module",
+  "type": "silverstripe-vendormodule",
   "require": {
     "silverstripe/framework": "^4",
+    "silverstripe/vendor-plugin": "^1.0",
     "webonyx/graphql-php": "~0.8.0"
   },
   "require-dev": {
