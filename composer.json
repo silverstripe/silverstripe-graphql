@@ -10,11 +10,6 @@
   "require-dev": {
     "phpunit/PHPUnit": "^5.7"
   },
-  "extra": {
-    "branch-alias": {
-      "dev-master": "0.2.x-dev"
-    }
-  },
   "autoload": {
     "psr-4": {
       "SilverStripe\\GraphQL\\": "src/"
