@@ -149,7 +149,7 @@ class TypeCreator
             ]
         );
 
-        if (sizeof($interfaces)) {
+        if (!empty($interfaces)) {
             $attributes['interfaces'] = $interfaces;
         }
 
