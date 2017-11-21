@@ -29,6 +29,12 @@ class Manager
 {
     use Injectable;
 
+    const QUERY_ROOT = 'query';
+
+    const MUTATION_ROOT = 'mutation';
+
+    const TYPES_ROOT = 'types';
+
     /**
      * Map of named {@link Type}
      *
@@ -151,30 +157,34 @@ class Manager
      */
     public function schema()
     {
-        $queryType = new ObjectType([
-            'name' => 'Query',
-            'fields' => function () {
-                return array_map(function ($query) {
-                    return is_callable($query) ? $query() : $query;
-                }, $this->queries);
-            },
-        ]);
-
-        $mutationType = new ObjectType([
-            'name' => 'Mutation',
-            'fields' => function () {
-                return array_map(function ($mutation) {
-                    return is_callable($mutation) ? $mutation() : $mutation;
-                }, $this->mutations);
-            },
-        ]);
-
-        return new Schema([
-            'query' => $queryType,
-            'mutation' => $mutationType,
+        $schema = [
             // usually inferred from 'query', but required for polymorphism on InterfaceType-based query results
-            'types' => $this->types,
-        ]);
+            self::TYPES_ROOT => $this->types,
+        ];
+
+        if (!empty($this->queries)) {
+            $schema[self::QUERY_ROOT] = new ObjectType([
+                'name' => 'Query',
+                'fields' => function () {
+                    return array_map(function ($query) {
+                        return is_callable($query) ? $query() : $query;
+                    }, $this->queries);
+                },
+            ]);
+        }
+
+        if (!empty($this->mutations)) {
+            $schema[self::MUTATION_ROOT] = new ObjectType([
+                'name' => 'Mutation',
+                'fields' => function () {
+                    return array_map(function ($mutation) {
+                        return is_callable($mutation) ? $mutation() : $mutation;
+                    }, $this->mutations);
+                },
+            ]);
+        }
+
+        return new Schema($schema);
     }
 
     /**
