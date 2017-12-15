@@ -83,7 +83,7 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
     public function setMaximumPaginationLimit($int)
     {
         $this->maximumLimit = (int) $int;
-        if($this->getPaginationLimit() > (int) $int){
+        if ($this->getPaginationLimit() > (int) $int) {
             $this->setPaginationLimit($int);
         }
 
