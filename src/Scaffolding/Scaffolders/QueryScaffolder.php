@@ -47,6 +47,14 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
     }
 
     /**
+     * @return int
+     */
+    public function getPaginationLimit()
+    {
+        return $this->defaultLimit;
+    }
+
+    /**
      * @param $int
      * @return $this
      */
@@ -58,6 +66,14 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
         $this->defaultLimit = (int) $int;
 
         return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getMaximumPaginationLimit()
+    {
+        return $this->maximumLimit;
     }
 
     /**
@@ -111,16 +127,16 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
             }
         }
         if (isset($config['paginate'])) {
-            $this->setUsePagination((bool) $config['paginate']);
+            $this->setUsePagination($config['paginate']);
 
             if (isset($config['paginate']['maximumLimit'])) {
-                $this->setMaximumPaginationLimit((int) $config['paginate']['maximumLimit']);
+                $this->setMaximumPaginationLimit($config['paginate']['maximumLimit']);
             }
 
             if (isset($config['paginate']['limit'])) {
-                $this->setPaginationLimit((int) $config['paginate']['limit']);
+                $this->setPaginationLimit($config['paginate']['limit']);
             } elseif (isset($config['paginate']['defaultLimit'])) {
-                $this->setPaginationLimit((int) $config['paginate']['defaultLimit']);
+                $this->setPaginationLimit($config['paginate']['defaultLimit']);
             }
         }
 
@@ -162,8 +178,8 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
             ->setConnectionResolver($this->createResolverFunction())
             ->setArgs($this->createArgs())
             ->setSortableFields($this->sortableFields)
-            ->setDefaultLimit($this->defaultLimit)
-            ->setMaximumLimit($this->maximumLimit);
+            ->setDefaultLimit($this->getPaginationLimit())
+            ->setMaximumLimit($this->getMaximumPaginationLimit());
     }
 
     /**
