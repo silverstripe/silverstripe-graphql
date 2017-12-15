@@ -36,7 +36,7 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
     protected $sortableFields = [];
 
     /**
-     * @param bool $bool
+     * @param $bool
      * @return $this
      */
     public function setUsePagination($bool)
@@ -83,6 +83,9 @@ class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInter
     public function setMaximumPaginationLimit($int)
     {
         $this->maximumLimit = (int) $int;
+        if($this->getPaginationLimit() > (int) $int){
+            $this->setPaginationLimit($int);
+        }
 
         return $this;
     }

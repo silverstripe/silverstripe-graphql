@@ -10,6 +10,41 @@ use GraphQL\Type\Definition\ObjectType;
 
 class QueryScaffolderTest extends SapphireTest
 {
+
+    public function testGetPaginationLimit()
+    {
+        /** @var Manager $observer */
+        $observer = $this->getMockBuilder(Manager::class)
+            ->setMethods(['addQuery'])
+            ->getMock();
+        $scaffold = new QueryScaffolder($observer, 'test');
+
+        $this->assertEquals(100, $scaffold->getPaginationLimit());
+
+        $scaffold->setPaginationLimit(200);
+        $this->assertEquals(100, $scaffold->getPaginationLimit());
+
+        $scaffold->setPaginationLimit(25);
+        $this->assertEquals(25, $scaffold->getPaginationLimit());
+    }
+
+    public function testMaximumPaginationLimit()
+    {
+        /** @var Manager $observer */
+        $observer = $this->getMockBuilder(Manager::class)
+            ->setMethods(['addQuery'])
+            ->getMock();
+        $scaffold = new QueryScaffolder($observer, 'test');
+
+        $this->assertEquals(100, $scaffold->getMaximumPaginationLimit());
+
+        $scaffold->setMaximumPaginationLimit(200);
+        $this->assertEquals(200, $scaffold->getMaximumPaginationLimit());
+
+        $scaffold->setMaximumPaginationLimit(25);
+        $this->assertEquals(25, $scaffold->getPaginationLimit());
+    }
+
     public function testQueryScaffolderUnpaginated()
     {
         /** @var Manager $observer */
@@ -78,28 +113,38 @@ class QueryScaffolderTest extends SapphireTest
         $mock->expects($this->once())
             ->method('addSortableFields')
             ->with(['Test1', 'Test2']);
-        $mock->expects($this->exactly(2))
+        $mock->expects($this->exactly(3))
             ->method('setUsePagination')
-            ->withConsecutive([false], [true]);
+            ->withConsecutive([false], [[
+                'limit' => 25,
+                'maximumLimit' => 110
+            ]], [[
+                'defaultLimit' => 25,
+                'maximumLimit' => 110
+            ]]);
 
         $mock->applyConfig([
             'sortableFields' => ['Test1', 'Test2'],
             'paginate' => false,
         ]);
-
-        $mock->expects($this->once())
-            ->method('setUsePagination')
-            ->with(true);
-        $mock->expects($this->once())
+        
+        $mock->expects($this->exactly(2))
             ->method('setPaginationLimit')
             ->with(25);
-        $mock->expects($this->once())
+        $mock->expects($this->exactly(2))
             ->method('setMaximumPaginationLimit')
             ->with(110);
 
         $mock->applyConfig([
             'paginate' => [
                 'limit' => 25,
+                'maximumLimit' => 110
+            ],
+        ]);
+
+        $mock->applyConfig([
+            'paginate' => [
+                'defaultLimit' => 25,
                 'maximumLimit' => 110
             ],
         ]);
