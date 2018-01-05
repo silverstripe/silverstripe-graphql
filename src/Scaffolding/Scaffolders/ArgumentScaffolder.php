@@ -141,10 +141,15 @@ class ArgumentScaffolder implements ConfigurationApplier
      */
     public function toArray()
     {
-        return [
+        $args = [
             'description' => $this->description,
             'type' => $this->required ? Type::nonNull($this->type) : $this->type,
-            'defaultValue' => $this->defaultValue
         ];
+
+        if ($this->defaultValue !== null) {
+            $args['defaultValue'] = $this->defaultValue;
+        }
+
+        return $args;
     }
 }
