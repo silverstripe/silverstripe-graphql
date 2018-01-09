@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
+use SilverStripe\Core\Extensible;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\ORM\DataList;
@@ -18,6 +19,7 @@ use SilverStripe\ORM\DB;
 class Delete extends MutationScaffolder implements CRUDInterface
 {
     use DataObjectTypeTrait;
+    use Extensible;
 
     /**
      * DeleteOperationScaffolder constructor.
@@ -37,7 +39,7 @@ class Delete extends MutationScaffolder implements CRUDInterface
             DB::get_conn()->withTransaction(function () use ($args, $context) {
                 $results = DataList::create($this->dataObjectClass)
                     ->byIDs($args['IDs']);
-
+                $this->extend('onBeforeMutation', $results, $args, $context, $info);
                 foreach ($results as $obj) {
                     /** @var DataObject $obj */
                     if ($obj->canDelete($context['currentUser'])) {
@@ -50,6 +52,7 @@ class Delete extends MutationScaffolder implements CRUDInterface
                         ));
                     }
                 }
+                $this->extend('onAfterMutation', $args, $context, $info);
             });
         });
     }
@@ -67,11 +70,14 @@ class Delete extends MutationScaffolder implements CRUDInterface
      */
     protected function createArgs()
     {
-        return [
+        $args = [
             'IDs' => [
                 'type' => Type::nonNull($this->generateInputType()),
             ],
         ];
+        $this->extend('updateArgs', $args);
+
+        return $args;
     }
 
     protected function generateInputType()

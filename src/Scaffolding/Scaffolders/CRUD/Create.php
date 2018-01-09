@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
+use SilverStripe\Core\Extensible;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
@@ -20,6 +21,7 @@ use SilverStripe\ORM\FieldType\DBField;
 class Create extends MutationScaffolder implements CRUDInterface
 {
     use DataObjectTypeTrait;
+    use Extensible;
 
     /**
      * CreateOperationScaffolder constructor.
@@ -38,9 +40,10 @@ class Create extends MutationScaffolder implements CRUDInterface
                 if (singleton($this->dataObjectClass)->canCreate($context['currentUser'], $context)) {
                     /** @var DataObject $newObject */
                     $newObject = Injector::inst()->create($this->dataObjectClass);
+                    $this->extend('onBeforeMutation', $newObject, $args, $context, $info);
                     $newObject->update($args['Input']);
                     $newObject->write();
-                    
+                    $this->extend('onAfterMutation', $newObject, $args, $context, $info);
                     return DataObject::get_by_id($this->dataObjectClass, $newObject->ID);
                 } else {
                     throw new Exception("Cannot create {$this->dataObjectClass}");
@@ -62,11 +65,14 @@ class Create extends MutationScaffolder implements CRUDInterface
      */
     protected function createArgs()
     {
-        return [
+        $args = [
             'Input' => [
                 'type' => Type::nonNull($this->generateInputType()),
             ],
         ];
+        $this->extend('updateArgs', $args);
+
+        return $args;
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use GraphQL\Type\Definition\Type;
+use SilverStripe\Core\Extensible;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
@@ -20,6 +21,7 @@ use Exception;
 class Read extends QueryScaffolder implements CRUDInterface
 {
     use DataObjectTypeTrait;
+    use Extensible;
 
     /**
      * ReadOperationScaffolder constructor.
@@ -44,7 +46,7 @@ class Read extends QueryScaffolder implements CRUDInterface
             }
     
             $list = DataList::create($this->dataObjectClass);
-    
+            $this->extend('updateList', $list, $args, $context, $info);
             return $list;
         };
         
@@ -57,6 +59,17 @@ class Read extends QueryScaffolder implements CRUDInterface
     public function getIdentifier()
     {
         return SchemaScaffolder::READ;
+    }
+
+    /**
+     * @return array
+     */
+    protected function createArgs()
+    {
+        $args = [];
+        $this->extend('updateArgs', $args);
+
+        return $args;
     }
 
     /**

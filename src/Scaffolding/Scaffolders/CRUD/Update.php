@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
+use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
@@ -20,6 +21,7 @@ use SilverStripe\ORM\FieldType\DBField;
 class Update extends MutationScaffolder implements CRUDInterface
 {
     use DataObjectTypeTrait;
+    use Extensible;
 
     /**
      * UpdateOperationScaffolder constructor.
@@ -48,9 +50,10 @@ class Update extends MutationScaffolder implements CRUDInterface
             }
 
             if ($obj->canEdit($context['currentUser'])) {
+                $this->extend('onBeforeMutation', $obj, $args, $context, $info);
                 $obj->update($args['Input']);
                 $obj->write();
-
+                $this->extend('onAfterMutation', $obj, $args, $context, $info);
                 return $obj;
             } else {
                 throw new Exception(sprintf(
@@ -76,7 +79,7 @@ class Update extends MutationScaffolder implements CRUDInterface
      */
     protected function createArgs()
     {
-        return [
+        $args = [
             'ID' => [
                 'type' => Type::nonNull(Type::id())
             ],
@@ -84,6 +87,9 @@ class Update extends MutationScaffolder implements CRUDInterface
                 'type' => Type::nonNull($this->generateInputType()),
             ],
         ];
+        $this->extend('updateArgs', $args);
+
+        return $args;
     }
 
     /**
