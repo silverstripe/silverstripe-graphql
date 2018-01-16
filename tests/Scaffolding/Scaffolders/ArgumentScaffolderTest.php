@@ -36,5 +36,9 @@ class ArgumentScaffolderTest extends SapphireTest
         $this->assertEquals('Bar', $arr['defaultValue']);
         $this->assertInstanceOf(NonNull::class, $arr['type']);
         $this->assertInstanceOf(StringType::class, $arr['type']->getWrappedType());
+
+        $scaffolder->setDefaultValue(null);
+        $arr = $scaffolder->toArray();
+        $this->assertArrayNotHasKey('defaultValue', $arr);
     }
 }
