@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\Language\SourceLocation;
-use GraphQL\Schema;
+use GraphQL\Type\Schema;
 use GraphQL\GraphQL;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Injector\Injectable;
@@ -219,7 +219,7 @@ class Manager
     {
         $schema = $this->schema();
         $context = $this->getContext();
-        $result = GraphQL::executeAndReturnResult($schema, $query, null, $context, $params);
+        $result = GraphQL::executeQuery($schema, $query, null, $context, $params);
 
         return $result;
     }

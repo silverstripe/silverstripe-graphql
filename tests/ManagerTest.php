@@ -12,9 +12,8 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Member;
 use GraphQL\Error\Error;
-use GraphQL\Schema;
+use GraphQL\Type\Schema;
 use GraphQL\Language\SourceLocation;
-use SilverStripe\Security\Security;
 
 class ManagerTest extends SapphireTest
 {
