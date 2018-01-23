@@ -2,27 +2,27 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use Exception;
-use SilverStripe\ORM\DataList;
-use SilverStripe\ORM\DataObject;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\ORM\SS_List;
-use SilverStripe\View\ArrayData;
-use SilverStripe\ORM\DataObjectInterface;
-use SilverStripe\ORM\FieldType\DBField;
-use SilverStripe\GraphQL\Manager;
 use GraphQL\Type\Definition\ObjectType;
-use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
-use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
-use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
-use SilverStripe\Core\Config\Config;
+use InvalidArgumentException;
 use SilverStripe\Core\ClassInfo;
-use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
+use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
+use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
+use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
+use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 use SilverStripe\ORM\ArrayLib;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
+use SilverStripe\ORM\ArrayList;
+use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\DataObjectInterface;
+use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\ORM\SS_List;
+use SilverStripe\View\ArrayData;
 
 /**
  * Scaffolds a DataObjectTypeCreator.
@@ -31,6 +31,17 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 {
     use DataObjectTypeTrait;
     use Chainable;
+
+    /**
+     * Minimum fields that any type will expose. Useful for implicitly
+     * created types, e.g. exposing a has_one.
+     *
+     * @config
+     * @var array
+     */
+    private static $default_fields = [
+        'ID' => 'ID',
+    ];
 
     /**
      * @var ArrayList

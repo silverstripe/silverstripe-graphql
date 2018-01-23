@@ -4,7 +4,7 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use League\Flysystem\Exception;
 use SilverStripe\Core\Injector\Injector;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;

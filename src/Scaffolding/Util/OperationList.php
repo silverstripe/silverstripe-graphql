@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Scaffolding\Util;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
 use SilverStripe\ORM\ArrayList;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 
 /**
  * An array list designed to work with OperationScaffolders
