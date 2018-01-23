@@ -3,18 +3,16 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use League\Flysystem\Exception;
+use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\ORM\ArrayLib;
-use SilverStripe\Core\ClassInfo;
-use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\View\ViewableData;
 
@@ -24,13 +22,7 @@ use SilverStripe\View\ViewableData;
  */
 class SchemaScaffolder implements ManagerMutatorInterface
 {
-    const CREATE = 'create';
-
-    const READ = 'read';
-
-    const UPDATE = 'update';
-
-    const DELETE = 'delete';
+    use Extensible;
 
     const ALL = '*';
 
@@ -157,7 +149,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
             return $query;
         }
 
-        $operationScaffold = (new QueryScaffolder(
+        $operationScaffold = (new ListQueryScaffolder(
             $name,
             ScaffoldingUtil::typeNameForDataObject($class),
             $resolver
@@ -270,7 +262,36 @@ class SchemaScaffolder implements ManagerMutatorInterface
      */
     public function addToManager(Manager $manager)
     {
-        // Register fixed types
+
+        $this->registerFixedTypes($manager);
+        $this->registerAncestralTypes($manager);
+
+        $this->extend('onBeforeAddToManager', $manager);
+
+        // Add all DataObjects to the manager
+        foreach ($this->types as $scaffold) {
+            $scaffold->addToManager($manager);
+        }
+
+        foreach ($this->queries as $scaffold) {
+            $scaffold->addToManager($manager);
+        }
+
+        foreach ($this->mutations as $scaffold) {
+            $scaffold->addToManager($manager);
+        }
+
+        $this->extend('onAfterAddToManager', $manager);
+    }
+
+    /**
+     * Registers special SS types that are made available to all schemas, e.g. DBFile ObjectType
+     *
+     * @param Manager $manager
+     * @throws Exception
+     */
+    protected function registerFixedTypes(Manager $manager)
+    {
         $fixedTypes = Config::inst()->get(self::class, 'fixed_types');
         if ($fixedTypes) {
             if (!is_array($fixedTypes)) {
@@ -304,7 +325,14 @@ class SchemaScaffolder implements ManagerMutatorInterface
                 $instance->addToManager($manager);
             }
         }
+    }
 
+    /**
+     * Registers types and respective operations for all ancestors of exposed dataobjects
+     * @param Manager $manager
+     */
+    protected function registerAncestralTypes(Manager $manager)
+    {
         foreach ($this->types as $scaffold) {
             // Add dependent classes, e.g has_one, has_many nested queries
             foreach ($scaffold->getDependentClasses() as $class) {
@@ -324,24 +352,10 @@ class SchemaScaffolder implements ManagerMutatorInterface
                     }
                 }
                 foreach ($exposedOperations as $op) {
-                    if ($op instanceof CRUDInterface) {
-                        $ancestorType->operation($op->getIdentifier());
-                    }
+                    $identifier = OperationScaffolder::getIdentifier($op);
+                    $ancestorType->operation($identifier);
                 }
             }
-        }
-
-        // Add all DataObjects to the manager
-        foreach ($this->types as $scaffold) {
-            $scaffold->addToManager($manager);
-        }
-
-        foreach ($this->queries as $scaffold) {
-            $scaffold->addToManager($manager);
-        }
-
-        foreach ($this->mutations as $scaffold) {
-            $scaffold->addToManager($manager);
         }
     }
 }

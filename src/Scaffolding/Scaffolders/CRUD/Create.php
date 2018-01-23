@@ -3,13 +3,11 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use SilverStripe\Core\Extensible;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use GraphQL\Type\Definition\InputObjectType;
-use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Exception;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
@@ -18,7 +16,7 @@ use SilverStripe\ORM\FieldType\DBField;
 /**
  * A generic "create" operation for a DataObject.
  */
-class Create extends MutationScaffolder implements CRUDInterface
+class Create extends MutationScaffolder
 {
     use DataObjectTypeTrait;
     use Extensible;
@@ -40,11 +38,8 @@ class Create extends MutationScaffolder implements CRUDInterface
                 if (singleton($this->dataObjectClass)->canCreate($context['currentUser'], $context)) {
                     /** @var DataObject $newObject */
                     $newObject = Injector::inst()->create($this->dataObjectClass);
-                    $this->extend('onBeforeMutation', $newObject, $args, $context, $info);
-                    $newObject->update($args['Input']);
-                    $newObject->write();
-                    $this->extend('onAfterMutation', $newObject, $args, $context, $info);
-                    return DataObject::get_by_id($this->dataObjectClass, $newObject->ID);
+                    $results = $this->extend('augmentMutation', $newObject, $args, $context, $info);
+                     return DataObject::get_by_id($this->dataObjectClass, $newObject->ID);
                 } else {
                     throw new Exception("Cannot create {$this->dataObjectClass}");
                 }
@@ -53,36 +48,39 @@ class Create extends MutationScaffolder implements CRUDInterface
     }
 
     /**
-     * @return string
+     * @param Manager $manager
      */
-    public function getIdentifier()
+    public function addToManager(Manager $manager)
     {
-        return SchemaScaffolder::CREATE;
+        $manager->addType($this->generateInputType($manager));
+        parent::addToManager($manager);
     }
 
     /**
+     * @param Manager $manager
      * @return array
      */
-    protected function createArgs()
+    protected function createArgs(Manager $manager)
     {
         $args = [
             'Input' => [
-                'type' => Type::nonNull($this->generateInputType()),
+                'type' => $manager->getType($this->inputTypeName()),
             ],
         ];
-        $this->extend('updateArgs', $args);
+        $this->extend('updateArgs', $args, $manager);
 
         return $args;
     }
 
     /**
+     * @param Manager $manager
      * @return InputObjectType
      */
-    protected function generateInputType()
+    protected function generateInputType(Manager $manager)
     {
         return new InputObjectType([
-            'name' => $this->typeName().'CreateInputType',
-            'fields' => function () {
+            'name' => $this->inputTypeName(),
+            'fields' => function () use ($manager) {
                 $fields = [];
                 $instance = $this->getDataObjectInstance();
 
@@ -95,8 +93,12 @@ class Create extends MutationScaffolder implements CRUDInterface
                 foreach ($db as $dbFieldName => $dbFieldType) {
                     /** @var DBField $result */
                     $result = $instance->obj($dbFieldName);
+                    // Skip complex fields, e.g. composite, as that would require scaffolding a new input type.
+                    if (!$result->isInternalGraphQLType()) {
+                        continue;
+                    }
                     $arr = [
-                        'type' => $result->getGraphQLType(),
+                        'type' => $result->getGraphQLType($manager),
                     ];
                     $fields[$dbFieldName] = $arr;
                 }
@@ -104,5 +106,13 @@ class Create extends MutationScaffolder implements CRUDInterface
                 return $fields;
             },
         ]);
+    }
+
+    /**
+     * @return string
+     */
+    protected function inputTypeName()
+    {
+        return $this->typeName().'CreateInputType';
     }
 }

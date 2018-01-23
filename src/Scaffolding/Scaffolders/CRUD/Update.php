@@ -4,13 +4,12 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\ORM\DataList;
 use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Exception;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
@@ -18,7 +17,7 @@ use SilverStripe\ORM\FieldType\DBField;
 /**
  * Scaffolds a generic update operation for DataObjects.
  */
-class Update extends MutationScaffolder implements CRUDInterface
+class Update extends MutationScaffolder
 {
     use DataObjectTypeTrait;
     use Extensible;
@@ -50,10 +49,13 @@ class Update extends MutationScaffolder implements CRUDInterface
             }
 
             if ($obj->canEdit($context['currentUser'])) {
-                $this->extend('onBeforeMutation', $obj, $args, $context, $info);
-                $obj->update($args['Input']);
-                $obj->write();
-                $this->extend('onAfterMutation', $obj, $args, $context, $info);
+                $results = $this->extend('augmentMutation', $obj, $args, $context, $info);
+                // Extension points that return false should kill the write operation
+                if (!in_array(false, $results, true)) {
+                    $obj->update($args['Input']);
+                    $obj->write();
+                }
+
                 return $obj;
             } else {
                 throw new Exception(sprintf(
@@ -65,43 +67,45 @@ class Update extends MutationScaffolder implements CRUDInterface
     }
 
     /**
-     * @return string
+     * @param Manager $manager
      */
-    public function getIdentifier()
+    public function addToManager(Manager $manager)
     {
-        return SchemaScaffolder::UPDATE;
+        $manager->addType($this->generateInputType($manager));
+        parent::addToManager($manager);
     }
 
     /**
      * Use a generated Input type, and require an ID.
      *
+     * @param Manager $manager
      * @return array
      */
-    protected function createArgs()
+    protected function createArgs(Manager $manager)
     {
         $args = [
             'ID' => [
                 'type' => Type::nonNull(Type::id())
             ],
             'Input' => [
-                'type' => Type::nonNull($this->generateInputType()),
+                'type' => Type::nonNull($manager->getType($this->inputTypeName())),
             ],
         ];
-        $this->extend('updateArgs', $args);
+        $this->extend('updateArgs', $args, $manager);
 
         return $args;
     }
 
     /**
      * Based on the args provided, create an Input type to add to the Manager.
-     *
+     * @param Manager $manager
      * @return InputObjectType
      */
-    protected function generateInputType()
+    protected function generateInputType(Manager $manager)
     {
         return new InputObjectType([
-            'name' => $this->typeName().'UpdateInputType',
-            'fields' => function () {
+            'name' => $this->inputTypeName(),
+            'fields' => function () use ($manager) {
                 $fields = [];
                 $instance = $this->getDataObjectInstance();
 
@@ -114,8 +118,12 @@ class Update extends MutationScaffolder implements CRUDInterface
                 foreach ($db as $dbFieldName => $dbFieldType) {
                     /** @var DBField $result */
                     $result = $instance->obj($dbFieldName);
+                    // Skip complex fields, e.g. composite, as that would require scaffolding a new input type.
+                    if (!$result->isInternalGraphQLType()) {
+                        continue;
+                    }
                     $arr = [
-                        'type' => $result->getGraphQLType(),
+                        'type' => $result->getGraphQLType($manager),
                     ];
                     $fields[$dbFieldName] = $arr;
                 }
@@ -123,4 +131,13 @@ class Update extends MutationScaffolder implements CRUDInterface
             }
         ]);
     }
+
+    /**
+     * @return string
+     */
+    protected function inputTypeName()
+    {
+        return $this->typeName().'UpdateInputType';
+    }
+
 }

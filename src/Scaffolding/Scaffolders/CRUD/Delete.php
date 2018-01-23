@@ -3,20 +3,20 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use SilverStripe\Core\Extensible;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\ORM\DataList;
 use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Exception;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
+use GraphQL\Type\Definition\ListOfType;
 
 /**
  * A generic delete operation.
  */
-class Delete extends MutationScaffolder implements CRUDInterface
+class Delete extends MutationScaffolder
 {
     use DataObjectTypeTrait;
     use Extensible;
@@ -39,7 +39,12 @@ class Delete extends MutationScaffolder implements CRUDInterface
             DB::get_conn()->withTransaction(function () use ($args, $context) {
                 $results = DataList::create($this->dataObjectClass)
                     ->byIDs($args['IDs']);
-                $this->extend('onBeforeMutation', $results, $args, $context, $info);
+                $results = $this->extend('augmentMutation', $results, $args, $context, $info);
+                // Extension points that return false should kill the deletion
+                if (in_array(false, $results, true)) {
+                    return;
+                }
+
                 foreach ($results as $obj) {
                     /** @var DataObject $obj */
                     if ($obj->canDelete($context['currentUser'])) {
@@ -52,34 +57,29 @@ class Delete extends MutationScaffolder implements CRUDInterface
                         ));
                     }
                 }
-                $this->extend('onAfterMutation', $args, $context, $info);
             });
         });
     }
 
     /**
-     * @return string
-     */
-    public function getIdentifier()
-    {
-        return SchemaScaffolder::DELETE;
-    }
-
-    /**
+     * @param Manager $manager
      * @return array
      */
-    protected function createArgs()
+    protected function createArgs(Manager $manager)
     {
         $args = [
             'IDs' => [
                 'type' => Type::nonNull($this->generateInputType()),
             ],
         ];
-        $this->extend('updateArgs', $args);
+        $this->extend('updateArgs', $args, $manager);
 
         return $args;
     }
 
+    /**
+     * @return ListOfType
+     */
     protected function generateInputType()
     {
         return Type::listOf(Type::id());
