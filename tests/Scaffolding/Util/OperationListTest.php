@@ -3,7 +3,7 @@
 namespace SilverStripe\GraphQL\Tests\Util;
 
 use SilverStripe\Dev\SapphireTest;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 

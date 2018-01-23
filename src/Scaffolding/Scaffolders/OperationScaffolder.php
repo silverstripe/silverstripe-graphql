@@ -2,7 +2,7 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;

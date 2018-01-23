@@ -8,7 +8,7 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 
 /**
  * Scaffolds a GraphQL query field.

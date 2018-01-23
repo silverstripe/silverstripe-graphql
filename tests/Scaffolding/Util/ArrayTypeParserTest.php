@@ -7,7 +7,7 @@ use GraphQL\Type\Definition\IntType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\StringType;
 use SilverStripe\Dev\SapphireTest;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Util\ArrayTypeParser;
 
 /**
