@@ -7,6 +7,7 @@ use SilverStripe\GraphQL\Pagination\Connection;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
+use GraphQL\Type\Definition\ResolveInfo;
 
 class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutatorInterface, ScaffolderInterface
 {
