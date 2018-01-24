@@ -58,9 +58,9 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     protected $operations;
 
     /**
-     * @var OperationList
+     * @var array
      */
-    protected $nestedQueries;
+    protected $nestedQueries = [];
 
     /**
      * DataObjectScaffold constructor.
@@ -90,7 +90,6 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         $this->fields = ArrayList::create([]);
         $this->operations = OperationList::create([]);
-        $this->nestedQueries = OperationList::create([]);
 
         $this->dataObjectClass = $dataObjectClass;
     }
@@ -330,7 +329,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function nestedQuery($fieldName, QueryScaffolder $queryScaffolder = null)
     {
-        $query = $this->nestedQueries->findByName($fieldName);
+        $query = isset($this->nestedQueries[$fieldName]) ? $this->nestedQueries[$fieldName] : null;
 
         if ($query) {
             return $query;
@@ -365,7 +364,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         $queryScaffolder->setChainableParent($this);
-        $this->nestedQueries->push($queryScaffolder);
+        $queryScaffolder->setNested(true);
+        $this->nestedQueries[$fieldName] = $queryScaffolder;
 
         return $queryScaffolder;
     }
@@ -556,6 +556,11 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         foreach ($this->operations as $op) {
             $op->addToManager($manager);
         }
+
+        foreach ($this->nestedQueries as $scaffold) {
+            $scaffold->addToManager($manager);
+        }
+
         $this->extend('onAfterAddToManager', $manager);
 
     }
@@ -618,10 +623,10 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         $queries = [];
         $inst = $this->getDataObjectInstance();
-        foreach ($this->nestedQueries as $q) {
-            $result = $inst->obj($q->getName());
+        foreach ($this->nestedQueries as $name => $q) {
+            $result = $inst->obj($name);
             if ($result instanceof DataList) {
-                $queries[$q->getName()] = $result->dataClass();
+                $queries[$name] = $result->dataClass();
             }
         }
 
@@ -703,9 +708,10 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             ];
         }
 
-        foreach ($this->nestedQueries as $scaffolder) {
+        foreach ($this->nestedQueries as $name => $scaffolder) {
             $scaffold = $scaffolder->scaffold($manager);
-            $fieldMap[$scaffolder->getName()] = $scaffold;
+            $scaffold['name'] = $name;
+            $fieldMap[$name] = $scaffold;
         }
 
         return $fieldMap;

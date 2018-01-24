@@ -71,32 +71,6 @@ class Manager
         /** @var Manager $manager */
         $manager = Injector::inst()->create(Manager::class);
 
-        if (isset($config['scaffolding'])) {
-            $scaffolder = SchemaScaffolder::createFromConfig($config['scaffolding']);
-        } else {
-            $scaffolder = new SchemaScaffolder();
-        }
-        if (isset($config['scaffolding_providers'])) {
-            foreach ($config['scaffolding_providers'] as $provider) {
-                if (!class_exists($provider)) {
-                    throw new InvalidArgumentException(sprintf(
-                        'Scaffolding provider %s does not exist.',
-                        $provider
-                    ));
-                }
-
-                $provider = Injector::inst()->create($provider);
-                if (!$provider instanceof ScaffoldingProvider) {
-                    throw new InvalidArgumentException(sprintf(
-                        'All scaffolding providers must implement the %s interface',
-                        ScaffoldingProvider::class
-                    ));
-                }
-                $scaffolder = $provider->provideGraphQLScaffolding($scaffolder);
-            }
-        }
-        $scaffolder->addToManager($manager);
-
         // Types (incl. Interfaces and InputTypes)
         if ($config && array_key_exists('types', $config)) {
             foreach ($config['types'] as $name => $typeCreatorClass) {
@@ -146,6 +120,33 @@ class Manager
                 }, $name);
             }
         }
+
+        if (isset($config['scaffolding'])) {
+            $scaffolder = SchemaScaffolder::createFromConfig($config['scaffolding']);
+        } else {
+            $scaffolder = new SchemaScaffolder();
+        }
+        if (isset($config['scaffolding_providers'])) {
+            foreach ($config['scaffolding_providers'] as $provider) {
+                if (!class_exists($provider)) {
+                    throw new InvalidArgumentException(sprintf(
+                        'Scaffolding provider %s does not exist.',
+                        $provider
+                    ));
+                }
+
+                $provider = Injector::inst()->create($provider);
+                if (!$provider instanceof ScaffoldingProvider) {
+                    throw new InvalidArgumentException(sprintf(
+                        'All scaffolding providers must implement the %s interface',
+                        ScaffoldingProvider::class
+                    ));
+                }
+                $scaffolder = $provider->provideGraphQLScaffolding($scaffolder);
+            }
+        }
+        $scaffolder->addToManager($manager);
+
 
         return $manager;
     }

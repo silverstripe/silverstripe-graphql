@@ -18,14 +18,32 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
     use Extensible;
 
     /**
+     * @var bool
+     */
+    protected $isNested = false;
+
+    /**
      * @param Manager $manager
      */
     public function addToManager(Manager $manager)
     {
         $this->extend('onBeforeAddToManager', $manager);
-        $manager->addQuery(function () use ($manager) {
-            return $this->scaffold($manager);
-        }, $this->getName());
+        if (!$this->isNested) {
+            $manager->addQuery(function () use ($manager) {
+                return $this->scaffold($manager);
+            }, $this->getName());
+        }
+    }
+
+    /**
+     * @param $bool
+     * @return $this
+     */
+    public function setNested($bool)
+    {
+        $this->isNested = (boolean)$bool;
+
+        return $this;
     }
 
     /**

@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use GraphQL\Type\Definition\Type;
-use SilverStripe\Dev\Debug;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
@@ -22,6 +21,11 @@ class ListQueryScaffolder extends QueryScaffolder
      * @var array
      */
     protected $sortableFields = [];
+
+    /**
+     * @var PaginationScaffolder
+     */
+    protected $paginationScaffolder;
 
     /**
      * @param bool $bool
@@ -72,16 +76,28 @@ class ListQueryScaffolder extends QueryScaffolder
 
     /**
      * @param Manager $manager
+     */
+    public function addToManager(Manager $manager)
+    {
+        if ($this->usePagination) {
+            $paginationScaffolder = $this->getPaginationScaffolder($manager);
+            $paginationScaffolder->addToManager($manager);
+        }
+
+        parent::addToManager($manager);
+    }
+
+    /**
+     * @param Manager $manager
      *
      * @return array
      */
     public function scaffold(Manager $manager)
     {
         if ($this->usePagination) {
-            return (new PaginationScaffolder(
-                $manager,
-                $this->createConnection($manager)
-            ))->toArray();
+            $paginationScaffolder = $this->getPaginationScaffolder($manager);
+
+            return $paginationScaffolder->scaffold($manager);
         }
 
         return [
@@ -105,6 +121,23 @@ class ListQueryScaffolder extends QueryScaffolder
             ->setConnectionResolver($this->createResolverFunction())
             ->setArgs($this->createArgs($manager))
             ->setSortableFields($this->sortableFields);
+    }
+
+    /**
+     * @param Manager $manager
+     * @return PaginationScaffolder
+     */
+    protected function getPaginationScaffolder(Manager $manager)
+    {
+        if (!$this->paginationScaffolder) {
+            $this->paginationScaffolder = new PaginationScaffolder(
+                $this->operationName,
+                $manager,
+                $this->createConnection($manager)
+            );
+        }
+
+        return $this->paginationScaffolder;
     }
 
 }

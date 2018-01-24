@@ -211,6 +211,22 @@ class Connection implements OperationResolver
     }
 
     /**
+     * @return string
+     */
+    public function getConnectionTypeName()
+    {
+        return $this->connectionName . 'Connection';
+    }
+
+    /**
+     * @return string
+     */
+    public function getEdgeTypeName()
+    {
+        return $this->connectionName . 'Edge';
+    }
+
+    /**
      * Pagination support for the connection type. Currently doesn't support
      * cursors, just basic offset pagination.
      *
@@ -275,7 +291,7 @@ class Connection implements OperationResolver
         }
 
         return new ObjectType([
-            'name' => $this->connectionName . 'Edge',
+            'name' => $this->getEdgeTypeName(),
             'description' => 'The collections edge',
             'fields' => [
                 'node' => [
@@ -295,7 +311,7 @@ class Connection implements OperationResolver
     public function toType()
     {
         return new ObjectType([
-            'name' => $this->connectionName . 'Connection',
+            'name' => $this->getConnectionTypeName(),
             'description' => $this->description,
             'fields' => function () {
                 return $this->fields();
