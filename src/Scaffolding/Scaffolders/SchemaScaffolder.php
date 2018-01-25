@@ -26,6 +26,16 @@ class SchemaScaffolder implements ManagerMutatorInterface
 
     const ALL = '*';
 
+    const CREATE = 'create';
+
+    const READ = 'read';
+
+    const UPDATE = 'update';
+
+    const DELETE = 'delete';
+
+    const READ_ONE = 'readOne';
+
     /**
      * @var DataObjectScaffolder[]
      */
