@@ -1677,6 +1677,7 @@ and extension for `DataObjectScaffolder` to update the scaffolding before it is 
 ```php
 class MyDataObjectScaffolderExtension extends Extension
 {
+  
   public function onBeforeAddToManager(Manager $manager)
   {
     if ($this->owner->getDataObjectInstance()->hasExtension(MyExtension::class)) {
@@ -1692,10 +1693,12 @@ The basic `CRUD` operations that come with the module are all extensible with`up
 ```php
 class MyCreateExtension extends Extension
 {
+  
   public function updateArgs(&$args, Manager $manager)
   {
     $args['SendEmail'] = ['type' => Type::bool()];
   }
+  
   
   public function augmentMutation($obj, $args, $context, $info)
   {
@@ -1716,11 +1719,14 @@ the `Product` interface.
 ```php
 class AddToCartOperation extends MutationScaffolder
 {
+   
    public function __construct($dataObjectClass)
    {
       parent::__construct($this->createOperationName(), $dataObjectClass);
       if (!$this->getDataObjectInstance() instanceof ProductInterace) {
-        throw new InvalidArgumentException('addToCart operation is only for implementors of ProductrInterface');
+        throw new InvalidArgumentException(
+            'addToCart operation is only for implementors of ProductInterface'
+        );
       }
       $this->setResolver(function($obj, array $args) {
         $record = DataObject::get_by_id($this->dataObjectClass, $args['ID']);
@@ -1734,12 +1740,14 @@ class AddToCartOperation extends MutationScaffolder
       });
    }
    
+   
    protected function createArgs(Manager $manager)
    {
       return [
         'ID' => ['type' => Type::nonNull(Type::id())]
       ];
    }
+   
    
    protected function createOperationName()
    {
