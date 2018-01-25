@@ -36,6 +36,7 @@ composer require silverstripe/graphql
    - [Scaffolding through the config layer](#scaffolding-through-the-config-layer)
    - [Scaffolding through procedural code](#scaffolding-through-procedural-code)
    - [Exposing a DataObject to GraphQL](#exposing-a-dataobject-to-graphql)
+     - [Available operations](#available-operations)
      - [Setting field descriptions](#setting-field-descriptions)
      - [Wildcarding and whitelisting fields](#wildcarding-and-whitelisting-fields)
      - [Adding arguments](#adding-arguments)
@@ -47,8 +48,16 @@ composer require silverstripe/graphql
      - [Adding arbitrary queries and mutations](#adding-arbitrary-queries-and-mutations)
      - [Dealing with inheritance](#dealing-with-inheritance)
      - [Querying types that have descendants](#querying-types-that-have-descendants)
+   - [Versioned content](#versioned-content)
+     - [Version-specific-operations](#version-specific-operations)
+     - [Version-specific arguments](#version-specific-arguments)
+     - [Version-specific fields](#version-specific-fields)
    - [Define interfaces](#define-interfaces)
    - [Define input types](#define-input-types)
+ - [Extending](#extending)
+   - [Adding/removing fields from thirdparty code](#adding-removing-fields-from-thirdparty-code)
+   - [Updating the core operations](#updating-the-core-operations)
+   - [Adding new operations](#adding-new-operations)
  - [Testing/debugging queries and mutations](#testingdebugging-queries-and-mutations)
  - [Authentication](#authentication)
    - [Default authentication](#default-authentication)
@@ -1564,27 +1573,27 @@ to the result set.
   <td>
     <p>One of:</p>
     <ul>
-      <li>**ARCHIVE** (Read from a specific date in the archive)</li>
-      <li>**LIVE** (Read from the live stage)</li>
-      <li>**DRAFT** (Read from the draft stage)</li>
-      <li>**LATEST** (Read the latest version from each record)</li>
-      <li>**STATUS** (Filter records by their status. Must supply a `Status` parameter)</li>
+      <li><strong>ARCHIVE</strong> (Read from a specific date in the archive)</li>
+      <li><strong>LIVE</strong> (Read from the live stage)</li>
+      <li><strong>DRAFT</strong> (Read from the draft stage)</li>
+      <li><strong>LATEST</strong> (Read the latest version from each record)</li>
+      <li><strong>STATUS</strong> (Filter records by their status. Must supply a `Status` parameter)</li>
      </ul>
   </td>
 </tr>
 <tr>
   <td>ArchiveDate</td>
-  <td>The date, in `YYYY-MM-DD` format to use when in `ARCHIVE` mode.</td>
+  <td>The date, in <code>YYYY-MM-DD</code> format to use when in <code>ARCHIVE</code> mode.</td>
 </tr>
 <tr>
   <td>[Status]</td>
   <td>
     <p>A list of statuses that records must match. Options:</p>
     <ul>
-      <li>**PUBLISHED** (Include published records)</li>
-      <li>**DRAFT** (Include draft records)</li>
-      <li>**MODIFIED** (Include records that have draft changes)</li>
-      <li>**ARCHIVED** (Include records that have been deleted from stage)</li>
+      <li><strong>PUBLISHED</strong> (Include published records)</li>
+      <li><strong>DRAFT</strong> (Include draft records)</li>
+      <li><strong>MODIFIED</strong> (Include records that have draft changes)</li>
+      <li><strong>ARCHIVED</strong> (Include records that have been deleted from stage)</li>
     </ul>
    </td>
 </tr> 
@@ -1665,7 +1674,7 @@ with custom needs.
 Suppose you have a module that adds new fields to dataobjects that use your extension. You can write
 and extension for `DataObjectScaffolder` to update the scaffolding before it is sent to the `Manager`.
 
-```
+```php
 class MyDataObjectScaffolderExtension extends Extension
 {
   public function onBeforeAddToManager(Manager $manager)
@@ -1680,7 +1689,7 @@ class MyDataObjectScaffolderExtension extends Extension
 ### Updating the core operations
 The basic `CRUD` operations that come with the module are all extensible with`updateArgs` and `augmentMutation` (or `updateList` for read operations).
 
-```
+```php
 class MyCreateExtension extends Extension
 {
   public function updateArgs(&$args, Manager $manager)
@@ -1704,7 +1713,7 @@ to some or all types, you can write one and register it with the scaffolder. Let
 an ecommerce module that wants to offer an `addToCart` mutation to any dataobject that implements
 the `Product` interface.
 
-```
+```php
 class AddToCartOperation extends MutationScaffolder
 {
    public function __construct($dataObjectClass)
