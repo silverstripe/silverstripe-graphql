@@ -6,7 +6,7 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\OperationScaffolderFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ArgumentScaffolder;

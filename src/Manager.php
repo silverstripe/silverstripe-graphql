@@ -2,7 +2,7 @@
 
 namespace SilverStripe\GraphQL;
 
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\Language\SourceLocation;
 use GraphQL\Schema;

@@ -12,7 +12,7 @@ use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeInt;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;

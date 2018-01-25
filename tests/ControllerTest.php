@@ -186,7 +186,7 @@ class ControllerTest extends SapphireTest
     {
         Config::modify()->set(Controller::class, 'cors', [
             'Enabled' => true,
-            'Allow-Origin' => 'localhost',
+            'Allow-Origin' => 'http://localhost',
             'Allow-Headers' => 'Authorization, Content-Type',
             'Allow-Methods' =>  'GET, POST, OPTIONS',
             'Max-Age' => 86400
@@ -194,7 +194,7 @@ class ControllerTest extends SapphireTest
 
         $controller = new Controller();
         $request = new HTTPRequest('GET', '');
-        $request->addHeader('Origin', 'localhost');
+        $request->addHeader('Origin', 'http://localhost');
         $response = new HTTPResponse();
         $response = $controller->addCorsHeaders($request, $response);
 
@@ -202,10 +202,84 @@ class ControllerTest extends SapphireTest
         $this->assertEquals('200', $response->getStatusCode());
 
         // Check returned headers.  A valid origin should return 4 headers.
-        $this->assertEquals('localhost', $response->getHeader('Access-Control-Allow-Origin'));
+        $this->assertEquals('http://localhost', $response->getHeader('Access-Control-Allow-Origin'));
         $this->assertEquals('Authorization, Content-Type', $response->getHeader('Access-Control-Allow-Headers'));
         $this->assertEquals('GET, POST, OPTIONS', $response->getHeader('Access-Control-Allow-Methods'));
         $this->assertEquals(86400, $response->getHeader('Access-Control-Max-Age'));
+    }
+
+    public function testAddCorsHeadersRefererAllowed()
+    {
+        Config::modify()->set(Controller::class, 'cors', [
+            'Enabled' => true,
+            'Allow-Origin' => 'http://localhost',
+            'Allow-Headers' => 'Authorization, Content-Type',
+            'Allow-Methods' =>  'GET, POST, OPTIONS',
+            'Max-Age' => 86400
+        ]);
+
+        $controller = new Controller();
+        $request = new HTTPRequest('GET', '');
+        $request->addHeader('Referer', 'http://localhost/some-url/?bob=1');
+        $response = new HTTPResponse();
+        $response = $controller->addCorsHeaders($request, $response);
+
+        $this->assertTrue($response instanceof HTTPResponse);
+        $this->assertEquals('200', $response->getStatusCode());
+
+        // Check returned headers.  A valid origin should return 4 headers.
+        $this->assertEquals('http://localhost', $response->getHeader('Access-Control-Allow-Origin'));
+        $this->assertEquals('Authorization, Content-Type', $response->getHeader('Access-Control-Allow-Headers'));
+        $this->assertEquals('GET, POST, OPTIONS', $response->getHeader('Access-Control-Allow-Methods'));
+        $this->assertEquals(86400, $response->getHeader('Access-Control-Max-Age'));
+    }
+
+    public function testAddCorsHeadersRefererPortAllowed()
+    {
+        Config::modify()->set(Controller::class, 'cors', [
+            'Enabled' => true,
+            'Allow-Origin' => 'http://localhost:8181',
+            'Allow-Headers' => 'Authorization, Content-Type',
+            'Allow-Methods' =>  'GET, POST, OPTIONS',
+            'Max-Age' => 86400
+        ]);
+
+        $controller = new Controller();
+        $request = new HTTPRequest('GET', '');
+        $request->addHeader('Referer', 'http://localhost:8181/some-url/?bob=1');
+        $response = new HTTPResponse();
+        $response = $controller->addCorsHeaders($request, $response);
+
+        $this->assertTrue($response instanceof HTTPResponse);
+        $this->assertEquals('200', $response->getStatusCode());
+
+        // Check returned headers.  A valid origin should return 4 headers.
+        $this->assertEquals('http://localhost:8181', $response->getHeader('Access-Control-Allow-Origin'));
+        $this->assertEquals('Authorization, Content-Type', $response->getHeader('Access-Control-Allow-Headers'));
+        $this->assertEquals('GET, POST, OPTIONS', $response->getHeader('Access-Control-Allow-Methods'));
+        $this->assertEquals(86400, $response->getHeader('Access-Control-Max-Age'));
+    }
+
+    /**
+     * Test fail on referer port
+     */
+    public function testAddCorsHeadersRefererPortDisallowed()
+    {
+        $this->expectException(HTTPResponse_Exception::class);
+
+        Config::modify()->set(Controller::class, 'cors', [
+            'Enabled' => true,
+            'Allow-Origin' => 'http://localhost:9090',
+            'Allow-Headers' => 'Authorization, Content-Type',
+            'Allow-Methods' =>  'GET, POST, OPTIONS',
+            'Max-Age' => 86400
+        ]);
+
+        $controller = new Controller();
+        $request = new HTTPRequest('GET', '');
+        $request->addHeader('Referer', 'http://localhost:8080/some-url/?bob=1');
+        $response = new HTTPResponse();
+        $controller->addCorsHeaders($request, $response);
     }
 
     public function testAddCorsHeadersOriginAllowedWildcard()
@@ -244,18 +318,16 @@ class ControllerTest extends SapphireTest
         $controller = new Controller();
         $request = new HTTPRequest('GET', '');
         $response = new HTTPResponse();
-        $response = $controller->addCorsHeaders($request, $response);
-
-        $this->assertTrue($response instanceof HTTPResponse);
-        $this->assertEquals('403', $response->getStatusCode());
+        $controller->addCorsHeaders($request, $response);
     }
 
     /**
-     * {@inheritDoc}
-     * @expectedException \SilverStripe\Control\HTTPResponse_Exception
+     * HTTP OPTIONS without cors should error
      */
     public function testAddCorsHeadersResponseCORSDisabled()
     {
+        $this->expectException(HTTPResponse_Exception::class);
+
         Config::modify()->set(Controller::class, 'cors', [
             'Enabled' => false
         ]);
@@ -263,10 +335,7 @@ class ControllerTest extends SapphireTest
         $controller = new Controller();
         $request = new HTTPRequest('OPTIONS', '');
         $request->addHeader('Origin', 'localhost');
-        $response = $controller->index($request);
-
-        $this->assertTrue($response instanceof HTTPResponse);
-        $this->assertEquals('405', $response->getStatusCode());
+        $controller->index($request);
     }
 
     protected function getType(Manager $manager)
