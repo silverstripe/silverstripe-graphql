@@ -68,7 +68,7 @@ class OperationList extends ArrayList
             return false;
         }
         return $this->findItemByCallback(function (OperationScaffolder $item) use ($scaffoldClass) {
-            return $item instanceof $scaffoldClass;
+            return get_class($item) === $scaffoldClass;
         });
     }
 

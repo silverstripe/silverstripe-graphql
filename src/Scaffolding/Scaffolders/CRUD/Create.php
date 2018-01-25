@@ -91,7 +91,7 @@ class Create extends MutationScaffolder
                 unset($db['ID']);
 
                 foreach ($db as $dbFieldName => $dbFieldType) {
-                    /** @var DBField $result */
+                    /** @var DBField|TypeCreatorExtension $result */
                     $result = $instance->obj($dbFieldName);
                     // Skip complex fields, e.g. composite, as that would require scaffolding a new input type.
                     if (!$result->isInternalGraphQLType()) {
