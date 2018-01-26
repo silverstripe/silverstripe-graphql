@@ -223,11 +223,9 @@ The query contained in the `query` parameter can be reformatted as follows:
   readMembers {
     edges {
       node {
-        ... on Member {
-          ID
-          FirstName
-          Email
-        }
+        ID
+        FirstName
+        Email
       }
     }
   }
@@ -241,11 +239,9 @@ query ($Email: String) {
   readMembers(Email: $Email) {
     edges {
       node {
-        ... on Member {
-          ID
-          FirstName
-          Email
-        }
+        ID
+        FirstName
+        Email
       }
     }
   }
@@ -267,11 +263,9 @@ You could express this query inline as a single query as below:
   readMembers(Email: "john@example.com") {
     edges {
       node {
-        ... on Member {
-          ID
-          FirstName
-          Email
-        }
+        ID
+        FirstName
+        Email
       }
     }
   }
@@ -719,10 +713,8 @@ query {
   readPosts {
     edges {
       node {
-        ... on Post {
-          Title
-          Content
-        }
+        Title
+        Content
       }
     }
   }
@@ -1101,10 +1093,8 @@ query readPosts(Title: "Japan", sortBy: [{field:Title, direction:DESC}]) {
 query readComments {
   edges {
     node {
-      ... on Comment {
-        Author
-        Comment
-      }
+      Author
+      Comment
     }
   }
 }
