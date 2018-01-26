@@ -33,7 +33,7 @@ class ListQueryScaffolder extends QueryScaffolder
      */
     public function setUsePagination($bool)
     {
-        $this->usePagination = (bool) $bool;
+        $this->usePagination = (bool)$bool;
 
         return $this;
     }
@@ -47,7 +47,7 @@ class ListQueryScaffolder extends QueryScaffolder
         $this->sortableFields = array_unique(
             array_merge(
                 $this->sortableFields,
-                (array) $fields
+                (array)$fields
             )
         );
 
@@ -68,7 +68,7 @@ class ListQueryScaffolder extends QueryScaffolder
             }
         }
         if (isset($config['paginate'])) {
-            $this->setUsePagination((bool) $config['paginate']);
+            $this->setUsePagination((bool)$config['paginate']);
         }
 
         return $this;
@@ -117,7 +117,9 @@ class ListQueryScaffolder extends QueryScaffolder
     protected function createConnection(Manager $manager)
     {
         return Connection::create($this->operationName)
-            ->setConnectionType($this->getType($manager))
+            ->setConnectionType(function () use ($manager) {
+                return $this->getType($manager);
+            })
             ->setConnectionResolver($this->createResolverFunction())
             ->setArgs($this->createArgs($manager))
             ->setSortableFields($this->sortableFields);

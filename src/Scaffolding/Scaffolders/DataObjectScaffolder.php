@@ -282,6 +282,19 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     }
 
     /**
+     * Adds all operations that are registered
+     *
+     * @return $this
+     */
+    public function addAllOperations()
+    {
+        foreach(OperationScaffolder::getOperations() as $id => $operation) {
+            $this->operation($id);
+        }
+        return $this;
+    }
+
+    /**
      * Find or make an operation.
      *
      * @param string $operation
