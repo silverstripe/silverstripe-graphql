@@ -27,8 +27,7 @@ composer require silverstripe/graphql
    - [Define types](#define-types)
    - [Define queries](#define-queries)
    - [Pagination](#pagination)
-     - [Setting pagination and sorting options 
-](#setting-pagination-and-sorting-options)
+     - [Setting pagination and sorting options](#setting-pagination-and-sorting-options)
    - [Nested connections](#nested-connections)
    - [Define Mutations](#define-mutations)
  - [Scaffolding DataObjects into the schema](#scaffolding-dataobjects-into-the-schema)
@@ -67,11 +66,11 @@ composer require silverstripe/graphql
  - [Cross-Origin Resource Sharing (CORS)](#cross-origin-resource-sharing-cors)
    - [Sample Custom CORS Config](#sample-custom-cors-config)
  - [TODO](#todo)
-   
-   
-   
- 
- 
+
+
+
+
+
 ## Usage
 
 GraphQL is used through a single route which defaults to `/graphql`. You need
@@ -222,9 +221,15 @@ The query contained in the `query` parameter can be reformatted as follows:
 ```graphql
 {
   readMembers {
-    ID
-    FirstName
-    Email
+    edges {
+      node {
+        ... on Member {
+          ID
+          FirstName
+          Email
+        }
+      }
+    }
   }
 }
 ```
@@ -234,9 +239,15 @@ You can apply the `Email` filter in the above example like so:
 ```graphql
 query ($Email: String) {
   readMembers(Email: $Email) {
-    ID
-    FirstName
-    Email
+    edges {
+      node {
+        ... on Member {
+          ID
+          FirstName
+          Email
+        }
+      }
+    }
   }
 }
 ```
@@ -246,6 +257,24 @@ And add a query variable:
 ```json
 {
   "Email": "john@example.com"
+}
+```
+
+You could express this query inline as a single query as below:
+
+```graphql
+{
+  readMembers(Email: "john@example.com") {
+    edges {
+      node {
+        ... on Member {
+          ID
+          FirstName
+          Email
+        }
+      }
+    }
+  }
 }
 ```
 
@@ -688,8 +717,14 @@ the operation type and the `singular_name` or `plural_name` of the DataObject.
 ```graphql
 query {
   readPosts {
-    Title
-    Content
+    edges {
+      node {
+        ... on Post {
+          Title
+          Content
+        }
+      }
+    }
   }
 }
 ```
@@ -715,7 +750,7 @@ by the operation resolvers.
 
 #### Available operations
 For each type, all the basic `CRUD` operations are afforded to you by default (`create`, `read`, `update`, `delete`),
-plus an operation for `readoOne`, which retrieves a record by ID. Each operation can be activated by setting their 
+plus an operation for `readoOne`, which retrieves a record by ID. Each operation can be activated by setting their
 identifier to `true` in YAML.
 
 ```
@@ -726,7 +761,7 @@ identifier to `true` in YAML.
     create: true
     delete: true
     readOne: true
-``` 
+```
 
 To add configuration to these operations, define a map rather than assigning a boolean.
 
@@ -735,7 +770,7 @@ To add configuration to these operations, define a map rather than assigning a b
   operations:
     read:
       paginate: false
-```      
+```
 
 Alternatively, when using procedural code, just call `opertation($identifier)`, where `$identifier`
 is a constant on the `SchemaScaffolder` class definition.
@@ -822,6 +857,7 @@ SilverStripe\GraphQL\Controller:
 $scaffolder
     ->type(Post::class)
         ->addAllFieldsExcept(['SecretThing'])
+    ->end()
 ```
 
 
@@ -1063,8 +1099,14 @@ query readPosts(Title: "Japan", sortBy: [{field:Title, direction:DESC}]) {
 
 ```graphql
 query readComments {
-  Author
-  Comment
+  edges {
+    node {
+      ... on Comment {
+        Author
+        Comment
+      }
+    }
+  }
 }
 ```
 
@@ -1371,14 +1413,14 @@ class MyCustomListQueryScaffolder extends ListQueryScaffolder
     {
         // .. custom query code
     }
-    
+
     protected function createArgs(Manager $manager)
     {
         return [
             'SpecialArg' => [
                 'type' => $manager->getType('SpecialInputType')
             ]
-        ];    
+        ];
     }
 }
 ```
@@ -1596,7 +1638,7 @@ to the result set.
       <li><strong>ARCHIVED</strong> (Include records that have been deleted from stage)</li>
     </ul>
    </td>
-</tr> 
+</tr>
 </table>
 
 
@@ -1622,7 +1664,7 @@ readBlogPosts(Versioning: {
   Title
 }
 ```
-   
+
 `readOne` operations also allow a `Version` parameter, which allows you to read a specific version.
 
 **GraphQL**
@@ -1677,7 +1719,7 @@ and extension for `DataObjectScaffolder` to update the scaffolding before it is 
 ```php
 class MyDataObjectScaffolderExtension extends Extension
 {
-  
+
   public function onBeforeAddToManager(Manager $manager)
   {
     if ($this->owner->getDataObjectInstance()->hasExtension(MyExtension::class)) {
@@ -1693,13 +1735,13 @@ The basic `CRUD` operations that come with the module are all extensible with`up
 ```php
 class MyCreateExtension extends Extension
 {
-  
+
   public function updateArgs(&$args, Manager $manager)
   {
     $args['SendEmail'] = ['type' => Type::bool()];
   }
-  
-  
+
+
   public function augmentMutation($obj, $args, $context, $info)
   {
     if ($args['SendEmail']) {
@@ -1719,7 +1761,7 @@ the `Product` interface.
 ```php
 class AddToCartOperation extends MutationScaffolder
 {
-   
+
    public function __construct($dataObjectClass)
    {
       parent::__construct($this->createOperationName(), $dataObjectClass);
@@ -1733,29 +1775,29 @@ class AddToCartOperation extends MutationScaffolder
         if (!$record) {
           throw new Exception('ID not found');
         }
-        
+
         $record->addToCart();
-        
+
         return $record;
       });
    }
-   
-   
+
+
    protected function createArgs(Manager $manager)
    {
       return [
         'ID' => ['type' => Type::nonNull(Type::id())]
       ];
    }
-   
-   
+
+
    protected function createOperationName()
    {
         return 'add' . ucfirst($this->typeName()) . 'ToCart';
    }
-   
+
 }
-``` 
+```
 
 Now, register it as an opt-in operation.
 
