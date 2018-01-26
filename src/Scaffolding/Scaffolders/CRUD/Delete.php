@@ -39,9 +39,9 @@ class Delete extends MutationScaffolder
             DB::get_conn()->withTransaction(function () use ($args, $context) {
                 $results = DataList::create($this->dataObjectClass)
                     ->byIDs($args['IDs']);
-                $results = $this->extend('augmentMutation', $results, $args, $context, $info);
+                $extensionResults = $this->extend('augmentMutation', $results, $args, $context, $info);
                 // Extension points that return false should kill the deletion
-                if (in_array(false, $results, true)) {
+                if (in_array(false, $extensionResults, true)) {
                     return;
                 }
 

@@ -258,6 +258,20 @@ class SchemaScaffolder implements ManagerMutatorInterface
     }
 
     /**
+     * Gets all nested queries for all types
+     * @return array
+     */
+    public function getNestedQueries()
+    {
+        $queries = [];
+        foreach ($this->types as $scaffold) {
+            $queries = array_merge($queries, $scaffold->getNestedQueries());
+        }
+
+        return $queries;
+    }
+
+    /**
      * @return OperationList
      */
     public function getMutations()
@@ -274,7 +288,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
     {
 
         $this->registerFixedTypes($manager);
-        $this->registerAncestralTypes($manager);
+        $this->registerPeripheralTypes($manager);
 
         $this->extend('onBeforeAddToManager', $manager);
 
@@ -282,6 +296,12 @@ class SchemaScaffolder implements ManagerMutatorInterface
         foreach ($this->types as $scaffold) {
             $scaffold->addToManager($manager);
         }
+
+        // Nested queries add to the list of peripheral types. Make sure all those
+        // types are registered with the manager before scaffolding the queries they're used in.
+//        foreach ($this->getNestedQueries() as $scaffold) {
+//            $scaffold->addToManager($manager);
+//        }
 
         foreach ($this->queries as $scaffold) {
             $scaffold->addToManager($manager);
@@ -341,7 +361,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
      * Registers types and respective operations for all ancestors of exposed dataobjects
      * @param Manager $manager
      */
-    protected function registerAncestralTypes(Manager $manager)
+    protected function registerPeripheralTypes(Manager $manager)
     {
         foreach ($this->types as $scaffold) {
             // Add dependent classes, e.g has_one, has_many nested queries

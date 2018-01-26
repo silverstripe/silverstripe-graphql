@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Tests\Scaffolders\CRUD;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FakeCRUDExtension;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
 use GraphQL\Type\Definition\NonNull;
@@ -22,11 +23,36 @@ class DeleteTest extends SapphireTest
         RestrictedDataObjectFake::class,
     ];
 
-    public function testDeleteOperationResolver()
+    protected function setUp()
     {
+        parent::setUp();
+        // Make sure we're only testing the native features
+        foreach(Delete::get_extensions() as $className) {
+            Delete::remove_extension($className);
+        }
+    }
+
+    public function getExtensionDataProvider()
+    {
+        return [
+            [false],
+            [true],
+        ];
+    }
+
+    /**
+     * @dataProvider getExtensionDataProvider
+     */
+    public function testDeleteOperationResolver($shouldExtend)
+    {
+        if ($shouldExtend) {
+            Delete::add_extension(FakeCRUDExtension::class);
+        }
+
         $delete = new Delete(DataObjectFake::class);
         $manager = new Manager();
         $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
+        $delete->addToManager($manager);
         $scaffold = $delete->scaffold($manager);
 
         $record = DataObjectFake::create();
@@ -49,9 +75,15 @@ class DeleteTest extends SapphireTest
             new ResolveInfo([])
         );
 
-        $this->assertNull(DataObjectFake::get()->byID($ID1));
-        $this->assertNull(DataObjectFake::get()->byID($ID2));
-        $this->assertInstanceOf(DataObjectFake::class, DataObjectFake::get()->byID($ID3));
+        if ($shouldExtend) {
+            $this->assertNotNull(DataObjectFake::get()->byID($ID1));
+            $this->assertNotNull(DataObjectFake::get()->byID($ID2));
+            $this->assertInstanceOf(DataObjectFake::class, DataObjectFake::get()->byID($ID3));
+        } else {
+            $this->assertNull(DataObjectFake::get()->byID($ID1));
+            $this->assertNull(DataObjectFake::get()->byID($ID2));
+            $this->assertInstanceOf(DataObjectFake::class, DataObjectFake::get()->byID($ID3));
+        }
     }
 
     public function testDeleteOperationArgs()

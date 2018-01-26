@@ -37,8 +37,6 @@ class Read extends ListQueryScaffolder
 
             $list = $this->getResults($args);
             $this->extend('updateList', $list, $args, $context, $info);
-//            $list = $list->setDataQueryParam('Versioned.mode', 'stage')
-//                ->setDataQueryParam('Versioned.stage', 'Stage');
 
             return $list;
         };

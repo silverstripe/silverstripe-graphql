@@ -12,6 +12,7 @@ use Exception;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
+use GraphQL\Type\Definition\Type;
 
 /**
  * A generic "create" operation for a DataObject.
@@ -38,7 +39,14 @@ class Create extends MutationScaffolder
                 if (singleton($this->dataObjectClass)->canCreate($context['currentUser'], $context)) {
                     /** @var DataObject $newObject */
                     $newObject = Injector::inst()->create($this->dataObjectClass);
+                    $newObject->update($args['Input']);
+                    $newObject->write();
                     $results = $this->extend('augmentMutation', $newObject, $args, $context, $info);
+                    // Extension points that return false should kill the create
+                    if (in_array(false, $results, true)) {
+                        return;
+                    }
+
                      return DataObject::get_by_id($this->dataObjectClass, $newObject->ID);
                 } else {
                     throw new Exception("Cannot create {$this->dataObjectClass}");
@@ -64,7 +72,7 @@ class Create extends MutationScaffolder
     {
         $args = [
             'Input' => [
-                'type' => $manager->getType($this->inputTypeName()),
+                'type' => Type::nonNull($manager->getType($this->inputTypeName())),
             ],
         ];
         $this->extend('updateArgs', $args, $manager);

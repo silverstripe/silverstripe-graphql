@@ -1683,7 +1683,7 @@ returned by this query contains a few additional fields: `Author:Member`, `Publi
 
 **GraphQL**
 ```
-readBlocPosts {
+readBlogPosts {
   Title
   Version
   Versions(limit: 5) {

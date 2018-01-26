@@ -2,10 +2,10 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
+use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
 
 /**
  * Scaffolds a GraphQL query field.

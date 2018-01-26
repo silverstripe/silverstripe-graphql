@@ -25,6 +25,7 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\ORM\SS_List;
+use SilverStripe\ORM\UnsavedRelationList;
 use SilverStripe\View\ArrayData;
 
 /**
@@ -58,7 +59,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     protected $operations;
 
     /**
-     * @var array
+     * @var OperationList
      */
     protected $nestedQueries = [];
 
@@ -350,29 +351,29 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         if (!$queryScaffolder) {
             // If no scaffolder if provided, try to infer the type by resolving the field
-        $result = $this->getDataObjectInstance()->obj($fieldName);
+            $result = $this->getDataObjectInstance()->obj($fieldName);
 
-        if (!$result instanceof DataList && !$result instanceof ArrayList) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    '%s::addNestedQuery() tried to add %s, but must be passed a method name or relation that returns a DataList or ArrayList',
-                    __CLASS__,
-                    $fieldName
-                )
-            );
-        }
+            if (!$result instanceof DataList && !$result instanceof ArrayList) {
+                throw new InvalidArgumentException(
+                    sprintf(
+                        '%s::addNestedQuery() tried to add %s, but must be passed a method name or relation that returns a DataList or ArrayList',
+                        __CLASS__,
+                        $fieldName
+                    )
+                );
+            }
 
-        $typeName = ScaffoldingUtil::typeNameForDataObject($result->dataClass());
+            $typeName = ScaffoldingUtil::typeNameForDataObject($result->dataClass());
 
             $queryScaffolder = (new ListQueryScaffolder(
-            $fieldName,
-            $typeName,
-            function ($obj) use ($fieldName) {
-                /**
-                 * @var DataObject $obj
-                 */
-                return $obj->obj($fieldName);
-            }
+                $fieldName,
+                $typeName,
+                function ($obj) use ($fieldName) {
+                    /**
+                     * @var DataObject $obj
+                     */
+                    return $obj->obj($fieldName);
+                }
             ));
         }
 
@@ -525,12 +526,12 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                             $this->dataObjectClass,
                             QueryScaffolder::class
                         ));
-                }
+                    }
                 } else {
-                $this->nestedQuery($relationName)
-                    ->applyConfig((array)$settings);
+                    $this->nestedQuery($relationName)
+                        ->applyConfig((array)$settings);
+                }
             }
-        }
         }
 
         return $this;
@@ -638,7 +639,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         $inst = $this->getDataObjectInstance();
         foreach ($this->nestedQueries as $name => $q) {
             $result = $inst->obj($name);
-            if ($result instanceof DataList) {
+            if ($result instanceof DataList || $result instanceof UnsavedRelationList) {
                 $queries[$name] = $result->dataClass();
             }
         }

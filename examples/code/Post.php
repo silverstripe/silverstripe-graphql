@@ -53,10 +53,10 @@ class Post extends DataObject implements ScaffoldingProvider
             })
             ->end()
             // basic crud operation, no options
-            ->operation('create')
+            ->operation(SchemaScaffolder::CREATE)
             ->end()
             // complex crud operation, with custom args
-            ->operation('read')
+            ->operation(SchemaScaffolder::READ)
             ->addArgs([
                 'StartingWith' => 'String'
             ])

@@ -26,6 +26,14 @@ use SilverStripe\ORM\FieldType\DBInt;
 
 class DataObjectScaffolderTest extends SapphireTest
 {
+    protected function setUp()
+    {
+        parent::setUp();
+        foreach(Read::get_extensions() as $class) {
+            Read::remove_extension($class);
+        }
+    }
+
     public function testDataObjectScaffolderConstructor()
     {
         $scaffolder = $this->getFakeScaffolder();
@@ -148,8 +156,22 @@ class DataObjectScaffolderTest extends SapphireTest
         $this->assertEquals(true, $query->Test);
 
         // Ensure duplicates aren't created
-        $this->assertEquals(1, $scaffolder->getNestedQueries()->count());
+        $this->assertCount(1, $scaffolder->getNestedQueries());
 
+        // Ensure nested queries are not added to manager
+        $managerMock = $this->getMockBuilder(Manager::class)
+            ->setMethods(['addQuery'])
+            ->getMock();
+        $managerMock
+            ->expects($this->never())
+            ->method('addQuery');
+        $managerMock->addType(new ObjectType([
+            'name' => 'File',
+            'fields' => []
+        ]));
+        $scaffolder->addToManager($managerMock);
+
+        // Can't add a nested query for a regular field
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageRegExp('/returns a DataList or ArrayList/');
         $scaffolder = $this->getFakeScaffolder();
