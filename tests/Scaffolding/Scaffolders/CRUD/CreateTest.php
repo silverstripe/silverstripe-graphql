@@ -6,6 +6,7 @@ use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FakeCRUDExtension;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
 use GraphQL\Type\Definition\StringType;
@@ -22,11 +23,36 @@ class CreateTest extends SapphireTest
         RestrictedDataObjectFake::class,
     ];
 
-    public function testCreateOperationResolver()
+    protected function setUp()
     {
+        parent::setUp();
+        // Make sure we're only testing the native features
+        foreach (Create::get_extensions() as $className) {
+            Create::remove_extension($className);
+        }
+    }
+
+    public function getExtensionDataProvider()
+    {
+        return [
+            [false],
+            [true],
+        ];
+    }
+
+    /**
+     * @dataProvider getExtensionDataProvider
+     */
+    public function testCreateOperationResolver($shouldExtend)
+    {
+        if ($shouldExtend) {
+            Create::add_extension(FakeCRUDExtension::class);
+        }
+
         $create = new Create(DataObjectFake::class);
         $manager = new Manager();
         $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
+        $create->addToManager($manager);
         $scaffold = $create->scaffold($manager);
 
         $newRecord = $scaffold['resolve'](
@@ -40,8 +66,12 @@ class CreateTest extends SapphireTest
             new ResolveInfo([])
         );
 
-        $this->assertGreaterThan(0, $newRecord->ID);
-        $this->assertEquals('__testing__', $newRecord->MyField);
+        if ($shouldExtend) {
+            $this->assertNull($newRecord);
+        } else {
+            $this->assertGreaterThan(0, $newRecord->ID);
+            $this->assertEquals('__testing__', $newRecord->MyField);
+        }
     }
 
     public function testCreateOperationInputType()
@@ -49,6 +79,7 @@ class CreateTest extends SapphireTest
         $create = new Create(DataObjectFake::class);
         $manager = new Manager();
         $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
+        $create->addToManager($manager);
         $scaffold = $create->scaffold($manager);
 
         $this->assertArrayHasKey('Input', $scaffold['args']);
@@ -74,7 +105,7 @@ class CreateTest extends SapphireTest
         $create = new Create(RestrictedDataObjectFake::class);
         $manager = new Manager();
         $manager->addType(new ObjectType(['name' => 'GraphQL_RestrictedDataObjectFake']), 'GraphQL_RestrictedDataObjectFake');
-
+        $create->addToManager($manager);
         $scaffold = $create->scaffold($manager);
 
         $this->expectException(Exception::class);

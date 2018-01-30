@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
+use SilverStripe\Core\Extensible;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
@@ -11,11 +12,14 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
  */
 class MutationScaffolder extends OperationScaffolder implements ManagerMutatorInterface, ScaffolderInterface
 {
+    use Extensible;
+
     /**
      * @param Manager $manager
      */
     public function addToManager(Manager $manager)
     {
+        $this->extend('onBeforeAddToManager', $this, $manager);
         $manager->addMutation(function () use ($manager) {
             return $this->scaffold($manager);
         }, $this->getName());
@@ -30,7 +34,7 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
     {
         return [
             'name' => $this->operationName,
-            'args' => $this->createArgs(),
+            'args' => $this->createArgs($manager),
             'type' => $manager->getType($this->typeName),
             'resolve' => $this->createResolverFunction(),
         ];

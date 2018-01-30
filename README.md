@@ -27,8 +27,7 @@ composer require silverstripe/graphql
    - [Define types](#define-types)
    - [Define queries](#define-queries)
    - [Pagination](#pagination)
-     - [Setting pagination and sorting options 
-](#setting-pagination-and-sorting-options)
+     - [Setting pagination and sorting options](#setting-pagination-and-sorting-options)
    - [Nested connections](#nested-connections)
    - [Define Mutations](#define-mutations)
  - [Scaffolding DataObjects into the schema](#scaffolding-dataobjects-into-the-schema)
@@ -36,6 +35,7 @@ composer require silverstripe/graphql
    - [Scaffolding through the config layer](#scaffolding-through-the-config-layer)
    - [Scaffolding through procedural code](#scaffolding-through-procedural-code)
    - [Exposing a DataObject to GraphQL](#exposing-a-dataobject-to-graphql)
+     - [Available operations](#available-operations)
      - [Setting field descriptions](#setting-field-descriptions)
      - [Wildcarding and whitelisting fields](#wildcarding-and-whitelisting-fields)
      - [Adding arguments](#adding-arguments)
@@ -47,8 +47,16 @@ composer require silverstripe/graphql
      - [Adding arbitrary queries and mutations](#adding-arbitrary-queries-and-mutations)
      - [Dealing with inheritance](#dealing-with-inheritance)
      - [Querying types that have descendants](#querying-types-that-have-descendants)
+   - [Versioned content](#versioned-content)
+     - [Version-specific-operations](#version-specific-operations)
+     - [Version-specific arguments](#version-specific-arguments)
+     - [Version-specific fields](#version-specific-fields)
    - [Define interfaces](#define-interfaces)
    - [Define input types](#define-input-types)
+ - [Extending](#extending)
+   - [Adding/removing fields from thirdparty code](#adding-removing-fields-from-thirdparty-code)
+   - [Updating the core operations](#updating-the-core-operations)
+   - [Adding new operations](#adding-new-operations)
  - [Testing/debugging queries and mutations](#testingdebugging-queries-and-mutations)
  - [Authentication](#authentication)
    - [Default authentication](#default-authentication)
@@ -58,11 +66,11 @@ composer require silverstripe/graphql
  - [Cross-Origin Resource Sharing (CORS)](#cross-origin-resource-sharing-cors)
    - [Sample Custom CORS Config](#sample-custom-cors-config)
  - [TODO](#todo)
-   
-   
-   
- 
- 
+
+
+
+
+
 ## Usage
 
 GraphQL is used through a single route which defaults to `/graphql`. You need
@@ -213,9 +221,13 @@ The query contained in the `query` parameter can be reformatted as follows:
 ```graphql
 {
   readMembers {
-    ID
-    FirstName
-    Email
+    edges {
+      node {
+        ID
+        FirstName
+        Email
+      }
+    }
   }
 }
 ```
@@ -225,9 +237,13 @@ You can apply the `Email` filter in the above example like so:
 ```graphql
 query ($Email: String) {
   readMembers(Email: $Email) {
-    ID
-    FirstName
-    Email
+    edges {
+      node {
+        ID
+        FirstName
+        Email
+      }
+    }
   }
 }
 ```
@@ -237,6 +253,22 @@ And add a query variable:
 ```json
 {
   "Email": "john@example.com"
+}
+```
+
+You could express this query inline as a single query as below:
+
+```graphql
+{
+  readMembers(Email: "john@example.com") {
+    edges {
+      node {
+        ID
+        FirstName
+        Email
+      }
+    }
+  }
 }
 ```
 
@@ -679,8 +711,12 @@ the operation type and the `singular_name` or `plural_name` of the DataObject.
 ```graphql
 query {
   readPosts {
-    Title
-    Content
+    edges {
+      node {
+        Title
+        Content
+      }
+    }
   }
 }
 ```
@@ -704,6 +740,39 @@ mutation CreatePost($Input: PostCreateInputType!) {
 Permission constraints (in this case `canView()` and `canCreate()`) are enforced
 by the operation resolvers.
 
+#### Available operations
+For each type, all the basic `CRUD` operations are afforded to you by default (`create`, `read`, `update`, `delete`),
+plus an operation for `readoOne`, which retrieves a record by ID. Each operation can be activated by setting their
+identifier to `true` in YAML.
+
+```
+...
+  operations:
+    read: true
+    update: true
+    create: true
+    delete: true
+    readOne: true
+```
+
+To add configuration to these operations, define a map rather than assigning a boolean.
+
+```
+...
+  operations:
+    read:
+      paginate: false
+```
+
+Alternatively, when using procedural code, just call `opertation($identifier)`, where `$identifier`
+is a constant on the `SchemaScaffolder` class definition.
+
+```php
+$scaffolder->type(MyDataObject::class)
+  ->operation(SchemaScaffolder::READ)
+    ->setUsePagination(false)
+  ->end();
+```
 #### Setting field descriptions
 
 Adding field descriptions is a great way to maintain a well-documented API. To do this,
@@ -780,6 +849,7 @@ SilverStripe\GraphQL\Controller:
 $scaffolder
     ->type(Post::class)
         ->addAllFieldsExcept(['SecretThing'])
+    ->end()
 ```
 
 
@@ -1021,8 +1091,12 @@ query readPosts(Title: "Japan", sortBy: [{field:Title, direction:DESC}]) {
 
 ```graphql
 query readComments {
-  Author
-  Comment
+  edges {
+    node {
+      Author
+      Comment
+    }
+  }
 }
 ```
 
@@ -1317,6 +1391,48 @@ query latestPost {
 }
 ```
 
+Alternatively, if you want to customise a nested query, you can specify `QueryScaffolder` subclass, which
+will allow you to write your own resolver and build your own set of arguments. This is particularly
+useful if your nested query does not return a `DataList`, from which a dataobject class can be
+inferred.
+
+```php
+class MyCustomListQueryScaffolder extends ListQueryScaffolder
+{
+    public function resolve ($obj, array $args, $context, ResolveInfo $info)
+    {
+        // .. custom query code
+    }
+
+    protected function createArgs(Manager $manager)
+    {
+        return [
+            'SpecialArg' => [
+                'type' => $manager->getType('SpecialInputType')
+            ]
+        ];
+    }
+}
+```
+**Via YAML**:
+```yaml
+...
+  nestedQueries:
+    MyCustomList: My\Project\Scaffolders\MyCustomListQueryScaffolder
+```
+
+
+**... Or with code**:
+```php
+ $scaffolder->type(MyObject::class)
+    ->nestedQuery(
+        'MyNestedField',  // the name of the field on the parent object
+        new MyCustomListQueryScaffolder(
+          'customOperation', // The name of the operation. Must be unique.
+          'MyCustomType' // The type the query will return. Make sure it's been registered.
+        )
+    );
+```
 #### Dealing with inheritance
 
 Adding any given type will implicitly add all of its ancestors, all the way back to `DataObject`.
@@ -1454,7 +1570,124 @@ query readSiteTrees {
   }
 }
 ```
+### Versioned content
 
+If the `silversrtripe/versioned` module is installed in your project (as it is with a default CMS install),
+a series of schema updates specific to versioning will be provided to all types that use the `Versioned` extension.
+These include:
+
+#### Version-specific operations
+* `publish<MyType>(ID: Int!)`
+* `unpublish<MyType>(ID: Int!)`
+* `copy<MyType>ToStage(Input: CopyToStageInputType { ID: Int, FromStage: String, ToStage: String, Version: Int })`
+
+```yaml
+...
+  operations:
+    publish: true
+    unpublish: true
+    copyToStage: true
+```
+
+#### Version-specific arguments
+Types that use the `Versioned` extension will also have their `read` operations extended to accept
+a `Versioning` parameter which allows you define very specifically what versioning filters to apply
+to the result set.
+
+**The "Versioning" input**
+<table>
+<tr>
+  <th>Field</th>
+  <th>Description</th>
+</tr>
+<tr>
+  <td>Mode</td>
+  <td>
+    <p>One of:</p>
+    <ul>
+      <li><strong>ARCHIVE</strong> (Read from a specific date in the archive)</li>
+      <li><strong>LIVE</strong> (Read from the live stage)</li>
+      <li><strong>DRAFT</strong> (Read from the draft stage)</li>
+      <li><strong>LATEST</strong> (Read the latest version from each record)</li>
+      <li><strong>STATUS</strong> (Filter records by their status. Must supply a `Status` parameter)</li>
+     </ul>
+  </td>
+</tr>
+<tr>
+  <td>ArchiveDate</td>
+  <td>The date, in <code>YYYY-MM-DD</code> format to use when in <code>ARCHIVE</code> mode.</td>
+</tr>
+<tr>
+  <td>[Status]</td>
+  <td>
+    <p>A list of statuses that records must match. Options:</p>
+    <ul>
+      <li><strong>PUBLISHED</strong> (Include published records)</li>
+      <li><strong>DRAFT</strong> (Include draft records)</li>
+      <li><strong>MODIFIED</strong> (Include records that have draft changes)</li>
+      <li><strong>ARCHIVED</strong> (Include records that have been deleted from stage)</li>
+    </ul>
+   </td>
+</tr>
+</table>
+
+
+**GraphQL**
+```
+readBlogPosts(Versioning: {
+  Mode: "DRAFT"
+}) {
+  Title
+}
+
+readBlogPosts(Versioning: {
+  Mode: "ARCHIVE",
+  ArchiveDate: "2016-11-08"
+}) {
+  Title
+}
+
+readBlogPosts(Versioning: {
+  Mode: "STATUS",
+  Status: [DRAFT, MODIFIED]
+}) {
+  Title
+}
+```
+
+`readOne` operations also allow a `Version` parameter, which allows you to read a specific version.
+
+**GraphQL**
+```
+readBlogPosts(Version: 5, ID: 100) {
+  Title
+}
+```
+
+#### Version-specific fields
+
+Types that use the `Versioned` extension will also benefit from two new fields:
+* `Version:Int` The version number of the record
+* `Versions:[<MyTypeName>Version]` A paginated list of all the previous versions of this record. The type
+returned by this query contains a few additional fields: `Author:Member`, `Publisher:Member`, and `Published:Boolean`.
+
+**GraphQL**
+```
+readBlogPosts {
+  Title
+  Version
+  Versions(limit: 5) {
+    Title
+    Author {
+      FirstName
+    }
+    Publisher {
+      Email
+    }
+    Published
+  }
+}
+```
 
 ### Define interfaces
 
@@ -1463,6 +1696,106 @@ TODO
 ### Define input types
 
 TODO
+
+## Extending
+
+Many of the scaffolding classes use the `Extensible` trait, allowing you to influence the scaffolding process
+with custom needs.
+
+### Adding/removing fields from thirdparty code
+Suppose you have a module that adds new fields to dataobjects that use your extension. You can write
+and extension for `DataObjectScaffolder` to update the scaffolding before it is sent to the `Manager`.
+
+```php
+class MyDataObjectScaffolderExtension extends Extension
+{
+
+  public function onBeforeAddToManager(Manager $manager)
+  {
+    if ($this->owner->getDataObjectInstance()->hasExtension(MyExtension::class)) {
+      $this->owner->addField('MyField');
+    }
+  }
+}
+```
+
+### Updating the core operations
+The basic `CRUD` operations that come with the module are all extensible with`updateArgs` and `augmentMutation` (or `updateList` for read operations).
+
+```php
+class MyCreateExtension extends Extension
+{
+
+  public function updateArgs(&$args, Manager $manager)
+  {
+    $args['SendEmail'] = ['type' => Type::bool()];
+  }
+
+
+  public function augmentMutation($obj, $args, $context, $info)
+  {
+    if ($args['SendEmail']) {
+      MyService::inst()->sendEmail();
+      $obj->EmailSent = true;
+    }
+  }
+}
+````
+
+### Adding new operations
+If you have a custom operation, in addition to `read`, `update`, `delete`, etc., that you want available
+to some or all types, you can write one and register it with the scaffolder. Let's suppose we have
+an ecommerce module that wants to offer an `addToCart` mutation to any dataobject that implements
+the `Product` interface.
+
+```php
+class AddToCartOperation extends MutationScaffolder
+{
+
+   public function __construct($dataObjectClass)
+   {
+      parent::__construct($this->createOperationName(), $dataObjectClass);
+      if (!$this->getDataObjectInstance() instanceof ProductInterace) {
+        throw new InvalidArgumentException(
+            'addToCart operation is only for implementors of ProductInterface'
+        );
+      }
+      $this->setResolver(function($obj, array $args) {
+        $record = DataObject::get_by_id($this->dataObjectClass, $args['ID']);
+        if (!$record) {
+          throw new Exception('ID not found');
+        }
+
+        $record->addToCart();
+
+        return $record;
+      });
+   }
+
+
+   protected function createArgs(Manager $manager)
+   {
+      return [
+        'ID' => ['type' => Type::nonNull(Type::id())]
+      ];
+   }
+
+
+   protected function createOperationName()
+   {
+        return 'add' . ucfirst($this->typeName()) . 'ToCart';
+   }
+
+}
+```
+
+Now, register it as an opt-in operation.
+
+```yaml
+SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder:
+  operations:
+    addToCart: My\Project\AddToCartOperation
+```
 
 ## Testing/debugging queries and mutations
 

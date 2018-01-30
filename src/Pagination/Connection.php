@@ -2,16 +2,16 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
-use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\OperationResolver;
-use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\ORM\SS_List;
-use SilverStripe\ORM\Limitable;
-use SilverStripe\ORM\Sortable;
-use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
+use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\OperationResolver;
+use SilverStripe\ORM\Limitable;
+use SilverStripe\ORM\Sortable;
+use SilverStripe\ORM\SS_List;
 
 /**
  * A connection to a list of items on a object type. Collections are paginated
@@ -45,7 +45,7 @@ class Connection implements OperationResolver
      * Return a thunk function, which in turn returns the lazy-evaluated
      * {@link ObjectType}.
      *
-     * @var Callable
+     * @var ObjectType|Callable
      */
     protected $connectedType;
 
@@ -106,8 +106,7 @@ class Connection implements OperationResolver
     /**
      * Pass in the {@link ObjectType}.
      *
-     * @param ObjectType
-     *
+     * @param ObjectType|Callable $type Type, or callable to evaluate type
      * @return $this
      */
     public function setConnectionType($type)
@@ -115,6 +114,19 @@ class Connection implements OperationResolver
         $this->connectedType = $type;
 
         return $this;
+    }
+
+    /**
+     * Evaluate Connection type
+     *
+     * @param bool $evaluate
+     * @return ObjectType|Callable
+     */
+    public function getConnectionType($evaluate = true)
+    {
+        return ($evaluate && is_callable($this->connectedType))
+            ? call_user_func($this->connectedType)
+            : $this->connectedType;
     }
 
     /**
@@ -211,6 +223,22 @@ class Connection implements OperationResolver
     }
 
     /**
+     * @return string
+     */
+    public function getConnectionTypeName()
+    {
+        return $this->connectionName . 'Connection';
+    }
+
+    /**
+     * @return string
+     */
+    public function getEdgeTypeName()
+    {
+        return $this->connectionName . 'Edge';
+    }
+
+    /**
      * Pagination support for the connection type. Currently doesn't support
      * cursors, just basic offset pagination.
      *
@@ -275,17 +303,19 @@ class Connection implements OperationResolver
         }
 
         return new ObjectType([
-            'name' => $this->connectionName . 'Edge',
+            'name' => $this->getEdgeTypeName(),
             'description' => 'The collections edge',
-            'fields' => [
-                'node' => [
-                    'type' => $this->connectedType,
-                    'description' => 'The node at the end of the collections edge',
-                    'resolve' => function ($obj) {
-                        return $obj;
-                    }
-                ]
-            ]
+            'fields' => function () {
+                return [
+                    'node' => [
+                        'type' => $this->getConnectionType(),
+                        'description' => 'The node at the end of the collections edge',
+                        'resolve' => function ($obj) {
+                            return $obj;
+                        }
+                    ]
+                ];
+            }
         ]);
     }
 
@@ -295,7 +325,7 @@ class Connection implements OperationResolver
     public function toType()
     {
         return new ObjectType([
-            'name' => $this->connectionName . 'Connection',
+            'name' => $this->getConnectionTypeName(),
             'description' => $this->description,
             'fields' => function () {
                 return $this->fields();

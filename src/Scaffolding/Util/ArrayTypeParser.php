@@ -70,11 +70,9 @@ class ArrayTypeParser implements TypeParserInterface
             ];
         }
 
-        return new ObjectType(
-            [
+        return new ObjectType([
             'name' => $this->name,
             'fields' => $fields,
-            ]
-        );
+        ]);
     }
 }
