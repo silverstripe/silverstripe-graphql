@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use GraphQL\Type\Definition\InputObjectType;
@@ -37,21 +38,22 @@ class Update extends MutationScaffolder
 
         // Todo: this is totally half baked
         $this->setResolver(function ($object, array $args, $context, $info) {
+            $input = $args['Input'];
             $obj = DataList::create($this->dataObjectClass)
-                ->byID($args['ID']);
+                ->byID($input['ID']);
             if (!$obj) {
                 throw new Exception(sprintf(
                     '%s with ID %s not found',
                     $this->dataObjectClass,
-                    $args['ID']
+                    $input['ID']
                 ));
             }
-
+            unset($input['ID']);
             if ($obj->canEdit($context['currentUser'])) {
                 $results = $this->extend('augmentMutation', $obj, $args, $context, $info);
                 // Extension points that return false should kill the write operation
                 if (!in_array(false, $results, true)) {
-                    $obj->update($args['Input']);
+                    $obj->update($input);
                     $obj->write();
                 }
 
@@ -83,9 +85,6 @@ class Update extends MutationScaffolder
     protected function createArgs(Manager $manager)
     {
         $args = [
-            'ID' => [
-                'type' => Type::nonNull(Type::id())
-            ],
             'Input' => [
                 'type' => Type::nonNull($manager->getType($this->inputTypeName())),
             ],
@@ -105,7 +104,11 @@ class Update extends MutationScaffolder
         return new InputObjectType([
             'name' => $this->inputTypeName(),
             'fields' => function () use ($manager) {
-                $fields = [];
+                $fields = [
+                    'ID' => [
+                        'type' => Type::nonNull(Type::id()),
+                    ],
+                ];
                 $instance = $this->getDataObjectInstance();
 
                 // Setup default input args.. Placeholder!
@@ -115,7 +118,7 @@ class Update extends MutationScaffolder
                 unset($db['ID']);
 
                 foreach ($db as $dbFieldName => $dbFieldType) {
-                    /** @var DBField $result */
+                    /** @var DBField|TypeCreatorExtension $result */
                     $result = $instance->obj($dbFieldName);
                     // Skip complex fields, e.g. composite, as that would require scaffolding a new input type.
                     if (!$result->isInternalGraphQLType()) {
