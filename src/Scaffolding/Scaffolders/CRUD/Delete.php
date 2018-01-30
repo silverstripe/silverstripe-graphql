@@ -19,7 +19,6 @@ use GraphQL\Type\Definition\ListOfType;
 class Delete extends MutationScaffolder
 {
     use DataObjectTypeTrait;
-    use Extensible;
 
     /**
      * DeleteOperationScaffolder constructor.

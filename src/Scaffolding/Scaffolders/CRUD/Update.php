@@ -20,7 +20,6 @@ use SilverStripe\ORM\FieldType\DBField;
 class Update extends MutationScaffolder
 {
     use DataObjectTypeTrait;
-    use Extensible;
 
     /**
      * UpdateOperationScaffolder constructor.

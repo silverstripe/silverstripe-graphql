@@ -20,7 +20,6 @@ use GraphQL\Type\Definition\Type;
 class Create extends MutationScaffolder
 {
     use DataObjectTypeTrait;
-    use Extensible;
 
     /**
      * CreateOperationScaffolder constructor.
