@@ -31,16 +31,15 @@ class SchemaScaffolderTest extends SapphireTest
     protected function setUp()
     {
         parent::setUp();
-        foreach(Read::get_extensions() as $class) {
+        foreach (Read::get_extensions() as $class) {
             Read::remove_extension($class);
         }
-        foreach(SchemaScaffolder::get_extensions() as $class) {
+        foreach (SchemaScaffolder::get_extensions() as $class) {
             SchemaScaffolder::remove_extension($class);
         }
-        foreach(DataObjectScaffolder::get_extensions() as $class) {
+        foreach (DataObjectScaffolder::get_extensions() as $class) {
             DataObjectScaffolder::remove_extension($class);
         }
-
     }
 
     public function testSchemaScaffolderTypes()

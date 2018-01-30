@@ -27,7 +27,7 @@ class CreateTest extends SapphireTest
     {
         parent::setUp();
         // Make sure we're only testing the native features
-        foreach(Create::get_extensions() as $className) {
+        foreach (Create::get_extensions() as $className) {
             Create::remove_extension($className);
         }
     }

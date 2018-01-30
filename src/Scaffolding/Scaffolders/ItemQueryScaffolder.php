@@ -23,5 +23,4 @@ class ItemQueryScaffolder extends QueryScaffolder
             'resolve' => $this->createResolverFunction(),
         ];
     }
-
 }

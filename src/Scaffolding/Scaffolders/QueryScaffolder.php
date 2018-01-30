@@ -59,5 +59,4 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
         $type = $manager->getType($this->typeName);
         return $type;
     }
-
 }

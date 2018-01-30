@@ -141,5 +141,4 @@ class ListQueryScaffolder extends QueryScaffolder
 
         return $this->paginationScaffolder;
     }
-
 }

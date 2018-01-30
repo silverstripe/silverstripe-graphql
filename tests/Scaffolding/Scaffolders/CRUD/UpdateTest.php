@@ -27,7 +27,7 @@ class UpdateTest extends SapphireTest
     {
         parent::setUp();
         // Make sure we're only testing the native features
-        foreach(Update::get_extensions() as $className) {
+        foreach (Update::get_extensions() as $className) {
             Update::remove_extension($className);
         }
     }

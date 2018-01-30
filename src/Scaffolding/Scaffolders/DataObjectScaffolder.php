@@ -289,7 +289,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function addAllOperations()
     {
-        foreach(OperationScaffolder::getOperations() as $id => $operation) {
+        foreach (OperationScaffolder::getOperations() as $id => $operation) {
             $this->operation($id);
         }
         return $this;
@@ -481,7 +481,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         if (isset($config['operations'])) {
             if ($config['operations'] ===  SchemaScaffolder::ALL) {
                 $config['operations'] = [];
-                foreach(OperationScaffolder::getOperations() as $id => $operation) {
+                foreach (OperationScaffolder::getOperations() as $id => $operation) {
                     $config['operations'][$id] = true;
                 }
             }
@@ -514,11 +514,11 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             foreach ($config['nestedQueries'] as $relationName => $settings) {
                 if ($settings === false) {
                     continue;
-                } else if (is_string($settings)) {
+                } elseif (is_string($settings)) {
                     if (is_subclass_of(QueryScaffolder::class, $settings)) {
                         $queryScaffolder = new $settings($relationName);
                         $this->nestedQuery($relationName, $queryScaffolder);
-                    }  else {
+                    } else {
                         throw new InvalidArgumentException(sprintf(
                             'Tried to specify %s as a custom query scaffolder for %s on %s, but it is not a subclass of %s.',
                             $settings,
@@ -576,7 +576,6 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         $this->extend('onAfterAddToManager', $manager);
-
     }
 
     /**

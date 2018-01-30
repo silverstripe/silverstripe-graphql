@@ -305,7 +305,7 @@ class Connection implements OperationResolver
         return new ObjectType([
             'name' => $this->getEdgeTypeName(),
             'description' => 'The collections edge',
-            'fields' => function() {
+            'fields' => function () {
                 return [
                     'node' => [
                         'type' => $this->getConnectionType(),

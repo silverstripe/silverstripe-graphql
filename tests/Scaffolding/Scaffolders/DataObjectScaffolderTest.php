@@ -29,7 +29,7 @@ class DataObjectScaffolderTest extends SapphireTest
     protected function setUp()
     {
         parent::setUp();
-        foreach(Read::get_extensions() as $class) {
+        foreach (Read::get_extensions() as $class) {
             Read::remove_extension($class);
         }
     }

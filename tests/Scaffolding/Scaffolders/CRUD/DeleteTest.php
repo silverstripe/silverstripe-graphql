@@ -27,7 +27,7 @@ class DeleteTest extends SapphireTest
     {
         parent::setUp();
         // Make sure we're only testing the native features
-        foreach(Delete::get_extensions() as $className) {
+        foreach (Delete::get_extensions() as $className) {
             Delete::remove_extension($className);
         }
     }

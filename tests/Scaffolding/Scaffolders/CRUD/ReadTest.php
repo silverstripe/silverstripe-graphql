@@ -25,7 +25,7 @@ class ReadTest extends SapphireTest
     {
         parent::setUp();
         // Make sure we're only testing the native features
-        foreach(Read::get_extensions() as $className) {
+        foreach (Read::get_extensions() as $className) {
             Read::remove_extension($className);
         }
     }

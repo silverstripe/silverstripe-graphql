@@ -139,5 +139,4 @@ class Update extends MutationScaffolder
     {
         return $this->typeName().'UpdateInputType';
     }
-
 }

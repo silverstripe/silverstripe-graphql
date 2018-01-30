@@ -22,7 +22,7 @@ class ReadOneTest extends SapphireTest
     {
         parent::setUp();
         // Make sure we're only testing the native features
-        foreach(ReadOne::get_extensions() as $className) {
+        foreach (ReadOne::get_extensions() as $className) {
             ReadOne::remove_extension($className);
         }
     }
@@ -54,5 +54,4 @@ class ReadOneTest extends SapphireTest
         $this->assertEquals($ID, $response->ID);
         $this->assertEquals('Test', $response->MyField);
     }
-
 }
