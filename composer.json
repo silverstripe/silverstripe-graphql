@@ -29,7 +29,8 @@
     "process-timeout": 600
   },
   "scripts": {
-    "lint": "phpcs src/ tests/"
+    "lint": "phpcs src/ tests/",
+    "lint-clean": "phpcbf src/ tests/"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,

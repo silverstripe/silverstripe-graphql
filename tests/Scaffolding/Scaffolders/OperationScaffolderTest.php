@@ -6,7 +6,7 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\OperationScaffolderFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ArgumentScaffolder;
@@ -32,19 +32,19 @@ class OperationScaffolderTest extends SapphireTest
     {
         $this->assertEquals(
             Read::class,
-            OperationScaffolder::getOperationScaffoldFromIdentifier(SchemaScaffolder::READ)
+            OperationScaffolder::getClassFromIdentifier(SchemaScaffolder::READ)
         );
         $this->assertEquals(
             Update::class,
-            OperationScaffolder::getOperationScaffoldFromIdentifier(SchemaScaffolder::UPDATE)
+            OperationScaffolder::getClassFromIdentifier(SchemaScaffolder::UPDATE)
         );
         $this->assertEquals(
             Delete::class,
-            OperationScaffolder::getOperationScaffoldFromIdentifier(SchemaScaffolder::DELETE)
+            OperationScaffolder::getClassFromIdentifier(SchemaScaffolder::DELETE)
         );
         $this->assertEquals(
             Create::class,
-            OperationScaffolder::getOperationScaffoldFromIdentifier(SchemaScaffolder::CREATE)
+            OperationScaffolder::getClassFromIdentifier(SchemaScaffolder::CREATE)
         );
     }
 

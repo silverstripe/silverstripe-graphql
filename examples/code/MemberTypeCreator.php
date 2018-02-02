@@ -18,7 +18,9 @@ class MemberTypeCreator extends TypeCreator
     public function fields()
     {
         $groupsConnection = Connection::create('Groups')
-            ->setConnectionType($this->manager->getType('group'))
+            ->setConnectionType(function () {
+                return $this->manager->getType('group');
+            })
             ->setDescription('A list of the users groups')
             ->setSortableFields(['ID', 'Title']);
 

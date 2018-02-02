@@ -3,7 +3,7 @@
 namespace SilverStripe\GraphQL\Scaffolding\Util;
 
 use GraphQL\Type\Definition\Type;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use SilverStripe\ORM\ArrayLib;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
@@ -70,11 +70,9 @@ class ArrayTypeParser implements TypeParserInterface
             ];
         }
 
-        return new ObjectType(
-            [
+        return new ObjectType([
             'name' => $this->name,
             'fields' => $fields,
-            ]
-        );
+        ]);
     }
 }

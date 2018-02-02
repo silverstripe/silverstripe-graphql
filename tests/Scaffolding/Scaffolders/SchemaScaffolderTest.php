@@ -6,13 +6,14 @@ use League\Flysystem\Exception;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeInt;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
@@ -27,6 +28,20 @@ use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 
 class SchemaScaffolderTest extends SapphireTest
 {
+    protected function setUp()
+    {
+        parent::setUp();
+        foreach (Read::get_extensions() as $class) {
+            Read::remove_extension($class);
+        }
+        foreach (SchemaScaffolder::get_extensions() as $class) {
+            SchemaScaffolder::remove_extension($class);
+        }
+        foreach (DataObjectScaffolder::get_extensions() as $class) {
+            DataObjectScaffolder::remove_extension($class);
+        }
+    }
+
     public function testSchemaScaffolderTypes()
     {
         $scaffolder = new SchemaScaffolder();
@@ -65,7 +80,6 @@ class SchemaScaffolderTest extends SapphireTest
         ]);
 
         $manager = new Manager();
-        /** @var SchemaScaffolder $scaffolder */
         $scaffolder = (new SchemaScaffolder())
             ->type(FakeRedirectorPage::class)
                 ->addFields(['Created', 'TestPageField', 'RedirectionType'])
@@ -178,7 +192,7 @@ class SchemaScaffolderTest extends SapphireTest
 
         $observer->expects($this->once())
             ->method('query')
-            ->will($this->returnValue(new QueryScaffolder('test', 'test')));
+            ->will($this->returnValue(new ListQueryScaffolder('test', 'test')));
 
         $observer->expects($this->once())
             ->method('mutation')

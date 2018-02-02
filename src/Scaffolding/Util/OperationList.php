@@ -2,10 +2,9 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Util;
 
-use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
 use SilverStripe\ORM\ArrayList;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 
 /**
  * An array list designed to work with OperationScaffolders
@@ -59,13 +58,17 @@ class OperationList extends ArrayList
     }
 
     /**
-     * @param  string $id
+     * @param  string $identifier
      * @return bool|OperationScaffolder
      */
-    public function findByIdentifier($id)
+    public function findByIdentifier($identifier)
     {
-        return $this->findItemByCallback(function (OperationScaffolder $item) use ($id) {
-            return $item instanceof CRUDInterface && $id === $item->getIdentifier();
+        $scaffoldClass = OperationScaffolder::getClassFromIdentifier($identifier);
+        if (!$scaffoldClass) {
+            return false;
+        }
+        return $this->findItemByCallback(function (OperationScaffolder $item) use ($scaffoldClass) {
+            return get_class($item) === $scaffoldClass;
         });
     }
 
@@ -84,9 +87,9 @@ class OperationList extends ArrayList
      */
     public function removeByIdentifier($id)
     {
-        $this->removeItemByCallback(function (OperationScaffolder $operation) use ($id) {
-            return $operation instanceof CRUDInterface
-                && $operation->getIdentifier() === $id;
+        $className = OperationScaffolder::getClassFromIdentifier($id);
+        $this->removeItemByCallback(function (OperationScaffolder $operation) use ($className) {
+            return $operation instanceof $className;
         });
     }
 

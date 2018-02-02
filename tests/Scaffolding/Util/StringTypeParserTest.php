@@ -3,7 +3,7 @@
 namespace SilverStripe\GraphQL\Tests\Util;
 
 use SilverStripe\Dev\SapphireTest;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser;
 use GraphQL\Type\Definition\StringType;
 

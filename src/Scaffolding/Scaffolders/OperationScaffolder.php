@@ -3,16 +3,14 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use Doctrine\Instantiator\Exception\InvalidArgumentException;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
-use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
-use SilverStripe\ORM\ArrayList;
 use Exception;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
+use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
+use SilverStripe\ORM\ArrayList;
 
 /**
  * Provides functionality common to both operation scaffolders. Cannot
@@ -46,20 +44,42 @@ abstract class OperationScaffolder implements ConfigurationApplier
      * @param string $name
      * @return  string|null
      */
-    public static function getOperationScaffoldFromIdentifier($name)
+    public static function getClassFromIdentifier($name)
     {
-        switch ($name) {
-            case SchemaScaffolder::CREATE:
-                return Create::class;
-            case SchemaScaffolder::READ:
-                return Read::class;
-            case SchemaScaffolder::UPDATE:
-                return Update::class;
-            case SchemaScaffolder::DELETE:
-                return Delete::class;
+        $operations = static::getOperations();
+
+        return isset($operations[$name]) ? $operations[$name] : null;
+    }
+
+    /**
+     * @param string|OperationScaffolder $instOrClass
+     * @return  string|null
+     */
+    public static function getIdentifier($instOrClass)
+    {
+        $class = ($instOrClass instanceof OperationScaffolder) ? get_class($instOrClass) : $instOrClass;
+        $operations = static::getOperations();
+        $operations = array_flip($operations);
+
+        return isset($operations[$class]) ? $operations[$class] : null;
+    }
+
+    /**
+     * Gets a map of operation identifiers to their classes
+     * @return array
+     */
+    public static function getOperations()
+    {
+        $operations = Config::inst()->get(__CLASS__, 'operations', Config::UNINHERITED);
+        $validOperations = [];
+        foreach ($operations as $identifier => $class) {
+            if (!$class) {
+                continue;
+            }
+            $validOperations[$identifier] = $class;
         }
 
-        return null;
+        return $validOperations;
     }
 
     /**
@@ -211,6 +231,14 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
+     * @return string
+     */
+    public function getTypeName()
+    {
+        return $this->typeName;
+    }
+
+    /**
      * @param string $arg
      * @return $this
      */
@@ -327,10 +355,10 @@ abstract class OperationScaffolder implements ConfigurationApplier
 
     /**
      * Parses the args to proper graphql-php spec.
-     *
+     * @param Manager $manager
      * @return array
      */
-    protected function createArgs()
+    protected function createArgs(Manager $manager)
     {
         $args = [];
         foreach ($this->args as $scaffolder) {

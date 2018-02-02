@@ -3,24 +3,20 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\ORM\DataList;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\UnionScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Core\ClassInfo;
 use Exception;
+use SilverStripe\Security\Member;
 
 /**
  * Scaffolds a generic read operation for DataObjects.
  */
-class Read extends QueryScaffolder implements CRUDInterface
+class Read extends ListQueryScaffolder
 {
-    use DataObjectTypeTrait;
-
     /**
      * ReadOperationScaffolder constructor.
      *
@@ -29,22 +25,19 @@ class Read extends QueryScaffolder implements CRUDInterface
     public function __construct($dataObjectClass)
     {
         $this->dataObjectClass = $dataObjectClass;
-
-        $typeName = $this->getDataObjectInstance()->plural_name();
-        $typeName = str_replace(' ', '', $typeName);
-        $typeName = ucfirst($typeName);
-        $operationName = 'read'.$typeName;
+        $operationName = $this->createOperationName();
 
         $resolver = function ($object, array $args, $context, $info) {
-            if (!singleton($this->dataObjectClass)->canView($context['currentUser'])) {
+            if (!$this->checkPermission($context['currentUser'])) {
                 throw new Exception(sprintf(
                     'Cannot view %s',
                     $this->dataObjectClass
                 ));
             }
-    
-            $list = DataList::create($this->dataObjectClass);
-    
+
+            $list = $this->getResults($args);
+            $this->extend('updateList', $list, $args, $context, $info);
+
             return $list;
         };
         
@@ -52,11 +45,15 @@ class Read extends QueryScaffolder implements CRUDInterface
     }
 
     /**
-     * @return string
+     * @param Manager $manager
+     * @return array
      */
-    public function getIdentifier()
+    protected function createArgs(Manager $manager)
     {
-        return SchemaScaffolder::READ;
+        $args = [];
+        $this->extend('updateArgs', $args, $manager);
+
+        return $args;
     }
 
     /**
@@ -84,5 +81,34 @@ class Read extends QueryScaffolder implements CRUDInterface
         }
 
         return $manager->getType($this->typeName);
+    }
+
+    /**
+     * @param array $args
+     * @return DataList
+     */
+    protected function getResults($args)
+    {
+        return DataList::create($this->dataObjectClass);
+    }
+
+    /**
+     * @return string
+     */
+    protected function createOperationName()
+    {
+        $typeName = $this->getDataObjectInstance()->plural_name();
+        $typeName = str_replace(' ', '', $typeName);
+        $typeName = ucfirst($typeName);
+        return 'read' . $typeName;
+    }
+
+    /**
+     * @param Member $member
+     * @return boolean
+     */
+    protected function checkPermission(Member $member)
+    {
+        return singleton($this->dataObjectClass)->canView($member);
     }
 }

@@ -21,12 +21,21 @@ class ReadTest extends SapphireTest
         RestrictedDataObjectFake::class,
     ];
 
+    protected function setUp()
+    {
+        parent::setUp();
+        // Make sure we're only testing the native features
+        foreach (Read::get_extensions() as $className) {
+            Read::remove_extension($className);
+        }
+    }
+
     public function testReadOperationResolver()
     {
         $read = new Read(DataObjectFake::class);
         $manager = new Manager();
         $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
-
+        $read->addToManager($manager);
         $scaffold = $read->scaffold($manager);
 
         DataObjectFake::get()->removeAll();
@@ -62,7 +71,7 @@ class ReadTest extends SapphireTest
         $redirectorScaffold->addToManager($manager = new Manager());
         $read = new Read(FakeRedirectorPage::class);
         $read->setUsePagination(false);
-
+        $read->addToManager($manager);
         $scaffold = $read->scaffold($manager);
         $type = $scaffold['type']->getWrappedType();
         $this->assertEquals(
