@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders\CRUD;
 
+use GraphQL\Type\Definition\IDType;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
@@ -62,8 +63,10 @@ class UpdateTest extends SapphireTest
         $scaffold['resolve'](
             $record,
             [
-                'ID' => $ID,
-                'Input' => ['MyField' => 'new'],
+                'Input' => [
+                    'ID' => $ID,
+                    'MyField' => 'new'
+                ],
             ],
             [
                 'currentUser' => Member::create(),
@@ -101,7 +104,9 @@ class UpdateTest extends SapphireTest
         $this->assertArrayHasKey('Created', $fieldMap, 'Includes fixed_fields');
         $this->assertArrayHasKey('MyField', $fieldMap);
         $this->assertArrayHasKey('MyInt', $fieldMap);
-        $this->assertArrayNotHasKey('ID', $fieldMap);
+        $this->assertArrayHasKey('ID', $fieldMap);
+        $this->assertInstanceOf(NonNull::class, $fieldMap['ID']);
+        $this->assertInstanceOf(IDType::class, $fieldMap['ID']->getWrappedType());
         $this->assertInstanceOf(StringType::class, $fieldMap['MyField']);
         $this->assertInstanceOf(IntType::class, $fieldMap['MyInt']);
     }
@@ -122,7 +127,11 @@ class UpdateTest extends SapphireTest
 
         $scaffold['resolve'](
             $restrictedDataobject,
-            ['ID' => $ID],
+            [
+                'Input' => [
+                    'ID' => $ID,
+                ],
+            ],
             ['currentUser' => Member::create()],
             new ResolveInfo([])
         );
