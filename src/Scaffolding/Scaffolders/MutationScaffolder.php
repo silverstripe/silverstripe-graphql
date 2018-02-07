@@ -2,7 +2,6 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use SilverStripe\Core\Extensible;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
@@ -12,8 +11,6 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
  */
 class MutationScaffolder extends OperationScaffolder implements ManagerMutatorInterface, ScaffolderInterface
 {
-    use Extensible;
-
     /**
      * @param Manager $manager
      */
