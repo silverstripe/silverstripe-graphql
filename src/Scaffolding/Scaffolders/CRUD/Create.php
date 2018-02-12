@@ -2,22 +2,23 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
-use SilverStripe\Core\Extensible;
+use Exception;
+use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\Type;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
-use GraphQL\Type\Definition\InputObjectType;
-use SilverStripe\Core\Injector\Injector;
-use Exception;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
-use GraphQL\Type\Definition\Type;
 
 /**
  * A generic "create" operation for a DataObject.
  */
-class Create extends MutationScaffolder
+class Create extends MutationScaffolder implements ResolverInterface
 {
     use DataObjectTypeTrait;
 
@@ -31,26 +32,9 @@ class Create extends MutationScaffolder
         $this->dataObjectClass = $dataObjectClass;
 
         parent::__construct(
-            'create'.ucfirst($this->typeName()),
+            'create' . ucfirst($this->typeName()),
             $this->typeName(),
-            function ($object, array $args, $context, $info) {
-                // Todo: this is totally half baked
-                if (singleton($this->dataObjectClass)->canCreate($context['currentUser'], $context)) {
-                    /** @var DataObject $newObject */
-                    $newObject = Injector::inst()->create($this->dataObjectClass);
-                    $newObject->update($args['Input']);
-                    $newObject->write();
-                    $results = $this->extend('augmentMutation', $newObject, $args, $context, $info);
-                    // Extension points that return false should kill the create
-                    if (in_array(false, $results, true)) {
-                        return;
-                    }
-
-                     return DataObject::get_by_id($this->dataObjectClass, $newObject->ID);
-                } else {
-                    throw new Exception("Cannot create {$this->dataObjectClass}");
-                }
-            }
+            $this
         );
     }
 
@@ -63,20 +47,13 @@ class Create extends MutationScaffolder
         parent::addToManager($manager);
     }
 
-    /**
-     * @param Manager $manager
-     * @return array
-     */
-    protected function createArgs(Manager $manager)
+    protected function createDefaultArgs(Manager $manager)
     {
-        $args = [
+        return [
             'Input' => [
                 'type' => Type::nonNull($manager->getType($this->inputTypeName())),
-            ],
+            ]
         ];
-        $this->extend('updateArgs', $args, $manager);
-
-        return $args;
     }
 
     /**
@@ -120,6 +97,29 @@ class Create extends MutationScaffolder
      */
     protected function inputTypeName()
     {
-        return $this->typeName().'CreateInputType';
+        return $this->typeName() . 'CreateInputType';
+    }
+
+    public function resolve($object, $args, $context, $info)
+    {
+        // Todo: this is totally half baked
+        $singleton = DataObject::singleton($this->dataObjectClass);
+        if (!$singleton->canCreate($context['currentUser'], $context)) {
+            throw new Exception("Cannot create {$this->dataObjectClass}");
+        }
+
+        /** @var DataObject $newObject */
+        $newObject = Injector::inst()->create($this->dataObjectClass);
+        $newObject->update($args['Input']);
+
+        // Extension points that return false should kill the create
+        $results = $this->extend('augmentMutation', $newObject, $args, $context, $info);
+        if (in_array(false, $results, true)) {
+            return null;
+        }
+
+        // Save and return
+        $newObject->write();
+        return DataObject::get_by_id($this->dataObjectClass, $newObject->ID);
     }
 }

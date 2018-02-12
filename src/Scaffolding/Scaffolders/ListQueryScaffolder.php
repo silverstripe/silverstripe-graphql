@@ -2,8 +2,8 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use GraphQL\Type\Definition\Type;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
 

@@ -2,13 +2,13 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
-use SilverStripe\Core\ClassInfo;
-use SilverStripe\ORM\DataObject;
-use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
-use SilverStripe\GraphQL\Manager;
+use Exception;
 use GraphQL\Type\Definition\UnionType;
-use \Exception;
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
+use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
+use SilverStripe\ORM\DataObject;
 
 class UnionScaffolder implements ScaffolderInterface
 {

@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use GraphQL\Type\Definition\ObjectType;
-use SilverStripe\Core\Extensible;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
@@ -15,7 +14,6 @@ use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 abstract class QueryScaffolder extends OperationScaffolder implements ManagerMutatorInterface, ScaffolderInterface
 {
     use DataObjectTypeTrait;
-    use Extensible;
 
     /**
      * @var bool

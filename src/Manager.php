@@ -252,7 +252,7 @@ class Manager
         if (isset($this->types[$name])) {
             return $this->types[$name];
         } else {
-            throw new \InvalidArgumentException("Type '$name' is not a registered GraphQL type");
+            throw new InvalidArgumentException("Type '$name' is not a registered GraphQL type");
         }
     }
 
