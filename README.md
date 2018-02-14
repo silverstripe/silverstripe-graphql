@@ -679,8 +679,12 @@ the operation type and the `singular_name` or `plural_name` of the DataObject.
 ```graphql
 query {
   readPosts {
-    Title
-    Content
+    edges {
+      node {
+        Title
+        Content
+      }
+    }
   }
 }
 ```
