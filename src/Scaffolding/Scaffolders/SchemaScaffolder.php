@@ -2,18 +2,18 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use League\Flysystem\Exception;
+use Exception;
+use InvalidArgumentException;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
-use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\ORM\ArrayLib;
-use SilverStripe\Core\Config\Config;
 use SilverStripe\View\ViewableData;
 
 /**

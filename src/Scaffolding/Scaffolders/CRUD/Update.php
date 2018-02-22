@@ -2,22 +2,22 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
-use SilverStripe\Core\Extensible;
+use Exception;
+use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
-use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\ORM\DataList;
-use GraphQL\Type\Definition\Type;
-use Exception;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
 
 /**
  * Scaffolds a generic update operation for DataObjects.
  */
-class Update extends MutationScaffolder
+class Update extends MutationScaffolder implements ResolverInterface
 {
     use DataObjectTypeTrait;
 
@@ -32,37 +32,9 @@ class Update extends MutationScaffolder
 
         parent::__construct(
             'update'.ucfirst($this->typeName()),
-            $this->typeName()
+            $this->typeName(),
+            $this
         );
-
-        // Todo: this is totally half baked
-        $this->setResolver(function ($object, array $args, $context, $info) {
-            $obj = DataList::create($this->dataObjectClass)
-                ->byID($args['ID']);
-            if (!$obj) {
-                throw new Exception(sprintf(
-                    '%s with ID %s not found',
-                    $this->dataObjectClass,
-                    $args['ID']
-                ));
-            }
-
-            if ($obj->canEdit($context['currentUser'])) {
-                $results = $this->extend('augmentMutation', $obj, $args, $context, $info);
-                // Extension points that return false should kill the write operation
-                if (!in_array(false, $results, true)) {
-                    $obj->update($args['Input']);
-                    $obj->write();
-                }
-
-                return $obj;
-            } else {
-                throw new Exception(sprintf(
-                    'Cannot edit this %s',
-                    $this->dataObjectClass
-                ));
-            }
-        });
     }
 
     /**
@@ -80,9 +52,9 @@ class Update extends MutationScaffolder
      * @param Manager $manager
      * @return array
      */
-    protected function createArgs(Manager $manager)
+    protected function createDefaultArgs(Manager $manager)
     {
-        $args = [
+        return [
             'ID' => [
                 'type' => Type::nonNull(Type::id())
             ],
@@ -90,9 +62,6 @@ class Update extends MutationScaffolder
                 'type' => Type::nonNull($manager->getType($this->inputTypeName())),
             ],
         ];
-        $this->extend('updateArgs', $args, $manager);
-
-        return $args;
     }
 
     /**
@@ -137,5 +106,34 @@ class Update extends MutationScaffolder
     protected function inputTypeName()
     {
         return $this->typeName().'UpdateInputType';
+    }
+
+    public function resolve($object, $args, $context, $info)
+    {
+        $obj = DataList::create($this->dataObjectClass)
+            ->byID($args['ID']);
+        if (!$obj) {
+            throw new Exception(sprintf(
+                '%s with ID %s not found',
+                $this->dataObjectClass,
+                $args['ID']
+            ));
+        }
+        if (!$obj->canEdit($context['currentUser'])) {
+            throw new Exception(sprintf(
+                'Cannot edit this %s',
+                $this->dataObjectClass
+            ));
+        }
+
+        // Extension points that return false should kill the write operation
+        $results = $this->extend('augmentMutation', $obj, $args, $context, $info);
+        if (in_array(false, $results, true)) {
+            return $obj;
+        }
+
+        $obj->update($args['Input']);
+        $obj->write();
+        return $obj;
     }
 }

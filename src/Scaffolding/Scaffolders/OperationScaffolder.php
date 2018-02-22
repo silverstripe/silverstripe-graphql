@@ -2,9 +2,10 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
 use Exception;
+use InvalidArgumentException;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
@@ -19,6 +20,7 @@ use SilverStripe\ORM\ArrayList;
 abstract class OperationScaffolder implements ConfigurationApplier
 {
     use Chainable;
+    use Extensible;
 
     /**
      * @var string
@@ -36,7 +38,9 @@ abstract class OperationScaffolder implements ConfigurationApplier
     protected $resolver;
 
     /**
-     * @var array
+     * List of argument scaffolders
+     *
+     * @var ArrayList|ArgumentScaffolder[]
      */
     protected $args = [];
 
@@ -259,7 +263,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @param callable|ResolverInterface $resolver
+     * @param callable|ResolverInterface|string $resolver Callable, instance of (or classname of) a ResolverInterface
      * @return $this
      * @throws InvalidArgumentException
      */
@@ -354,17 +358,29 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
+     * Helper for scaffolding args that require more work than ArgumentScaffolder::toArray()
+     *
+     * @param Manager $manager
+     * @return array
+     */
+    protected function createDefaultArgs(Manager $manager)
+    {
+        return [];
+    }
+
+    /**
      * Parses the args to proper graphql-php spec.
+     *
      * @param Manager $manager
      * @return array
      */
     protected function createArgs(Manager $manager)
     {
-        $args = [];
+        $args = $this->createDefaultArgs($manager);
         foreach ($this->args as $scaffolder) {
             $args[$scaffolder->argName] = $scaffolder->toArray();
         }
-
+        $this->extend('updateArgs', $args, $manager);
         return $args;
     }
 }
