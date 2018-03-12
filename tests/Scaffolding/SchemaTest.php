@@ -31,7 +31,6 @@ class SchemaTest extends SapphireTest
 
         $typename = $schema->typeNameForDataObject(FakePage::class);
         $this->assertEquals('FakePage', $typename);
-
     }
 
     public function testEnsureDataObject()
