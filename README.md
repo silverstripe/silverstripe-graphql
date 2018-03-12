@@ -1588,21 +1588,22 @@ may be customised or computed automatically, as described above. For a deeper le
 name the operation using the `name` property.
 
 ```yaml
-My\Really\Long\Namespaced\BlogPost:
-  operations:
-    read: true
-```
-
-The name of the read operation, given the `Schema` config above, will be `readBlogs`.
-
-```yaml
 My\Really\Long\Namespaced\DataObject:
   operations:
     read: true
     name: currentBlogs
 ```
 
-Now the name of the operation has been fully customised to `currentBlogs`, returning the type `Blog`.
+The name of the operation has been fully customised to `currentBlogs`, returning the type `Blog`.
+
+```yaml
+My\Really\Long\Namespaced\BlogPost:
+  operations:
+    read: true
+```
+
+Otherwise, the name of the read operation, given the `Schema` config above, will be `readBlogs`.
+
 
 ### Versioned content
 
