@@ -2,9 +2,9 @@
 
 namespace SilverStripe\GraphQL\Scaffolding;
 
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Configurable;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ViewableData;
@@ -57,7 +57,7 @@ class Schema
             return $customTypeName;
         }
         $typeName = Config::inst()->get($class, 'table_name', Config::UNINHERITED) ?:
-            Injector::inst()->get($class)->singular_name();
+            ClassInfo::shortName($class);
 
         return $this->typeName($typeName);
     }
@@ -68,7 +68,7 @@ class Schema
      */
     public function typeName($str)
     {
-        return preg_replace('/[^A-Za-z0-9_]/', '_', $str);
+        return preg_replace('/[^A-Za-z0-9_]/', '_', str_replace(' ', '', $str));
     }
 
     /**

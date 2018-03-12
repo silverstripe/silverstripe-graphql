@@ -1574,7 +1574,7 @@ query readSiteTrees {
 #### Customising the names of types and operations
 By default, the scaffolder will generate a type name for you based on the dataobject's `$table_name`
 setting and the output of its `singular_name()` method. Often times, these are poor proxies for 
-a canonical name, e.g. `readMy_Really_Long_NameSpaced_BlogPost`. To customise the type name, simply map a name to it in the `SilverStripe\GraphQL\Scaffolding\Schema`
+a canonical name, e.g. `readMy_Really_Long_NameSpaced_BlogPosts`. To customise the type name, simply map a name to it in the `SilverStripe\GraphQL\Scaffolding\Schema`
 class.
 
 ```yaml

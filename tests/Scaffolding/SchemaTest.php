@@ -22,6 +22,16 @@ class SchemaTest extends SapphireTest
         $this->assertEquals('testType', $typename);
         $typename = $schema->typeNameForDataObject(FakePage::class);
         $this->assertEquals('GraphQL_FakePage', $typename);
+
+        Config::modify()->merge(
+            FakePage::class,
+            'table_name',
+            null
+        );
+
+        $typename = $schema->typeNameForDataObject(FakePage::class);
+        $this->assertEquals('FakePage', $typename);
+
     }
 
     public function testEnsureDataObject()
@@ -57,7 +67,7 @@ class SchemaTest extends SapphireTest
     public function testTypeName()
     {
         $schema = new Schema();
-        $this->assertEquals('Nicely_Formatted_Type', $schema->typeName('Nicely Formatted/Type'));
+        $this->assertEquals('NicelyFormatted_Type', $schema->typeName('Nicely Formatted/Type'));
     }
 
     public function testIsValidFieldName()
