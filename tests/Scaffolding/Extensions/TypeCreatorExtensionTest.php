@@ -43,7 +43,7 @@ class TypeCreatorExtensionTest extends SapphireTest
             'FieldOne' => 'String',
             'FieldTwo' => 'Int'
         ]);
-        $typeName = ScaffolderSchema::typeName(DBInt::class);
+        $typeName = Schema::inst()->typeName(DBInt::class);
 
         $mockManager = $this->getMockBuilder(Manager::class)
             ->setMethods(['getType','addType'])

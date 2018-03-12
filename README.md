@@ -47,6 +47,7 @@ composer require silverstripe/graphql
      - [Adding arbitrary queries and mutations](#adding-arbitrary-queries-and-mutations)
      - [Dealing with inheritance](#dealing-with-inheritance)
      - [Querying types that have descendants](#querying-types-that-have-descendants)
+     - [Customising type names](#customising-type-names)
    - [Versioned content](#versioned-content)
      - [Version-specific-operations](#version-specific-operations)
      - [Version-specific arguments](#version-specific-arguments)
@@ -1570,6 +1571,39 @@ query readSiteTrees {
   }
 }
 ```
+#### Customising the names of types and operations
+By default, the scaffolder will generate a type name for you based on the dataobject's `$table_name`
+setting and the output of its `singular_name()` method. Often times, these are poor proxies for 
+a canonical name, e.g. `readMy_Really_Long_NameSpaced_BlogPost`. To customise the type name, simply map a name to it in the `SilverStripe\GraphQL\Scaffolding\Schema`
+class.
+
+```yaml
+SilverStripe\GraphQL\Scaffolding\Schema:
+  typeNames:
+    My\Really\Long\Namespaced\BlogPost: Blog
+``` 
+
+Operations names are expressed using the type name of the dataobject they serve. That type name 
+may be customised or computed automatically, as described above. For a deeper level of control, you can
+name the operation using the `name` property.
+
+```yaml
+My\Really\Long\Namespaced\BlogPost:
+  operations:
+    read: true
+```
+
+The name of the read operation, given the `Schema` config above, will be `readBlogs`.
+
+```yaml
+My\Really\Long\Namespaced\DataObject:
+  operations:
+    read: true
+    name: currentBlogs
+```
+
+Now the name of the operation has been fully customised to `currentBlogs`, returning the type `Blog`.
+
 ### Versioned content
 
 If the `silversrtripe/versioned` module is installed in your project (as it is with a default CMS install),

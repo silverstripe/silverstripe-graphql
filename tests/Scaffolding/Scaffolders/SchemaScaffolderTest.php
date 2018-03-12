@@ -233,7 +233,7 @@ class SchemaScaffolderTest extends SapphireTest
             'FieldOne' => 'String',
             'FieldTwo' => 'Int'
         ]);
-        $typeName = ScaffolderSchema::typeName(FakeInt::class);
+        $typeName = Schema::inst()->typeName(FakeInt::class);
         $manager = new Manager();
         (new SchemaScaffolder())->addToManager($manager);
         $this->assertTrue($manager->hasType($typeName));

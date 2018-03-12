@@ -53,6 +53,10 @@ class OperationScaffolderTest extends SapphireTest
         $scaffolder = new OperationScaffolderFake('testOperation', 'testType');
 
         $this->assertEquals('testOperation', $scaffolder->getName());
+
+        $scaffolder->setName('changedOperation');
+        $this->assertEquals('changedOperation', $scaffolder->getName());
+
         $scaffolder->addArgs([
             'One' => 'String',
             'Two' => 'Boolean',
@@ -165,12 +169,15 @@ class OperationScaffolderTest extends SapphireTest
                 ],
             ],
             'resolver' => FakeResolver::class,
+            'name' => 'theGreatestOperation',
         ]);
 
         $this->assertEquals([], array_diff(
             $scaffolder->getArgs()->column('argName'),
             ['One', 'Two']
         ));
+
+        $this->assertEquals('theGreatestOperation', $scaffolder->getName());
 
         $arg = $scaffolder->getArgs()->find('argName', 'Two');
         $this->assertInstanceof(ArgumentScaffolder::class, $arg);

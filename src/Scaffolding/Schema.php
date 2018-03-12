@@ -6,8 +6,9 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\ArrayLib;
+use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ViewableData;
-use \InvalidArgumentException;
+use InvalidArgumentException;
 
 class Schema
 {
@@ -33,30 +34,12 @@ class Schema
 
     /**
      * Schema constructor.
+     * @param array $typeNames Optional map of classname => type name
      */
-    public function __construct()
+    public function __construct($typeNames = null)
     {
-        $typesMap = $this->config()->get('typeNames') ?: [];
-        if (!empty($typesMap)) {
-            if (!ArrayLib::is_associative($typesMap)) {
-                throw new InvalidArgumentException(sprintf(
-                    '%s.typeNames must be a map of class names to type names',
-                    static::class
-                ));
-            }
-            $allTypes = array_values($typesMap);
-            $uniqueTypes = array_unique($allTypes);
-            $diff = array_diff($allTypes, $uniqueTypes);
-
-            if (!empty($diff)) {
-                throw new InvalidArgumentException(sprintf(
-                    '%s.typeNames contains duplicate type names: %s',
-                    static::class,
-                    implode(', ', $diff)
-                ));
-            }
-        }
-        $this->typesMap = $typesMap;
+        $map = is_array($typeNames) ? $typeNames : $this->config()->get('typeNames');
+        $this->setTypeNames($map ?: []);
     }
 
     /**
@@ -68,6 +51,7 @@ class Schema
      */
     public function typeNameForDataObject($class)
     {
+        $this->ensureDataObject($class);
         $customTypeName = $this->mappedTypeName($class);
         if ($customTypeName) {
             return $customTypeName;
@@ -100,11 +84,63 @@ class Schema
     }
 
     /**
+     * @param array $typesMap An associate array of classname => type name
+     * @return $this
+     */
+    public function setTypeNames($typesMap)
+    {
+        if (!ArrayLib::is_associative($typesMap)) {
+            throw new InvalidArgumentException(sprintf(
+                '%s.typeNames must be a map of class names to type names',
+                static::class
+            ));
+        }
+        $allTypes = array_values($typesMap);
+        $diff = array_unique(
+            array_diff_assoc(
+                $allTypes,
+                array_unique($allTypes)
+            )
+        );
+
+        if (!empty($diff)) {
+            throw new InvalidArgumentException(sprintf(
+                '%s.typeNames contains duplicate type names: %s',
+                static::class,
+                implode(', ', $diff)
+            ));
+        }
+
+        foreach ($typesMap as $class => $type) {
+            $this->ensureDataObject($class);
+        }
+
+        $this->typesMap = $typesMap;
+
+        return $this;
+    }
+
+    /**
      * @param $class
      * @return mixed|null
      */
     protected function mappedTypeName($class)
     {
         return isset($this->typesMap[$class]) ? $this->typesMap[$class] : null;
+    }
+
+    /**
+     * @param $class
+     * @throws InvalidArgumentException
+     */
+    protected function ensureDataObject($class)
+    {
+        if (!is_subclass_of($class, DataObject::class)) {
+            throw new InvalidArgumentException(sprintf(
+                '%s is not a subclass of %s',
+                $class,
+                DataObject::class
+            ));
+        }
     }
 }
