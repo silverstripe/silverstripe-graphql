@@ -47,7 +47,7 @@ composer require silverstripe/graphql
      - [Adding arbitrary queries and mutations](#adding-arbitrary-queries-and-mutations)
      - [Dealing with inheritance](#dealing-with-inheritance)
      - [Querying types that have descendants](#querying-types-that-have-descendants)
-     - [Customising type names](#customising-type-names)
+     - [Customising the names of types and operations](#customising-the-names-of-types-and-operations)
    - [Versioned content](#versioned-content)
      - [Version-specific-operations](#version-specific-operations)
      - [Version-specific arguments](#version-specific-arguments)
