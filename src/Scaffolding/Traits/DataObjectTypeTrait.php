@@ -3,7 +3,7 @@
 namespace SilverStripe\GraphQL\Scaffolding\Traits;
 
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
+use SilverStripe\GraphQL\Scaffolding\Schema;
 use SilverStripe\ORM\DataObject;
 
 /**
@@ -39,7 +39,7 @@ trait DataObjectTypeTrait
      */
     public function typeName()
     {
-        return ScaffoldingUtil::typeNameForDataObject($this->dataObjectClass);
+        return Schema::inst()->typeNameForDataObject($this->dataObjectClass);
     }
 
     /**

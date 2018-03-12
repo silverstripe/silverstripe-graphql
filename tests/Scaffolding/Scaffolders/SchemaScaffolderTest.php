@@ -15,7 +15,7 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
+use SilverStripe\GraphQL\Scaffolding\Schema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeInt;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
@@ -233,7 +233,7 @@ class SchemaScaffolderTest extends SapphireTest
             'FieldOne' => 'String',
             'FieldTwo' => 'Int'
         ]);
-        $typeName = ScaffoldingUtil::typeName(FakeInt::class);
+        $typeName = ScaffolderSchema::typeName(FakeInt::class);
         $manager = new Manager();
         (new SchemaScaffolder())->addToManager($manager);
         $this->assertTrue($manager->hasType($typeName));

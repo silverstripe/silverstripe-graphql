@@ -8,7 +8,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\ORM\DataList;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\UnionScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
+use SilverStripe\GraphQL\Scaffolding\Schema;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Core\ClassInfo;
 use Exception;
@@ -43,7 +43,7 @@ class Read extends ListQueryScaffolder implements ResolverInterface
         array_shift($descendants);
         $union = [$this->typeName];
         foreach ($descendants as $descendant) {
-            $typeName = ScaffoldingUtil::typeNameForDataObject($descendant);
+            $typeName = Schema::inst()->typeNameForDataObject($descendant);
             if ($manager->hasType($typeName)) {
                 $union[] = $typeName;
             }
@@ -68,14 +68,18 @@ class Read extends ListQueryScaffolder implements ResolverInterface
     }
 
     /**
+     *
      * @return string
      */
     protected function createOperationName()
     {
-        $typeName = $this->getDataObjectInstance()->plural_name();
-        $typeName = str_replace(' ', '', $typeName);
-        $typeName = ucfirst($typeName);
-        return 'read' . $typeName;
+        $typeName = $this->typeName();
+
+        // Ported from DataObject::plural_name()
+        if (preg_match('/[^aeiou]y$/i', $typeName)) {
+            $typeName = substr($typeName, 0, -1) . 'ie';
+        }
+        return 'read' . ucfirst($typeName . 's');
     }
 
     /**
