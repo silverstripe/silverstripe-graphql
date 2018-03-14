@@ -21,16 +21,10 @@ class SchemaTest extends SapphireTest
         $typename = $schema->typeNameForDataObject(DataObjectFake::class);
         $this->assertEquals('testType', $typename);
         $typename = $schema->typeNameForDataObject(FakePage::class);
-        $this->assertEquals('GraphQL_FakePage', $typename);
+        $this->assertEquals('SilverStripeFakePage', $typename);
 
-        Config::modify()->merge(
-            FakePage::class,
-            'table_name',
-            null
-        );
-
-        $typename = $schema->typeNameForDataObject(FakePage::class);
-        $this->assertEquals('FakePage', $typename);
+        $typename = $schema->typeNameForDataObject('UnNamespacedClass');
+        $this->assertEquals('UnNamespacedClass', $typename);
     }
 
     public function testEnsureDataObject()

@@ -2,8 +2,6 @@
 
 namespace SilverStripe\GraphQL\Scaffolding;
 
-use SilverStripe\Core\ClassInfo;
-use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataObject;
@@ -51,13 +49,12 @@ class Schema
      */
     public function typeNameForDataObject($class)
     {
-        $this->ensureDataObject($class);
         $customTypeName = $this->mappedTypeName($class);
         if ($customTypeName) {
             return $customTypeName;
         }
-        $typeName = Config::inst()->get($class, 'table_name', Config::UNINHERITED) ?:
-            ClassInfo::shortName($class);
+        $parts = explode('\\', $class);
+        $typeName = sizeof($parts) > 1 ? $parts[0] . end($parts) : $parts[0];
 
         return $this->typeName($typeName);
     }
