@@ -2,18 +2,23 @@
 
 namespace SilverStripe\GraphQL\Scaffolding;
 
-use SilverStripe\Core\Config\Configurable;
+use InvalidArgumentException;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ViewableData;
-use InvalidArgumentException;
 
-class Schema
+/**
+ * Global map of dataobject classes to graphql schema types.
+ * Provides an automatic scaffold mechanism for any classes
+ * without explicit mapping.
+ *
+ * This must be done globally and prior to scaffolding as type mapping
+ * must be determined before scaffolding begins.
+ */
+class StaticSchema
 {
-    use Configurable;
-
     /**
-     * @var Schema
+     * @var StaticSchema
      */
     private static $instance;
 
@@ -27,24 +32,17 @@ class Schema
      */
     public static function inst()
     {
-        return self::$instance ?: new static();
-    }
-
-    /**
-     * Schema constructor.
-     * @param array $typeNames Optional map of classname => type name
-     */
-    public function __construct($typeNames = null)
-    {
-        $map = is_array($typeNames) ? $typeNames : $this->config()->get('typeNames');
-        $this->setTypeNames($map ?: []);
+        if (!self::$instance) {
+            self::$instance = new static();
+        }
+        return self::$instance;
     }
 
     /**
      * Given a DataObject subclass name, transform it into a sanitised (and implicitly unique) type
      * name suitable for the GraphQL schema
      *
-     * @param  string $class
+     * @param string $class
      * @return string
      */
     public function typeNameForDataObject($class)
@@ -60,7 +58,7 @@ class Schema
     }
 
     /**
-     * @param $str
+     * @param string $str
      * @return mixed
      */
     public function typeName($str)
@@ -71,8 +69,8 @@ class Schema
     /**
      * Returns true if the field name can be accessed on the given object
      *
-     * @param  ViewableData $instance
-     * @param  $fieldName
+     * @param ViewableData $instance
+     * @param string $fieldName
      * @return bool
      */
     public function isValidFieldName(ViewableData $instance, $fieldName)
@@ -118,7 +116,7 @@ class Schema
     }
 
     /**
-     * @param $class
+     * @param string $class
      * @return mixed|null
      */
     protected function mappedTypeName($class)

@@ -7,7 +7,7 @@ use GraphQL\Type\Definition\UnionType;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
-use SilverStripe\GraphQL\Scaffolding\Schema;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\DataObject;
 
 class UnionScaffolder implements ScaffolderInterface
@@ -57,7 +57,7 @@ class UnionScaffolder implements ScaffolderInterface
                     if ($class === DataObject::class) {
                         break;
                     }
-                    $typeName = Schema::inst()->typeNameForDataObject($class);
+                    $typeName = StaticSchema::inst()->typeNameForDataObject($class);
                     if ($manager->hasType($typeName)) {
                         return $manager->getType($typeName);
                     }

@@ -8,7 +8,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\ORM\DataList;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\UnionScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Schema;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Core\ClassInfo;
 use Exception;
@@ -43,14 +43,14 @@ class Read extends ListQueryScaffolder implements ResolverInterface
         array_shift($descendants);
         $union = [$this->typeName];
         foreach ($descendants as $descendant) {
-            $typeName = Schema::inst()->typeNameForDataObject($descendant);
+            $typeName = StaticSchema::inst()->typeNameForDataObject($descendant);
             if ($manager->hasType($typeName)) {
                 $union[] = $typeName;
             }
         }
         if (sizeof($union) > 1) {
             return (new UnionScaffolder(
-                $this->typeName . 'WithDescendants',
+                $this->typeName.'WithDescendants',
                 $union
             ))->scaffold($manager);
         }

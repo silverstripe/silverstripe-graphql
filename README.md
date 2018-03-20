@@ -1467,8 +1467,10 @@ $scaffolder
     ->type('SilverStripe\CMS\Model\RedirectorPage')
         ->addFields(['ID', 'ExternalURL', 'Content'])
         ->operation(SchemaScaffolder::READ)
+            ->setName('readRedirectors')
             ->end()
         ->operation(SchemaScaffolder::CREATE)
+            ->setName('createRedirector')
             ->end()
         ->end()
     ->type('Page')
@@ -1523,7 +1525,7 @@ input SiteTreeCreateInputType {
   # all fields from SiteTree
 }
 
-query readRedirectorPages {
+query readRedirectors {
   RedirectorPage
 }
 
@@ -1535,7 +1537,7 @@ query readSiteTrees {
   SiteTreeWithDescendants
 }
 
-mutation createRedirectorPage {
+mutation createRedirector {
   RedirectorPageCreateInputType
 }
 
@@ -1571,33 +1573,40 @@ query readSiteTrees {
   }
 }
 ```
+
 #### Customising the names of types and operations
+
 By default, the scaffolder will generate a type name for you based on the dataobject's `$table_name`
-setting and the output of its `singular_name()` method. Often times, these are poor proxies for 
+setting and the output of its `singular_name()` method. Often times, these are poor proxies for
 a canonical name, e.g. `readMy_Really_Long_NameSpaced_BlogPosts`. To customise the type name, simply map a name to it in the `SilverStripe\GraphQL\Scaffolding\Schema`
 class.
 
 ```yaml
-SilverStripe\GraphQL\Scaffolding\Schema:
-  typeNames:
-    My\Really\Long\Namespaced\BlogPost: Blog
-``` 
+SilverStripe\GraphQL\Controller:
+  schema:
+    typeNames:
+      My\Really\Long\Namespaced\BlogPost: Blog
+```
 
-Operations names are expressed using the type name of the dataobject they serve. That type name 
+Note that `typeNames` is the mapping of dataobjects to the graphql types, whereas the `types`
+config is the list of type creators for non-scaffolded types, backed by php classes.
+`typeNames` is also used (and required by) scaffolding, whether via PHP or YML.
+
+Operations names are expressed using the type name of the dataobject they serve. That type name
 may be customised or computed automatically, as described above. For a deeper level of control, you can
 name the operation using the `name` property.
 
 ```yaml
-My\Really\Long\Namespaced\DataObject:
+...
   operations:
-    read: true
-    name: currentBlogs
+    read:
+      name: currentBlogs
 ```
 
 The name of the operation has been fully customised to `currentBlogs`, returning the type `Blog`.
 
 ```yaml
-My\Really\Long\Namespaced\BlogPost:
+...
   operations:
     read: true
 ```

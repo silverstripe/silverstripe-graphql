@@ -13,7 +13,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
-use SilverStripe\GraphQL\Scaffolding\Schema;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\View\ViewableData;
 
@@ -162,7 +162,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
 
         $operationScaffold = (new ListQueryScaffolder(
             $name,
-            Schema::inst()->typeNameForDataObject($class),
+            StaticSchema::inst()->typeNameForDataObject($class),
             $resolver
         ))->setChainableParent($this);
 
@@ -189,7 +189,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
 
         $operationScaffold = (new MutationScaffolder(
             $name,
-            Schema::inst()->typeNameForDataObject($class),
+            StaticSchema::inst()->typeNameForDataObject($class),
             $resolver
         ))->setChainableParent($this);
 
@@ -378,7 +378,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
                 $ancestorType = $this->type($class);
                 $inst = $ancestorType->getDataObjectInstance();
                 foreach ($exposedFields as $field) {
-                    if (Schema::inst()->isValidFieldName($inst, $field->Name)) {
+                    if (StaticSchema::inst()->isValidFieldName($inst, $field->Name)) {
                         $ancestorType->addField($field->Name, $field->Description);
                     }
                 }
