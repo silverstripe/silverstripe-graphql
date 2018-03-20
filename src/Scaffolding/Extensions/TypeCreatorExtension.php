@@ -8,7 +8,7 @@ use SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser;
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
-use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Manager;
 use Exception;
 
@@ -32,7 +32,7 @@ class TypeCreatorExtension extends DataExtension implements ManagerMutatorInterf
             return Injector::inst()->createWithArgs(
                 TypeParserInterface::class . '.array',
                 [
-                    ScaffoldingUtil::typeName(get_class($this->owner)),
+                    StaticSchema::inst()->typeName(get_class($this->owner)),
                     $type
                 ]
             );

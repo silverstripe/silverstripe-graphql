@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests\Util;
+namespace SilverStripe\GraphQL\Tests\Scaffolding\Util;
 
 use SilverStripe\Dev\SapphireTest;
 use InvalidArgumentException;

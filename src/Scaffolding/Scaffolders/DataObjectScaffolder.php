@@ -17,7 +17,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
-use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
@@ -363,7 +363,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 );
             }
 
-            $typeName = ScaffoldingUtil::typeNameForDataObject($result->dataClass());
+            $typeName = StaticSchema::inst()->typeNameForDataObject($result->dataClass());
 
             $queryScaffolder = (new ListQueryScaffolder(
                 $fieldName,
@@ -679,7 +679,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         foreach ($this->fields as $fieldData) {
             $fieldName = $fieldData->Name;
-            if (!ScaffoldingUtil::isValidFieldName($instance, $fieldName)) {
+            if (!StaticSchema::inst()->isValidFieldName($instance, $fieldName)) {
                 throw new InvalidArgumentException(
                     sprintf(
                         'Invalid field "%s" on %s',
@@ -712,7 +712,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         foreach ($extraDataObjects as $fieldName => $className) {
-            $typeName = ScaffoldingUtil::typeNameForDataObject($className);
+            $typeName = StaticSchema::inst()->typeNameForDataObject($className);
             $description = $this->getFieldDescription($fieldName);
             $fieldMap[$fieldName] = [
                 'type' => $manager->getType($typeName),

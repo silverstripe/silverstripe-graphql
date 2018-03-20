@@ -227,6 +227,17 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
+     * @param $name
+     * @return $this
+     */
+    public function setName($name)
+    {
+        $this->operationName = $name;
+
+        return $this;
+    }
+
+    /**
      * @return ArrayList
      */
     public function getArgs()
@@ -325,6 +336,9 @@ abstract class OperationScaffolder implements ConfigurationApplier
         }
         if (isset($config['resolver'])) {
             $this->setResolver($config['resolver']);
+        }
+        if (isset($config['name'])) {
+            $this->setName($config['name']);
         }
 
         return $this;

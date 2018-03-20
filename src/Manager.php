@@ -12,6 +12,7 @@ use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
@@ -68,6 +69,11 @@ class Manager
      */
     public static function createFromConfig($config)
     {
+        // Bootstrap schema class mapping from config
+        if ($config && array_key_exists('typeNames', $config)) {
+            StaticSchema::inst()->setTypeNames($config['typeNames']);
+        }
+
         /** @var Manager $manager */
         $manager = Injector::inst()->create(Manager::class);
 
@@ -257,7 +263,7 @@ class Manager
     }
 
     /**
-     * @param  string  $name
+     * @param  string $name
      *
      * @return boolean
      */

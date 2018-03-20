@@ -7,7 +7,7 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
-use SilverStripe\GraphQL\Scaffolding\Util\ScaffoldingUtil;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\Core\Config\Config;
 use GraphQL\Type\Definition\IntType;
 use SilverStripe\ORM\FieldType\DBInt;
@@ -43,7 +43,7 @@ class TypeCreatorExtensionTest extends SapphireTest
             'FieldOne' => 'String',
             'FieldTwo' => 'Int'
         ]);
-        $typeName = ScaffoldingUtil::typeName(DBInt::class);
+        $typeName = StaticSchema::inst()->typeName(DBInt::class);
 
         $mockManager = $this->getMockBuilder(Manager::class)
             ->setMethods(['getType','addType'])

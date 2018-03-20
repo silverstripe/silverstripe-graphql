@@ -44,6 +44,8 @@ class UpdateTest extends SapphireTest
 
     /**
      * @dataProvider getExtensionDataProvider
+     *
+     * @param bool $shouldExtend
      */
     public function testUpdateOperationResolver($shouldExtend)
     {
@@ -52,7 +54,7 @@ class UpdateTest extends SapphireTest
         }
         $update = new Update(DataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
+        $manager->addType(new ObjectType(['name' => 'SilverStripeDataObjectFake']), 'SilverStripeDataObjectFake');
         $update->addToManager($manager);
         $scaffold = $update->scaffold($manager);
 
@@ -75,11 +77,11 @@ class UpdateTest extends SapphireTest
             new ResolveInfo([])
         );
 
+        /** @var DataObjectFake $updatedRecord */
+        $updatedRecord = DataObjectFake::get()->byID($ID);
         if ($shouldExtend) {
-            $updatedRecord = DataObjectFake::get()->byID($ID);
             $this->assertEquals('old', $updatedRecord->MyField);
         } else {
-            $updatedRecord = DataObjectFake::get()->byID($ID);
             $this->assertEquals('new', $updatedRecord->MyField);
         }
     }
@@ -89,7 +91,7 @@ class UpdateTest extends SapphireTest
         $update = new Update(DataObjectFake::class);
         $update->addArg('MyField', 'String');
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
+        $manager->addType(new ObjectType(['name' => 'SilverStripeDataObjectFake']), 'SilverStripeDataObjectFake');
         $update->addToManager($manager);
         $scaffold = $update->scaffold($manager);
 
@@ -103,7 +105,7 @@ class UpdateTest extends SapphireTest
         /** @var InputObjectType $inputTypeWrapped */
         $inputTypeWrapped = $inputType->getWrappedType();
         $this->assertInstanceOf(InputObjectType::class, $inputTypeWrapped);
-        $this->assertEquals('GraphQL_DataObjectFakeUpdateInputType', $inputTypeWrapped->toString());
+        $this->assertEquals('SilverStripeDataObjectFakeUpdateInputType', $inputTypeWrapped->toString());
 
         // Custom field
         $this->assertInstanceOf(StringType::class, $args['MyField']['type']);
@@ -131,7 +133,7 @@ class UpdateTest extends SapphireTest
         $ID = $restrictedDataobject->write();
 
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'GraphQL_RestrictedDataObjectFake']), 'GraphQL_RestrictedDataObjectFake');
+        $manager->addType(new ObjectType(['name' => 'SilverStripeRestrictedDataObjectFake']), 'SilverStripeRestrictedDataObjectFake');
         $update->addToManager($manager);
         $scaffold = $update->scaffold($manager);
 
