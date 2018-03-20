@@ -34,7 +34,7 @@ class ReadOneTest extends SapphireTest
     {
         $read = new ReadOne(DataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
+        $manager->addType(new ObjectType(['name' => 'SilverStripeDataObjectFake']), 'SilverStripeDataObjectFake');
         $read->addToManager($manager);
         $scaffold = $read->scaffold($manager);
 

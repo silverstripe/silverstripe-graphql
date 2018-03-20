@@ -70,7 +70,9 @@ class Manager
     public static function createFromConfig($config)
     {
         // Bootstrap schema class mapping from config
-        StaticSchema::inst()->setTypeNames($config['typeNames']);
+        if ($config && array_key_exists('typeNames', $config)) {
+            StaticSchema::inst()->setTypeNames($config['typeNames']);
+        }
 
         /** @var Manager $manager */
         $manager = Injector::inst()->create(Manager::class);
@@ -261,7 +263,7 @@ class Manager
     }
 
     /**
-     * @param  string  $name
+     * @param  string $name
      *
      * @return boolean
      */

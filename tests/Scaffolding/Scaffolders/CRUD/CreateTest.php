@@ -12,6 +12,8 @@ use GraphQL\Type\Definition\StringType;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
+use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeCRUDExtension;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
@@ -27,10 +29,17 @@ class CreateTest extends SapphireTest
     protected function setUp()
     {
         parent::setUp();
+        StaticSchema::inst()->setTypeNames([]);
         // Make sure we're only testing the native features
         foreach (Create::get_extensions() as $className) {
             Create::remove_extension($className);
         }
+    }
+
+    protected function tearDown()
+    {
+        StaticSchema::inst()->setTypeNames([]);
+        parent::tearDown();
     }
 
     public function getExtensionDataProvider()
@@ -43,16 +52,20 @@ class CreateTest extends SapphireTest
 
     /**
      * @dataProvider getExtensionDataProvider
+     *
+     * @param bool $shouldExtend
      */
     public function testCreateOperationResolver($shouldExtend)
     {
         if ($shouldExtend) {
             Create::add_extension(FakeCRUDExtension::class);
         }
-
+        StaticSchema::inst()->setTypeNames([
+            DataObjectFake::class => 'FakeObject',
+        ]);
         $create = new Create(DataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
+        $manager->addType(new ObjectType(['name' => 'FakeObject']), 'FakeObject');
         $create->addToManager($manager);
         $scaffold = $create->scaffold($manager);
 
@@ -77,10 +90,13 @@ class CreateTest extends SapphireTest
 
     public function testCreateOperationInputType()
     {
+        StaticSchema::inst()->setTypeNames([
+            DataObjectFake::class => 'FakeObject',
+        ]);
         $create = new Create(DataObjectFake::class);
         $create->addArg('MyField', 'String');
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
+        $manager->addType(new ObjectType(['name' => 'FakeObject']), 'FakeObject');
         $create->addToManager($manager);
         $scaffold = $create->scaffold($manager);
 
@@ -98,7 +114,7 @@ class CreateTest extends SapphireTest
         /** @var InputObjectType $inputTypeWrapped */
         $inputTypeWrapped = $inputType->getWrappedType();
         $this->assertInstanceOf(InputObjectType::class, $inputTypeWrapped);
-        $this->assertEquals('GraphQL_DataObjectFakeCreateInputType', $inputTypeWrapped->toString());
+        $this->assertEquals('FakeObjectCreateInputType', $inputTypeWrapped->toString());
         ;
 
         // Check fields
@@ -117,9 +133,12 @@ class CreateTest extends SapphireTest
 
     public function testCreateOperationPermissionCheck()
     {
+        StaticSchema::inst()->setTypeNames([
+            RestrictedDataObjectFake::class => 'RestrictedFakeObject',
+        ]);
         $create = new Create(RestrictedDataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'GraphQL_RestrictedDataObjectFake']), 'GraphQL_RestrictedDataObjectFake');
+        $manager->addType(new ObjectType(['name' => 'RestrictedFakeObject']), 'RestrictedFakeObject');
         $create->addToManager($manager);
         $scaffold = $create->scaffold($manager);
 

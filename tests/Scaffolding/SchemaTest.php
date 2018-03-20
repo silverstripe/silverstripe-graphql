@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Tests\Scaffolding;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use InvalidArgumentException;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
@@ -17,7 +18,8 @@ class SchemaTest extends SapphireTest
         $typeNames = [
             DataObjectFake::class => 'testType',
         ];
-        $schema = new StaticSchema($typeNames);
+        $schema = new StaticSchema();
+        $schema->setTypeNames($typeNames);
         $typename = $schema->typeNameForDataObject(DataObjectFake::class);
         $this->assertEquals('testType', $typename);
         $typename = $schema->typeNameForDataObject(FakePage::class);
@@ -74,19 +76,16 @@ class SchemaTest extends SapphireTest
 
     public function testLoadsFromConfig()
     {
-        Config::modify()->merge(
-            StaticSchema::class,
-            'typeNames',
-            [
-                DataObjectFake::class => 'testType'
+        $config = [
+            'typeNames' =>  [
+                DataObjectFake::class => 'testType',
             ]
-        );
-
-        $schema = new StaticSchema();
-        $this->assertEquals('testType', $schema->typeNameForDataObject(DataObjectFake::class));
-        $schema = new StaticSchema([
+        ];
+        Manager::createFromConfig($config);
+        $this->assertEquals('testType', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
+        StaticSchema::inst()->setTypeNames([
             DataObjectFake::class => 'otherTestType'
         ]);
-        $this->assertEquals('otherTestType', $schema->typeNameForDataObject(DataObjectFake::class));
+        $this->assertEquals('otherTestType', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
     }
 }

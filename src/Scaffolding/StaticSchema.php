@@ -84,7 +84,7 @@ class StaticSchema
      */
     public function setTypeNames($typesMap)
     {
-        if (!ArrayLib::is_associative($typesMap)) {
+        if ($typesMap && !ArrayLib::is_associative($typesMap)) {
             throw new InvalidArgumentException(sprintf(
                 '%s.typeNames must be a map of class names to type names',
                 static::class
