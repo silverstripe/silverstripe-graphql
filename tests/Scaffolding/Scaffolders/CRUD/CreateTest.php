@@ -2,19 +2,20 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders\CRUD;
 
+use Exception;
+use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\IntType;
+use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ObjectType;
-use SilverStripe\GraphQL\Manager;
+use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\StringType;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeCRUDExtension;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
-use GraphQL\Type\Definition\StringType;
-use GraphQL\Type\Definition\NonNull;
-use GraphQL\Type\Definition\IntType;
-use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Security\Member;
-use Exception;
 
 class CreateTest extends SapphireTest
 {
@@ -77,17 +78,31 @@ class CreateTest extends SapphireTest
     public function testCreateOperationInputType()
     {
         $create = new Create(DataObjectFake::class);
+        $create->addArg('MyField', 'String');
         $manager = new Manager();
         $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
         $create->addToManager($manager);
         $scaffold = $create->scaffold($manager);
 
-        $this->assertArrayHasKey('Input', $scaffold['args']);
-        $this->assertInstanceof(NonNull::class, $scaffold['args']['Input']['type']);
+        // Test args
+        $args = $scaffold['args'];
+        $this->assertEquals(['Input', 'MyField'], array_keys($args));
 
-        $config = $scaffold['args']['Input']['type']->getWrappedType()->config;
+        // Custom field
+        $this->assertArrayHasKey('MyField', $args);
+        $this->assertInstanceOf(StringType::class, $args['MyField']['type']);
 
-        $this->assertEquals('GraphQL_DataObjectFakeCreateInputType', $config['name']);
+        /** @var NonNull $inputType */
+        $inputType = $args['Input']['type'];
+        $this->assertInstanceOf(NonNull::class, $inputType);
+        /** @var InputObjectType $inputTypeWrapped */
+        $inputTypeWrapped = $inputType->getWrappedType();
+        $this->assertInstanceOf(InputObjectType::class, $inputTypeWrapped);
+        $this->assertEquals('GraphQL_DataObjectFakeCreateInputType', $inputTypeWrapped->toString());
+        ;
+
+        // Check fields
+        $config = $inputTypeWrapped->config;
         $fieldMap = [];
         foreach ($config['fields']() as $name => $fieldData) {
             $fieldMap[$name] = $fieldData['type'];

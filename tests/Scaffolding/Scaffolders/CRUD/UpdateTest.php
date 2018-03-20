@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Tests\Scaffolders\CRUD;
 
 use GraphQL\Type\Definition\IDType;
+use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
@@ -64,7 +65,7 @@ class UpdateTest extends SapphireTest
             $record,
             [
                 'Input' => [
-                    'ID' => $ID,
+                'ID' => $ID,
                     'MyField' => 'new'
                 ],
             ],
@@ -86,17 +87,35 @@ class UpdateTest extends SapphireTest
     public function testUpdateOperationInputType()
     {
         $update = new Update(DataObjectFake::class);
+        $update->addArg('MyField', 'String');
         $manager = new Manager();
         $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
         $update->addToManager($manager);
         $scaffold = $update->scaffold($manager);
 
-        $this->assertArrayHasKey('Input', $scaffold['args']);
-        $this->assertInstanceof(NonNull::class, $scaffold['args']['Input']['type']);
+        // Test args
+        $args = $scaffold['args'];
+        $this->assertEquals(['ID', 'Input', 'MyField'], array_keys($args));
 
-        $config = $scaffold['args']['Input']['type']->getWrappedType()->config;
+        /** @var NonNull $inputType */
+        $inputType = $args['Input']['type'];
+        $this->assertInstanceOf(NonNull::class, $inputType);
+        /** @var InputObjectType $inputTypeWrapped */
+        $inputTypeWrapped = $inputType->getWrappedType();
+        $this->assertInstanceOf(InputObjectType::class, $inputTypeWrapped);
+        $this->assertEquals('GraphQL_DataObjectFakeUpdateInputType', $inputTypeWrapped->toString());
 
-        $this->assertEquals('GraphQL_DataObjectFakeUpdateInputType', $config['name']);
+        /** @var NonNull $idType */
+        $idType = $args['ID']['type'];
+        $this->assertInstanceOf(NonNull::class, $idType);
+        $this->assertInstanceOf(IDType::class, $idType->getWrappedType());
+
+        // Custom field
+        $this->assertArrayHasKey('MyField', $args);
+        $this->assertInstanceOf(StringType::class, $args['MyField']['type']);
+
+        // Test fields
+        $config = $inputTypeWrapped->config;
         $fieldMap = [];
         foreach ($config['fields']() as $name => $fieldData) {
             $fieldMap[$name] = $fieldData['type'];

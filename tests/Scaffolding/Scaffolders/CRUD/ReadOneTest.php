@@ -2,6 +2,9 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders\CRUD;
 
+use GraphQL\Type\Definition\IDType;
+use GraphQL\Type\Definition\NonNull;
+use GraphQL\Type\Definition\StringType;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
@@ -53,5 +56,28 @@ class ReadOneTest extends SapphireTest
         $this->assertInstanceOf(DataObjectFake::class, $response);
         $this->assertEquals($ID, $response->ID);
         $this->assertEquals('Test', $response->MyField);
+    }
+
+    public function testReadOneOperationArgs()
+    {
+        $read = new ReadOne(DataObjectFake::class);
+        $read->addArg('MyField', 'String');
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
+        $read->addToManager($manager);
+        $scaffold = $read->scaffold($manager);
+
+        // Check all args
+        $args = $scaffold['args'];
+        $this->assertEquals(['ID', 'MyField'], array_keys($args));
+
+        /** @var NonNull $idType */
+        $idType = $args['ID']['type'];
+        $this->assertInstanceOf(NonNull::class, $idType);
+        $this->assertInstanceOf(IDType::class, $idType->getWrappedType());
+
+        // Check custom arg
+        $this->assertArrayHasKey('MyField', $args);
+        $this->assertInstanceOf(StringType::class, $args['MyField']['type']);
     }
 }
