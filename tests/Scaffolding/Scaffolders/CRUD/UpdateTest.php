@@ -65,7 +65,7 @@ class UpdateTest extends SapphireTest
             $record,
             [
                 'Input' => [
-                'ID' => $ID,
+                    'ID' => $ID,
                     'MyField' => 'new'
                 ],
             ],
@@ -95,7 +95,7 @@ class UpdateTest extends SapphireTest
 
         // Test args
         $args = $scaffold['args'];
-        $this->assertEquals(['ID', 'Input', 'MyField'], array_keys($args));
+        $this->assertEquals(['Input', 'MyField'], array_keys($args));
 
         /** @var NonNull $inputType */
         $inputType = $args['Input']['type'];
@@ -105,13 +105,7 @@ class UpdateTest extends SapphireTest
         $this->assertInstanceOf(InputObjectType::class, $inputTypeWrapped);
         $this->assertEquals('GraphQL_DataObjectFakeUpdateInputType', $inputTypeWrapped->toString());
 
-        /** @var NonNull $idType */
-        $idType = $args['ID']['type'];
-        $this->assertInstanceOf(NonNull::class, $idType);
-        $this->assertInstanceOf(IDType::class, $idType->getWrappedType());
-
         // Custom field
-        $this->assertArrayHasKey('MyField', $args);
         $this->assertInstanceOf(StringType::class, $args['MyField']['type']);
 
         // Test fields
