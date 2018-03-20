@@ -2,12 +2,12 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use SilverStripe\GraphQL\Pagination\PaginatedQueryCreator;
-use SilverStripe\GraphQL\Pagination\Connection;
+use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Pagination\Connection;
+use SilverStripe\GraphQL\Pagination\PaginatedQueryCreator;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
-use GraphQL\Type\Definition\ResolveInfo;
 
 class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutatorInterface, ScaffolderInterface
 {

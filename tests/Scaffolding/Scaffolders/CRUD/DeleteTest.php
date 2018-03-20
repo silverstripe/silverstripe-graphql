@@ -2,19 +2,20 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders\CRUD;
 
-use SilverStripe\GraphQL\Manager;
+use Exception;
+use GraphQL\Type\Definition\IDType;
+use GraphQL\Type\Definition\ListOfType;
+use GraphQL\Type\Definition\NonNull;
+use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\StringType;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeCRUDExtension;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
-use GraphQL\Type\Definition\NonNull;
-use GraphQL\Type\Definition\ListOfType;
-use GraphQL\Type\Definition\IDType;
-use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Security\Member;
-use Exception;
 
 class DeleteTest extends SapphireTest
 {
@@ -89,21 +90,27 @@ class DeleteTest extends SapphireTest
     public function testDeleteOperationArgs()
     {
         $delete = new Delete(DataObjectFake::class);
+        $delete->addArg('MyField', 'String');
         $manager = new Manager();
         $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
-
+        $delete->addToManager($manager);
         $scaffold = $delete->scaffold($manager);
 
-        $this->assertArrayHasKey('IDs', $scaffold['args']);
-        $this->assertInstanceof(NonNull::class, $scaffold['args']['IDs']['type']);
+        // Test args
+        $args = $scaffold['args'];
+        $this->assertEquals(['IDs', 'MyField'], array_keys($args));
 
-        $listOf = $scaffold['args']['IDs']['type']->getWrappedType();
+        /** @var NonNull $idType */
+        $idType = $args['IDs']['type'];
+        $this->assertInstanceOf(NonNull::class, $idType);
+        /** @var ListOfType $idTypeWrapped */
+        $idTypeWrapped = $idType->getWrappedType();
+        $this->assertInstanceOf(ListOfType::class, $idTypeWrapped);
+        $this->assertInstanceOf(IDType::class, $idTypeWrapped->getWrappedType());
 
-        $this->assertInstanceOf(ListOfType::class, $listOf);
-
-        $idType = $listOf->getWrappedType();
-
-        $this->assertInstanceof(IDType::class, $idType);
+        // Custom field
+        $this->assertArrayHasKey('MyField', $args);
+        $this->assertInstanceOf(StringType::class, $args['MyField']['type']);
     }
 
     public function testDeleteOperationPermissionCheck()

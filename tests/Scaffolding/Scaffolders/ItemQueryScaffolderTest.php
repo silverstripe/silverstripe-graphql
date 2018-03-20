@@ -4,7 +4,7 @@ namespace SilverStripe\GraphQL\Tests\Scaffolders;
 
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
-use Doctrine\Instantiator\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder;
 use GraphQL\Type\Definition\ObjectType;
 
