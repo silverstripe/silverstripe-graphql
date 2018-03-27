@@ -70,8 +70,12 @@ class Manager
     public static function createFromConfig($config)
     {
         // Bootstrap schema class mapping from config
-        if ($config && array_key_exists('typeNames', $config)) {
-            StaticSchema::inst()->setTypeNames($config['typeNames']);
+        if (
+            $config &&
+            isset($config['scaffolding']) &&
+            isset($config['scaffolding']['typeNames'])
+        ) {
+            StaticSchema::inst()->setTypeNames($config['scaffolding']['typeNames']);
         }
 
         /** @var Manager $manager */
