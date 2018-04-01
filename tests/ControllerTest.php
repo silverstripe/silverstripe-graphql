@@ -295,6 +295,7 @@ class ControllerTest extends SapphireTest
             'Allow-Origin' => '*',
             'Allow-Headers' => 'Authorization, Content-Type',
             'Allow-Methods' =>  'GET, PUT, OPTIONS',
+            'Allow-Credentials' => 'true',
             'Max-Age' => 600
         ]);
 
