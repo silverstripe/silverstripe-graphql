@@ -112,15 +112,17 @@ class Update extends MutationScaffolder implements ResolverInterface
 
     public function resolve($object, $args, $context, $info)
     {
+        $input = $args['Input'];
         $obj = DataList::create($this->dataObjectClass)
-            ->byID($args['ID']);
+            ->byID($input['ID']);
         if (!$obj) {
             throw new Exception(sprintf(
                 '%s with ID %s not found',
                 $this->dataObjectClass,
-                $args['ID']
+                $input['ID']
             ));
         }
+        unset($input['ID']);
         if (!$obj->canEdit($context['currentUser'])) {
             throw new Exception(sprintf(
                 'Cannot edit this %s',
@@ -134,7 +136,7 @@ class Update extends MutationScaffolder implements ResolverInterface
             return $obj;
         }
 
-        $obj->update($args['Input']);
+        $obj->update($input);
         $obj->write();
         return $obj;
     }

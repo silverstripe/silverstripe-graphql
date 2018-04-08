@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests\Util;
+namespace SilverStripe\GraphQL\Tests\Scaffolding\Util;
 
 use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\IntType;

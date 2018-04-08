@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders\CRUD;
 
+use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\StringType;
@@ -13,6 +14,7 @@ use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
+use SilverStripe\ORM\DataList;
 use SilverStripe\Security\Member;
 
 class ReadTest extends SapphireTest
@@ -35,7 +37,7 @@ class ReadTest extends SapphireTest
     {
         $read = new Read(DataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
+        $manager->addType(new ObjectType(['name' => 'SilverStripeDataObjectFake']), 'SilverStripeDataObjectFake');
         $read->addToManager($manager);
         $scaffold = $read->scaffold($manager);
 
@@ -63,7 +65,9 @@ class ReadTest extends SapphireTest
         );
 
         $this->assertArrayHasKey('edges', $response);
-        $this->assertEquals([$ID1, $ID3, $ID2], $response['edges']->column('ID'));
+        /** @var DataList $edges */
+        $edges = $response['edges'];
+        $this->assertEquals([$ID1, $ID3, $ID2], $edges->column('ID'));
     }
 
     public function testReadOperationArgs()
@@ -88,7 +92,9 @@ class ReadTest extends SapphireTest
         $read->setUsePagination(false);
         $read->addToManager($manager);
         $scaffold = $read->scaffold($manager);
-        $type = $scaffold['type']->getWrappedType();
+        /** @var NonNull $scaffoldType */
+        $scaffoldType = $scaffold['type'];
+        $type = $scaffoldType->getWrappedType();
         $this->assertEquals(
             $redirectorScaffold->typeName(),
             $type->config['name']
@@ -101,7 +107,9 @@ class ReadTest extends SapphireTest
         $read->setUsePagination(false);
 
         $scaffold = $read->scaffold($manager);
-        $unionType = $scaffold['type']->getWrappedType();
+        /** @var NonNull $scaffoldType */
+        $scaffoldType = $scaffold['type'];
+        $unionType = $scaffoldType->getWrappedType();
         $this->assertEquals(
             $pageScaffold->typeName().'WithDescendants',
             $unionType->name

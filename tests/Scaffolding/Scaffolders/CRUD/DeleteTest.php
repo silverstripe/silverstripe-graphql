@@ -52,7 +52,7 @@ class DeleteTest extends SapphireTest
 
         $delete = new Delete(DataObjectFake::class);
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
+        $manager->addType(new ObjectType(['name' => 'SilverStripeDataObjectFake']), 'SilverStripeDataObjectFake');
         $delete->addToManager($manager);
         $scaffold = $delete->scaffold($manager);
 
@@ -92,7 +92,7 @@ class DeleteTest extends SapphireTest
         $delete = new Delete(DataObjectFake::class);
         $delete->addArg('MyField', 'String');
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'GraphQL_DataObjectFake']), 'GraphQL_DataObjectFake');
+        $manager->addType(new ObjectType(['name' => 'SilverStripeDataObjectFake']), 'SilverStripeDataObjectFake');
         $delete->addToManager($manager);
         $scaffold = $delete->scaffold($manager);
 
@@ -119,7 +119,7 @@ class DeleteTest extends SapphireTest
         $restrictedDataobject = RestrictedDataObjectFake::create();
         $ID = $restrictedDataobject->write();
         $manager = new Manager();
-        $manager->addType(new ObjectType(['name' => 'GraphQL_RestrictedDataObjectFake']), 'GraphQL_RestrictedDataObjectFake');
+        $manager->addType(new ObjectType(['name' => 'SilverStripeRestrictedDataObjectFake']), 'SilverStripeRestrictedDataObjectFake');
 
         $scaffold = $delete->scaffold($manager);
 
