@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Scaffolding;
 
 use InvalidArgumentException;
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ViewableData;
@@ -28,6 +29,11 @@ class StaticSchema
     protected $typesMap;
 
     /**
+     * @var string
+     */
+    protected $ancestryTypeSuffix = 'WithDescendants';
+
+    /**
      * @return static
      */
     public static function inst()
@@ -51,10 +57,21 @@ class StaticSchema
         if ($customTypeName) {
             return $customTypeName;
         }
+
         $parts = explode('\\', $class);
         $typeName = sizeof($parts) > 1 ? $parts[0] . end($parts) : $parts[0];
 
         return $this->typeName($typeName);
+    }
+
+    /**
+     * Gets the type name for a union type of all ancestors of a class given the classname
+     * @param $class
+     * @return string
+     */
+    public function typeNameForAncestry($class)
+    {
+        return $this->typeNameForDataObject($class) . $this->ancestryTypeSuffix;
     }
 
     /**
@@ -64,6 +81,16 @@ class StaticSchema
     public function typeName($str)
     {
         return preg_replace('/[^A-Za-z0-9_]/', '_', str_replace(' ', '', $str));
+    }
+
+    /**
+     * Gets the type name for a union type of all ancestors of a class given the type name
+     * @param string $typeName
+     * @return string|null
+     */
+    public function ancestryTypeName($typeName)
+    {
+        return $typeName . $this->ancestryTypeSuffix;
     }
 
     /**
@@ -115,6 +142,70 @@ class StaticSchema
         return $this;
     }
 
+    /**
+     * @param $rootClass
+     * @param $typeName
+     * @return StaticSchema
+     */
+    public function registerAncestralType($rootClass, $typeName)
+    {
+        $existing = $this->getAncestralTypeName($rootClass);
+        if ($existing && $existing !== $typeName) {
+            throw new InvalidArgumentException(sprintf(
+                'Class %s has already registered an ancestral type as %s, but tried to register' .
+                ' it again as %s.',
+                $rootClass,
+                $existing,
+                $typeName
+            ));
+        }
+
+        $this->ancestralTypesMap[$rootClass] = $typeName;
+
+        return $this;
+    }
+
+    /**
+     * Gets all ancestors of a DataObject
+     * @param $dataObjectClass
+     * @return array
+     */
+    public function getAncestry($dataObjectClass)
+    {
+        $classes = [];
+        $ancestry = array_reverse(ClassInfo::ancestry($dataObjectClass));
+
+        foreach ($ancestry as $class) {
+            if ($class === $dataObjectClass) {
+                continue;
+            }
+            if ($class == DataObject::class) {
+                break;
+            }
+            $classes[] = $class;
+        }
+
+        return $classes;
+    }
+
+    /**
+     * @param $suffix
+     * @return StaticSchema
+     * @throws InvalidArgumentException
+     */
+    public function setAncestryTypeSuffix($suffix)
+    {
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $suffix)) {
+            throw new InvalidArgumentException(sprintf(
+                'Invalid suffix: %s. Must be alphanumeric.',
+                $suffix
+            ));
+        }
+
+        $this->ancestryTypeSuffix = $suffix;
+
+        return $this;
+    }
     /**
      * @param string $class
      * @return mixed|null

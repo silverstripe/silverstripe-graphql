@@ -3,9 +3,11 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 
 /**
@@ -49,12 +51,15 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
      * Creates a thunk that lazily fetches the type
      *
      * @param Manager $manager
-     * @return ObjectType
+     * @return Type
      */
     protected function getType(Manager $manager)
     {
-        /** @var ObjectType $type */
-        $type = $manager->getType($this->typeName);
-        return $type;
+        $ancestryTypeName = StaticSchema::inst()->ancestryTypeName($this->typeName);
+        if ($manager->hasType($ancestryTypeName)) {
+            return $manager->getType($ancestryTypeName);
+        }
+
+        return $manager->getType($this->typeName);
     }
 }

@@ -14,6 +14,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\ArrayLib;
+use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ViewableData;
 
 /**
@@ -128,6 +129,9 @@ class SchemaScaffolder implements ManagerMutatorInterface
      */
     public function type($class)
     {
+        // Remove leading backslash. All namespaces are assumed absolute in YAML
+        $class = preg_replace('/^\\\\/', '' , $class);
+
         foreach ($this->types as $scaffold) {
             if ($scaffold->getDataObjectClass() == $class) {
                 return $scaffold;
@@ -295,13 +299,14 @@ class SchemaScaffolder implements ManagerMutatorInterface
         // Add all DataObjects to the manager
         foreach ($this->types as $scaffold) {
             $scaffold->addToManager($manager);
+            foreach ($scaffold->getAncestralClasses() as $class) {
+                $ancestryScaffolder = new AncestryScaffolder($class);
+                // Due to common ancestry, the same union type can get added multiple times.
+                if (!$manager->hasType($ancestryScaffolder->getName())) {
+                    $ancestryScaffolder->addToManager($manager);
+                }
+            }
         }
-
-        // Nested queries add to the list of peripheral types. Make sure all those
-        // types are registered with the manager before scaffolding the queries they're used in.
-//        foreach ($this->getNestedQueries() as $scaffold) {
-//            $scaffold->addToManager($manager);
-//        }
 
         foreach ($this->queries as $scaffold) {
             $scaffold->addToManager($manager);
@@ -371,9 +376,9 @@ class SchemaScaffolder implements ManagerMutatorInterface
             // The fields and operations explicitly exposed to the lowest type in the ancestry
             $exposedFields = $scaffold->getFields();
             $exposedOperations = $scaffold->getOperations();
-
+            $ancestors = $scaffold->getAncestralClasses();
             // Expose all the ancestors, and add the exposed fields and operations
-            foreach ($scaffold->getAncestralClasses() as $class) {
+            foreach ($ancestors as $class) {
                 $ancestorType = $this->type($class);
                 $inst = $ancestorType->getDataObjectInstance();
                 foreach ($exposedFields as $field) {
@@ -385,6 +390,37 @@ class SchemaScaffolder implements ManagerMutatorInterface
                     $identifier = OperationScaffolder::getIdentifier($op);
                     $ancestorType->operation($identifier);
                 }
+            }
+        }
+    }
+
+    /**
+     * For all of the registered types, create unions for their ancestry
+     * @param AncestryScaffolder[] $scaffolders
+     */
+    protected function registerAncestralTypes($scaffolders)
+    {
+        foreach($scaffolders as $scaffold) {
+            StaticSchema::inst()->registerAncestralType(
+                $scaffold->getRootClass(),
+                $scaffold->getName()
+            );
+        }
+    }
+
+    /**
+     * @param AncestryScaffolder[] $scaffolders
+     * @param Manager $manager
+     */
+    protected function addAncestralTypes($scaffolders, Manager $manager)
+    {
+        foreach($scaffolders as $scaffolder) {
+            // Due to common ancestry, the same union type can get added multiple times.
+            if (!$manager->hasType($scaffolder->getName())) {
+                $manager->addType(
+                    $scaffolder->scaffold($manager),
+                    $scaffolder->getName()
+                );
             }
         }
     }

@@ -107,7 +107,7 @@ class Update extends MutationScaffolder implements ResolverInterface
      */
     protected function inputTypeName()
     {
-        return $this->typeName().'UpdateInputType';
+        return $this->typeName() . 'UpdateInputType';
     }
 
     public function resolve($object, $args, $context, $info)

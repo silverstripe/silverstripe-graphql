@@ -364,17 +364,14 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             }
 
             $typeName = StaticSchema::inst()->typeNameForDataObject($result->dataClass());
-
-            $queryScaffolder = (new ListQueryScaffolder(
+            $queryScaffolder = new ListQueryScaffolder(
                 $fieldName,
                 $typeName,
                 function ($obj) use ($fieldName) {
-                    /**
-                     * @var DataObject $obj
-                     */
+                    /* @var DataObject $obj */
                     return $obj->obj($fieldName);
                 }
-            ));
+            );
         }
 
         $queryScaffolder->setChainableParent($this);
@@ -404,20 +401,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function getAncestralClasses()
     {
-        $classes = [];
-        $ancestry = array_reverse(ClassInfo::ancestry($this->dataObjectClass));
-
-        foreach ($ancestry as $class) {
-            if ($class === $this->dataObjectClass) {
-                continue;
-            }
-            if ($class == DataObject::class) {
-                break;
-            }
-            $classes[] = $class;
-        }
-
-        return $classes;
+        return StaticSchema::inst()->getAncestry($this->dataObjectClass);
     }
 
     /**
@@ -712,10 +696,16 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         foreach ($extraDataObjects as $fieldName => $className) {
-            $typeName = StaticSchema::inst()->typeNameForDataObject($className);
             $description = $this->getFieldDescription($fieldName);
+            $typeName = StaticSchema::inst()->typeNameForDataObject($className);
+            $ancestryTypeName = StaticSchema::inst()->typeNameForAncestry($className);
+
+            $type = $manager->hasType($ancestryTypeName)
+                 ? $manager->getType($ancestryTypeName)
+                 : $manager->getType($typeName);
+
             $fieldMap[$fieldName] = [
-                'type' => $manager->getType($typeName),
+                'type' => $type,
                 'description' => $description,
                 'resolve' => $resolver,
             ];

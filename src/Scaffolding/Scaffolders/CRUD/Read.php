@@ -38,24 +38,12 @@ class Read extends ListQueryScaffolder implements ResolverInterface
      */
     protected function getType(Manager $manager)
     {
-        // Create unions for exposed descendants
-        $descendants = ClassInfo::subclassesFor($this->dataObjectClass);
-        array_shift($descendants);
-        $union = [$this->typeName];
-        foreach ($descendants as $descendant) {
-            $typeName = StaticSchema::inst()->typeNameForDataObject($descendant);
-            if ($manager->hasType($typeName)) {
-                $union[] = $typeName;
-            }
-        }
-        if (sizeof($union) > 1) {
-            return (new UnionScaffolder(
-                $this->typeName.'WithDescendants',
-                $union
-            ))->scaffold($manager);
-        }
+        $ancestryTypeName = StaticSchema::inst()->typeNameForAncestry($this->dataObjectClass);
+        $typeName = StaticSchema::inst()->typeNameForDataObject($this->dataObjectClass);
 
-        return $manager->getType($this->typeName);
+        return $manager->hasType($ancestryTypeName)
+            ? $manager->getType($ancestryTypeName)
+            : $manager->getType($typeName);
     }
 
     /**
@@ -97,6 +85,7 @@ class Read extends ListQueryScaffolder implements ResolverInterface
      * @param array $context
      * @param ResolveInfo $info
      * @return mixed
+     * @throws Exception
      */
     public function resolve($object, $args, $context, $info)
     {

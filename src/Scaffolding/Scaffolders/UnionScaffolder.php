@@ -6,11 +6,12 @@ use Exception;
 use GraphQL\Type\Definition\UnionType;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\DataObject;
 
-class UnionScaffolder implements ScaffolderInterface
+class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
 {
 
     /**
@@ -34,6 +35,44 @@ class UnionScaffolder implements ScaffolderInterface
     }
 
     /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     * @return UnionScaffolder
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getTypes()
+    {
+        return $this->types;
+    }
+
+    /**
+     * @param array $types
+     * @return UnionScaffolder
+     */
+    public function setTypes($types)
+    {
+        $this->types = $types;
+
+        return $this;
+    }
+
+    /**
      * @param Manager $manager
      * @return mixed
      */
@@ -42,9 +81,11 @@ class UnionScaffolder implements ScaffolderInterface
         $types = $this->types;
         return new UnionType([
             'name' => $this->name,
-            'types' => array_map(function ($item) use ($manager) {
-                return $manager->getType($item);
-            }, $types),
+            'types' => function () use ($manager, $types) {
+                return array_map(function ($item) use ($manager) {
+                    return $manager->getType($item);
+                }, $types);
+            },
             'resolveType' => function ($obj) use ($manager) {
                 if (!$obj instanceof DataObject) {
                     throw new Exception(sprintf(
@@ -68,5 +109,13 @@ class UnionScaffolder implements ScaffolderInterface
                 ));
             }
         ]);
+    }
+
+    /**
+     * @param Manager $manager
+     */
+    public function addToManager(Manager $manager)
+    {
+        $manager->addType($this->scaffold($manager));
     }
 }
