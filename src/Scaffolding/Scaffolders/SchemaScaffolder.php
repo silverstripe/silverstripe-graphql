@@ -290,7 +290,6 @@ class SchemaScaffolder implements ManagerMutatorInterface
      */
     public function addToManager(Manager $manager)
     {
-
         $this->registerFixedTypes($manager);
         $this->registerPeripheralTypes($manager);
 
@@ -299,12 +298,13 @@ class SchemaScaffolder implements ManagerMutatorInterface
         // Add all DataObjects to the manager
         foreach ($this->types as $scaffold) {
             $scaffold->addToManager($manager);
-            foreach ($scaffold->getAncestralClasses() as $class) {
-                $ancestryScaffolder = new AncestryScaffolder($class);
-                // Due to common ancestry, the same union type can get added multiple times.
-                if (!$manager->hasType($ancestryScaffolder->getName())) {
-                    $ancestryScaffolder->addToManager($manager);
-                }
+            $inheritanceScaffolder = new InheritanceScaffolder(
+                $scaffold->getDataObjectClass(),
+                InheritanceScaffolder::MODE_DESCENDANTS
+            );
+            // Due to shared ancestry, it's inevitable that the same union type will get added multiple times.
+            if (!$manager->hasType($inheritanceScaffolder->getName())) {
+                $inheritanceScaffolder->addToManager($manager);
             }
         }
 
@@ -368,59 +368,38 @@ class SchemaScaffolder implements ManagerMutatorInterface
      */
     protected function registerPeripheralTypes(Manager $manager)
     {
+        $schema = StaticSchema::inst();
         foreach ($this->types as $scaffold) {
             // Add dependent classes, e.g has_one, has_many nested queries
             foreach ($scaffold->getDependentClasses() as $class) {
                 $this->type($class);
+                // Implicitly, all subclasses are added (albeit with no fields)
+                foreach ($schema->getDescendants($class) as $subclass) {
+                    $this->type($subclass);
+                }
             }
-            // The fields and operations explicitly exposed to the lowest type in the ancestry
+            // The fields and operations explicitly exposed to the inheritance chain where they apply
             $exposedFields = $scaffold->getFields();
             $exposedOperations = $scaffold->getOperations();
-            $ancestors = $scaffold->getAncestralClasses();
-            // Expose all the ancestors, and add the exposed fields and operations
-            foreach ($ancestors as $class) {
-                $ancestorType = $this->type($class);
-                $inst = $ancestorType->getDataObjectInstance();
+
+            $tree = array_merge(
+                $schema->getAncestry($scaffold->getDataObjectClass()),
+                $schema->getDescendants($scaffold->getDataObjectClass())
+            );
+
+            // Expose all the classes along the inheritance chain
+            foreach ($tree as $class) {
+                $inheritanceType = $this->type($class);
+                $inst = $inheritanceType->getDataObjectInstance();
                 foreach ($exposedFields as $field) {
-                    if (StaticSchema::inst()->isValidFieldName($inst, $field->Name)) {
-                        $ancestorType->addField($field->Name, $field->Description);
+                    if ($schema->isValidFieldName($inst, $field->Name)) {
+                        $inheritanceType->addField($field->Name, $field->Description);
                     }
                 }
                 foreach ($exposedOperations as $op) {
                     $identifier = OperationScaffolder::getIdentifier($op);
-                    $ancestorType->operation($identifier);
+                    $inheritanceType->operation($identifier);
                 }
-            }
-        }
-    }
-
-    /**
-     * For all of the registered types, create unions for their ancestry
-     * @param AncestryScaffolder[] $scaffolders
-     */
-    protected function registerAncestralTypes($scaffolders)
-    {
-        foreach($scaffolders as $scaffold) {
-            StaticSchema::inst()->registerAncestralType(
-                $scaffold->getRootClass(),
-                $scaffold->getName()
-            );
-        }
-    }
-
-    /**
-     * @param AncestryScaffolder[] $scaffolders
-     * @param Manager $manager
-     */
-    protected function addAncestralTypes($scaffolders, Manager $manager)
-    {
-        foreach($scaffolders as $scaffolder) {
-            // Due to common ancestry, the same union type can get added multiple times.
-            if (!$manager->hasType($scaffolder->getName())) {
-                $manager->addType(
-                    $scaffolder->scaffold($manager),
-                    $scaffolder->getName()
-                );
             }
         }
     }

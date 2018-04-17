@@ -4,7 +4,6 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use Exception;
 use GraphQL\Type\Definition\UnionType;
-use SilverStripe\Core\ClassInfo;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
@@ -93,15 +92,13 @@ class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
                         get_class($obj)
                     ));
                 }
-                $ancestry = array_reverse(ClassInfo::ancestry($obj));
-                foreach ($ancestry as $class) {
-                    if ($class === DataObject::class) {
-                        break;
-                    }
+                $class = get_class($obj);
+                while ($class !== DataObject::class) {
                     $typeName = StaticSchema::inst()->typeNameForDataObject($class);
                     if ($manager->hasType($typeName)) {
                         return $manager->getType($typeName);
                     }
+                    $class = get_parent_class($class);
                 }
                 throw new Exception(sprintf(
                     'There is no type defined for %s, and none of its ancestors are defined.',

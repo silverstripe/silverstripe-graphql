@@ -3,6 +3,8 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use InvalidArgumentException;
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\Core\Config\Configurable;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
@@ -12,8 +14,18 @@ use SilverStripe\ORM\DataObject;
  * Scaffolds a UnionType based on the ancestry of a DataObject class
  * @package SilverStripe\GraphQL\Scaffolding\Scaffolders
  */
-class AncestryScaffolder extends UnionScaffolder
+class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInterface
 {
+    use Configurable;
+
+    const MODE_ANCESTRY = 'ancestry';
+
+    const MODE_DESCENDANTS = 'descendants';
+
+    private static $suffix_descendants = 'WithDescendants';
+
+    private static $suffix_ancestors = 'WithAncestors';
+
     /**
      * @var string
      */
@@ -25,11 +37,17 @@ class AncestryScaffolder extends UnionScaffolder
     protected $suffix;
 
     /**
+     * @var string
+     */
+    private $mode;
+
+    /**
      * AncestryScaffolder constructor.
      * @param string $rootDataObjectClass
-     * @param string $suffix
+     * @param string $mode
+     * @param string $mode
      */
-    public function __construct($rootDataObjectClass, $suffix = 'WithDescendants')
+    public function __construct($rootDataObjectClass, $mode = self::MODE_DESCENDANTS)
     {
         if (!class_exists($rootDataObjectClass)) {
             throw new InvalidArgumentException(sprintf(
@@ -46,8 +64,17 @@ class AncestryScaffolder extends UnionScaffolder
             ));
         }
 
+        $validModes = [self::MODE_ANCESTRY, self::MODE_DESCENDANTS];
+        if (!in_array($mode, $validModes)) {
+            throw new InvalidArgumentException(sprintf(
+                'Invalid mode: %s. Must be one of %s',
+                $mode,
+                implode(', ', $validModes)
+            ));
+        }
+
+        $this->mode = $mode;
         $this->rootClass = $rootDataObjectClass;
-        $this->suffix = $suffix;
 
         parent::__construct(
             $this->generateTypeName(),
@@ -65,7 +92,7 @@ class AncestryScaffolder extends UnionScaffolder
 
     /**
      * @param string $rootClass
-     * @return AncestryScaffolder
+     * @return InheritanceScaffolder
      */
     public function setRootClass($rootClass)
     {
@@ -79,34 +106,22 @@ class AncestryScaffolder extends UnionScaffolder
      */
     public function getSuffix()
     {
-        return $this->suffix;
-    }
-
-    /**
-     * @param string $suffix
-     * @return AncestryScaffolder
-     */
-    public function setSuffix($suffix)
-    {
-        $this->suffix = $suffix;
-
-        return $this;
+        return $this->mode === self::MODE_DESCENDANTS
+            ? $this->config()->suffix_descendants
+            : $this->config()->suffix_ancestors;
     }
 
     /**
      * @return array
      */
-    public function getAncestry()
+    public function getClassTree()
     {
-        $ancestry = [];
-        $currentClass = $this->rootClass;
+        $schema = StaticSchema::inst();
+        $tree = $this->mode === self::MODE_DESCENDANTS
+            ? $schema->getDescendants($this->rootClass)
+            : $schema->getAncestry($this->rootClass);
 
-        while ($currentClass !== DataObject::class) {
-            $ancestry[] = $currentClass;
-            $currentClass = get_parent_class($currentClass);
-        }
-
-        return $ancestry;
+        return array_merge([$this->rootClass], $tree);
     }
 
     /**
@@ -117,7 +132,23 @@ class AncestryScaffolder extends UnionScaffolder
     {
         return array_map(function ($class) {
             return StaticSchema::inst()->typeNameForDataObject($class);
-        }, $this->getAncestry());
+        }, $this->getClassTree());
+    }
+
+    /**
+     * @param Manager $manager
+     */
+    public function addToManager(Manager $manager)
+    {
+        $types = $this->getTypes();
+        if (sizeof($types) === 1) {
+            return;
+        }
+
+        $manager->addType(
+            $this->scaffold($manager),
+            $this->getName()
+        );
     }
 
     /**
@@ -127,6 +158,6 @@ class AncestryScaffolder extends UnionScaffolder
     {
         $prefix = StaticSchema::inst()->typeNameForDataObject($this->rootClass);
 
-        return $prefix . $this->suffix;
+        return $prefix . $this->getSuffix();
     }
 }

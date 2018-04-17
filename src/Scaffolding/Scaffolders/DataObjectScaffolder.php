@@ -9,6 +9,7 @@ use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Dev\Deprecation;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
@@ -398,9 +399,12 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      * Gets the class ancestry back to DataObject.
      *
      * @return array
+     * @deprecated 2.0.0..3.0.0 Use StaticSchema::getAncestry($class) instead
      */
     public function getAncestralClasses()
     {
+        Deprecation::notice('3.0', 'Use StaticSchema::getAncestry($class) instead');
+
         return StaticSchema::inst()->getAncestry($this->dataObjectClass);
     }
 

@@ -143,29 +143,6 @@ class StaticSchema
     }
 
     /**
-     * @param $rootClass
-     * @param $typeName
-     * @return StaticSchema
-     */
-    public function registerAncestralType($rootClass, $typeName)
-    {
-        $existing = $this->getAncestralTypeName($rootClass);
-        if ($existing && $existing !== $typeName) {
-            throw new InvalidArgumentException(sprintf(
-                'Class %s has already registered an ancestral type as %s, but tried to register' .
-                ' it again as %s.',
-                $rootClass,
-                $existing,
-                $typeName
-            ));
-        }
-
-        $this->ancestralTypesMap[$rootClass] = $typeName;
-
-        return $this;
-    }
-
-    /**
      * Gets all ancestors of a DataObject
      * @param $dataObjectClass
      * @return array
@@ -189,23 +166,26 @@ class StaticSchema
     }
 
     /**
-     * @param $suffix
-     * @return StaticSchema
+     * @param $dataObjectClass
+     * @return array
      * @throws InvalidArgumentException
      */
-    public function setAncestryTypeSuffix($suffix)
+    public function getDescendants($dataObjectClass)
     {
-        if (!preg_match('/^[A-Za-z0-9_]+$/', $suffix)) {
+        if (!is_subclass_of($dataObjectClass, DataObject::class)) {
             throw new InvalidArgumentException(sprintf(
-                'Invalid suffix: %s. Must be alphanumeric.',
-                $suffix
+                '%s::getDescendants takes only %s subclasses',
+                __CLASS__,
+                DataObject::class
             ));
         }
 
-        $this->ancestryTypeSuffix = $suffix;
+        $descendants = ClassInfo::subclassesFor($dataObjectClass);
+        array_shift($descendants);
 
-        return $this;
+        return $descendants;
     }
+
     /**
      * @param string $class
      * @return mixed|null
