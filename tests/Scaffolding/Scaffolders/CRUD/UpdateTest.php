@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests\Scaffolders\CRUD;
+namespace SilverStripe\GraphQL\Tests\Scaffolding\Scaffolders\CRUD;
 
 use GraphQL\Type\Definition\IDType;
 use GraphQL\Type\Definition\InputObjectType;

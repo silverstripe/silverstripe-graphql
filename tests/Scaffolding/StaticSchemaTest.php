@@ -2,7 +2,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolding;
 
-use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
@@ -11,7 +10,7 @@ use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 
-class SchemaTest extends SapphireTest
+class StaticSchemaTest extends SapphireTest
 {
     public function testTypeNameForDataObject()
     {

@@ -188,7 +188,7 @@ class StaticSchema
         $descendants = ClassInfo::subclassesFor($dataObjectClass);
         array_shift($descendants);
 
-        return $descendants;
+        return array_values($descendants);
     }
 
     /**

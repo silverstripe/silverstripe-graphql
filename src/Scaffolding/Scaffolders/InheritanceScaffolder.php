@@ -40,23 +40,8 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
      */
     public function __construct($rootDataObjectClass, $suffix = '')
     {
-        if (!class_exists($rootDataObjectClass)) {
-            throw new InvalidArgumentException(sprintf(
-                'Class %s does not exist.',
-                $rootDataObjectClass
-            ));
-        }
-
-        if (!is_subclass_of($rootDataObjectClass, DataObject::class)) {
-            throw new InvalidArgumentException(sprintf(
-                'Class %s is not a subclass of %s.',
-                $rootDataObjectClass,
-                DataObject::class
-            ));
-        }
-
-        $this->rootClass = $rootDataObjectClass;
-        $this->suffix = $suffix;
+        $this->setRootClass($rootDataObjectClass);
+        $this->setSuffix($suffix);
 
         parent::__construct(
             $this->generateTypeName(),
@@ -69,6 +54,7 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
      */
     public function getRootClass()
     {
+
         return $this->rootClass;
     }
 
@@ -78,6 +64,21 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
      */
     public function setRootClass($rootClass)
     {
+        if (!class_exists($rootClass)) {
+            throw new InvalidArgumentException(sprintf(
+                'Class %s does not exist.',
+                $rootClass
+            ));
+        }
+
+        if (!is_subclass_of($rootClass, DataObject::class)) {
+            throw new InvalidArgumentException(sprintf(
+                'Class %s is not a subclass of %s.',
+                $rootClass,
+                DataObject::class
+            ));
+        }
+
         $this->rootClass = $rootClass;
 
         return $this;
