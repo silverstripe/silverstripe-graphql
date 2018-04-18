@@ -6,6 +6,7 @@ use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
+use Exception;
 
 /**
  * Scaffolds a GraphQL query field.
@@ -145,6 +146,7 @@ class ListQueryScaffolder extends QueryScaffolder
 
     /**
      * @param Manager $manager
+     * @throws Exception
      */
     public function addToManager(Manager $manager)
     {

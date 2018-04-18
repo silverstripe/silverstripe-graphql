@@ -18,14 +18,6 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
 {
     use Configurable;
 
-    const MODE_ANCESTRY = 'ancestry';
-
-    const MODE_DESCENDANTS = 'descendants';
-
-    private static $suffix_descendants = 'WithDescendants';
-
-    private static $suffix_ancestors = 'WithAncestors';
-
     /**
      * @var string
      */
@@ -44,10 +36,9 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
     /**
      * AncestryScaffolder constructor.
      * @param string $rootDataObjectClass
-     * @param string $mode
-     * @param string $mode
+     * @param string $suffix
      */
-    public function __construct($rootDataObjectClass, $mode = self::MODE_DESCENDANTS)
+    public function __construct($rootDataObjectClass, $suffix = '')
     {
         if (!class_exists($rootDataObjectClass)) {
             throw new InvalidArgumentException(sprintf(
@@ -64,17 +55,8 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
             ));
         }
 
-        $validModes = [self::MODE_ANCESTRY, self::MODE_DESCENDANTS];
-        if (!in_array($mode, $validModes)) {
-            throw new InvalidArgumentException(sprintf(
-                'Invalid mode: %s. Must be one of %s',
-                $mode,
-                implode(', ', $validModes)
-            ));
-        }
-
-        $this->mode = $mode;
         $this->rootClass = $rootDataObjectClass;
+        $this->suffix = $suffix;
 
         parent::__construct(
             $this->generateTypeName(),
@@ -106,22 +88,18 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
      */
     public function getSuffix()
     {
-        return $this->mode === self::MODE_DESCENDANTS
-            ? $this->config()->suffix_descendants
-            : $this->config()->suffix_ancestors;
+        return $this->suffix;
     }
 
     /**
-     * @return array
+     * @param $suffix
+     * @return $this
      */
-    public function getClassTree()
+    public function setSuffix($suffix)
     {
-        $schema = StaticSchema::inst();
-        $tree = $this->mode === self::MODE_DESCENDANTS
-            ? $schema->getDescendants($this->rootClass)
-            : $schema->getAncestry($this->rootClass);
+        $this->suffix = $suffix;
 
-        return array_merge([$this->rootClass], $tree);
+        return $this;
     }
 
     /**
@@ -130,9 +108,15 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
      */
     public function getTypes()
     {
-        return array_map(function ($class) {
-            return StaticSchema::inst()->typeNameForDataObject($class);
-        }, $this->getClassTree());
+        $schema = StaticSchema::inst();
+        $tree = array_merge(
+            [$this->rootClass],
+            $schema->getDescendants($this->rootClass)
+        );
+
+        return array_map(function ($class) use ($tree, $schema) {
+            return $schema->typeNameForDataObject($class);
+        }, $tree);
     }
 
     /**
@@ -158,6 +142,6 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
     {
         $prefix = StaticSchema::inst()->typeNameForDataObject($this->rootClass);
 
-        return $prefix . $this->getSuffix();
+        return $prefix . $this->suffix;
     }
 }

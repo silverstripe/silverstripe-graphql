@@ -300,7 +300,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
             $scaffold->addToManager($manager);
             $inheritanceScaffolder = new InheritanceScaffolder(
                 $scaffold->getDataObjectClass(),
-                InheritanceScaffolder::MODE_DESCENDANTS
+                StaticSchema::config()->get('inheritanceTypeSuffix')
             );
             // Due to shared ancestry, it's inevitable that the same union type will get added multiple times.
             if (!$manager->hasType($inheritanceScaffolder->getName())) {
@@ -378,9 +378,6 @@ class SchemaScaffolder implements ManagerMutatorInterface
                     $this->type($subclass);
                 }
             }
-            // The fields and operations explicitly exposed to the inheritance chain where they apply
-            $exposedFields = $scaffold->getFields();
-            $exposedOperations = $scaffold->getOperations();
 
             $tree = array_merge(
                 $schema->getAncestry($scaffold->getDataObjectClass()),
@@ -389,17 +386,8 @@ class SchemaScaffolder implements ManagerMutatorInterface
 
             // Expose all the classes along the inheritance chain
             foreach ($tree as $class) {
-                $inheritanceType = $this->type($class);
-                $inst = $inheritanceType->getDataObjectInstance();
-                foreach ($exposedFields as $field) {
-                    if ($schema->isValidFieldName($inst, $field->Name)) {
-                        $inheritanceType->addField($field->Name, $field->Description);
-                    }
-                }
-                foreach ($exposedOperations as $op) {
-                    $identifier = OperationScaffolder::getIdentifier($op);
-                    $inheritanceType->operation($identifier);
-                }
+                $newType = $this->type($class);
+                $scaffold->cloneTo($newType);
             }
         }
     }

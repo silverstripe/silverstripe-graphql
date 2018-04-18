@@ -34,7 +34,8 @@ class Create extends MutationScaffolder implements ResolverInterface
         parent::__construct(
             'create' . ucfirst($this->typeName()),
             $this->typeName(),
-            $this
+            $this,
+            $dataObjectClass
         );
     }
 

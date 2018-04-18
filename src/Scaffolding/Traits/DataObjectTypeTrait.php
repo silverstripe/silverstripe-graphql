@@ -43,14 +43,6 @@ trait DataObjectTypeTrait
     }
 
     /**
-     * @return null|string
-     */
-    public function ancestryTypeName()
-    {
-        return StaticSchema::inst()->typeNameForAncestry($this->dataObjectClass);
-    }
-
-    /**
      * @return mixed
      */
     public function getDataObjectInstance()

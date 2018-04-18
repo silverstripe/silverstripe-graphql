@@ -2,13 +2,14 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
+use InvalidArgumentException;
 
 /**
  * Scaffolds a GraphQL query field.
@@ -21,6 +22,27 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
      * @var bool
      */
     protected $isNested = false;
+
+    /**
+     * QueryScaffolder constructor.
+     *
+     * @param string $operationName
+     * @param string $typeName
+     * @param ResolverInterface|callable|null $resolver
+     * @param string $class
+     */
+    public function __construct($operationName, $typeName = null, $resolver = null, $class = null)
+    {
+        $this->dataObjectClass = $class;
+        parent::__construct($operationName, $typeName, $resolver);
+
+        if (!$this->typeName && !$this->dataObjectClass) {
+            throw new InvalidArgumentException(sprintf(
+                '%s::__construct() must take a $typeName or $class parameter.',
+                __CLASS__
+            ));
+        }
+    }
 
     /**
      * @param Manager $manager
@@ -48,18 +70,20 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
     }
 
     /**
-     * Creates a thunk that lazily fetches the type
+     * Get the type from Manager
      *
      * @param Manager $manager
      * @return Type
      */
     protected function getType(Manager $manager)
     {
-        $ancestryTypeName = StaticSchema::inst()->ancestryTypeName($this->typeName);
-        if ($manager->hasType($ancestryTypeName)) {
-            return $manager->getType($ancestryTypeName);
+        if ($this->typeName) {
+            return $manager->getType($this->typeName);
         }
 
-        return $manager->getType($this->typeName);
+        return StaticSchema::inst()->fetchFromManager(
+            $this->dataObjectClass,
+            $manager
+        );
     }
 }

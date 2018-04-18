@@ -24,7 +24,12 @@ class ReadOne extends ItemQueryScaffolder implements ResolverInterface
     public function __construct($dataObjectClass)
     {
         $this->dataObjectClass = $dataObjectClass;
-        parent::__construct($this->createOperationName(), $this->typeName(), $this);
+        parent::__construct(
+            $this->createOperationName(),
+            $this->typeName(),
+            $this,
+            $dataObjectClass
+        );
     }
 
     /**
@@ -38,6 +43,10 @@ class ReadOne extends ItemQueryScaffolder implements ResolverInterface
         return 'readOne' . $typeName;
     }
 
+    /**
+     * @param Manager $manager
+     * @return array
+     */
     protected function createDefaultArgs(Manager $manager)
     {
         return [
@@ -53,6 +62,7 @@ class ReadOne extends ItemQueryScaffolder implements ResolverInterface
      * @param array $context
      * @param ResolveInfo $info
      * @return mixed
+     * @throws Exception
      */
     public function resolve($object, $args, $context, $info)
     {

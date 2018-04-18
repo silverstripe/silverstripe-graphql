@@ -28,22 +28,12 @@ class Read extends ListQueryScaffolder implements ResolverInterface
     public function __construct($dataObjectClass)
     {
         $this->dataObjectClass = $dataObjectClass;
-        parent::__construct($this->createOperationName(), $this->typeName(), $this);
-    }
-
-    /**
-     * Creates a thunk that lazily fetches the type
-     * @param  Manager $manager
-     * @return Type
-     */
-    protected function getType(Manager $manager)
-    {
-        $ancestryTypeName = StaticSchema::inst()->typeNameForAncestry($this->dataObjectClass);
-        $typeName = StaticSchema::inst()->typeNameForDataObject($this->dataObjectClass);
-
-        return $manager->hasType($ancestryTypeName)
-            ? $manager->getType($ancestryTypeName)
-            : $manager->getType($typeName);
+        parent::__construct(
+            $this->createOperationName(),
+            $this->typeName(),
+            $this,
+            $dataObjectClass
+        );
     }
 
     /**

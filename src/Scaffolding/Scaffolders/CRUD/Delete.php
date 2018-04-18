@@ -32,7 +32,8 @@ class Delete extends MutationScaffolder implements ResolverInterface
         parent::__construct(
             'delete' . ucfirst($this->typeName()),
             $this->typeName(),
-            $this
+            $this,
+            $dataObjectClass
         );
     }
 

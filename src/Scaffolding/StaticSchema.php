@@ -2,8 +2,11 @@
 
 namespace SilverStripe\GraphQL\Scaffolding;
 
+use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\Core\ClassInfo;
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ViewableData;
@@ -18,6 +21,8 @@ use SilverStripe\View\ViewableData;
  */
 class StaticSchema
 {
+    use Configurable;
+
     /**
      * @var StaticSchema
      */
@@ -31,7 +36,7 @@ class StaticSchema
     /**
      * @var string
      */
-    protected $ancestryTypeSuffix = 'WithDescendants';
+    private static $inheritanceTypeSuffix = 'WithDescendants';
 
     /**
      * @return static
@@ -69,9 +74,19 @@ class StaticSchema
      * @param $class
      * @return string
      */
-    public function typeNameForAncestry($class)
+    public function inheritanceTypeNameForDataObject($class)
     {
-        return $this->typeNameForDataObject($class) . $this->ancestryTypeSuffix;
+        return $this->typeNameForDataObject($class) . $this->config()->inheritanceTypeSuffix;
+    }
+
+    /**
+     * Gets the type name for a union type of all ancestors of a class given the type name
+     * @param string $typeName
+     * @return string|null
+     */
+    public function inheritanceTypeNameForType($typeName)
+    {
+        return $typeName . $this->config()->inheritanceTypeSuffix;
     }
 
     /**
@@ -81,16 +96,6 @@ class StaticSchema
     public function typeName($str)
     {
         return preg_replace('/[^A-Za-z0-9_]/', '_', str_replace(' ', '', $str));
-    }
-
-    /**
-     * Gets the type name for a union type of all ancestors of a class given the type name
-     * @param string $typeName
-     * @return string|null
-     */
-    public function ancestryTypeName($typeName)
-    {
-        return $typeName . $this->ancestryTypeSuffix;
     }
 
     /**
@@ -184,6 +189,30 @@ class StaticSchema
         array_shift($descendants);
 
         return $descendants;
+    }
+
+    /**
+     * Gets the type from the manager given a DataObject class. Will use an
+     * inheritance type if available.
+     * @param $class
+     * @param Manager $manager
+     * @return Type
+     */
+    public function fetchFromManager($class, Manager $manager)
+    {
+        $typeName = $this->typeNameForDataObject($class);
+        $inheritanceTypeName = $this->inheritanceTypeNameForDataObject($class);
+
+        foreach([$inheritanceTypeName, $typeName] as $type) {
+            if ($manager->hasType($type)) {
+                return $manager->getType($type);
+            }
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            'The class %s could not be resolved to any type in the manager instance.',
+            $class
+        ));
     }
 
     /**
