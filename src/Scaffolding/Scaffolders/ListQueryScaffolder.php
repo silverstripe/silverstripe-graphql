@@ -39,7 +39,7 @@ class ListQueryScaffolder extends QueryScaffolder
     protected $paginationScaffolder;
 
     /**
-     * @param $bool
+     * @param bool $bool
      * @return $this
      */
     public function setUsePagination($bool)
@@ -79,7 +79,7 @@ class ListQueryScaffolder extends QueryScaffolder
     }
 
     /**
-     * @param $int
+     * @param int $int
      * @return $this
      */
     public function setMaximumPaginationLimit($int)

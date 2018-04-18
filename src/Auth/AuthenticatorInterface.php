@@ -12,8 +12,6 @@ use SilverStripe\Security\Member;
  *
  * It should return the authenticated Member if successful so that GraphQL can
  * use it in place of the Member from the session for permission checks such as DataObject::canView.
- *
- * @package silverstripe-graphql
  */
 interface AuthenticatorInterface
 {

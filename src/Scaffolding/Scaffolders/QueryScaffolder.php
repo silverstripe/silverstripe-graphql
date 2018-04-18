@@ -59,7 +59,7 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
 
     /**
      * Set to true if this query is a nested field and should not appear in the root query field
-     * @param $bool
+     * @param bool $bool
      * @return $this
      */
     public function setNested($bool)

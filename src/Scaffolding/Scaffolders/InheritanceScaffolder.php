@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use InvalidArgumentException;
-use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
@@ -12,7 +11,6 @@ use SilverStripe\ORM\DataObject;
 
 /**
  * Scaffolds a UnionType based on the ancestry of a DataObject class
- * @package SilverStripe\GraphQL\Scaffolding\Scaffolders
  */
 class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInterface
 {
@@ -93,7 +91,7 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
     }
 
     /**
-     * @param $suffix
+     * @param string $suffix
      * @return $this
      */
     public function setSuffix($suffix)

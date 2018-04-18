@@ -28,6 +28,7 @@ class StaticSchema
     const PREFER_SINGLE = 2;
 
     /**
+     * @internal
      * @var StaticSchema
      */
     private static $instance;
@@ -38,6 +39,7 @@ class StaticSchema
     protected $typesMap;
 
     /**
+     * @config
      * @var string
      */
     private static $inheritanceTypeSuffix = 'WithDescendants';
@@ -75,22 +77,23 @@ class StaticSchema
 
     /**
      * Gets the type name for a union type of all ancestors of a class given the classname
-     * @param $class
+     * @param string $class
      * @return string
      */
     public function inheritanceTypeNameForDataObject($class)
     {
-        return $this->typeNameForDataObject($class) . $this->config()->inheritanceTypeSuffix;
+        $typeName = $this->typeNameForDataObject($class);
+        return $this->inheritanceTypeNameForType($typeName);
     }
 
     /**
      * Gets the type name for a union type of all ancestors of a class given the type name
      * @param string $typeName
-     * @return string|null
+     * @return string
      */
     public function inheritanceTypeNameForType($typeName)
     {
-        return $typeName . $this->config()->inheritanceTypeSuffix;
+        return $typeName . $this->config()->get('inheritanceTypeSuffix');
     }
 
     /**
@@ -153,7 +156,7 @@ class StaticSchema
 
     /**
      * Gets all ancestors of a DataObject
-     * @param $dataObjectClass
+     * @param string $dataObjectClass
      * @return array
      */
     public function getAncestry($dataObjectClass)
@@ -175,7 +178,7 @@ class StaticSchema
     }
 
     /**
-     * @param $dataObjectClass
+     * @param string $dataObjectClass
      * @return array
      * @throws InvalidArgumentException
      */
@@ -198,7 +201,7 @@ class StaticSchema
     /**
      * Gets the type from the manager given a DataObject class. Will use an
      * inheritance type if available.
-     * @param $class
+     * @param string $class
      * @param Manager $manager
      * @param int $mode
      * @return Type
@@ -241,7 +244,7 @@ class StaticSchema
     }
 
     /**
-     * @param $class
+     * @param string $class
      * @throws InvalidArgumentException
      */
     protected function ensureDataObject($class)

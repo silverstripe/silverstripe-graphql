@@ -2,16 +2,11 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
-use GraphQL\Type\Definition\ResolveInfo;
-use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
-use SilverStripe\ORM\DataList;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\UnionScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
-use SilverStripe\GraphQL\Scaffolding\StaticSchema;
-use SilverStripe\GraphQL\Manager;
-use SilverStripe\Core\ClassInfo;
 use Exception;
+use GraphQL\Type\Definition\ResolveInfo;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
+use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\Security\Member;
 

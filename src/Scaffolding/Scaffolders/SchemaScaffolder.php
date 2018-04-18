@@ -11,10 +11,9 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
-use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
+use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\ORM\ArrayLib;
-use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ViewableData;
 
 /**
@@ -130,10 +129,10 @@ class SchemaScaffolder implements ManagerMutatorInterface
     public function type($class)
     {
         // Remove leading backslash. All namespaces are assumed absolute in YAML
-        $class = preg_replace('/^\\\\/', '', $class);
+        $class = ltrim('\\', $class);
 
         foreach ($this->types as $scaffold) {
-            if ($scaffold->getDataObjectClass() == $class) {
+            if ($scaffold->getDataObjectClass() === $class) {
                 return $scaffold;
             }
         }

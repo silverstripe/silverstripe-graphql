@@ -62,7 +62,7 @@ class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
 
     /**
      * @param array $types
-     * @return UnionScaffolder
+     * @return $this
      */
     public function setTypes($types)
     {
@@ -73,7 +73,7 @@ class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
 
     /**
      * @param Manager $manager
-     * @return mixed
+     * @return UnionType
      */
     public function scaffold(Manager $manager)
     {

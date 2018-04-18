@@ -47,7 +47,7 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
     }
 
     /**
-     * @param $name
+     * @param string $name
      * @return $this
      */
     public function setOperationName($name)
