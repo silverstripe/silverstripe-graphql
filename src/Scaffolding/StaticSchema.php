@@ -23,6 +23,10 @@ class StaticSchema
 {
     use Configurable;
 
+    const PREFER_UNION = 1;
+
+    const PREFER_SINGLE = 2;
+
     /**
      * @var StaticSchema
      */
@@ -196,14 +200,26 @@ class StaticSchema
      * inheritance type if available.
      * @param $class
      * @param Manager $manager
+     * @param int $mode
      * @return Type
      */
-    public function fetchFromManager($class, Manager $manager)
+    public function fetchFromManager($class, Manager $manager, $mode = self::PREFER_UNION)
     {
+        if (!in_array($mode, [self::PREFER_UNION, self::PREFER_SINGLE])) {
+            throw new InvalidArgumentException(sprintf(
+                '%s::%s illegal mode %s. Allowed modes are PREFER_UNION, PREFER_SINGLE',
+                __CLASS__,
+                __FUNCTION__,
+                $mode
+            ));
+        }
         $typeName = $this->typeNameForDataObject($class);
         $inheritanceTypeName = $this->inheritanceTypeNameForDataObject($class);
+        $names = $mode === self::PREFER_UNION
+            ? [$inheritanceTypeName, $typeName]
+            : [$typeName, $inheritanceTypeName];
 
-        foreach ([$inheritanceTypeName, $typeName] as $type) {
+        foreach ($names as $type) {
             if ($manager->hasType($type)) {
                 return $manager->getType($type);
             }
