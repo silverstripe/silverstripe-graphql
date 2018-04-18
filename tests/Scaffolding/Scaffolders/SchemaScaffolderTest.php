@@ -116,7 +116,7 @@ class SchemaScaffolderTest extends SapphireTest
             Member::class,
             File::class,
         ];
-        foreach($explicitTypes as $className) {
+        foreach ($explicitTypes as $className) {
             $expectedTypes = array_merge(
                 [$className],
                 $expectedTypes,
@@ -330,7 +330,6 @@ class SchemaScaffolderTest extends SapphireTest
 
             $this->assertNotNull($manager->getQuery($read->getName()));
             $this->assertNotNull($manager->getMutation($delete->getName()));
-
         }
     }
 
@@ -366,7 +365,5 @@ class SchemaScaffolderTest extends SapphireTest
         $union = $manager->getType($inheritanceTypeName);
         $descendants = StaticSchema::inst()->getDescendants(File::class);
         $this->assertCount(count($descendants) + 1, $union->getTypes());
-
     }
-
 }

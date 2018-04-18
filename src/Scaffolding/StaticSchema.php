@@ -203,7 +203,7 @@ class StaticSchema
         $typeName = $this->typeNameForDataObject($class);
         $inheritanceTypeName = $this->inheritanceTypeNameForDataObject($class);
 
-        foreach([$inheritanceTypeName, $typeName] as $type) {
+        foreach ([$inheritanceTypeName, $typeName] as $type) {
             if ($manager->hasType($type)) {
                 return $manager->getType($type);
             }

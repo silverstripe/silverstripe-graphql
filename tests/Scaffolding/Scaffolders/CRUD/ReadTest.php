@@ -83,5 +83,4 @@ class ReadTest extends SapphireTest
         $this->assertArrayHasKey('MyField', $args);
         $this->assertInstanceOf(StringType::class, $args['MyField']['type']);
     }
-
 }
