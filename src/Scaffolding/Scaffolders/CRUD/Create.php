@@ -4,12 +4,13 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use Exception;
 use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
@@ -18,7 +19,7 @@ use SilverStripe\ORM\FieldType\DBField;
 /**
  * A generic "create" operation for a DataObject.
  */
-class Create extends MutationScaffolder implements ResolverInterface, CRUDInterface
+class Create extends MutationScaffolder implements OperationResolver, CRUDInterface
 {
     /**
      * Create constructor.
@@ -107,7 +108,7 @@ class Create extends MutationScaffolder implements ResolverInterface, CRUDInterf
         return $this->typeName() . 'CreateInputType';
     }
 
-    public function resolve($object, $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         // Todo: this is totally half baked
         $singleton = DataObject::singleton($this->dataObjectClass);

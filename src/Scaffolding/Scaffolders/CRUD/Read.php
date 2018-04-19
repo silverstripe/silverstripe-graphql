@@ -5,8 +5,8 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
@@ -15,7 +15,7 @@ use SilverStripe\Security\Member;
 /**
  * Scaffolds a generic read operation for DataObjects.
  */
-class Read extends ListQueryScaffolder implements ResolverInterface, CRUDInterface
+class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterface
 {
     /**
      * Read constructor.
@@ -68,7 +68,7 @@ class Read extends ListQueryScaffolder implements ResolverInterface, CRUDInterfa
      * @return mixed
      * @throws Exception
      */
-    public function resolve($object, $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         if (!$this->checkPermission($context['currentUser'])) {
             throw new Exception(sprintf(

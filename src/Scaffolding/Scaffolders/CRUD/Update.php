@@ -8,9 +8,9 @@ use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
@@ -20,7 +20,7 @@ use SilverStripe\ORM\FieldType\DBField;
 /**
  * Scaffolds a generic update operation for DataObjects.
  */
-class Update extends MutationScaffolder implements ResolverInterface, CRUDInterface
+class Update extends MutationScaffolder implements OperationResolver, CRUDInterface
 {
     /**
      * Update constructor.
@@ -123,7 +123,7 @@ class Update extends MutationScaffolder implements ResolverInterface, CRUDInterf
      * @return mixed
      * @throws Exception
      */
-    public function resolve($object, $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         $input = $args['Input'];
         $obj = DataList::create($this->dataObjectClass)

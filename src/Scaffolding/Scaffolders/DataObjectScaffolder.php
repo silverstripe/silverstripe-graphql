@@ -339,7 +339,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      *
      * @param string $fieldName
      * @param QueryScaffolder $queryScaffolder
-     * @return OperationScaffolder
+     * @return OperationScaffolder|ListQueryScaffolder
      */
     public function nestedQuery($fieldName, QueryScaffolder $queryScaffolder = null)
     {

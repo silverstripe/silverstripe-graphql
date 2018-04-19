@@ -6,8 +6,8 @@ use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
@@ -15,7 +15,7 @@ use SilverStripe\ORM\DataObjectInterface;
 /**
  * Scaffolds a generic read operation for DataObjects.
  */
-class ReadOne extends ItemQueryScaffolder implements ResolverInterface, CRUDInterface
+class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInterface
 {
     /**
      * Read one constructor.
@@ -59,7 +59,7 @@ class ReadOne extends ItemQueryScaffolder implements ResolverInterface, CRUDInte
      * @return mixed
      * @throws Exception
      */
-    public function resolve($object, $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         if (!singleton($this->dataObjectClass)->canView($context['currentUser'])) {
             throw new Exception(sprintf(

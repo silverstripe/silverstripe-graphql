@@ -3,13 +3,13 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use GraphQL\Type\Definition\Type;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
-use InvalidArgumentException;
 
 /**
  * Scaffolds a GraphQL query field.
@@ -28,7 +28,7 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
      *
      * @param string $operationName
      * @param string $typeName
-     * @param ResolverInterface|callable|null $resolver
+     * @param OperationResolver|callable|null $resolver
      * @param string $class
      */
     public function __construct($operationName = null, $typeName = null, $resolver = null, $class = null)

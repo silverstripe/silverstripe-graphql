@@ -4,10 +4,11 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use Exception;
 use GraphQL\Type\Definition\ListOfType;
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
@@ -16,7 +17,7 @@ use SilverStripe\ORM\DB;
 /**
  * A generic delete operation.
  */
-class Delete extends MutationScaffolder implements ResolverInterface, CRUDInterface
+class Delete extends MutationScaffolder implements OperationResolver, CRUDInterface
 {
     /**
      * Delete constructor.
@@ -57,7 +58,7 @@ class Delete extends MutationScaffolder implements ResolverInterface, CRUDInterf
         return Type::listOf(Type::id());
     }
 
-    public function resolve($object, $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         DB::get_conn()->withTransaction(function () use ($args, $context) {
             // Build list to filter
