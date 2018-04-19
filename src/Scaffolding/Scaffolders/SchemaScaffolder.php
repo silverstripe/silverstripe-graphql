@@ -162,11 +162,8 @@ class SchemaScaffolder implements ManagerMutatorInterface
             return $query;
         }
 
-        $operationScaffold = (new ListQueryScaffolder(
-            $name,
-            StaticSchema::inst()->typeNameForDataObject($class),
-            $resolver
-        ))->setChainableParent($this);
+        $operationScaffold = (new ListQueryScaffolder($name, null, $resolver, $class))
+            ->setChainableParent($this);
 
         $this->queries->push($operationScaffold);
 
@@ -189,11 +186,8 @@ class SchemaScaffolder implements ManagerMutatorInterface
             return $mutation;
         }
 
-        $operationScaffold = (new MutationScaffolder(
-            $name,
-            StaticSchema::inst()->typeNameForDataObject($class),
-            $resolver
-        ))->setChainableParent($this);
+        $operationScaffold = (new MutationScaffolder($name, null, $resolver, $class))
+            ->setChainableParent($this);
 
         $this->mutations->push($operationScaffold);
 

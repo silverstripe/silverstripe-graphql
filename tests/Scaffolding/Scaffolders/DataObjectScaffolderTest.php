@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
@@ -40,7 +41,7 @@ class DataObjectScaffolderTest extends SapphireTest
         $this->assertInstanceOf(DataObjectFake::class, $scaffolder->getDataObjectInstance());
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/non-existent classname/');
+        $this->expectExceptionMessageRegExp('/Non-existent classname/i');
         new DataObjectScaffolder('fail');
     }
 
@@ -365,7 +366,7 @@ class DataObjectScaffolderTest extends SapphireTest
         $this->assertInstanceof(ObjectType::class, $objectType);
         $config = $objectType->config;
 
-        $this->assertEquals($scaffolder->typeName(), $config['name']);
+        $this->assertEquals($scaffolder->getTypeName(), $config['name']);
         $this->assertEquals(['MyField', 'Author', 'Files'], array_keys($config['fields']()));
     }
 
@@ -418,7 +419,7 @@ class DataObjectScaffolderTest extends SapphireTest
             $mutationConfig['fields']()
         );
 
-        $this->assertTrue($manager->hasType($scaffolder->typeName()));
+        $this->assertTrue($manager->hasType($scaffolder->getTypeName()));
     }
 
     public function testDataObjectScaffolderSimpleFieldTypes()
@@ -447,7 +448,9 @@ class DataObjectScaffolderTest extends SapphireTest
         ]);
         $fake = new DataObjectFake(['MyInt' => 5]);
         $manager = new Manager();
-        (new DBInt(0))->addToManager($manager);
+        /** @var DBInt|TypeCreatorExtension $dbInt */
+        $dbInt = new DBInt(0);
+        $dbInt->addToManager($manager);
 
         $this->assertInstanceOf(ObjectType::class, $fake->obj('MyInt')->getGraphQLType($manager));
         $scaffolder = $this->getFakeScaffolder();
@@ -480,6 +483,9 @@ class DataObjectScaffolderTest extends SapphireTest
         $this->assertCount(2, $target->getOperations());
     }
 
+    /**
+     * @return DataObjectScaffolder
+     */
     protected function getFakeScaffolder()
     {
         return new DataObjectScaffolder(DataObjectFake::class);

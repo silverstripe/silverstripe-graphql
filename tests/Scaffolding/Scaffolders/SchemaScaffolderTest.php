@@ -302,6 +302,7 @@ class SchemaScaffolderTest extends SapphireTest
         $this->assertNotNull($manager->getQuery('READ'));
         $this->assertNotNull($manager->getMutation('DELETE'));
 
+        /** @var ObjectType $type */
         $type = $manager->getType($normalTypeName);
         $fields = $type->getFields();
         $this->assertArrayHasKey('Title', $fields);
@@ -327,8 +328,8 @@ class SchemaScaffolderTest extends SapphireTest
             $read = new Read($ancestor);
             $delete = new Delete($ancestor);
 
-            $this->assertNotNull($manager->getQuery($read->getDefaultName()));
-            $this->assertNotNull($manager->getMutation($delete->getDefaultName()));
+            $this->assertNotNull($manager->getQuery($read->getName()));
+            $this->assertNotNull($manager->getMutation($delete->getName()));
         }
     }
 

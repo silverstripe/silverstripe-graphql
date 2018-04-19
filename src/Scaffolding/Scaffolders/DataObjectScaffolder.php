@@ -14,10 +14,10 @@ use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
-use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
@@ -70,29 +70,19 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function __construct($dataObjectClass)
     {
-        if (!class_exists($dataObjectClass)) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'DataObjectScaffold instantiated with non-existent classname "%s"',
-                    $dataObjectClass
-                )
-            );
-        }
-
-        if (!is_subclass_of($dataObjectClass, DataObject::class)) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'DataObjectScaffold must instantiate with a classname that is a subclass of %s (%s given)',
-                    DataObject::class,
-                    $dataObjectClass
-                )
-            );
-        }
-
         $this->fields = ArrayList::create([]);
         $this->operations = OperationList::create([]);
+        $this->setDataObjectClass($dataObjectClass);
+    }
 
-        $this->dataObjectClass = $dataObjectClass;
+    /**
+     * Name of graphql type
+     *
+     * @return string
+     */
+    public function getTypeName()
+    {
+        return $this->typeName();
     }
 
     /**
@@ -227,7 +217,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 sprintf(
                     'Cannot set description of %s. It has not been added to %s.',
                     $field,
-                    $this->dataObjectClass
+                    $this->getDataObjectClass()
                 )
             );
         }
@@ -261,7 +251,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 sprintf(
                     'Tried to get field description for %s, but it has not been added to %s',
                     $field,
-                    $this->dataObjectClass
+                    $this->getDataObjectClass()
                 )
             );
         }
@@ -316,14 +306,14 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 sprintf(
                     'Invalid operation: %s added to %s',
                     $operation,
-                    $this->dataObjectClass
+                    $this->getDataObjectClass()
                 )
             );
         }
         /**
          * @var OperationScaffolder $scaffolder
          */
-        $scaffolder = Injector::inst()->createWithArgs($scaffoldClass, [$this->dataObjectClass]);
+        $scaffolder = Injector::inst()->createWithArgs($scaffoldClass, [$this->getDataObjectClass()]);
 
         $this->operations->push(
             $scaffolder->setChainableParent($this)
@@ -404,7 +394,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         Deprecation::notice('3.0', 'Use StaticSchema::getAncestry($class) instead');
 
-        return StaticSchema::inst()->getAncestry($this->dataObjectClass);
+        return StaticSchema::inst()->getAncestry($this->getDataObjectClass());
     }
 
     /**
@@ -438,7 +428,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function applyConfig(array $config)
     {
-        $dataObjectClass = $this->dataObjectClass;
+        $dataObjectClass = $this->getDataObjectClass();
         if (empty($config['fields'])) {
             throw new Exception(
                 "No array of fields defined for $dataObjectClass"
@@ -464,7 +454,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 throw new InvalidArgumentException(
                     sprintf(
                         '"excludeFields" must be an enumerated list of fields. See %s',
-                        $this->dataObjectClass
+                        $this->getDataObjectClass()
                     )
                 );
             }
@@ -477,7 +467,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 throw new InvalidArgumentException(
                     sprintf(
                         '"fieldDescripions" must be a map of field name to description. See %s',
-                        $this->dataObjectClass
+                        $this->getDataObjectClass()
                     )
                 );
             }
@@ -515,7 +505,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 throw new InvalidArgumentException(
                     sprintf(
                         '"nestedQueries" must be a map of relation name to a map of settings, or true/false. See %s',
-                        $this->dataObjectClass
+                        $this->getDataObjectClass()
                     )
                 );
             }
@@ -532,7 +522,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                             'Tried to specify %s as a custom query scaffolder for %s on %s, but it is not a subclass of %s.',
                             $settings,
                             $relationName,
-                            $this->dataObjectClass,
+                            $this->getDataObjectClass(),
                             QueryScaffolder::class
                         ));
                     }
@@ -555,7 +545,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         return new ObjectType(
             [
-                'name' => $this->typeName(),
+                'name' => $this->getTypeName(),
                 'fields' => function () use ($manager) {
                     return $this->createFields($manager);
                 },
@@ -572,8 +562,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         $this->extend('onBeforeAddToManager', $manager);
         $scaffold = $this->scaffold($manager);
-        if (!$manager->hasType($this->typeName())) {
-            $manager->addType($scaffold, $this->typeName());
+        if (!$manager->hasType($this->getTypeName())) {
+            $manager->addType($scaffold, $this->getTypeName());
         }
 
         foreach ($this->operations as $op) {
@@ -596,7 +586,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         $fields = [];
         $db = DataObject::config()->get('fixed_fields');
-        $extra = Config::inst()->get($this->dataObjectClass, 'db');
+        $extra = Config::inst()->get($this->getDataObjectClass(), 'db');
         if ($extra) {
             $db = array_merge($db, $extra);
         }
@@ -693,7 +683,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                     sprintf(
                         'Invalid field "%s" on %s',
                         $fieldName,
-                        $this->dataObjectClass
+                        $this->getDataObjectClass()
                     )
                 );
             }
@@ -705,7 +695,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                     sprintf(
                         'Fieldname %s added to %s returns a list. This should be defined as a nested query using addNestedQuery(%s)',
                         $fieldName,
-                        $this->dataObjectClass,
+                        $this->getDataObjectClass(),
                         $fieldName
                     )
                 );

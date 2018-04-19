@@ -32,12 +32,14 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
         parent::__construct(null, null, $this, $dataObjectClass);
     }
 
-    /**
-     * @return string
-     */
-    public function getDefaultName()
+    public function getName()
     {
-        return 'update' . ucfirst($this->typeName());
+        $name = parent::getName();
+        if ($name) {
+            return $name;
+        }
+
+        return 'update' . ucfirst($this->getTypeName());
     }
 
     /**
@@ -45,9 +47,6 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
      */
     public function addToManager(Manager $manager)
     {
-        if (!$this->operationName) {
-            $this->setName($this->getDefaultName());
-        }
         $manager->addType($this->generateInputType($manager));
         parent::addToManager($manager);
     }
@@ -86,7 +85,7 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
 
                 // Setup default input args.. Placeholder!
                 $schema = Injector::inst()->get(DataObjectSchema::class);
-                $db = $schema->fieldSpecs($this->dataObjectClass);
+                $db = $schema->fieldSpecs($this->getDataObjectClass());
 
                 unset($db['ID']);
 
@@ -112,7 +111,7 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
      */
     protected function inputTypeName()
     {
-        return $this->typeName() . 'UpdateInputType';
+        return $this->getTypeName() . 'UpdateInputType';
     }
 
     /**
@@ -126,12 +125,12 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         $input = $args['Input'];
-        $obj = DataList::create($this->dataObjectClass)
+        $obj = DataList::create($this->getDataObjectClass())
             ->byID($input['ID']);
         if (!$obj) {
             throw new Exception(sprintf(
                 '%s with ID %s not found',
-                $this->dataObjectClass,
+                $this->getDataObjectClass(),
                 $input['ID']
             ));
         }
@@ -139,7 +138,7 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
         if (!$obj->canEdit($context['currentUser'])) {
             throw new Exception(sprintf(
                 'Cannot edit this %s',
-                $this->dataObjectClass
+                $this->getDataObjectClass()
             ));
         }
 

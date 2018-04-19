@@ -27,15 +27,14 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
         parent::__construct(null, null, $this, $dataObjectClass);
     }
 
-    /**
-     * @return string
-     */
-    public function getDefaultName()
+    public function getName()
     {
-        $typeName = $this->getDataObjectInstance()->singular_name();
-        $typeName = str_replace(' ', '', $typeName);
-        $typeName = ucfirst($typeName);
-        return 'readOne' . $typeName;
+        $name = parent::getName();
+        if ($name) {
+            return $name;
+        }
+
+        return 'readOne' . ucfirst($this->getTypeName());
     }
 
     /**
@@ -61,28 +60,17 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        if (!singleton($this->dataObjectClass)->canView($context['currentUser'])) {
+        if (!$this->getDataObjectInstance()->canView($context['currentUser'])) {
             throw new Exception(sprintf(
                 'Cannot view %s',
-                $this->dataObjectClass
+                $this->getDataObjectClass()
             ));
         }
         // get as a list so extensions can influence it pre-query
-        $list = DataList::create($this->dataObjectClass)
+        $list = DataList::create($this->getDataObjectClass())
             ->filter('ID', $args['ID']);
         $this->extend('updateList', $list, $args, $context, $info);
 
         return $list->first();
-    }
-
-    /**
-     * @param Manager $manager
-     */
-    public function addToManager(Manager $manager)
-    {
-        if (!$this->operationName) {
-            $this->setName($this->getDefaultName());
-        }
-        parent::addToManager($manager);
     }
 }

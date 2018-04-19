@@ -23,19 +23,23 @@ abstract class OperationScaffolder implements ConfigurationApplier
     use Extensible;
 
     /**
+     * Type backing this operation
+     *
      * @var string
      */
-    protected $typeName;
+    private $typeName;
 
     /**
+     * Name of operation
+     *
      * @var string
      */
-    protected $operationName;
+    private $operationName;
 
     /**
      * @var OperationResolver|callable
      */
-    protected $resolver;
+    private $resolver;
 
     /**
      * List of argument scaffolders
@@ -95,8 +99,8 @@ abstract class OperationScaffolder implements ConfigurationApplier
      */
     public function __construct($operationName = null, $typeName = null, $resolver = null)
     {
-        $this->operationName = $operationName;
-        $this->typeName = $typeName;
+        $this->setName($operationName);
+        $this->setTypeName($typeName);
         $this->args = ArrayList::create([]);
 
         if ($resolver) {
@@ -227,7 +231,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @param $name
+     * @param string $name
      * @return $this
      */
     public function setName($name)
@@ -243,6 +247,18 @@ abstract class OperationScaffolder implements ConfigurationApplier
     public function getArgs()
     {
         return $this->args;
+    }
+
+    /**
+     * Type name
+     *
+     * @param string $typeName
+     * @return $this
+     */
+    public function setTypeName($typeName)
+    {
+        $this->typeName = $typeName;
+        return $this;
     }
 
     /**
@@ -274,6 +290,14 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
+     * @return callable|OperationResolver
+     */
+    public function getResolver()
+    {
+        return $this->resolver;
+    }
+
+    /**
      * @param callable|OperationResolver|string $resolver Callable, instance of (or classname of) a OperationResolver
      * @return $this
      * @throws InvalidArgumentException
@@ -282,19 +306,18 @@ abstract class OperationScaffolder implements ConfigurationApplier
     {
         if (is_callable($resolver) || $resolver instanceof OperationResolver) {
             $this->resolver = $resolver;
-        } else {
-            if (is_subclass_of($resolver, OperationResolver::class)) {
-                $this->resolver = Injector::inst()->create($resolver);
-            } else {
-                throw new InvalidArgumentException(sprintf(
-                    '%s::setResolver() accepts closures, instances of %s or names of resolver subclasses.',
-                    __CLASS__,
-                    OperationResolver::class
-                ));
-            }
+            return $this;
+        }
+        if (is_subclass_of($resolver, OperationResolver::class)) {
+            $this->resolver = Injector::inst()->create($resolver);
+            return $this;
         }
 
-        return $this;
+        throw new InvalidArgumentException(sprintf(
+            '%s::setResolver() accepts closures, instances of %s or names of resolver subclasses.',
+            __CLASS__,
+            OperationResolver::class
+        ));
     }
 
     /**

@@ -7,5 +7,5 @@ interface CRUDInterface
     /**
      * @return string
      */
-    public function getDefaultName();
+    public function getName();
 }

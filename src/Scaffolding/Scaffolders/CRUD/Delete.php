@@ -29,12 +29,13 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
         parent::__construct(null, null, $this, $dataObjectClass);
     }
 
-    /**
-     * @return string
-     */
-    public function getDefaultName()
+    public function getName()
     {
-        return 'delete' . ucfirst($this->typeName());
+        $name = parent::getName();
+        if ($name) {
+            return $name;
+        }
+        return 'delete' . ucfirst($this->getTypeName());
     }
 
     /**
@@ -62,7 +63,7 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
     {
         DB::get_conn()->withTransaction(function () use ($args, $context) {
             // Build list to filter
-            $results = DataList::create($this->dataObjectClass)
+            $results = DataList::create($this->getDataObjectClass())
                 ->byIDs($args['IDs']);
             $extensionResults = $this->extend('augmentMutation', $results, $args, $context, $info);
 
@@ -78,7 +79,7 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
                 if (!$obj->canDelete($context['currentUser'])) {
                     throw new Exception(sprintf(
                         'Cannot delete %s with ID %s',
-                        $this->dataObjectClass,
+                        $this->getDataObjectClass(),
                         $obj->ID
                     ));
                 }
@@ -89,16 +90,5 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
                 $obj->delete();
             }
         });
-    }
-
-    /**
-     * @param Manager $manager
-     */
-    public function addToManager(Manager $manager)
-    {
-        if (!$this->operationName) {
-            $this->setName($this->getDefaultName());
-        }
-        parent::addToManager($manager);
     }
 }
