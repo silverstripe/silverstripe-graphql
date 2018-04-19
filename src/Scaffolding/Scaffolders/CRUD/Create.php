@@ -11,7 +11,6 @@ use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Traits\CRUDTrait;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
@@ -21,7 +20,15 @@ use SilverStripe\ORM\FieldType\DBField;
  */
 class Create extends MutationScaffolder implements ResolverInterface, CRUDInterface
 {
-    use CRUDTrait;
+    /**
+     * Create constructor.
+     *
+     * @param string $dataObjectClass
+     */
+    public function __construct($dataObjectClass)
+    {
+        parent::__construct(null, null, $this, $dataObjectClass);
+    }
 
     /**
      * @return string

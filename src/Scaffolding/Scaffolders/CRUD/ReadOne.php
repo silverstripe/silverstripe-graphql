@@ -9,7 +9,6 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Traits\CRUDTrait;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
 
@@ -18,7 +17,15 @@ use SilverStripe\ORM\DataObjectInterface;
  */
 class ReadOne extends ItemQueryScaffolder implements ResolverInterface, CRUDInterface
 {
-    use CRUDTrait;
+    /**
+     * Read one constructor.
+     *
+     * @param string $dataObjectClass
+     */
+    public function __construct($dataObjectClass)
+    {
+        parent::__construct(null, null, $this, $dataObjectClass);
+    }
 
     /**
      * @return string

@@ -129,7 +129,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
     public function type($class)
     {
         // Remove leading backslash. All namespaces are assumed absolute in YAML
-        $class = ltrim('\\', $class);
+        $class = ltrim($class, '\\');
 
         foreach ($this->types as $scaffold) {
             if ($scaffold->getDataObjectClass() === $class) {

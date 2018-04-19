@@ -4,9 +4,9 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Traits\CRUDTrait;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
@@ -17,7 +17,15 @@ use SilverStripe\Security\Member;
  */
 class Read extends ListQueryScaffolder implements ResolverInterface, CRUDInterface
 {
-    use CRUDTrait;
+    /**
+     * Read constructor.
+     *
+     * @param string $dataObjectClass
+     */
+    public function __construct($dataObjectClass)
+    {
+        parent::__construct(null, null, $this, $dataObjectClass);
+    }
 
     /**
      * @param array $args

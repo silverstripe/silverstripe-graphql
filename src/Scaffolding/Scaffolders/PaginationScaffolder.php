@@ -17,6 +17,7 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
     protected $operationName;
 
     /**
+     * @param string $operationName
      * @param Manager $manager
      * @param  Connection $connection
      */

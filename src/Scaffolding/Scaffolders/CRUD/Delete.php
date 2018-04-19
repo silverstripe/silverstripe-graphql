@@ -9,7 +9,6 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Traits\CRUDTrait;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
@@ -19,7 +18,15 @@ use SilverStripe\ORM\DB;
  */
 class Delete extends MutationScaffolder implements ResolverInterface, CRUDInterface
 {
-    use CRUDTrait;
+    /**
+     * Delete constructor.
+     *
+     * @param string $dataObjectClass
+     */
+    public function __construct($dataObjectClass)
+    {
+        parent::__construct(null, null, $this, $dataObjectClass);
+    }
 
     /**
      * @return string
