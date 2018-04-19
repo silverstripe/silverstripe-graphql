@@ -13,5 +13,4 @@ trait CRUDTrait
     {
         parent::__construct(null, null, $this, $dataObjectClass);
     }
-
 }

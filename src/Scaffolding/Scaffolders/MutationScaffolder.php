@@ -86,5 +86,4 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
             StaticSchema::PREFER_SINGLE
         );
     }
-
 }
