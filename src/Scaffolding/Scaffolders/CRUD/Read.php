@@ -5,6 +5,8 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
+use SilverStripe\GraphQL\Scaffolding\Traits\CRUDTrait;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
@@ -13,23 +15,9 @@ use SilverStripe\Security\Member;
 /**
  * Scaffolds a generic read operation for DataObjects.
  */
-class Read extends ListQueryScaffolder implements ResolverInterface
+class Read extends ListQueryScaffolder implements ResolverInterface, CRUDInterface
 {
-    /**
-     * ReadOperationScaffolder constructor.
-     *
-     * @param string $dataObjectClass
-     */
-    public function __construct($dataObjectClass)
-    {
-        $this->dataObjectClass = $dataObjectClass;
-        parent::__construct(
-            $this->createOperationName(),
-            $this->typeName(),
-            $this,
-            $dataObjectClass
-        );
-    }
+    use CRUDTrait;
 
     /**
      * @param array $args
@@ -44,7 +32,7 @@ class Read extends ListQueryScaffolder implements ResolverInterface
      *
      * @return string
      */
-    protected function createOperationName()
+    public function getDefaultName()
     {
         $typeName = $this->typeName();
 
@@ -84,5 +72,16 @@ class Read extends ListQueryScaffolder implements ResolverInterface
         $list = $this->getResults($args);
         $this->extend('updateList', $list, $args, $context, $info);
         return $list;
+    }
+
+    /**
+     * @param Manager $manager
+     */
+    public function addToManager(Manager $manager)
+    {
+        if (!$this->operationName) {
+            $this->setName($this->getDefaultName());
+        }
+        parent::addToManager($manager);
     }
 }

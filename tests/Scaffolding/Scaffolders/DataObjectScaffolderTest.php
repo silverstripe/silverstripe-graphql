@@ -396,8 +396,10 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder = $this->getFakeScaffolder()
             ->addFields(['MyField'])
             ->operation(SchemaScaffolder::CREATE)
+                ->setName('Create and Barrel')
                 ->end()
             ->operation(SchemaScaffolder::READ)
+                ->setName('Ready McRead')
                 ->end();
 
         $scaffolder->addToManager($manager);
@@ -407,12 +409,12 @@ class DataObjectScaffolderTest extends SapphireTest
         $mutationConfig = $schema->getMutationType()->config;
 
         $this->assertArrayHasKey(
-            (new Read(DataObjectFake::class))->getName(),
+            'Ready McRead',
             $queryConfig['fields']()
         );
 
         $this->assertArrayHasKey(
-            (new Create(DataObjectFake::class))->getName(),
+            'Create and Barrel',
             $mutationConfig['fields']()
         );
 

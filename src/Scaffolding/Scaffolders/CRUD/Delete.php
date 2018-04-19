@@ -6,9 +6,10 @@ use Exception;
 use GraphQL\Type\Definition\ListOfType;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
+use SilverStripe\GraphQL\Scaffolding\Traits\CRUDTrait;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
@@ -16,25 +17,16 @@ use SilverStripe\ORM\DB;
 /**
  * A generic delete operation.
  */
-class Delete extends MutationScaffolder implements ResolverInterface
+class Delete extends MutationScaffolder implements ResolverInterface, CRUDInterface
 {
-    use DataObjectTypeTrait;
+    use CRUDTrait;
 
     /**
-     * DeleteOperationScaffolder constructor.
-     *
-     * @param string $dataObjectClass
+     * @return string
      */
-    public function __construct($dataObjectClass)
+    public function getDefaultName()
     {
-        $this->dataObjectClass = $dataObjectClass;
-
-        parent::__construct(
-            'delete' . ucfirst($this->typeName()),
-            $this->typeName(),
-            $this,
-            $dataObjectClass
-        );
+        return 'delete' . ucfirst($this->typeName());
     }
 
     /**
@@ -89,5 +81,16 @@ class Delete extends MutationScaffolder implements ResolverInterface
                 $obj->delete();
             }
         });
+    }
+
+    /**
+     * @param Manager $manager
+     */
+    public function addToManager(Manager $manager)
+    {
+        if (!$this->operationName) {
+            $this->setName($this->getDefaultName());
+        }
+        parent::addToManager($manager);
     }
 }

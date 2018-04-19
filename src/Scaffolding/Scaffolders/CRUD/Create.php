@@ -8,9 +8,10 @@ use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
+use SilverStripe\GraphQL\Scaffolding\Traits\CRUDTrait;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
@@ -18,25 +19,16 @@ use SilverStripe\ORM\FieldType\DBField;
 /**
  * A generic "create" operation for a DataObject.
  */
-class Create extends MutationScaffolder implements ResolverInterface
+class Create extends MutationScaffolder implements ResolverInterface, CRUDInterface
 {
-    use DataObjectTypeTrait;
+    use CRUDTrait;
 
     /**
-     * CreateOperationScaffolder constructor.
-     *
-     * @param string $dataObjectClass
+     * @return string
      */
-    public function __construct($dataObjectClass)
+    public function getDefaultName()
     {
-        $this->dataObjectClass = $dataObjectClass;
-
-        parent::__construct(
-            'create' . ucfirst($this->typeName()),
-            $this->typeName(),
-            $this,
-            $dataObjectClass
-        );
+        return 'create' . ucfirst($this->typeName());
     }
 
     /**
@@ -44,10 +36,17 @@ class Create extends MutationScaffolder implements ResolverInterface
      */
     public function addToManager(Manager $manager)
     {
+        if (!$this->operationName) {
+            $this->setName($this->getDefaultName());
+        }
         $manager->addType($this->generateInputType($manager));
         parent::addToManager($manager);
     }
 
+    /**
+     * @param Manager $manager
+     * @return array
+     */
     protected function createDefaultArgs(Manager $manager)
     {
         return [

@@ -283,8 +283,10 @@ class SchemaScaffolderTest extends SapphireTest
             ->type(FakeRedirectorPage::class)
             ->addFields(['Title', 'RedirectionType'])
             ->operation(SchemaScaffolder::READ)
+                ->setName('READ')
             ->end()
             ->operation(SchemaScaffolder::DELETE)
+                ->setName('DELETE')
             ->end()
             ->end();
         $scaffolder->addToManager($manager = new Manager());
@@ -297,11 +299,8 @@ class SchemaScaffolderTest extends SapphireTest
         $this->assertFalse($manager->hasType($inheritanceTypeName));
         $this->assertTrue($manager->hasType($normalTypeName));
 
-        $read = new Read(FakeRedirectorPage::class);
-        $delete = new Delete(FakeRedirectorPage::class);
-
-        $this->assertNotNull($manager->getQuery($read->getName()));
-        $this->assertNotNull($manager->getMutation($delete->getName()));
+        $this->assertNotNull($manager->getQuery('READ'));
+        $this->assertNotNull($manager->getMutation('DELETE'));
 
         $type = $manager->getType($normalTypeName);
         $fields = $type->getFields();
@@ -315,7 +314,7 @@ class SchemaScaffolderTest extends SapphireTest
             $normalTypeName = StaticSchema::inst()
                 ->typeNameForDataObject($ancestor);
 
-            $this->assertTrue($manager->hasType($inheritanceTypeName), "No type $inheritanceTypeName");
+            $this->assertTrue($manager->hasType($inheritanceTypeName));
             /* @var UnionType $type */
             $type = $manager->getType($inheritanceTypeName);
             $numDescendants = count(StaticSchema::inst()->getDescendants($ancestor));
@@ -328,8 +327,8 @@ class SchemaScaffolderTest extends SapphireTest
             $read = new Read($ancestor);
             $delete = new Delete($ancestor);
 
-            $this->assertNotNull($manager->getQuery($read->getName()));
-            $this->assertNotNull($manager->getMutation($delete->getName()));
+            $this->assertNotNull($manager->getQuery($read->getDefaultName()));
+            $this->assertNotNull($manager->getMutation($delete->getDefaultName()));
         }
     }
 

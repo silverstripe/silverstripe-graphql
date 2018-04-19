@@ -93,7 +93,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
      * @param string $typeName
      * @param ResolverInterface|callable|null $resolver
      */
-    public function __construct($operationName, $typeName, $resolver = null)
+    public function __construct($operationName = null, $typeName = null, $resolver = null)
     {
         $this->operationName = $operationName;
         $this->typeName = $typeName;
@@ -158,7 +158,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
                 throw new InvalidArgumentException(sprintf(
                     'Tried to set description for %s, but it was not added to %s',
                     $argName,
-                    $this->operationName
+                    $this->operationName ?: '(unnamed operation)'
                 ));
             }
 
@@ -196,7 +196,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
                 throw new InvalidArgumentException(sprintf(
                     'Tried to set default for %s, but it was not added to %s',
                     $argName,
-                    $this->operationName
+                    $this->operationName ?: '(unnamed operation)'
                 ));
             }
 
@@ -308,7 +308,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
             if (!is_array($config['args'])) {
                 throw new Exception(sprintf(
                     'args must be an array on %s',
-                    $this->operationName
+                    $this->operationName ?: '(unnamed operation)'
                 ));
             }
             foreach ($config['args'] as $argName => $argData) {

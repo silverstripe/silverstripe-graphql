@@ -31,17 +31,10 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
      * @param ResolverInterface|callable|null $resolver
      * @param string $class
      */
-    public function __construct($operationName, $typeName = null, $resolver = null, $class = null)
+    public function __construct($operationName = null, $typeName = null, $resolver = null, $class = null)
     {
         $this->dataObjectClass = $class;
         parent::__construct($operationName, $typeName, $resolver);
-
-        if (!$this->typeName && !$this->dataObjectClass) {
-            throw new InvalidArgumentException(sprintf(
-                '%s::__construct() must take a $typeName or $class parameter.',
-                __CLASS__
-            ));
-        }
     }
 
     /**
@@ -49,6 +42,13 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
      */
     public function addToManager(Manager $manager)
     {
+        if (!$this->typeName && !$this->dataObjectClass) {
+            throw new InvalidArgumentException(sprintf(
+                '%s must have either a typeName or dataObjectClass member defined.',
+                __CLASS__
+            ));
+        }
+
         $this->extend('onBeforeAddToManager', $manager);
         if (!$this->isNested) {
             $manager->addQuery(function () use ($manager) {
@@ -85,7 +85,8 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
         // Fall back on a computed type name
         return StaticSchema::inst()->fetchFromManager(
             $this->dataObjectClass,
-            $manager
+            $manager,
+            StaticSchema::PREFER_UNION
         );
     }
 }
