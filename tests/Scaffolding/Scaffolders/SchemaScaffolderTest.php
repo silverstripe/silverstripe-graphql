@@ -1,8 +1,10 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests\Scaffolders;
+namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
 use Exception;
+use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\UnionType;
 use InvalidArgumentException;
 use SilverStripe\Assets\File;
 use SilverStripe\Core\Config\Config;
@@ -10,6 +12,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
@@ -106,14 +109,25 @@ class SchemaScaffolderTest extends SapphireTest
             return $scaffold->getDataObjectClass();
         }, $types);
 
-        $this->assertEquals([
+        $expectedTypes = [];
+        $explicitTypes = [
             FakeRedirectorPage::class,
             DataObjectFake::class,
-            FakePage::class,
-            FakeSiteTree::class,
             Member::class,
             File::class,
-        ], $classNames);
+        ];
+        foreach ($explicitTypes as $className) {
+            $expectedTypes = array_merge(
+                [$className],
+                $expectedTypes,
+                StaticSchema::inst()->getDescendants($className),
+                StaticSchema::inst()->getAncestry($className)
+            );
+        }
+
+        sort($expectedTypes);
+        sort($classNames);
+        $this->assertEquals($expectedTypes, $classNames);
 
         $this->assertEquals(
             ['Created', 'TestPageField', 'RedirectionType'],
@@ -261,5 +275,94 @@ class SchemaScaffolderTest extends SapphireTest
         $this->expectException(Exception::class);
         $this->expectExceptionMessageRegExp('/must be an array/');
         (new SchemaScaffolder())->addToManager(new Manager());
+    }
+
+    public function testUnionInheritanceForTypes()
+    {
+        $scaffolder = (new SchemaScaffolder())
+            ->type(FakeRedirectorPage::class)
+            ->addFields(['Title', 'RedirectionType'])
+            ->operation(SchemaScaffolder::READ)
+                ->setName('READ')
+            ->end()
+            ->operation(SchemaScaffolder::DELETE)
+                ->setName('DELETE')
+            ->end()
+            ->end();
+        $scaffolder->addToManager($manager = new Manager());
+
+        $inheritanceTypeName = StaticSchema::inst()
+            ->inheritanceTypeNameForDataObject(FakeRedirectorPage::class);
+        $normalTypeName = StaticSchema::inst()
+            ->typeNameForDataObject(FakeRedirectorPage::class);
+
+        $this->assertFalse($manager->hasType($inheritanceTypeName));
+        $this->assertTrue($manager->hasType($normalTypeName));
+
+        $this->assertNotNull($manager->getQuery('READ'));
+        $this->assertNotNull($manager->getMutation('DELETE'));
+
+        $type = $manager->getType($normalTypeName);
+        $fields = $type->getFields();
+        $this->assertArrayHasKey('Title', $fields);
+        $this->assertArrayHasKey('RedirectionType', $fields);
+        $ancestors = StaticSchema::inst()->getAncestry(FakeRedirectorPage::class);
+
+        foreach ($ancestors as $ancestor) {
+            $inheritanceTypeName = StaticSchema::inst()
+                ->inheritanceTypeNameForDataObject($ancestor);
+            $normalTypeName = StaticSchema::inst()
+                ->typeNameForDataObject($ancestor);
+
+            $this->assertTrue($manager->hasType($inheritanceTypeName));
+            /* @var UnionType $type */
+            $type = $manager->getType($inheritanceTypeName);
+            $numDescendants = count(StaticSchema::inst()->getDescendants($ancestor));
+            $this->assertCount($numDescendants + 1, $type->getTypes());
+            $this->assertTrue($manager->hasType($normalTypeName));
+            /* @var ObjectType $type */
+            $type = $manager->getType($normalTypeName);
+            $this->assertArrayHasKey('Title', $type->getFields());
+
+            $read = new Read($ancestor);
+            $delete = new Delete($ancestor);
+
+            $this->assertNotNull($manager->getQuery($read->getDefaultName()));
+            $this->assertNotNull($manager->getMutation($delete->getDefaultName()));
+        }
+    }
+
+    public function testUnionInheritanceForFields()
+    {
+        $scaffolder = (new SchemaScaffolder())
+            ->type(DataObjectFake::class)
+                ->addFields(['MyField', 'Author'])
+                ->nestedQuery('Files')
+                    ->end()
+            ->end();
+        $scaffolder->addToManager($manager = new Manager());
+        $inheritanceTypeName = StaticSchema::inst()
+            ->inheritanceTypeNameForDataObject(Member::class);
+        $normalTypeName = StaticSchema::inst()
+            ->typeNameForDataObject(Member::class);
+
+        $this->assertTrue($manager->hasType($inheritanceTypeName));
+        $this->assertTrue($manager->hasType($normalTypeName));
+
+        /* @var UnionType $union */
+        $union = $manager->getType($inheritanceTypeName);
+        $descendants = StaticSchema::inst()->getDescendants(Member::class);
+        $this->assertCount(count($descendants) + 1, $union->getTypes());
+        $inheritanceTypeName = StaticSchema::inst()
+            ->inheritanceTypeNameForDataObject(File::class);
+        $normalTypeName = StaticSchema::inst()
+            ->typeNameForDataObject(File::class);
+
+        $this->assertTrue($manager->hasType($inheritanceTypeName));
+        $this->assertTrue($manager->hasType($normalTypeName));
+
+        $union = $manager->getType($inheritanceTypeName);
+        $descendants = StaticSchema::inst()->getDescendants(File::class);
+        $this->assertCount(count($descendants) + 1, $union->getTypes());
     }
 }

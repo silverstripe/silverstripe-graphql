@@ -2,7 +2,11 @@
 
 namespace SilverStripe\GraphQL\Scaffolding;
 
+use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ViewableData;
@@ -17,7 +21,14 @@ use SilverStripe\View\ViewableData;
  */
 class StaticSchema
 {
+    use Configurable;
+
+    const PREFER_UNION = 1;
+
+    const PREFER_SINGLE = 2;
+
     /**
+     * @internal
      * @var StaticSchema
      */
     private static $instance;
@@ -26,6 +37,12 @@ class StaticSchema
      * @var array
      */
     protected $typesMap;
+
+    /**
+     * @config
+     * @var string
+     */
+    private static $inheritanceTypeSuffix = 'WithDescendants';
 
     /**
      * @return static
@@ -51,10 +68,32 @@ class StaticSchema
         if ($customTypeName) {
             return $customTypeName;
         }
+
         $parts = explode('\\', $class);
         $typeName = sizeof($parts) > 1 ? $parts[0] . end($parts) : $parts[0];
 
         return $this->typeName($typeName);
+    }
+
+    /**
+     * Gets the type name for a union type of all ancestors of a class given the classname
+     * @param string $class
+     * @return string
+     */
+    public function inheritanceTypeNameForDataObject($class)
+    {
+        $typeName = $this->typeNameForDataObject($class);
+        return $this->inheritanceTypeNameForType($typeName);
+    }
+
+    /**
+     * Gets the type name for a union type of all ancestors of a class given the type name
+     * @param string $typeName
+     * @return string
+     */
+    public function inheritanceTypeNameForType($typeName)
+    {
+        return $typeName . $this->config()->get('inheritanceTypeSuffix');
     }
 
     /**
@@ -116,6 +155,86 @@ class StaticSchema
     }
 
     /**
+     * Gets all ancestors of a DataObject
+     * @param string $dataObjectClass
+     * @return array
+     */
+    public function getAncestry($dataObjectClass)
+    {
+        $classes = [];
+        $ancestry = array_reverse(ClassInfo::ancestry($dataObjectClass));
+
+        foreach ($ancestry as $class) {
+            if ($class === $dataObjectClass) {
+                continue;
+            }
+            if ($class == DataObject::class) {
+                break;
+            }
+            $classes[] = $class;
+        }
+
+        return $classes;
+    }
+
+    /**
+     * @param string $dataObjectClass
+     * @return array
+     * @throws InvalidArgumentException
+     */
+    public function getDescendants($dataObjectClass)
+    {
+        if (!is_subclass_of($dataObjectClass, DataObject::class)) {
+            throw new InvalidArgumentException(sprintf(
+                '%s::getDescendants takes only %s subclasses',
+                __CLASS__,
+                DataObject::class
+            ));
+        }
+
+        $descendants = ClassInfo::subclassesFor($dataObjectClass);
+        array_shift($descendants);
+
+        return array_values($descendants);
+    }
+
+    /**
+     * Gets the type from the manager given a DataObject class. Will use an
+     * inheritance type if available.
+     * @param string $class
+     * @param Manager $manager
+     * @param int $mode
+     * @return Type
+     */
+    public function fetchFromManager($class, Manager $manager, $mode = self::PREFER_UNION)
+    {
+        if (!in_array($mode, [self::PREFER_UNION, self::PREFER_SINGLE])) {
+            throw new InvalidArgumentException(sprintf(
+                '%s::%s illegal mode %s. Allowed modes are PREFER_UNION, PREFER_SINGLE',
+                __CLASS__,
+                __FUNCTION__,
+                $mode
+            ));
+        }
+        $typeName = $this->typeNameForDataObject($class);
+        $inheritanceTypeName = $this->inheritanceTypeNameForDataObject($class);
+        $names = $mode === self::PREFER_UNION
+            ? [$inheritanceTypeName, $typeName]
+            : [$typeName, $inheritanceTypeName];
+
+        foreach ($names as $type) {
+            if ($manager->hasType($type)) {
+                return $manager->getType($type);
+            }
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            'The class %s could not be resolved to any type in the manager instance.',
+            $class
+        ));
+    }
+
+    /**
      * @param string $class
      * @return mixed|null
      */
@@ -125,7 +244,7 @@ class StaticSchema
     }
 
     /**
-     * @param $class
+     * @param string $class
      * @throws InvalidArgumentException
      */
     protected function ensureDataObject($class)

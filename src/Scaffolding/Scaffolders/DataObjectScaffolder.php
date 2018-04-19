@@ -5,10 +5,10 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 use Exception;
 use GraphQL\Type\Definition\ObjectType;
 use InvalidArgumentException;
-use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Dev\Deprecation;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
@@ -363,18 +363,15 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 );
             }
 
-            $typeName = StaticSchema::inst()->typeNameForDataObject($result->dataClass());
-
-            $queryScaffolder = (new ListQueryScaffolder(
+            $queryScaffolder = new ListQueryScaffolder(
                 $fieldName,
-                $typeName,
+                null,
                 function ($obj) use ($fieldName) {
-                    /**
-                     * @var DataObject $obj
-                     */
+                    /* @var DataObject $obj */
                     return $obj->obj($fieldName);
-                }
-            ));
+                },
+                $result->dataClass()
+            );
         }
 
         $queryScaffolder->setChainableParent($this);
@@ -401,23 +398,35 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      * Gets the class ancestry back to DataObject.
      *
      * @return array
+     * @deprecated 2.0.0..3.0.0 Use StaticSchema::getAncestry($class) instead
      */
     public function getAncestralClasses()
     {
-        $classes = [];
-        $ancestry = array_reverse(ClassInfo::ancestry($this->dataObjectClass));
+        Deprecation::notice('3.0', 'Use StaticSchema::getAncestry($class) instead');
 
-        foreach ($ancestry as $class) {
-            if ($class === $this->dataObjectClass) {
-                continue;
+        return StaticSchema::inst()->getAncestry($this->dataObjectClass);
+    }
+
+    /**
+     * Clones this scaffolder to another class, copying over only valid fields and operations
+     * @param DataObjectScaffolder $target
+     * @return DataObjectScaffolder
+     */
+    public function cloneTo(DataObjectScaffolder $target)
+    {
+        $inst = $target->getDataObjectInstance();
+
+        foreach ($this->getFields() as $field) {
+            if (StaticSchema::inst()->isValidFieldName($inst, $field->Name)) {
+                $target->addField($field->Name, $field->Description);
             }
-            if ($class == DataObject::class) {
-                break;
-            }
-            $classes[] = $class;
+        }
+        foreach ($this->getOperations() as $op) {
+            $identifier = OperationScaffolder::getIdentifier($op);
+            $target->operation($identifier);
         }
 
-        return $classes;
+        return $target;
     }
 
     /**
@@ -712,10 +721,9 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         foreach ($extraDataObjects as $fieldName => $className) {
-            $typeName = StaticSchema::inst()->typeNameForDataObject($className);
             $description = $this->getFieldDescription($fieldName);
             $fieldMap[$fieldName] = [
-                'type' => $manager->getType($typeName),
+                'type' => StaticSchema::inst()->fetchFromManager($className, $manager),
                 'description' => $description,
                 'resolve' => $resolver,
             ];

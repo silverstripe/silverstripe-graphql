@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests\Scaffolders;
+namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\UnionScaffolder;
 use SilverStripe\Dev\SapphireTest;

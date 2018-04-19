@@ -4,38 +4,40 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use Exception;
 use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
 
 /**
  * Scaffolds a generic update operation for DataObjects.
  */
-class Update extends MutationScaffolder implements ResolverInterface
+class Update extends MutationScaffolder implements ResolverInterface, CRUDInterface
 {
-    use DataObjectTypeTrait;
-
     /**
-     * UpdateOperationScaffolder constructor.
+     * Update constructor.
      *
      * @param string $dataObjectClass
      */
     public function __construct($dataObjectClass)
     {
-        $this->dataObjectClass = $dataObjectClass;
+        parent::__construct(null, null, $this, $dataObjectClass);
+    }
 
-        parent::__construct(
-            'update'.ucfirst($this->typeName()),
-            $this->typeName(),
-            $this
-        );
+    /**
+     * @return string
+     */
+    public function getDefaultName()
+    {
+        return 'update' . ucfirst($this->typeName());
     }
 
     /**
@@ -43,6 +45,9 @@ class Update extends MutationScaffolder implements ResolverInterface
      */
     public function addToManager(Manager $manager)
     {
+        if (!$this->operationName) {
+            $this->setName($this->getDefaultName());
+        }
         $manager->addType($this->generateInputType($manager));
         parent::addToManager($manager);
     }
@@ -107,9 +112,17 @@ class Update extends MutationScaffolder implements ResolverInterface
      */
     protected function inputTypeName()
     {
-        return $this->typeName().'UpdateInputType';
+        return $this->typeName() . 'UpdateInputType';
     }
 
+    /**
+     * @param DataObjectInterface $object
+     * @param array $args
+     * @param array $context
+     * @param ResolveInfo $info
+     * @return mixed
+     * @throws Exception
+     */
     public function resolve($object, $args, $context, $info)
     {
         $input = $args['Input'];

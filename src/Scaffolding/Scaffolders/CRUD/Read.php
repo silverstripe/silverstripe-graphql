@@ -2,60 +2,29 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
-use GraphQL\Type\Definition\ResolveInfo;
-use GraphQL\Type\Definition\Type;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
-use SilverStripe\ORM\DataList;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\UnionScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
-use SilverStripe\GraphQL\Scaffolding\StaticSchema;
-use SilverStripe\GraphQL\Manager;
-use SilverStripe\Core\ClassInfo;
 use Exception;
+use GraphQL\Type\Definition\ResolveInfo;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
+use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\Security\Member;
 
 /**
  * Scaffolds a generic read operation for DataObjects.
  */
-class Read extends ListQueryScaffolder implements ResolverInterface
+class Read extends ListQueryScaffolder implements ResolverInterface, CRUDInterface
 {
     /**
-     * ReadOperationScaffolder constructor.
+     * Read constructor.
      *
      * @param string $dataObjectClass
      */
     public function __construct($dataObjectClass)
     {
-        $this->dataObjectClass = $dataObjectClass;
-        parent::__construct($this->createOperationName(), $this->typeName(), $this);
-    }
-
-    /**
-     * Creates a thunk that lazily fetches the type
-     * @param  Manager $manager
-     * @return Type
-     */
-    protected function getType(Manager $manager)
-    {
-        // Create unions for exposed descendants
-        $descendants = ClassInfo::subclassesFor($this->dataObjectClass);
-        array_shift($descendants);
-        $union = [$this->typeName];
-        foreach ($descendants as $descendant) {
-            $typeName = StaticSchema::inst()->typeNameForDataObject($descendant);
-            if ($manager->hasType($typeName)) {
-                $union[] = $typeName;
-            }
-        }
-        if (sizeof($union) > 1) {
-            return (new UnionScaffolder(
-                $this->typeName.'WithDescendants',
-                $union
-            ))->scaffold($manager);
-        }
-
-        return $manager->getType($this->typeName);
+        parent::__construct(null, null, $this, $dataObjectClass);
     }
 
     /**
@@ -71,7 +40,7 @@ class Read extends ListQueryScaffolder implements ResolverInterface
      *
      * @return string
      */
-    protected function createOperationName()
+    public function getDefaultName()
     {
         $typeName = $this->typeName();
 
@@ -97,6 +66,7 @@ class Read extends ListQueryScaffolder implements ResolverInterface
      * @param array $context
      * @param ResolveInfo $info
      * @return mixed
+     * @throws Exception
      */
     public function resolve($object, $args, $context, $info)
     {
@@ -110,5 +80,16 @@ class Read extends ListQueryScaffolder implements ResolverInterface
         $list = $this->getResults($args);
         $this->extend('updateList', $list, $args, $context, $info);
         return $list;
+    }
+
+    /**
+     * @param Manager $manager
+     */
+    public function addToManager(Manager $manager)
+    {
+        if (!$this->operationName) {
+            $this->setName($this->getDefaultName());
+        }
+        parent::addToManager($manager);
     }
 }

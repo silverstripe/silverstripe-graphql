@@ -1,9 +1,8 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests\Scaffolders;
+namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
 use SilverStripe\Core\Config\Config;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
@@ -350,10 +349,13 @@ class DataObjectScaffolderTest extends SapphireTest
     public function testDataObjectScaffolderScaffold()
     {
         $manager = $this->getMockBuilder(Manager::class)
-            ->setMethods(['getType'])
+            ->setMethods(['getType', 'hasType'])
             ->getMock();
         $manager->method('getType')
             ->will($this->returnValue([]));
+        $manager->method('hasType')
+            ->will($this->returnValue(true));
+
         $scaffolder = $this->getFakeScaffolder();
         $scaffolder->addFields(['MyField', 'Author'])
                    ->nestedQuery('Files');
@@ -394,8 +396,10 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder = $this->getFakeScaffolder()
             ->addFields(['MyField'])
             ->operation(SchemaScaffolder::CREATE)
+                ->setName('Create and Barrel')
                 ->end()
             ->operation(SchemaScaffolder::READ)
+                ->setName('Ready McRead')
                 ->end();
 
         $scaffolder->addToManager($manager);
@@ -405,12 +409,12 @@ class DataObjectScaffolderTest extends SapphireTest
         $mutationConfig = $schema->getMutationType()->config;
 
         $this->assertArrayHasKey(
-            (new Read(DataObjectFake::class))->getName(),
+            'Ready McRead',
             $queryConfig['fields']()
         );
 
         $this->assertArrayHasKey(
-            (new Create(DataObjectFake::class))->getName(),
+            'Create and Barrel',
             $mutationConfig['fields']()
         );
 
@@ -455,6 +459,25 @@ class DataObjectScaffolderTest extends SapphireTest
         $value = $myIntResolver($fake, [], null, new ResolveInfo(['fieldName' => 'MyInt']));
 
         $this->assertInstanceOf(DBInt::class, $value);
+    }
+
+    public function testCloneTo()
+    {
+        $scaffolder = new DataObjectScaffolder(FakeRedirectorPage::class);
+        $scaffolder->addFields(['Title', 'RedirectionType', 'ID']);
+        $scaffolder->operation(SchemaScaffolder::READ);
+        $scaffolder->operation(SchemaScaffolder::UPDATE);
+
+        $target = new DataObjectScaffolder(FakeSiteTree::class);
+        $this->assertNotContains('Title', $target->getFields()->column('Name'));
+        $this->assertNotContains('RedirectionType', $target->getFields()->column('Name'));
+        $this->assertEmpty($target->getOperations());
+
+        $target = $scaffolder->cloneTo($target);
+
+        $this->assertContains('Title', $target->getFields()->column('Name'));
+        $this->assertNotContains('RedirectionType', $target->getFields()->column('Name'));
+        $this->assertCount(2, $target->getOperations());
     }
 
     protected function getFakeScaffolder()

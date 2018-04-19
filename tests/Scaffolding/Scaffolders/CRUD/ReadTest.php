@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests\Scaffolders\CRUD;
+namespace SilverStripe\GraphQL\Tests\Scaffolding\Scaffolders\CRUD;
 
 use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ObjectType;
@@ -82,46 +82,5 @@ class ReadTest extends SapphireTest
         $args = $scaffold['args'];
         $this->assertArrayHasKey('MyField', $args);
         $this->assertInstanceOf(StringType::class, $args['MyField']['type']);
-    }
-
-    public function testUnionInheritance()
-    {
-        $redirectorScaffold = new DataObjectScaffolder(FakeRedirectorPage::class);
-        $redirectorScaffold->addToManager($manager = new Manager());
-        $read = new Read(FakeRedirectorPage::class);
-        $read->setUsePagination(false);
-        $read->addToManager($manager);
-        $scaffold = $read->scaffold($manager);
-        /** @var NonNull $scaffoldType */
-        $scaffoldType = $scaffold['type'];
-        $type = $scaffoldType->getWrappedType();
-        $this->assertEquals(
-            $redirectorScaffold->typeName(),
-            $type->config['name']
-        );
-
-        $pageScaffold = new DataObjectScaffolder(FakePage::class);
-        $pageScaffold->addToManager($manager);
-
-        $read = new Read(FakePage::class);
-        $read->setUsePagination(false);
-
-        $scaffold = $read->scaffold($manager);
-        /** @var NonNull $scaffoldType */
-        $scaffoldType = $scaffold['type'];
-        $unionType = $scaffoldType->getWrappedType();
-        $this->assertEquals(
-            $pageScaffold->typeName().'WithDescendants',
-            $unionType->name
-        );
-        $types = $unionType->getTypes();
-        $this->assertEquals(
-            $pageScaffold->typeName(),
-            $types[0]->config['name']
-        );
-        $this->assertEquals(
-            $redirectorScaffold->typeName(),
-            $types[1]->config['name']
-        );
     }
 }
