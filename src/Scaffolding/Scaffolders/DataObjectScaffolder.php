@@ -495,9 +495,23 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             foreach ($config['nestedQueries'] as $relationName => $settings) {
                 if ($settings === false) {
                     continue;
+                } elseif (is_string($settings)) {
+                    if (is_subclass_of($settings, QueryScaffolder::class)) {
+                        $queryScaffolder = new $settings($relationName);
+                        $this->nestedQuery($relationName, $queryScaffolder);
+                    } else {
+                        throw new InvalidArgumentException(sprintf(
+                            'Tried to specify %s as a custom query scaffolder for %s on %s, but it is not a subclass of %s.',
+                            $settings,
+                            $relationName,
+                            $this->dataObjectClass,
+                            QueryScaffolder::class
+                        ));
+                    }
+                } else {
+                    $this->nestedQuery($relationName)
+                        ->applyConfig((array)$settings);
                 }
-                $this->nestedQuery($relationName)
-                    ->applyConfig((array)$settings);
             }
         }
 
