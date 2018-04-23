@@ -8,8 +8,8 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\ORM\ArrayList;
 
@@ -23,19 +23,23 @@ abstract class OperationScaffolder implements ConfigurationApplier
     use Extensible;
 
     /**
+     * Type backing this operation
+     *
      * @var string
      */
-    protected $typeName;
+    private $typeName;
 
     /**
+     * Name of operation
+     *
      * @var string
      */
-    protected $operationName;
+    private $operationName;
 
     /**
-     * @var ResolverInterface|callable
+     * @var OperationResolver|callable
      */
-    protected $resolver;
+    private $resolver;
 
     /**
      * List of argument scaffolders
@@ -91,12 +95,12 @@ abstract class OperationScaffolder implements ConfigurationApplier
      *
      * @param string $operationName
      * @param string $typeName
-     * @param ResolverInterface|callable|null $resolver
+     * @param OperationResolver|callable|null $resolver
      */
     public function __construct($operationName = null, $typeName = null, $resolver = null)
     {
-        $this->operationName = $operationName;
-        $this->typeName = $typeName;
+        $this->setName($operationName);
+        $this->setTypeName($typeName);
         $this->args = ArrayList::create([]);
 
         if ($resolver) {
@@ -227,7 +231,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @param $name
+     * @param string $name
      * @return $this
      */
     public function setName($name)
@@ -243,6 +247,18 @@ abstract class OperationScaffolder implements ConfigurationApplier
     public function getArgs()
     {
         return $this->args;
+    }
+
+    /**
+     * Type name
+     *
+     * @param string $typeName
+     * @return $this
+     */
+    public function setTypeName($typeName)
+    {
+        $this->typeName = $typeName;
+        return $this;
     }
 
     /**
@@ -274,27 +290,34 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @param callable|ResolverInterface|string $resolver Callable, instance of (or classname of) a ResolverInterface
+     * @return callable|OperationResolver
+     */
+    public function getResolver()
+    {
+        return $this->resolver;
+    }
+
+    /**
+     * @param callable|OperationResolver|string $resolver Callable, instance of (or classname of) a OperationResolver
      * @return $this
      * @throws InvalidArgumentException
      */
     public function setResolver($resolver)
     {
-        if (is_callable($resolver) || $resolver instanceof ResolverInterface) {
+        if (is_callable($resolver) || $resolver instanceof OperationResolver) {
             $this->resolver = $resolver;
-        } else {
-            if (is_subclass_of($resolver, ResolverInterface::class)) {
-                $this->resolver = Injector::inst()->create($resolver);
-            } else {
-                throw new InvalidArgumentException(sprintf(
-                    '%s::setResolver() accepts closures, instances of %s or names of resolver subclasses.',
-                    __CLASS__,
-                    ResolverInterface::class
-                ));
-            }
+            return $this;
+        }
+        if (is_subclass_of($resolver, OperationResolver::class)) {
+            $this->resolver = Injector::inst()->create($resolver);
+            return $this;
         }
 
-        return $this;
+        throw new InvalidArgumentException(sprintf(
+            '%s::setResolver() accepts closures, instances of %s or names of resolver subclasses.',
+            __CLASS__,
+            OperationResolver::class
+        ));
     }
 
     /**
@@ -358,13 +381,13 @@ abstract class OperationScaffolder implements ConfigurationApplier
             if (is_callable($resolver)) {
                 return call_user_func_array($resolver, $args);
             } else {
-                if ($resolver instanceof ResolverInterface) {
+                if ($resolver instanceof OperationResolver) {
                     return call_user_func_array([$resolver, 'resolve'], $args);
                 } else {
                     throw new \Exception(sprintf(
                         '%s resolver must be a closure or implement %s',
                         __CLASS__,
-                        ResolverInterface::class
+                        OperationResolver::class
                     ));
                 }
             }

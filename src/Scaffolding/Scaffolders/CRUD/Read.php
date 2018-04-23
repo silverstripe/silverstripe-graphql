@@ -4,9 +4,8 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
-use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
@@ -15,7 +14,7 @@ use SilverStripe\Security\Member;
 /**
  * Scaffolds a generic read operation for DataObjects.
  */
-class Read extends ListQueryScaffolder implements ResolverInterface, CRUDInterface
+class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterface
 {
     /**
      * Read constructor.
@@ -33,22 +32,21 @@ class Read extends ListQueryScaffolder implements ResolverInterface, CRUDInterfa
      */
     protected function getResults($args)
     {
-        return DataList::create($this->dataObjectClass);
+        return DataList::create($this->getDataObjectClass());
     }
 
     /**
-     *
      * @return string
      */
-    public function getDefaultName()
+    public function getName()
     {
-        $typeName = $this->typeName();
-
-        // Ported from DataObject::plural_name()
-        if (preg_match('/[^aeiou]y$/i', $typeName)) {
-            $typeName = substr($typeName, 0, -1) . 'ie';
+        $name = parent::getName();
+        if ($name) {
+            return $name;
         }
-        return 'read' . ucfirst($typeName . 's');
+
+        $typePlural = $this->pluralise($this->getTypeName());
+        return 'read' . ucfirst($typePlural);
     }
 
     /**
@@ -57,7 +55,7 @@ class Read extends ListQueryScaffolder implements ResolverInterface, CRUDInterfa
      */
     protected function checkPermission(Member $member)
     {
-        return singleton($this->dataObjectClass)->canView($member);
+        return $this->getDataObjectInstance()->canView($member);
     }
 
     /**
@@ -68,12 +66,12 @@ class Read extends ListQueryScaffolder implements ResolverInterface, CRUDInterfa
      * @return mixed
      * @throws Exception
      */
-    public function resolve($object, $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         if (!$this->checkPermission($context['currentUser'])) {
             throw new Exception(sprintf(
                 'Cannot view %s',
-                $this->dataObjectClass
+                $this->getDataObjectClass()
             ));
         }
 
@@ -83,13 +81,18 @@ class Read extends ListQueryScaffolder implements ResolverInterface, CRUDInterfa
     }
 
     /**
-     * @param Manager $manager
+     * Pluralise a name
+     *
+     * @param string $typeName
+     * @return string
      */
-    public function addToManager(Manager $manager)
+    protected function pluralise($typeName)
     {
-        if (!$this->operationName) {
-            $this->setName($this->getDefaultName());
+        // Ported from DataObject::plural_name()
+        if (preg_match('/[^aeiou]y$/i', $typeName)) {
+            $typeName = substr($typeName, 0, -1) . 'ie';
         }
-        parent::addToManager($manager);
+        $typeName .= 's';
+        return $typeName;
     }
 }

@@ -122,7 +122,7 @@ class ListQueryScaffolder extends QueryScaffolder
             } else {
                 throw new InvalidArgumentException(sprintf(
                     'sortableFields must be an array (see %s)',
-                    $this->typeName
+                    $this->getTypeName()
                 ));
             }
         }
@@ -172,7 +172,7 @@ class ListQueryScaffolder extends QueryScaffolder
         }
 
         return [
-            'name' => $this->operationName,
+            'name' => $this->getName(),
             'args' => $this->createArgs($manager),
             'type' => Type::listOf($this->getType($manager)),
             'resolve' => $this->createResolverFunction(),
@@ -187,7 +187,7 @@ class ListQueryScaffolder extends QueryScaffolder
      */
     protected function createConnection(Manager $manager)
     {
-        return Connection::create($this->operationName)
+        return Connection::create($this->getName())
             ->setConnectionType(function () use ($manager) {
                 return $this->getType($manager);
             })
@@ -206,7 +206,7 @@ class ListQueryScaffolder extends QueryScaffolder
     {
         if (!$this->paginationScaffolder) {
             $this->paginationScaffolder = new PaginationScaffolder(
-                $this->operationName,
+                $this->getName(),
                 $manager,
                 $this->createConnection($manager)
             );

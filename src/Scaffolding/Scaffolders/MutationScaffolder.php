@@ -3,12 +3,12 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use GraphQL\Type\Definition\Type;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
-use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 
 /**
@@ -23,12 +23,14 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
      *
      * @param string $operationName
      * @param string $typeName
-     * @param ResolverInterface|callable|null $resolver
+     * @param OperationResolver|callable|null $resolver
      * @param string $class
      */
     public function __construct($operationName = null, $typeName = null, $resolver = null, $class = null)
     {
-        $this->dataObjectClass = $class;
+        if ($class) {
+            $this->setDataObjectClass($class);
+        }
         parent::__construct($operationName, $typeName, $resolver);
     }
 
@@ -37,13 +39,6 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
      */
     public function addToManager(Manager $manager)
     {
-        if (!$this->typeName && !$this->dataObjectClass) {
-            throw new InvalidArgumentException(sprintf(
-                '%s must have either a typeName or dataObjectClass member defined.',
-                __CLASS__
-            ));
-        }
-
         $this->extend('onBeforeAddToManager', $this, $manager);
         $manager->addMutation(function () use ($manager) {
             return $this->scaffold($manager);
@@ -59,11 +54,16 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
     public function scaffold(Manager $manager)
     {
         return [
-            'name' => $this->operationName,
+            'name' => $this->getName(),
             'args' => $this->createArgs($manager),
             'type' => $this->getType($manager),
             'resolve' => $this->createResolverFunction(),
         ];
+    }
+
+    public function getTypeName()
+    {
+        return parent::getTypeName() ?: $this->typeName();
     }
 
     /**
@@ -75,15 +75,24 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
     protected function getType(Manager $manager)
     {
         // If an explicit type name has been provided, use it.
-        if ($this->typeName) {
-            return $manager->getType($this->typeName);
+        $typeName = $this->getTypeName();
+        if ($typeName && $manager->hasType($typeName)) {
+            return $manager->getType($typeName);
         }
 
         // Fall back on a computed type name
-        return StaticSchema::inst()->fetchFromManager(
-            $this->dataObjectClass,
-            $manager,
-            StaticSchema::PREFER_SINGLE
-        );
+        $dataObjectClass = $this->getDataObjectClass();
+        if ($dataObjectClass) {
+            return StaticSchema::inst()->fetchFromManager(
+                $this->getDataObjectClass(),
+                $manager,
+                StaticSchema::PREFER_SINGLE
+            );
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            '%s must have either a typeName or dataObjectClass member defined.',
+            __CLASS__
+        ));
     }
 }

@@ -2,12 +2,13 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Dev\TestOnly;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
+use SilverStripe\GraphQL\OperationResolver;
 
-class FakeResolver implements ResolverInterface, TestOnly
+class FakeResolver implements OperationResolver, TestOnly
 {
-    public function resolve($object, $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         return 'resolved';
     }

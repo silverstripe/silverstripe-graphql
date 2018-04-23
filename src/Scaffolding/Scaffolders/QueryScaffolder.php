@@ -3,13 +3,13 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use GraphQL\Type\Definition\Type;
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
-use InvalidArgumentException;
 
 /**
  * Scaffolds a GraphQL query field.
@@ -28,12 +28,14 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
      *
      * @param string $operationName
      * @param string $typeName
-     * @param ResolverInterface|callable|null $resolver
+     * @param OperationResolver|callable|null $resolver
      * @param string $class
      */
     public function __construct($operationName = null, $typeName = null, $resolver = null, $class = null)
     {
-        $this->dataObjectClass = $class;
+        if ($class) {
+            $this->setDataObjectClass($class);
+        }
         parent::__construct($operationName, $typeName, $resolver);
     }
 
@@ -42,7 +44,7 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
      */
     public function addToManager(Manager $manager)
     {
-        if (!$this->typeName && !$this->dataObjectClass) {
+        if (!$this->getName() && !$this->dataObjectClass) {
             throw new InvalidArgumentException(sprintf(
                 '%s must have either a typeName or dataObjectClass member defined.',
                 __CLASS__
@@ -69,6 +71,11 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
         return $this;
     }
 
+    public function getTypeName()
+    {
+        return parent::getTypeName() ?: $this->typeName();
+    }
+
     /**
      * Get the type from Manager
      *
@@ -78,8 +85,9 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
     protected function getType(Manager $manager)
     {
         // If an explicit type name has been provided, use it.
-        if ($this->typeName) {
-            return $manager->getType($this->typeName);
+        $typeName = $this->getTypeName();
+        if ($typeName && $manager->hasType($typeName)) {
+            return $manager->getType($typeName);
         }
 
         // Fall back on a computed type name

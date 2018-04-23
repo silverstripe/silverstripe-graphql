@@ -4,12 +4,13 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use Exception;
 use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
@@ -18,7 +19,7 @@ use SilverStripe\ORM\FieldType\DBField;
 /**
  * A generic "create" operation for a DataObject.
  */
-class Create extends MutationScaffolder implements ResolverInterface, CRUDInterface
+class Create extends MutationScaffolder implements OperationResolver, CRUDInterface
 {
     /**
      * Create constructor.
@@ -33,9 +34,14 @@ class Create extends MutationScaffolder implements ResolverInterface, CRUDInterf
     /**
      * @return string
      */
-    public function getDefaultName()
+    public function getName()
     {
-        return 'create' . ucfirst($this->typeName());
+        $name = parent::getName();
+        if ($name) {
+            return $name;
+        }
+
+        return 'create' . ucfirst($this->getTypeName());
     }
 
     /**
@@ -43,9 +49,6 @@ class Create extends MutationScaffolder implements ResolverInterface, CRUDInterf
      */
     public function addToManager(Manager $manager)
     {
-        if (!$this->operationName) {
-            $this->setName($this->getDefaultName());
-        }
         $manager->addType($this->generateInputType($manager));
         parent::addToManager($manager);
     }
@@ -77,7 +80,7 @@ class Create extends MutationScaffolder implements ResolverInterface, CRUDInterf
 
                 // Setup default input args.. Placeholder!
                 $schema = Injector::inst()->get(DataObjectSchema::class);
-                $db = $schema->fieldSpecs($this->dataObjectClass);
+                $db = $schema->fieldSpecs($this->getDataObjectClass());
 
                 unset($db['ID']);
 
@@ -104,19 +107,19 @@ class Create extends MutationScaffolder implements ResolverInterface, CRUDInterf
      */
     protected function inputTypeName()
     {
-        return $this->typeName() . 'CreateInputType';
+        return $this->getTypeName() . 'CreateInputType';
     }
 
-    public function resolve($object, $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         // Todo: this is totally half baked
-        $singleton = DataObject::singleton($this->dataObjectClass);
+        $singleton = $this->getDataObjectInstance();
         if (!$singleton->canCreate($context['currentUser'], $context)) {
-            throw new Exception("Cannot create {$this->dataObjectClass}");
+            throw new Exception("Cannot create {$this->getDataObjectClass()}");
         }
 
         /** @var DataObject $newObject */
-        $newObject = Injector::inst()->create($this->dataObjectClass);
+        $newObject = Injector::inst()->create($this->getDataObjectClass());
         $newObject->update($args['Input']);
 
         // Extension points that return false should kill the create
@@ -127,6 +130,6 @@ class Create extends MutationScaffolder implements ResolverInterface, CRUDInterf
 
         // Save and return
         $newObject->write();
-        return DataObject::get_by_id($this->dataObjectClass, $newObject->ID);
+        return DataObject::get_by_id($this->getDataObjectClass(), $newObject->ID);
     }
 }

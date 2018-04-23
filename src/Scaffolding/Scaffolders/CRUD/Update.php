@@ -8,9 +8,9 @@ use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
@@ -20,7 +20,7 @@ use SilverStripe\ORM\FieldType\DBField;
 /**
  * Scaffolds a generic update operation for DataObjects.
  */
-class Update extends MutationScaffolder implements ResolverInterface, CRUDInterface
+class Update extends MutationScaffolder implements OperationResolver, CRUDInterface
 {
     /**
      * Update constructor.
@@ -35,9 +35,14 @@ class Update extends MutationScaffolder implements ResolverInterface, CRUDInterf
     /**
      * @return string
      */
-    public function getDefaultName()
+    public function getName()
     {
-        return 'update' . ucfirst($this->typeName());
+        $name = parent::getName();
+        if ($name) {
+            return $name;
+        }
+
+        return 'update' . ucfirst($this->getTypeName());
     }
 
     /**
@@ -45,9 +50,6 @@ class Update extends MutationScaffolder implements ResolverInterface, CRUDInterf
      */
     public function addToManager(Manager $manager)
     {
-        if (!$this->operationName) {
-            $this->setName($this->getDefaultName());
-        }
         $manager->addType($this->generateInputType($manager));
         parent::addToManager($manager);
     }
@@ -86,7 +88,7 @@ class Update extends MutationScaffolder implements ResolverInterface, CRUDInterf
 
                 // Setup default input args.. Placeholder!
                 $schema = Injector::inst()->get(DataObjectSchema::class);
-                $db = $schema->fieldSpecs($this->dataObjectClass);
+                $db = $schema->fieldSpecs($this->getDataObjectClass());
 
                 unset($db['ID']);
 
@@ -112,7 +114,7 @@ class Update extends MutationScaffolder implements ResolverInterface, CRUDInterf
      */
     protected function inputTypeName()
     {
-        return $this->typeName() . 'UpdateInputType';
+        return $this->getTypeName() . 'UpdateInputType';
     }
 
     /**
@@ -123,15 +125,15 @@ class Update extends MutationScaffolder implements ResolverInterface, CRUDInterf
      * @return mixed
      * @throws Exception
      */
-    public function resolve($object, $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         $input = $args['Input'];
-        $obj = DataList::create($this->dataObjectClass)
+        $obj = DataList::create($this->getDataObjectClass())
             ->byID($input['ID']);
         if (!$obj) {
             throw new Exception(sprintf(
                 '%s with ID %s not found',
-                $this->dataObjectClass,
+                $this->getDataObjectClass(),
                 $input['ID']
             ));
         }
@@ -139,7 +141,7 @@ class Update extends MutationScaffolder implements ResolverInterface, CRUDInterf
         if (!$obj->canEdit($context['currentUser'])) {
             throw new Exception(sprintf(
                 'Cannot edit this %s',
-                $this->dataObjectClass
+                $this->getDataObjectClass()
             ));
         }
 

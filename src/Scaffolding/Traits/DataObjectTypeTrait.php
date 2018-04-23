@@ -2,6 +2,8 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Traits;
 
+use BadMethodCallException;
+use InvalidArgumentException;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\DataObject;
@@ -14,17 +16,12 @@ trait DataObjectTypeTrait
     /**
      * @var string
      */
-    protected $dataObjectClass;
-
-    /**
-     * @var string
-     */
-    protected $dataObjectTypeName;
+    private $dataObjectClass;
 
     /**
      * @var DataObject
      */
-    protected $dataObjectInstance;
+    private $dataObjectInstance;
 
     /**
      * @return string
@@ -35,15 +32,22 @@ trait DataObjectTypeTrait
     }
 
     /**
+     * Type name inferred from the dataobject.
+     * This should not be called directly, but only by getTypeName()
+     *
      * @return string
      */
-    public function typeName()
+    protected function typeName()
     {
-        return StaticSchema::inst()->typeNameForDataObject($this->dataObjectClass);
+        $dataObjectClass = $this->getDataObjectClass();
+        if (!$dataObjectClass) {
+            throw new BadMethodCallException(__CLASS__ . " must have a dataobject class specified");
+        }
+        return StaticSchema::inst()->typeNameForDataObject($dataObjectClass);
     }
 
     /**
-     * @return mixed
+     * @return DataObject
      */
     public function getDataObjectInstance()
     {
@@ -61,8 +65,19 @@ trait DataObjectTypeTrait
      */
     public function setDataObjectClass($class)
     {
-        $this->dataObjectClass = $class;
+        if (!$class) {
+            throw new InvalidArgumentException("Missing class provided");
+        }
 
+        if (!class_exists($class)) {
+            throw new InvalidArgumentException("Non-existent classname \"{$class}\"");
+        }
+
+        if (!is_subclass_of($class, DataObject::class)) {
+            throw new InvalidArgumentException("\"{$class}\" is not a DataObject subclass");
+        }
+
+        $this->dataObjectClass = $class;
         return $this;
     }
 }
