@@ -35,6 +35,9 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
         return DataList::create($this->getDataObjectClass());
     }
 
+    /**
+     * @return string
+     */
     public function getName()
     {
         $name = parent::getName();

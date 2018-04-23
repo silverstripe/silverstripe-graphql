@@ -29,12 +29,16 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
         parent::__construct(null, null, $this, $dataObjectClass);
     }
 
+    /**
+     * @return string
+     */
     public function getName()
     {
         $name = parent::getName();
         if ($name) {
             return $name;
         }
+
         return 'delete' . ucfirst($this->getTypeName());
     }
 

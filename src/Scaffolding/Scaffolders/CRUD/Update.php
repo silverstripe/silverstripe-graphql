@@ -32,6 +32,9 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
         parent::__construct(null, null, $this, $dataObjectClass);
     }
 
+    /**
+     * @return string
+     */
     public function getName()
     {
         $name = parent::getName();
