@@ -29,5 +29,4 @@ class IntrospectionProvider extends Extension
         return (new HTTPResponse(json_encode($fragments), 200))
             ->addHeader('Content-Type', 'application/json');
     }
-
 }

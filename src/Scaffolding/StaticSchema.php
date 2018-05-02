@@ -241,7 +241,7 @@ class StaticSchema
     public function introspectTypes(Manager $manager)
     {
         $fragments = $manager->query(
-<<<GRAPHQL
+            <<<GRAPHQL
 query IntrospectionQuery {
     __schema {
       types {
