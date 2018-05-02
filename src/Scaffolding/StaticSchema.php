@@ -4,8 +4,10 @@ namespace SilverStripe\GraphQL\Scaffolding;
 
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
+use Exception;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataObject;
@@ -49,10 +51,7 @@ class StaticSchema
      */
     public static function inst()
     {
-        if (!self::$instance) {
-            self::$instance = new static();
-        }
-        return self::$instance;
+        return Injector::inst()->get(static::class);
     }
 
     /**
@@ -232,6 +231,43 @@ class StaticSchema
             'The class %s could not be resolved to any type in the manager instance.',
             $class
         ));
+    }
+
+    /**
+     * @param Manager $manager
+     * @return array
+     * @throws Exception
+     */
+    public function introspectTypes(Manager $manager)
+    {
+        $fragments = $manager->query(
+<<<GRAPHQL
+query IntrospectionQuery {
+    __schema {
+      types {
+        kind
+        name
+        possibleTypes {
+          name
+        }
+      }
+    }
+}
+GRAPHQL
+        );
+
+        if (isset($fragments['errors'])) {
+            $messages = array_map(function ($error) {
+                return $error['message'];
+            }, $fragments['errors']);
+
+            throw new Exception(sprintf(
+                'There were some errors with the introspection query: %s',
+                implode(PHP_EOL, $messages)
+            ));
+        }
+
+        return $fragments;
     }
 
     /**
