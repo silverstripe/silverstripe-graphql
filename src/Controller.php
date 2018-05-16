@@ -346,6 +346,15 @@ class Controller extends BaseController implements Flushable
         $this->writeTypes(json_encode($types));
     }
 
+    public function removeSchemaFromFilesystem()
+    {
+        if (!$this->getAssetHandler()) {
+            return;
+        }
+
+        $this->getAssetHandler()->removeContent('types.graphql');
+    }
+
     /**
      * @param string $content
      */
@@ -361,12 +370,17 @@ class Controller extends BaseController implements Flushable
     /**
      * Write the types json to a flat file, if silverstripe/assets is available
      */
+    public function processTypeCaching()
+    {
+        if ($this->config()->cache_types_in_filesystem) {
+            $this->writeSchemaToFilesystem();
+        } else {
+            $this->removeSchemaFromFilesystem();
+        }
+    }
+
     public static function flush()
     {
-        if (!self::config()->cache_types_in_filesystem) {
-            return;
-        }
-
-        static::singleton()->writeSchemaToFilesystem();
+        static::singleton()->processTypeCaching();
     }
 }
