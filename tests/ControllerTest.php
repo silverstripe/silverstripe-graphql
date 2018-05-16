@@ -351,47 +351,27 @@ class ControllerTest extends SapphireTest
 
     public function testTypeCaching()
     {
+        StaticSchema::setInstance($this->getStaticSchemaMock());
         $expectedSchemaPath = TestAssetStore::base_path() . '/types.graphql';
         $this->assertFileNotExists($expectedSchemaPath, 'Schema is not automatically cached');
 
         Config::modify()->set(Controller::class, 'cache_types_in_filesystem', true);
-        Controller::create()->writeTypes('These are the types');
-
-        // Static cache should now exist
-        $this->assertFileExists($expectedSchemaPath, 'Schema is cached');
-        $this->assertEquals('These are the types', file_get_contents($expectedSchemaPath));
-    }
-
-    public function testSchemaCaching()
-    {
-        $expectedSchemaPath = TestAssetStore::base_path() . '/types.graphql';
-        $this->assertFileNotExists($expectedSchemaPath, 'Schema is not automatically cached');
-
-        Config::modify()->set(Controller::class, 'cache_types_in_filesystem', true);
-        $mock = $this->getMockBuilder(StaticSchema::class)
-            ->setMethods(['introspectTypes'])
-            ->getMock();
-        $mock->expects($this->once())
-            ->method('introspectTypes')
-            ->willReturn(['uncle' => 'cheese']);
-        StaticSchema::setInstance($mock);
-
-        Controller::create()->writeSchemaToFilesystem();
+        Controller::create()->processTypeCaching();
 
         // Static cache should now exist
         $this->assertFileExists($expectedSchemaPath, 'Schema is cached');
         $this->assertEquals('{"uncle":"cheese"}', file_get_contents($expectedSchemaPath));
+
+        Config::modify()->set(Controller::class, 'cache_types_in_filesystem', false);
+        Controller::create()->processTypeCaching();
+
+        // Static cache should be removed when caching is disabled
+        $this->assertFileNotExists($expectedSchemaPath, 'Schema is not cached');
     }
 
     public function testIntrospectionProvider()
     {
-        $mock = $this->getMockBuilder(StaticSchema::class)
-            ->setMethods(['introspectTypes'])
-            ->getMock();
-        $mock->expects($this->once())
-            ->method('introspectTypes')
-            ->willReturn(['uncle' => 'cheese']);
-        StaticSchema::setInstance($mock);
+        StaticSchema::setInstance($this->getStaticSchemaMock());
 
         Controller::add_extension(IntrospectionProvider::class);
 
@@ -409,5 +389,20 @@ class ControllerTest extends SapphireTest
     protected function getQuery(Manager $manager)
     {
         return (new QueryCreatorFake($manager))->toArray();
+    }
+
+    /**
+     * @return \PHPUnit_Framework_MockObject_MockObject
+     */
+    protected function getStaticSchemaMock()
+    {
+        $mock = $this->getMockBuilder(StaticSchema::class)
+            ->setMethods(['introspectTypes'])
+            ->getMock();
+        $mock->expects($this->any())
+            ->method('introspectTypes')
+            ->willReturn(['uncle' => 'cheese']);
+
+        return $mock;
     }
 }
