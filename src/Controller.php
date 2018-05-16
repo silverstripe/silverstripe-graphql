@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL;
 
 use Exception;
-use SilverStripe\Assets\Flysystem\GeneratedAssets;
 use SilverStripe\Assets\Storage\GeneratedAssetHandler;
 use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\Director;
@@ -11,16 +10,11 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Flushable;
-use SilverStripe\Core\Injector\Injector;
-use SilverStripe\Core\Manifest\ManifestFileFinder;
-use SilverStripe\Core\Manifest\ModuleLoader;
-use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
-use SilverStripe\Assets\Filesystem;
 
 /**
  * Top level controller for handling graphql requests.

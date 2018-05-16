@@ -8,8 +8,7 @@ use SilverStripe\Core\Extension;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 
 /**
- * Class FragmentProvider
- * @package silversripe/graphql
+ * Class IntrospectionProvider
  */
 class IntrospectionProvider extends Extension
 {
