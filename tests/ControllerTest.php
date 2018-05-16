@@ -374,7 +374,7 @@ class ControllerTest extends SapphireTest
         $mock->expects($this->once())
             ->method('introspectTypes')
             ->willReturn(['uncle' => 'cheese']);
-        Injector::inst()->registerService($mock, StaticSchema::class);
+        StaticSchema::setInstance($mock);
 
         Controller::create()->writeSchemaToFilesystem();
 
@@ -391,7 +391,7 @@ class ControllerTest extends SapphireTest
         $mock->expects($this->once())
             ->method('introspectTypes')
             ->willReturn(['uncle' => 'cheese']);
-        Injector::inst()->registerService($mock, StaticSchema::class);
+        StaticSchema::setInstance($mock);
 
         Controller::add_extension(IntrospectionProvider::class);
 

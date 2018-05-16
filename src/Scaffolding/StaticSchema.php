@@ -30,7 +30,6 @@ class StaticSchema
     const PREFER_SINGLE = 2;
 
     /**
-     * @internal
      * @var StaticSchema
      */
     private static $instance;
@@ -51,7 +50,19 @@ class StaticSchema
      */
     public static function inst()
     {
-        return Injector::inst()->get(static::class);
+        if (!static::$instance) {
+            static::$instance = new static();
+        }
+
+        return static::$instance;
+    }
+
+    /**
+     * @param StaticSchema $inst
+     */
+    public static function setInstance(StaticSchema $inst)
+    {
+        static::$instance = $inst;
     }
 
     /**
