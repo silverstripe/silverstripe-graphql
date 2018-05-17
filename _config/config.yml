@@ -36,3 +36,10 @@ SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder:
 SilverStripe\GraphQL\Controller:
   extensions:
     - SilverStripe\GraphQL\Extensions\IntrospectionProvider
+---
+Only:
+  moduleexists: 'silverstripe/admin'
+---
+SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - SilverStripe\GraphQL\Extensions\ClientConfigProvider
