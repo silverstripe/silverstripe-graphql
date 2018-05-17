@@ -23,6 +23,8 @@ use SilverStripe\Versioned\Versioned;
  */
 class Controller extends BaseController implements Flushable
 {
+    const CACHE_FILENAME = 'types.graphql';
+
     /**
      * Cors default config
      *
@@ -352,7 +354,7 @@ class Controller extends BaseController implements Flushable
             return;
         }
 
-        $this->getAssetHandler()->removeContent('types.graphql');
+        $this->getAssetHandler()->removeContent(self::CACHE_FILENAME);
     }
 
     /**
@@ -364,7 +366,7 @@ class Controller extends BaseController implements Flushable
             return;
         }
 
-        $this->getAssetHandler()->setContent('types.graphql', $content);
+        $this->getAssetHandler()->setContent(self::CACHE_FILENAME, $content);
     }
 
     /**
