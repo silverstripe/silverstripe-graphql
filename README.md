@@ -573,7 +573,7 @@ Scaffolding DataObjects can be achieved in two non-exclusive ways:
 * Via executable code (procedurally)
 * Via the config layer (declaratively)
 
-The example code will show demonstrate both methods for each section.
+Examples of both methods will be demonstrated below.
 
 ### Our example
 
