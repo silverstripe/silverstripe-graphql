@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Tests;
 use Exception;
 use PHPUnit_Framework_MockObject_MockBuilder;
 use ReflectionClass;
+use SilverStripe\Assets\Dev\TestAssetStore;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Control\HTTPResponse_Exception;
@@ -14,7 +15,9 @@ use SilverStripe\Core\Kernel;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Controller;
+use SilverStripe\GraphQL\Extensions\IntrospectionProvider;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 
@@ -29,6 +32,14 @@ class ControllerTest extends SapphireTest
 
         // Disable CORS Config by default.
         Controller::config()->set('cors', [ 'Enabled' => false ]);
+
+        TestAssetStore::activate('GraphQLController');
+    }
+
+    public function tearDown()
+    {
+        TestAssetStore::reset();
+        parent::tearDown();
     }
 
     public function testIndex()
@@ -338,6 +349,38 @@ class ControllerTest extends SapphireTest
         $controller->index($request);
     }
 
+    public function testTypeCaching()
+    {
+        StaticSchema::setInstance($this->getStaticSchemaMock());
+        $expectedSchemaPath = TestAssetStore::base_path() . '/types.graphql';
+        $this->assertFileNotExists($expectedSchemaPath, 'Schema is not automatically cached');
+
+        Config::modify()->set(Controller::class, 'cache_types_in_filesystem', true);
+        Controller::create()->processTypeCaching();
+
+        // Static cache should now exist
+        $this->assertFileExists($expectedSchemaPath, 'Schema is cached');
+        $this->assertEquals('{"uncle":"cheese"}', file_get_contents($expectedSchemaPath));
+
+        Config::modify()->set(Controller::class, 'cache_types_in_filesystem', false);
+        Controller::create()->processTypeCaching();
+
+        // Static cache should be removed when caching is disabled
+        $this->assertFileNotExists($expectedSchemaPath, 'Schema is not cached');
+    }
+
+    public function testIntrospectionProvider()
+    {
+        StaticSchema::setInstance($this->getStaticSchemaMock());
+
+        Controller::add_extension(IntrospectionProvider::class);
+
+        /* @var Controller|IntrospectionProvider $controller */
+        $controller = Controller::create();
+        $response = $controller->types(new HTTPRequest('GET', '/'));
+        $this->assertEquals('{"uncle":"cheese"}', $response->getBody());
+    }
+
     protected function getType(Manager $manager)
     {
         return (new TypeCreatorFake($manager))->toType();
@@ -346,5 +389,20 @@ class ControllerTest extends SapphireTest
     protected function getQuery(Manager $manager)
     {
         return (new QueryCreatorFake($manager))->toArray();
+    }
+
+    /**
+     * @return \PHPUnit_Framework_MockObject_MockObject
+     */
+    protected function getStaticSchemaMock()
+    {
+        $mock = $this->getMockBuilder(StaticSchema::class)
+            ->setMethods(['introspectTypes'])
+            ->getMock();
+        $mock->expects($this->any())
+            ->method('introspectTypes')
+            ->willReturn(['uncle' => 'cheese']);
+
+        return $mock;
     }
 }

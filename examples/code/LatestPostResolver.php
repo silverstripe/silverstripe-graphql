@@ -2,11 +2,12 @@
 
 namespace MyProject;
 
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
+use GraphQL\Type\Definition\ResolveInfo;
+use SilverStripe\GraphQL\OperationResolver;
 
-class LatestPostResolver implements ResolverInterface
+class LatestPostResolver implements OperationResolver
 {
-    public function resolve($object, $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         return Post::get()->sort('Date', 'DESC')->first();
     }

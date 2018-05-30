@@ -6,6 +6,7 @@ use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
+use Exception;
 
 /**
  * Scaffolds a GraphQL query field.
@@ -38,7 +39,7 @@ class ListQueryScaffolder extends QueryScaffolder
     protected $paginationScaffolder;
 
     /**
-     * @param $bool
+     * @param bool $bool
      * @return $this
      */
     public function setUsePagination($bool)
@@ -78,7 +79,7 @@ class ListQueryScaffolder extends QueryScaffolder
     }
 
     /**
-     * @param $int
+     * @param int $int
      * @return $this
      */
     public function setMaximumPaginationLimit($int)
@@ -121,7 +122,7 @@ class ListQueryScaffolder extends QueryScaffolder
             } else {
                 throw new InvalidArgumentException(sprintf(
                     'sortableFields must be an array (see %s)',
-                    $this->typeName
+                    $this->getTypeName()
                 ));
             }
         }
@@ -145,6 +146,7 @@ class ListQueryScaffolder extends QueryScaffolder
 
     /**
      * @param Manager $manager
+     * @throws Exception
      */
     public function addToManager(Manager $manager)
     {
@@ -170,7 +172,7 @@ class ListQueryScaffolder extends QueryScaffolder
         }
 
         return [
-            'name' => $this->operationName,
+            'name' => $this->getName(),
             'args' => $this->createArgs($manager),
             'type' => Type::listOf($this->getType($manager)),
             'resolve' => $this->createResolverFunction(),
@@ -185,7 +187,7 @@ class ListQueryScaffolder extends QueryScaffolder
      */
     protected function createConnection(Manager $manager)
     {
-        return Connection::create($this->operationName)
+        return Connection::create($this->getName())
             ->setConnectionType(function () use ($manager) {
                 return $this->getType($manager);
             })
@@ -204,7 +206,7 @@ class ListQueryScaffolder extends QueryScaffolder
     {
         if (!$this->paginationScaffolder) {
             $this->paginationScaffolder = new PaginationScaffolder(
-                $this->operationName,
+                $this->getName(),
                 $manager,
                 $this->createConnection($manager)
             );

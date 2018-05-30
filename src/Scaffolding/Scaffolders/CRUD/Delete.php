@@ -4,11 +4,12 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use Exception;
 use GraphQL\Type\Definition\ListOfType;
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
+use SilverStripe\GraphQL\OperationResolver;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
@@ -16,24 +17,29 @@ use SilverStripe\ORM\DB;
 /**
  * A generic delete operation.
  */
-class Delete extends MutationScaffolder implements ResolverInterface
+class Delete extends MutationScaffolder implements OperationResolver, CRUDInterface
 {
-    use DataObjectTypeTrait;
-
     /**
-     * DeleteOperationScaffolder constructor.
+     * Delete constructor.
      *
      * @param string $dataObjectClass
      */
     public function __construct($dataObjectClass)
     {
-        $this->dataObjectClass = $dataObjectClass;
+        parent::__construct(null, null, $this, $dataObjectClass);
+    }
 
-        parent::__construct(
-            'delete' . ucfirst($this->typeName()),
-            $this->typeName(),
-            $this
-        );
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        $name = parent::getName();
+        if ($name) {
+            return $name;
+        }
+
+        return 'delete' . ucfirst($this->getTypeName());
     }
 
     /**
@@ -57,11 +63,11 @@ class Delete extends MutationScaffolder implements ResolverInterface
         return Type::listOf(Type::id());
     }
 
-    public function resolve($object, $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         DB::get_conn()->withTransaction(function () use ($args, $context) {
             // Build list to filter
-            $results = DataList::create($this->dataObjectClass)
+            $results = DataList::create($this->getDataObjectClass())
                 ->byIDs($args['IDs']);
             $extensionResults = $this->extend('augmentMutation', $results, $args, $context, $info);
 
@@ -77,7 +83,7 @@ class Delete extends MutationScaffolder implements ResolverInterface
                 if (!$obj->canDelete($context['currentUser'])) {
                     throw new Exception(sprintf(
                         'Cannot delete %s with ID %s',
-                        $this->dataObjectClass,
+                        $this->getDataObjectClass(),
                         $obj->ID
                     ));
                 }

@@ -35,6 +35,7 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "suggest": {
-    "silverstripe/graphql-devtools": "Adds in-browser tools for testing and debugging GraphQL queries"
+    "silverstripe/graphql-devtools": "Adds in-browser tools for testing and debugging GraphQL queries",
+    "silverstripe/assets": "Allows schema to be cached in the filesystem."
   }
 }

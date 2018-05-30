@@ -2,20 +2,13 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Interfaces;
 
-use GraphQL\Type\Definition\ResolveInfo;
-use SilverStripe\ORM\DataObjectInterface;
+use SilverStripe\GraphQL\OperationResolver;
 
 /**
  * Applied to classes that resolve queries or mutations
+ *
+ * @deprecated 2.0..3.0 Use OperationResolver instead
  */
-interface ResolverInterface
+interface ResolverInterface extends OperationResolver
 {
-    /**
-     * @param DataObjectInterface $object
-     * @param array $args
-     * @param array $context
-     * @param ResolveInfo $info
-     * @return mixed
-     */
-    public function resolve($object, $args, $context, $info);
 }

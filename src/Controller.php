@@ -3,12 +3,15 @@
 namespace SilverStripe\GraphQL;
 
 use Exception;
+use SilverStripe\Assets\Storage\GeneratedAssetHandler;
 use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Flushable;
 use SilverStripe\GraphQL\Auth\Handler;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
@@ -18,8 +21,10 @@ use SilverStripe\Versioned\Versioned;
  * @todo CSRF protection (or token-based auth)
  * @skipUpgrade
  */
-class Controller extends BaseController
+class Controller extends BaseController implements Flushable
 {
+    const CACHE_FILENAME = 'types.graphql';
+
     /**
      * Cors default config
      *
@@ -35,9 +40,21 @@ class Controller extends BaseController
     ];
 
     /**
+     * If true, store the fragment JSON in a flat file in assets/
+     * @var bool
+     * @config
+     */
+    private static $cache_types_in_filesystem = false;
+
+    /**
      * @var Manager
      */
     protected $manager;
+
+    /**
+     * @var GeneratedAssetHandler
+     */
+    protected $assetHandler;
 
     /**
      * Handles requests to /graphql (index action)
@@ -105,6 +122,7 @@ class Controller extends BaseController
         $config = Config::inst()->get(static::class, 'schema');
         $manager = Manager::createFromConfig($config);
         $this->setManager($manager);
+
         return $manager;
     }
 
@@ -116,6 +134,25 @@ class Controller extends BaseController
     {
         $this->manager = $manager;
         return $this;
+    }
+
+    /**
+     * @param GeneratedAssetHandler $handler
+     * @return $this
+     */
+    public function setAssetHandler(GeneratedAssetHandler $handler)
+    {
+        $this->assetHandler = $handler;
+
+        return $this;
+    }
+
+    /**
+     * @return GeneratedAssetHandler
+     */
+    public function getAssetHandler()
+    {
+        return $this->assetHandler;
     }
 
     /**
@@ -290,5 +327,62 @@ class Controller extends BaseController
             throw new Exception("Not authorised");
         }
         return $member;
+    }
+
+    /**
+     * Introspect the schema and persist it to the filesystem
+     * @throws Exception
+     */
+    public function writeSchemaToFilesystem()
+    {
+        $manager = $this->getManager();
+        try {
+            $types = StaticSchema::inst()->introspectTypes($manager);
+        } catch (Exception $e) {
+            throw new Exception(sprintf(
+                'There was an error caching the GraphQL types: %s',
+                $e->getMessage()
+            ));
+        }
+
+        $this->writeTypes(json_encode($types));
+    }
+
+    public function removeSchemaFromFilesystem()
+    {
+        if (!$this->getAssetHandler()) {
+            return;
+        }
+
+        $this->getAssetHandler()->removeContent(self::CACHE_FILENAME);
+    }
+
+    /**
+     * @param string $content
+     */
+    public function writeTypes($content)
+    {
+        if (!$this->getAssetHandler()) {
+            return;
+        }
+
+        $this->getAssetHandler()->setContent(self::CACHE_FILENAME, $content);
+    }
+
+    /**
+     * Write the types json to a flat file, if silverstripe/assets is available
+     */
+    public function processTypeCaching()
+    {
+        if ($this->config()->cache_types_in_filesystem) {
+            $this->writeSchemaToFilesystem();
+        } else {
+            $this->removeSchemaFromFilesystem();
+        }
+    }
+
+    public static function flush()
+    {
+        static::singleton()->processTypeCaching();
     }
 }

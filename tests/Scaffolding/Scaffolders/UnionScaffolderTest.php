@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests\Scaffolders;
+namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\UnionScaffolder;
 use SilverStripe\Dev\SapphireTest;
@@ -27,28 +27,28 @@ class UnionScaffolderTest extends SapphireTest
         $scaffolder2->addToManager($manager);
 
         $scaffolder = new UnionScaffolder('test', [
-            $scaffolder1->typeName(),
-            $scaffolder2->typeName()
+            $scaffolder1->getTypeName(),
+            $scaffolder2->getTypeName()
         ]);
 
         $unionType = $scaffolder->scaffold($manager);
         $types = $unionType->getTypes();
 
-        $this->assertEquals($scaffolder1->typeName(), $types[0]->config['name']);
-        $this->assertEquals($scaffolder2->typeName(), $types[1]->config['name']);
+        $this->assertEquals($scaffolder1->getTypeName(), $types[0]->config['name']);
+        $this->assertEquals($scaffolder2->getTypeName(), $types[1]->config['name']);
 
         $fakeRedirector = new FakeRedirectorPage();
         $result = $unionType->resolveType($fakeRedirector, [], new ResolveInfo([]));
         //$result = $typeResolver(new FakeRedirectorPage());
 
-        $this->assertEquals($scaffolder1->typeName(), $result->config['name']);
+        $this->assertEquals($scaffolder1->getTypeName(), $result->config['name']);
 
         $result = $unionType->resolveType(new FakeSiteTree(), [], new ResolveInfo([]));
-        $this->assertEquals($scaffolder2->typeName(), $result->config['name']);
+        $this->assertEquals($scaffolder2->getTypeName(), $result->config['name']);
 
         // FakePage was never added. Should fall back on the parent type (FakeSiteTree)
         $result = $unionType->resolveType(new FakePage(), [], new ResolveInfo([]));
-        $this->assertEquals($scaffolder2->typeName(), $result->config['name']);
+        $this->assertEquals($scaffolder2->getTypeName(), $result->config['name']);
 
         $ex = null;
         try {
@@ -65,7 +65,7 @@ class UnionScaffolderTest extends SapphireTest
         } catch (Exception $e) {
             $ex = $e->getMessage();
         }
-        
+
         $this->assertRegExp('/no type defined/', $ex);
     }
 }

@@ -66,6 +66,7 @@ composer require silverstripe/graphql
    - [Defining your own authenticators](#defining-your-own-authenticators)
  - [Cross-Origin Resource Sharing (CORS)](#cross-origin-resource-sharing-cors)
    - [Sample Custom CORS Config](#sample-custom-cors-config)
+ - [Schema introspection](#schema-introspection)
  - [TODO](#todo)
 
 
@@ -307,7 +308,7 @@ class PaginatedReadMembersQueryCreator extends PaginatedQueryCreator
                 ]
             ])
             ->setSortableFields(['ID', 'FirstName', 'Email'])
-            ->setConnectionResolver(function ($obj, $args, $context) {
+            ->setConnectionResolver(function ($object, array $args, $context, ResolveInfo $info) {
                 $member = Member::singleton();
                 if (!$member->canView($context['currentUser'])) {
                     throw new \InvalidArgumentException(sprintf(
@@ -439,7 +440,7 @@ class MemberTypeCreator extends TypeCreator
             'Groups' => [
                 'type' => $groupsConnection->toType(),
                 'args' => $groupsConnection->args(),
-                'resolve' => function($obj, $args, $context) use ($groupsConnection) {
+                'resolve' => function($object, array $args, $context, ResolveInfo $info) use ($groupsConnection) {
                     return $groupsConnection->resolveList(
                         $obj->Groups(),
                         $args,
@@ -496,6 +497,7 @@ will automatically include it in the response.
 <?php
 namespace MyProject\GraphQL;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\MutationCreator;
 use SilverStripe\GraphQL\OperationResolver;
@@ -525,7 +527,7 @@ class CreateMemberMutationCreator extends MutationCreator implements OperationRe
         ];
     }
 
-    public function resolve($object, array $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         if (!singleton(Member::class)->canCreate($context['currentUser'])) {
             throw new \InvalidArgumentException('Member creation not allowed');
@@ -574,7 +576,7 @@ Scaffolding DataObjects can be achieved in two non-exclusive ways:
 * Via executable code (procedurally)
 * Via the config layer (declaratively)
 
-The example code will show demonstrate both methods for each section.
+Examples of both methods will be demonstrated below.
 
 ### Our example
 
@@ -661,7 +663,7 @@ SilverStripe\GraphQL\Controller:
 
 Let's now expose the `Post` type. We'll choose the fields we want to offer, along with a simple query and mutation. To
 resolve queries and mutations, we'll need to specify the name of a resolver class. This class
-must implement the `SilverStripe\GraphQL\Scaffolding\ResolverInterface`. (More on this below).
+must implement the `SilverStripe\GraphQL\OperationResolver`. (More on this below).
 
 **Via YAML**:
 ```yaml
@@ -886,7 +888,7 @@ $scaffolder
             ->addArgs([
                 'Title' => 'String'
             ])
-            ->setResolver(function($obj, $args, $context) {
+            ->setResolver(function($object, array $args, $context, ResolveInfo $info) {
                 if (!singleton(Post::class)->canView($context['currentMember'])) {
                     throw new \Exception('Cannot view Post');
                 }
@@ -966,7 +968,7 @@ $scaffolder
             ->setArgDescriptions([
                 'MinimumCommentCount' => 'Use this parameter to specify the minimum number of comments per post'
             ])
-            ->setResolver(function($obj, $args, $context) {
+            ->setResolver(function($object, array $args, $context, ResolveInfo $info) {
                 if (!singleton(Post::class)->canView($context['currentMember'])) {
                     throw new \Exception('Cannot view Post');
                 }
@@ -986,19 +988,20 @@ $scaffolder
 #### Using a custom resolver
 
 As seen in the code example above, the simplest way to add a resolver is via an anonymous function
-via the `setResolver()` method. In YAML, you can't define such functions, so resolvers be names or instances of classes that implement the
-`ResolverInterface`.
+via the `setResolver()` method. In YAML, you can't define such functions, so resolvers be names or instances of
+classes that implement the `OperationResolver`.
 
 **When using the YAML approach, custom resolver classes are compulsory**, since you can't define closures in YAML.
 
 ```php
 namespace MyProject\GraphQL;
 
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverInterface;
+use GraphQL\Type\Definition\ResolveInfo;
+use SilverStripe\GraphQL\OperationResolver;
 
-class MyResolver implements ResolverInterface
+class MyResolver implements OperationResolver
 {
-    public function resolve($object, $args, $context, $info)
+    public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         $post = Post::get()->byID($args['ID']);
         $post->Title = $args['NewTitle'];
@@ -1056,7 +1059,7 @@ $scaffolder
             ->addArgs([
                 'Title' => 'String'
             ])
-            ->setResolver(function ($obj, $args, $context) {
+            ->setResolver(function ($object, array $args, $context, ResolveInfo $info) {
                 if (!singleton(Post::class)->canView($context['currentMember'])) {
                     throw new \Exception('Cannot view Post');
                 }
@@ -1145,7 +1148,7 @@ $scaffolder
             ->addArgs([
                 'Title' => 'String'
             ])
-            ->setResolver(function ($obj, $args, $context) {
+            ->setResolver(function ($object, array $args, $context, ResolveInfo $info) {
                 if (!singleton(Post::class)->canView($context['currentMember'])) {
                     throw new \Exception('Cannot view Post');
                 }
@@ -1270,7 +1273,7 @@ $scaffolder
             ->addArgs([
                 'OnlyToday' => 'Boolean'
             ])
-            ->setResolver(function($obj, $args, $context) {
+            ->setResolver(function($object, array $args, $context, ResolveInfo $info) {
                 if (!singleton(Comment::class)->canView($context['currentMember'])) {
                     throw new \Exception('Cannot view Comment');
                 }
@@ -1359,7 +1362,7 @@ $scaffolder
             'ID' => 'ID!',
             'NewTitle' => 'String!'
         ])
-        ->setResolver(function ($obj, $args, $context) {
+        ->setResolver(function ($object, array $args, $context, ResolveInfo $info) {
             $post = Post::get()->byID($args['ID']);
             if ($post->canEdit($context['currentMember'])) {
                 $post->Title = $args['NewTitle'];
@@ -1371,7 +1374,7 @@ $scaffolder
         ->end()
     ->query('latestPost', Post::class)
         ->setUsePagination(false)
-        ->setResolver(function ($obj, $args, $context) {
+        ->setResolver(function ($object, array $args, $context, ResolveInfo $info) {
             if (singleton(Post::class)->canView($context['currentMember'])) {
                 return Post::get()->sort('Date', 'DESC')->first();
             }
@@ -1776,7 +1779,7 @@ class MyCreateExtension extends Extension
   }
 
 
-  public function augmentMutation($obj, $args, $context, $info)
+  public function augmentMutation($object, array $args, $context, ResolveInfo $info)
   {
     if ($args['SendEmail']) {
       MyService::inst()->sendEmail();
@@ -1804,7 +1807,7 @@ class AddToCartOperation extends MutationScaffolder
             'addToCart operation is only for implementors of ProductInterface'
         );
       }
-      $this->setResolver(function($obj, array $args) {
+      $this->setResolver(function($object, array $args, $context, ResolveInfo $info) {
         $record = DataObject::get_by_id($this->dataObjectClass, $args['ID']);
         if (!$record) {
           throw new Exception('ID not found');
@@ -2010,6 +2013,46 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  ```yaml
  Max-Age: 600
  ```
+
+### Schema introspection
+Some GraphQL clients such as [Apollo](http://apollographql.com) require some level of introspection 
+into the schema. While introspection is [part of the GraphQL spec](http://graphql.org/learn/introspection/), 
+this module provides a limited API for fetching it via non-graphql endpoints. By default, the `graphql/`
+controller provides a `types` action that will return the type schema (serialised as JSON) dynamically.
+
+*GET http://example.com/graphql/types*
+```js
+{  
+   "data":{  
+      "__schema":{  
+         "types":[  
+            {  
+               "kind":"OBJECT",
+               "name":"Query",
+               "possibleTypes":null
+            }
+            // etc ...
+         ]
+      }
+   }
+
+```
+
+As your schema grows, introspecting it dynamically may have a performance hit. Alternatively, 
+if you have the `silverstripe/assets` module installed (as it is in the default SilverStripe installation),
+GraphQL can cache your schema as a flat file in the `assets/` directory. To enable this, simply
+set the `cache_types_in_filesystem` setting to `true` on `SilverStripe\GraphQL\Controller`. Once enabled,
+a `types.graphql` file will be written to your `assets/` directory on `flush`.
+
+When `cache_types_in_filesystem` is enabled, it is recommended that you remove the extension that
+provides the dynamic introspection endpoint.
+
+```php
+use SilverStripe\GraphQL\Controller;
+use SilverStripe\GraphQL\Extensions\IntrospectionProvider;
+
+Controller::remove_extension(IntrospectionProvider::class);
+```
 
 ### Sample Custom CORS Config
 

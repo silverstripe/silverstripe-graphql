@@ -32,3 +32,14 @@ SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder:
     readOne: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ReadOne
     update: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update
     delete: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete
+
+SilverStripe\GraphQL\Controller:
+  extensions:
+    - SilverStripe\GraphQL\Extensions\IntrospectionProvider
+---
+Only:
+  moduleexists: 'silverstripe/admin'
+---
+SilverStripe\Admin\LeftAndMain:
+  extensions:
+    - SilverStripe\GraphQL\Extensions\ClientConfigProvider

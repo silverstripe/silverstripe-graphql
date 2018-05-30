@@ -17,7 +17,7 @@ class ItemQueryScaffolder extends QueryScaffolder
     public function scaffold(Manager $manager)
     {
         return [
-            'name' => $this->operationName,
+            'name' => $this->getName(),
             'args' => $this->createArgs($manager),
             'type' => $this->getType($manager),
             'resolve' => $this->createResolverFunction(),

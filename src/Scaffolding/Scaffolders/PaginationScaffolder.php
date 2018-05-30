@@ -17,6 +17,7 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
     protected $operationName;
 
     /**
+     * @param string $operationName
      * @param Manager $manager
      * @param  Connection $connection
      */
@@ -47,7 +48,7 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
     }
 
     /**
-     * @param $name
+     * @param string $name
      * @return $this
      */
     public function setOperationName($name)
