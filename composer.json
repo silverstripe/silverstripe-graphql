@@ -1,41 +1,41 @@
 {
-  "name": "silverstripe/graphql",
-  "description": "GraphQL server for SilverStripe models and other data",
-  "type": "silverstripe-vendormodule",
-  "require": {
-    "silverstripe/framework": "^4.2",
-    "silverstripe/vendor-plugin": "^1.0",
-    "webonyx/graphql-php": "~0.8.0"
-  },
-  "require-dev": {
-    "phpunit/PHPUnit": "^5.7"
-  },
-  "extra": {
-    "branch-alias": {
-      "2.x-dev": "2.0.x-dev"
+    "name": "silverstripe/graphql",
+    "description": "GraphQL server for SilverStripe models and other data",
+    "type": "silverstripe-vendormodule",
+    "require": {
+        "silverstripe/framework": "^4.2",
+        "silverstripe/vendor-plugin": "^1.0",
+        "webonyx/graphql-php": "~0.8.0"
+    },
+    "require-dev": {
+        "phpunit/PHPUnit": "^5.7"
+    },
+    "extra": {
+        "branch-alias": {
+            "2.x-dev": "2.1.x-dev"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "SilverStripe\\GraphQL\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SilverStripe\\GraphQL\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "process-timeout": 600
+    },
+    "scripts": {
+        "lint": "phpcs src/ tests/",
+        "lint-clean": "phpcbf src/ tests/"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "suggest": {
+        "silverstripe/graphql-devtools": "Adds in-browser tools for testing and debugging GraphQL queries",
+        "silverstripe/assets": "Allows schema to be cached in the filesystem."
     }
-  },
-  "autoload": {
-    "psr-4": {
-      "SilverStripe\\GraphQL\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "SilverStripe\\GraphQL\\Tests\\": "tests/"
-    }
-  },
-  "config": {
-    "process-timeout": 600
-  },
-  "scripts": {
-    "lint": "phpcs src/ tests/",
-    "lint-clean": "phpcbf src/ tests/"
-  },
-  "minimum-stability": "dev",
-  "prefer-stable": true,
-  "suggest": {
-    "silverstripe/graphql-devtools": "Adds in-browser tools for testing and debugging GraphQL queries",
-    "silverstripe/assets": "Allows schema to be cached in the filesystem."
-  }
 }
