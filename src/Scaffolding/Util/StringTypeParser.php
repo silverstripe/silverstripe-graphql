@@ -119,9 +119,11 @@ class StringTypeParser implements TypeParserInterface
     }
 
     /**
-     * @return Type
+     * @param boolean $nullable If true, allow the type to be null. Otherwise,
+     *  return the typename, which may be arbitrary.
+     * @return Type|string
      */
-    public function getType()
+    public function getType($nullable = true)
     {
         switch ($this->typeStr) {
             case Type::ID:
@@ -135,7 +137,7 @@ class StringTypeParser implements TypeParserInterface
             case Type::FLOAT:
                 return Type::float();
             default:
-                return $this->typeStr;
+                return $nullable ? null : $this->typeStr;
         }
     }
 }

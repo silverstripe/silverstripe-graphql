@@ -7,6 +7,7 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
 use SilverStripe\Core\Injector\Injector;
+use InvalidArgumentException;
 
 class ArgumentScaffolder implements ConfigurationApplier
 {
@@ -49,7 +50,7 @@ class ArgumentScaffolder implements ConfigurationApplier
             [$typeStr]
         );
         $this->defaultValue = $parser->getDefaultValue();
-        $this->type = $parser->getType();
+        $this->type = $parser->getType(false);
         $this->required = $parser->isRequired();
     }
 
@@ -141,11 +142,19 @@ class ArgumentScaffolder implements ConfigurationApplier
      * @param Manager $manager
      * @return array
      */
-    public function toArray(Manager $manager)
+    public function toArray(Manager $manager = null)
     {
         $typeValue = null;
         $type = $this->type;
         if (!$type instanceof Type) {
+            if (!$manager) {
+                throw new InvalidArgumentException(sprintf(
+                    'Custom type %s provided, but no %s instance was given to %s',
+                    $type,
+                    Manager::class,
+                    __CLASS__
+                ));
+            }
             $type = $manager->getType($type);
         }
 

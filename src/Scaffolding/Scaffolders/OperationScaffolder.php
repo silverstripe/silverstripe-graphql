@@ -240,7 +240,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
             $arg = $this->args->find('argName', $argName);
             if (!$arg) {
                 throw new InvalidArgumentException(sprintf(
-                    'Tried make arg %s required, but it was not added to %s',
+                    'Tried to make arg %s required, but it was not added to %s',
                     $argName,
                     $this->operationName ?: '(unnamed operation)'
                 ));
