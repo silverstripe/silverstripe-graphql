@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use GraphQL\Type\Definition\Type;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
 use SilverStripe\Core\Injector\Injector;
@@ -137,13 +138,20 @@ class ArgumentScaffolder implements ConfigurationApplier
 
     /**
      * Creates an array suitable for a map of args in a field
+     * @param Manager $manager
      * @return array
      */
-    public function toArray()
+    public function toArray(Manager $manager)
     {
+        $typeValue = null;
+        $type = $this->type;
+        if (!$type instanceof Type) {
+            $type = $manager->getType($type);
+        }
+
         $args = [
             'description' => $this->description,
-            'type' => $this->required ? Type::nonNull($this->type) : $this->type,
+            'type' => $this->required ? Type::nonNull($type) : $type,
         ];
 
         if ($this->defaultValue !== null) {
