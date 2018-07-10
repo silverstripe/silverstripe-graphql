@@ -46,7 +46,7 @@ class ConnectionTest extends SapphireTest
             ],
         ];
 
-        $this->manager = Manager::createFromConfig($config);
+        $this->manager = Manager::create()->applyConfig($config);
         $this->connection = Connection::create('testConnection')
             ->setConnectionType(function () {
                 return $this->manager->getType('TypeCreatorFake');

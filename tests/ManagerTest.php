@@ -41,7 +41,7 @@ class ManagerTest extends SapphireTest
                 'mymutation' => MutationCreatorFake::class,
             ],
         ];
-        $manager = Manager::createFromConfig($config);
+        $manager = Manager::create()->applyConfig($config);
         $this->assertInstanceOf(
             Type::class,
             $manager->getType('mytype')

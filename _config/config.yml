@@ -7,7 +7,17 @@ SilverStripe\Core\Injector\Injector:
     class: SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser
   SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.array:
     class: SilverStripe\GraphQL\Scaffolding\Util\ArrayTypeParser
-
+  SilverStripe\GraphQL\Manager.default:
+    class: SilverStripe\GraphQL\Manager
+    constructor:
+      schemaKey: default
+  SilverStripe\GraphQL\Controller.default:
+    class: SilverStripe\GraphQL\Controller
+    constructor:
+      manager: %$SilverStripe\GraphQL\Manager.default
+SilverStripe\Control\Director:
+  rules:
+    'graphql': %$SilverStripe\GraphQL\Controller.default
 # Assign each DBField subclass with an associated internal type
 SilverStripe\ORM\FieldType\DBField:
   extensions:
@@ -36,6 +46,8 @@ SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder:
 SilverStripe\GraphQL\Controller:
   extensions:
     - SilverStripe\GraphQL\Extensions\IntrospectionProvider
+SilverStripe\GraphQL\Manager:
+  schemas: []
 ---
 Only:
   moduleexists: 'silverstripe/admin'

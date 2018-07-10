@@ -10,6 +10,7 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Flushable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\Security\Member;
@@ -57,7 +58,24 @@ class Controller extends BaseController implements Flushable
     protected $assetHandler;
 
     /**
-     * Handles requests to /graphql (index action)
+     * @param Manager $manager
+     */
+    public function __construct(Manager $manager = null)
+    {
+        parent::__construct();
+        $this->manager = $manager;
+
+        if ($this->manager && $this->manager->getSchemaKey()) {
+            // Side effect. This isn't ideal, but having multiple instances of StaticSchema
+            // is a massive architectural change.
+            StaticSchema::reset();
+
+            $this->manager->configure();
+        }
+    }
+
+    /**
+     * Handles requests to the index action (e.g. /graphql)
      *
      * @param HTTPRequest $request
      * @return HTTPResponse
@@ -114,16 +132,7 @@ class Controller extends BaseController implements Flushable
      */
     public function getManager()
     {
-        if ($this->manager) {
-            return $this->manager;
-        }
-
-        // Get a service rather than an instance (to allow procedural configuration)
-        $config = Config::inst()->get(static::class, 'schema');
-        $manager = Manager::createFromConfig($config);
-        $this->setManager($manager);
-
-        return $manager;
+        return $this->manager;
     }
 
     /**
@@ -354,7 +363,7 @@ class Controller extends BaseController implements Flushable
             return;
         }
 
-        $this->getAssetHandler()->removeContent(self::CACHE_FILENAME);
+        $this->getAssetHandler()->removeContent($this->generateCacheFilename());
     }
 
     /**
@@ -365,8 +374,7 @@ class Controller extends BaseController implements Flushable
         if (!$this->getAssetHandler()) {
             return;
         }
-
-        $this->getAssetHandler()->setContent(self::CACHE_FILENAME, $content);
+        $this->getAssetHandler()->setContent($this->generateCacheFilename(), $content);
     }
 
     /**
@@ -383,6 +391,26 @@ class Controller extends BaseController implements Flushable
 
     public static function flush()
     {
-        static::singleton()->processTypeCaching();
+        // This is a bit of a hack to find all registered GraphQL servers. Depends on them
+        // being routed through Director.
+        $routes = Director::config()->get('rules');
+        foreach ($routes as $pattern => $controllerInfo) {
+            $routeClass = (is_string($controllerInfo)) ? $controllerInfo : $controllerInfo['Controller'];
+            if (stristr($routeClass, Controller::class) !== false) {
+                $inst = Injector::inst()->convertServiceProperty($routeClass);
+                if ($inst instanceof Controller) {
+                    /* @var Controller $inst */
+                    $inst->processTypeCaching();
+                }
+            }
+        }
+    }
+
+    /**
+     * @return string
+     */
+    protected function generateCacheFilename()
+    {
+        return $this->getManager()->getSchemaKey() . '.' . self::CACHE_FILENAME;
     }
 }

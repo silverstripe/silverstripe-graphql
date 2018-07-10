@@ -51,7 +51,7 @@ class StaticSchema
     public static function inst()
     {
         if (!static::$instance) {
-            static::$instance = new static();
+            static::setInstance(new static());
         }
 
         return static::$instance;
@@ -60,9 +60,17 @@ class StaticSchema
     /**
      * @param StaticSchema $inst
      */
-    public static function setInstance(StaticSchema $inst)
+    public static function setInstance(StaticSchema $inst = null)
     {
         static::$instance = $inst;
+    }
+
+    /**
+     * Removes the current instance
+     */
+    public static function reset()
+    {
+        static::setInstance();
     }
 
     /**

@@ -84,7 +84,7 @@ class StaticSchemaTest extends SapphireTest
                 DataObjectFake::class => 'testType',
             ]
         ];
-        Manager::createFromConfig($config);
+        Manager::create()->applyConfig($config);
         $this->assertEquals('testType', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
         StaticSchema::inst()->setTypeNames([
             DataObjectFake::class => 'otherTestType'
