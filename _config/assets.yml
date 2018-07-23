@@ -18,7 +18,11 @@ SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder:
   fixed_types:
     - SilverStripe\Assets\Storage\DBFile
 SilverStripe\Assets\File:
-  allowed_extensions: [ graphql ]
+  allowed_extensions:
+    - graphql
+  app_categories:
+    document:
+      - graphql
 
 SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Controller:
