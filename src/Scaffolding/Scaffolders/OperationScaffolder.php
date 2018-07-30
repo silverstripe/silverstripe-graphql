@@ -230,7 +230,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
      * [
      *  'ID' => true
      * ]
-     * @param $argData
+     * @param array $argData
      * @return $this
      */
     public function setArgsRequired($argData)
