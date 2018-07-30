@@ -2,6 +2,8 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
+use GraphQL\Type\Definition\BooleanType;
+use GraphQL\Type\Definition\NonNull;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\OperationScaffolderFake;
@@ -89,15 +91,22 @@ class OperationScaffolderTest extends SapphireTest
             'Two' => 'Kiwifruit',
         ]);
 
+        $scaffolder->setArgsRequired([
+            'One' => true,
+            'Two' => false,
+        ]);
+
         $argument = $scaffolder->getArgs()->find('argName', 'One');
         $arr = $argument->toArray();
         $this->assertEquals('Foo', $arr['description']);
         $this->assertEquals('Feijoa', $arr['defaultValue']);
+        $this->assertInstanceOf(NonNull::class, $arr['type']);
 
         $argument = $scaffolder->getArgs()->find('argName', 'Two');
         $arr = $argument->toArray();
         $this->assertEquals('Bar', $arr['description']);
         $this->assertEquals('Kiwifruit', $arr['defaultValue']);
+        $this->assertInstanceof(BooleanType::class, $arr['type']);
 
         $scaffolder->setArgDescription('One', 'Tui')
             ->setArgDefault('One', 'Moa');
@@ -132,6 +141,16 @@ class OperationScaffolderTest extends SapphireTest
 
         $this->assertInstanceOf(InvalidArgumentException::class, $ex);
         $this->assertRegExp('/Tried to set default/', $ex->getMessage());
+
+        $ex = null;
+        try {
+            $scaffolder->setArgRequired('Nothing', true);
+        } catch (Exception $e) {
+            $ex = $e;
+        }
+
+        $this->assertInstanceOf(InvalidArgumentException::class, $ex);
+        $this->assertRegExp('/Tried to make arg [A-Za-z0-9]+ required/', $ex->getMessage());
     }
 
     public function testOperationScaffolderResolver()
