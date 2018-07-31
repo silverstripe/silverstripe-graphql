@@ -1620,7 +1620,7 @@ Otherwise, the name of the read operation, given the `Schema` config above, will
 
 ### Versioned content
 
-If the `silversrtripe/versioned` module is installed in your project (as it is with a default CMS install),
+If the `silverstripe/versioned` module is installed in your project (as it is with a default CMS install),
 a series of schema updates specific to versioning will be provided to all types that use the `Versioned` extension.
 These include:
 
