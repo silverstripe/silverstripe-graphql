@@ -97,7 +97,7 @@ GraphQL uses this information to validate queries and allow GraphQL clients to
 introspect your API capabilities. The GraphQL type system is hierarchical, so
 the `fields()` definition declares object properties as scalar types within
 your complex type. Refer to the
-[graphql-php type definitions](https://github.com/webonyx/graphql-php#type-system)
+[graphql-php type definitions](http://webonyx.github.io/graphql-php/type-system/)
 for available types.
 
 ```php
