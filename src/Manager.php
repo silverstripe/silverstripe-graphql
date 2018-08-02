@@ -14,6 +14,7 @@ use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\Dev\Deprecation;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\ValidationException;
@@ -86,6 +87,21 @@ class Manager implements ConfigurationApplier
     }
 
     /**
+     * @param $config
+     * @param string $schemaKey
+     * @return Manager
+     * @deprecated 4.0
+     */
+    public static function createFromConfig($config, $schemaKey = null)
+    {
+        Deprecation::notice('4.0', 'Use applyConfig() on a new instance instead');
+
+        $manager = new static($schemaKey);
+
+        return $manager->applyConfig($config);
+    }
+
+    /**
      * Applies a configuration based on the schemaKey property
      *
      * @return Manager
@@ -93,7 +109,7 @@ class Manager implements ConfigurationApplier
      */
     public function configure()
     {
-        if (!$this->schemaKey) {
+        if (!$this->getSchemaKey()) {
             throw new BadMethodCallException(sprintf(
                 'Attempted to run configure() on a %s instance without a schema key set. See setSchemaKey(),
                 or specify one in the constructor.',
@@ -102,7 +118,7 @@ class Manager implements ConfigurationApplier
         }
 
         $schemas = $this->config()->get('schemas');
-        $config = isset($schemas[$this->schemaKey]) ? $schemas[$this->schemaKey] : [];
+        $config = isset($schemas[$this->getSchemaKey()]) ? $schemas[$this->getSchemaKey()] : [];
 
         return $this->applyConfig($config);
     }
@@ -370,7 +386,7 @@ class Manager implements ConfigurationApplier
     }
 
     /**
-     * @param $schemaKey
+     * @param string $schemaKey
      * @return $this
      */
     public function setSchemaKey($schemaKey)
@@ -381,9 +397,15 @@ class Manager implements ConfigurationApplier
                 __CLASS__
             ));
         }
-        if (preg_match('/[^A-Za-z0-9_]/', $schemaKey)) {
+        if (empty($schemaKey)) {
             throw new InvalidArgumentException(sprintf(
-                '%s schemaKey may only contain alphanumeric characters and underscores',
+                '%s schemaKey must cannot be empty',
+                __CLASS__
+            ));
+        }
+        if (preg_match('/[^A-Za-z0-9_-]/', $schemaKey)) {
+            throw new InvalidArgumentException(sprintf(
+                '%s schemaKey may only contain alphanumeric characters, dashes, and underscores',
                 __CLASS__
             ));
         }

@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Tests;
 
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
@@ -14,7 +15,7 @@ use SilverStripe\Security\Member;
 use GraphQL\Error\Error;
 use GraphQL\Schema;
 use GraphQL\Language\SourceLocation;
-use SilverStripe\Security\Security;
+use InvalidArgumentException;
 
 class ManagerTest extends SapphireTest
 {
@@ -124,6 +125,57 @@ class ManagerTest extends SapphireTest
             $mutation,
             $manager->getMutation('mymutation')
         );
+    }
+
+    public function testSchemaKey()
+    {
+        $manager = new Manager();
+        $this->assertNull($manager->getSchemaKey());
+        $manager->setSchemaKey('test');
+        $this->assertEquals('test', $manager->getSchemaKey());
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/must be a string/');
+        $manager->setSchemaKey(['test']);
+        $this->assertEquals('test', $manager->getSchemaKey());
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/cannnot be empty/');
+        $manager->setSchemaKey('');
+        $this->assertEquals('test', $manager->getSchemaKey());
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageRegExp('/alphanumeric/');
+        $manager->setSchemaKey('completely % invalid #key');
+        $this->assertEquals('test', $manager->getSchemaKey());
+
+    }
+
+    public function testConfigure()
+    {
+        $mock = $this->getMockBuilder(Manager::class)
+            ->setMethods(['applyConfig', 'getSchemaKey'])
+            ->getMock();
+        $mock->expects($this->once())
+            ->method('applyConfig')
+            ->with(
+                ['some' => 'setting']
+            );
+        $mock->expects($this->any())
+            ->method('getSchemaKey')
+            ->willReturn('testKey');
+
+        Config::modify()->set(
+            Manager::class,
+            'schemas',
+            [
+                'testKey' => [
+                    'some' => 'setting'
+                ]
+            ]
+        );
+
+        $mock->configure();
     }
 
     public function testQueryWithError()

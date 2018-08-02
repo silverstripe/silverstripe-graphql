@@ -151,4 +151,19 @@ class StaticSchemaTest extends SapphireTest
         StaticSchema::inst()
             ->fetchFromManager('fail', $manager);
     }
+
+    public function testInstance()
+    {
+        $inst1 = StaticSchema::inst();
+        $inst2 = StaticSchema::inst();
+
+        $this->assertSame($inst1, $inst2);
+
+        $new = new StaticSchema();
+        StaticSchema::setInstance($new);
+        $this->assertSame($new, StaticSchema::inst());
+
+        StaticSchema::reset();
+        $this->assertNotSame($new, StaticSchema::inst());
+    }
 }
