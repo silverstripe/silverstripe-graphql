@@ -15,9 +15,6 @@ SilverStripe\Core\Injector\Injector:
     class: SilverStripe\GraphQL\Controller
     constructor:
       manager: %$SilverStripe\GraphQL\Manager.default
-SilverStripe\Control\Director:
-  rules:
-    'graphql': %$SilverStripe\GraphQL\Controller.default
 # Assign each DBField subclass with an associated internal type
 SilverStripe\ORM\FieldType\DBField:
   extensions:
