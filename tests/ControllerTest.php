@@ -18,6 +18,7 @@ use SilverStripe\GraphQL\Controller;
 use SilverStripe\GraphQL\Extensions\IntrospectionProvider;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
+use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 
@@ -44,8 +45,9 @@ class ControllerTest extends SapphireTest
 
     public function testIndex()
     {
-        $controller = new Controller();
         $manager = new Manager();
+        $controller = new Controller($manager);
+
         $manager->addType($this->getType($manager), 'mytype');
         $manager->addQuery($this->getQuery($manager), 'myquery');
         $controller->setManager($manager);
@@ -55,19 +57,17 @@ class ControllerTest extends SapphireTest
 
     public function testGetGetManagerPopulatesFromConfig()
     {
-        Config::modify()->set(Controller::class, 'schema', [
-            'types' => [
-                'mytype' => TypeCreatorFake::class,
-            ],
+        Config::modify()->set(Manager::class, 'schemas', [
+            'testSchema' => [
+                'types' => [
+                    'mytype' => TypeCreatorFake::class,
+                ],
+            ]
         ]);
-
-        $controller = new Controller();
-        $reflection = new ReflectionClass($controller);
-        $method = $reflection->getMethod('getManager');
-        $method->setAccessible(true);
-        $manager = $method->invoke($controller);
+        $manager = new Manager('testSchema');
+        $controller = new Controller($manager);
         $this->assertNotNull(
-            $manager->getType('mytype')
+            $controller->getManager()->getType('mytype')
         );
     }
 
@@ -77,7 +77,6 @@ class ControllerTest extends SapphireTest
         $kernel = Injector::inst()->get(Kernel::class);
         $kernel->setEnvironment(Kernel::LIVE);
 
-        $controller = new Controller();
         /** @var Manager|PHPUnit_Framework_MockObject_MockBuilder $managerMock */
         $managerMock = $this->getMockBuilder(Manager::class)
             ->setMethods(['query'])
@@ -86,7 +85,7 @@ class ControllerTest extends SapphireTest
         $managerMock->method('query')
             ->will($this->throwException(new Exception('Failed')));
 
-        $controller->setManager($managerMock);
+        $controller = new Controller($managerMock);
         $response = $controller->index(new HTTPRequest('GET', ''));
         $this->assertFalse($response->isError());
         $responseObj = json_decode($response->getBody(), true);
@@ -98,7 +97,6 @@ class ControllerTest extends SapphireTest
 
     public function testIndexWithExceptionIncludesTraceInDevMode()
     {
-        $controller = new Controller();
         /** @var Manager|PHPUnit_Framework_MockObject_MockBuilder $managerMock */
         $managerMock = $this->getMockBuilder(Manager::class)
             ->setMethods(['query'])
@@ -107,7 +105,7 @@ class ControllerTest extends SapphireTest
         $managerMock->method('query')
             ->will($this->throwException(new Exception('Failed')));
 
-        $controller->setManager($managerMock);
+        $controller = new Controller($managerMock);
         $response = $controller->index(new HTTPRequest('GET', ''));
         $this->assertFalse($response->isError());
         $responseObj = json_decode($response->getBody(), true);
@@ -122,8 +120,7 @@ class ControllerTest extends SapphireTest
      */
     public function testGetAuthHandler()
     {
-        $controller = new Controller;
-        $controller->setManager(new Manager);
+        $controller = new Controller();
         $this->assertInstanceOf(Handler::class, $controller->getAuthHandler());
     }
 
@@ -140,9 +137,7 @@ class ControllerTest extends SapphireTest
             ['class' => $authenticator]
         ]);
 
-        $controller = new Controller;
-        $manager = new Manager;
-        $controller->setManager($manager);
+        $controller = new Controller($manager = new Manager());
         $manager->addType($this->getType($manager), 'mytype');
         $manager->addQuery($this->getQuery($manager), 'myquery');
 
@@ -351,19 +346,21 @@ class ControllerTest extends SapphireTest
 
     public function testTypeCaching()
     {
-        StaticSchema::setInstance($this->getStaticSchemaMock());
-        $expectedSchemaPath = TestAssetStore::base_path() . '/types.graphql';
+        $expectedSchemaPath = TestAssetStore::base_path() . '/testSchema.types.graphql';
         $this->assertFileNotExists($expectedSchemaPath, 'Schema is not automatically cached');
 
         Config::modify()->set(Controller::class, 'cache_types_in_filesystem', true);
-        Controller::create()->processTypeCaching();
+        $controller = Controller::create(new Manager('testSchema'));
+        StaticSchema::setInstance($this->getStaticSchemaMock());
+
+        $controller->processTypeCaching();
 
         // Static cache should now exist
         $this->assertFileExists($expectedSchemaPath, 'Schema is cached');
         $this->assertEquals('{"uncle":"cheese"}', file_get_contents($expectedSchemaPath));
 
         Config::modify()->set(Controller::class, 'cache_types_in_filesystem', false);
-        Controller::create()->processTypeCaching();
+        Controller::create(new Manager('testSchema'))->processTypeCaching();
 
         // Static cache should be removed when caching is disabled
         $this->assertFileNotExists($expectedSchemaPath, 'Schema is not cached');
@@ -376,9 +373,26 @@ class ControllerTest extends SapphireTest
         Controller::add_extension(IntrospectionProvider::class);
 
         /* @var Controller|IntrospectionProvider $controller */
-        $controller = Controller::create();
+        $controller = new Controller(new Manager());
         $response = $controller->types(new HTTPRequest('GET', '/'));
         $this->assertEquals('{"uncle":"cheese"}', $response->getBody());
+    }
+
+    public function testSchemaIsResetPerController()
+    {
+        $config = [
+            'schema1' => [
+                'typeNames' => [DataObjectFake::class => 'testone'],
+            ],
+            'schema2' => [
+                'typeNames' => [DataObjectFake::class => 'testtwo'],
+            ]
+        ];
+        Config::modify()->set(Manager::class, 'schemas', $config);
+        $controller1 = new Controller(new Manager('schema1'));
+        $this->assertEquals('testone', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
+        $controller2 = new Controller(new Manager('schema2'));
+        $this->assertEquals('testtwo', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
     }
 
     protected function getType(Manager $manager)

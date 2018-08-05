@@ -7,11 +7,15 @@ use GraphQL\Executor\ExecutionResult;
 use GraphQL\Language\SourceLocation;
 use GraphQL\Schema;
 use GraphQL\GraphQL;
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\Dev\Deprecation;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
@@ -19,6 +23,8 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Closure;
 use SilverStripe\Security\Security;
+use BadMethodCallException;
+use Exception;
 
 /**
  * Manager is the master container for a graphql endpoint, and contains
@@ -26,15 +32,22 @@ use SilverStripe\Security\Security;
  *
  * Instantiate with {@see Manager::createFromConfig()} with a config array.
  */
-class Manager
+class Manager implements ConfigurationApplier
 {
     use Injectable;
+    use Extensible;
+    use Configurable;
 
     const QUERY_ROOT = 'query';
 
     const MUTATION_ROOT = 'mutation';
 
     const TYPES_ROOT = 'types';
+
+    /**
+     * @var string
+     */
+    protected $schemaKey;
 
     /**
      * Map of named {@link Type}
@@ -64,23 +77,69 @@ class Manager
     protected $member;
 
     /**
+     * @param string $schemaKey
+     */
+    public function __construct($schemaKey = null)
+    {
+        if ($schemaKey) {
+            $this->setSchemaKey($schemaKey);
+        }
+    }
+
+    /**
+     * @param $config
+     * @param string $schemaKey
+     * @return Manager
+     * @deprecated 4.0
+     */
+    public static function createFromConfig($config, $schemaKey = null)
+    {
+        Deprecation::notice('4.0', 'Use applyConfig() on a new instance instead');
+
+        $manager = new static($schemaKey);
+
+        return $manager->applyConfig($config);
+    }
+
+    /**
+     * Applies a configuration based on the schemaKey property
+     *
+     * @return Manager
+     * @throws Exception
+     */
+    public function configure()
+    {
+        if (!$this->getSchemaKey()) {
+            throw new BadMethodCallException(sprintf(
+                'Attempted to run configure() on a %s instance without a schema key set. See setSchemaKey(),
+                or specify one in the constructor.',
+                __CLASS__
+            ));
+        }
+
+        $schemas = $this->config()->get('schemas');
+        $config = isset($schemas[$this->getSchemaKey()]) ? $schemas[$this->getSchemaKey()] : [];
+
+        return $this->applyConfig($config);
+    }
+
+    /**
      * @param array $config An array with optional 'types' and 'queries' keys
      * @return Manager
      */
-    public static function createFromConfig($config)
+    public function applyConfig(array $config)
     {
+        $this->extend('updateConfig', $config);
+
         // Bootstrap schema class mapping from config
         if ($config && array_key_exists('typeNames', $config)) {
             StaticSchema::inst()->setTypeNames($config['typeNames']);
         }
 
-        /** @var Manager $manager */
-        $manager = Injector::inst()->create(Manager::class);
-
         // Types (incl. Interfaces and InputTypes)
         if ($config && array_key_exists('types', $config)) {
             foreach ($config['types'] as $name => $typeCreatorClass) {
-                $typeCreator = Injector::inst()->create($typeCreatorClass, $manager);
+                $typeCreator = Injector::inst()->create($typeCreatorClass, $this);
                 if (!($typeCreator instanceof TypeCreator)) {
                     throw new InvalidArgumentException(sprintf(
                         'The type named "%s" needs to be a class extending ' . TypeCreator::class,
@@ -89,14 +148,14 @@ class Manager
                 }
 
                 $type = $typeCreator->toType();
-                $manager->addType($type, $name);
+                $this->addType($type, $name);
             }
         }
 
         // Queries
         if ($config && array_key_exists('queries', $config)) {
             foreach ($config['queries'] as $name => $queryCreatorClass) {
-                $queryCreator = Injector::inst()->create($queryCreatorClass, $manager);
+                $queryCreator = Injector::inst()->create($queryCreatorClass, $this);
                 if (!($queryCreator instanceof QueryCreator)) {
                     throw new InvalidArgumentException(sprintf(
                         'The type named "%s" needs to be a class extending ' . QueryCreator::class,
@@ -104,7 +163,7 @@ class Manager
                     ));
                 }
 
-                $manager->addQuery(function () use ($queryCreator) {
+                $this->addQuery(function () use ($queryCreator) {
                     return $queryCreator->toArray();
                 }, $name);
             }
@@ -113,7 +172,7 @@ class Manager
         // Mutations
         if ($config && array_key_exists('mutations', $config)) {
             foreach ($config['mutations'] as $name => $mutationCreatorClass) {
-                $mutationCreator = Injector::inst()->create($mutationCreatorClass, $manager);
+                $mutationCreator = Injector::inst()->create($mutationCreatorClass, $this);
                 if (!($mutationCreator instanceof MutationCreator)) {
                     throw new InvalidArgumentException(sprintf(
                         'The mutation named "%s" needs to be a class extending ' . MutationCreator::class,
@@ -121,7 +180,7 @@ class Manager
                     ));
                 }
 
-                $manager->addMutation(function () use ($mutationCreator) {
+                $this->addMutation(function () use ($mutationCreator) {
                     return $mutationCreator->toArray();
                 }, $name);
             }
@@ -151,10 +210,10 @@ class Manager
                 $scaffolder = $provider->provideGraphQLScaffolding($scaffolder);
             }
         }
-        $scaffolder->addToManager($manager);
 
+        $scaffolder->addToManager($this);
 
-        return $manager;
+        return $this;
     }
 
     /**
@@ -316,6 +375,44 @@ class Manager
     public function getMutation($name)
     {
         return $this->mutations[$name];
+    }
+
+    /**
+     * @return string
+     */
+    public function getSchemaKey()
+    {
+        return $this->schemaKey;
+    }
+
+    /**
+     * @param string $schemaKey
+     * @return $this
+     */
+    public function setSchemaKey($schemaKey)
+    {
+        if (!is_string($schemaKey)) {
+            throw new InvalidArgumentException(sprintf(
+                '%s schemaKey must be a string',
+                __CLASS__
+            ));
+        }
+        if (empty($schemaKey)) {
+            throw new InvalidArgumentException(sprintf(
+                '%s schemaKey must cannot be empty',
+                __CLASS__
+            ));
+        }
+        if (preg_match('/[^A-Za-z0-9_-]/', $schemaKey)) {
+            throw new InvalidArgumentException(sprintf(
+                '%s schemaKey may only contain alphanumeric characters, dashes, and underscores',
+                __CLASS__
+            ));
+        }
+
+        $this->schemaKey = $schemaKey;
+
+        return $this;
     }
 
     /**

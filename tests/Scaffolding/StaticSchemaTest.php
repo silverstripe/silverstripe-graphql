@@ -84,7 +84,7 @@ class StaticSchemaTest extends SapphireTest
                 DataObjectFake::class => 'testType',
             ]
         ];
-        Manager::createFromConfig($config);
+        Manager::create()->applyConfig($config);
         $this->assertEquals('testType', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
         StaticSchema::inst()->setTypeNames([
             DataObjectFake::class => 'otherTestType'
@@ -150,5 +150,20 @@ class StaticSchemaTest extends SapphireTest
         $this->expectExceptionMessageRegExp('/could not be resolved/');
         StaticSchema::inst()
             ->fetchFromManager('fail', $manager);
+    }
+
+    public function testInstance()
+    {
+        $inst1 = StaticSchema::inst();
+        $inst2 = StaticSchema::inst();
+
+        $this->assertSame($inst1, $inst2);
+
+        $new = new StaticSchema();
+        StaticSchema::setInstance($new);
+        $this->assertSame($new, StaticSchema::inst());
+
+        StaticSchema::reset();
+        $this->assertNotSame($new, StaticSchema::inst());
     }
 }
