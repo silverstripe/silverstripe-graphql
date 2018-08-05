@@ -148,7 +148,6 @@ class ManagerTest extends SapphireTest
         $this->expectExceptionMessageRegExp('/alphanumeric/');
         $manager->setSchemaKey('completely % invalid #key');
         $this->assertEquals('test', $manager->getSchemaKey());
-
     }
 
     public function testConfigure()
