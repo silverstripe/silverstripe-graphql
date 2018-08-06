@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL\Tests;
 
 use Exception;
-use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use PHPUnit_Framework_MockObject_MockBuilder;
 use ReflectionClass;
@@ -24,12 +23,15 @@ use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Middleware\CSRFMiddleware;
 use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
+use SilverStripe\GraphQL\Tests\Fake\FakePersistedQuery;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\Security\SecurityToken;
 
 class ControllerTest extends SapphireTest
 {
+    protected $usesDatabase = true;
+
     public function setUp()
     {
         parent::setUp();
@@ -528,6 +530,40 @@ class ControllerTest extends SapphireTest
         $this->assertArrayHasKey('data', $data);
         $this->assertArrayHasKey($operation, $data['data']);
         $this->assertEquals('success', $data['data'][$operation]);
+
+    /**
+     * @throws \ReflectionException
+     */
+    public function testGetPersistedQuery()
+    {
+        $fake = new FakePersistedQuery();
+        $fakeQueryMapping = $fake->getPersistedQueryMappingString();
+
+        $configArr = [
+            [
+                'type'  => 'string',
+                'value' => $fakeQueryMapping
+            ],
+            [
+                'type'  => 'path',
+                'value' => $fake->getPersistedQueryMappingPath()
+            ]
+        ];
+
+        foreach ($configArr as $config) {
+            Config::modify()->set(Controller::class, 'persisted_query_mapping', $config);
+
+            /* @var $controller Controller */
+            $controller = Controller::create();
+            $reflection = new ReflectionClass($controller);
+            $method = $reflection->getMethod('getPersistedQueryFromID');
+            $method->setAccessible(true);
+
+            $expectMapping = array_flip(json_decode($fakeQueryMapping, true));
+            foreach ($expectMapping as $id => $query) {
+                $this->assertEquals($query, $method->invoke($controller, $id));
+            }
+        }
     }
 
     protected function getType(Manager $manager)

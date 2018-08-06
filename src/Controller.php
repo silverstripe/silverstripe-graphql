@@ -49,6 +49,17 @@ class Controller extends BaseController implements Flushable
     private static $cache_types_in_filesystem = false;
 
     /**
+     * Persisted query mapping content or path
+     *
+     * @var array
+     * @config
+     */
+    private static $persisted_query_mapping = [
+        'type' => null, // options: 'string', 'path', 'url'
+        'value' => null
+    ];
+
+    /**
      * @var Manager
      */
     protected $manager;
@@ -316,12 +327,56 @@ class Controller extends BaseController implements Flushable
             $rawBody = $request->getBody();
             $data = json_decode($rawBody ?: '', true);
             $query = isset($data['query']) ? $data['query'] : null;
+            $id = isset($data['id']) ? $data['id'] : null;
             $variables = isset($data['variables']) ? (array)$data['variables'] : null;
         } else {
             $query = $request->requestVar('query');
+            $id = $request->requestVar('id');
             $variables = json_decode($request->requestVar('variables'), true);
         }
+
+        if (!$query && $id) {
+            $query = $this->getPersistedQueryFromID($id);
+        }
+
         return [$query, $variables];
+    }
+
+    /**
+     * Get persisted query from given ID, return null if not found
+     *
+     * @param string $id
+     * @return string | null
+     */
+    protected function getPersistedQueryFromID($id)
+    {
+        $config = $this->config()->persisted_query_mapping;
+        $configType = isset($config['type']) ? $config['type']: null;
+        $configValue = isset($config['value']) ? $config['value']: null;
+        if (!$configType || !$configValue) {
+            return null;
+        }
+
+        $jsonString = null;
+        switch ($configType) {
+            case 'path':
+            case 'url':
+                $jsonString = file_get_contents($configValue);
+                break;
+            case 'string':
+                $jsonString = $configValue;
+                break;
+            default:
+                return null;
+        }
+
+        $mapping = json_decode($jsonString, true);
+        if (!$mapping || !is_array($mapping)) {
+            return null;
+        }
+
+        $invertMapping = array_flip($mapping);
+        return isset($invertMapping[$id]) ? $invertMapping[$id] : null;
     }
 
     /**
