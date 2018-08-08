@@ -148,7 +148,7 @@ class Manager
                         ScaffoldingProvider::class
                     ));
                 }
-                $scaffolder = $provider->provideGraphQLScaffolding($scaffolder);
+                $provider->provideGraphQLScaffolding($scaffolder);
             }
         }
         $scaffolder->addToManager($manager);
