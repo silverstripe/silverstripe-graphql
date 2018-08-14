@@ -19,6 +19,8 @@ use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Controller;
 use SilverStripe\GraphQL\Extensions\IntrospectionProvider;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\PersistedQuery\JSONStringProvider;
+use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Middleware\CSRFMiddleware;
@@ -534,36 +536,42 @@ class ControllerTest extends SapphireTest
     /**
      * @throws \ReflectionException
      */
-    public function testGetPersistedQuery()
+    public function testGetRequestQueryVariables()
     {
+        /* @var $controller Controller */
+        $controller = Controller::create();
+        $manager = new Manager();
+        $controller->setManager($manager);
+
+        $reflection = new ReflectionClass($controller);
+        $method = $reflection->getMethod('getRequestQueryVariables');
+        $method->setAccessible(true);
+
+        $expectedQueryID = '1cd63b53-472c-4844-9017-4e81b18b386d';
+        $expectedQuery = 'query($memberID:ID!){readOneMember(ID:$memberID){ID Email}}';
+        $expectedVariables = ['memberID' => '1'];
+
+        // normal query request: query + variables
+        $request = new HTTPRequest('POST', '', [], [
+            'query' => $expectedQuery,
+            'variables' => json_encode($expectedVariables)
+        ]);
+        list($query, $variables) = $method->invoke($controller, $request);
+        $this->assertEquals($expectedQuery, $query);
+        $this->assertEquals($expectedVariables, $variables);
+
+        // persisted query request: id + variables
         $fake = new FakePersistedQuery();
         $fakeQueryMapping = $fake->getPersistedQueryMappingString();
-
-        $configArr = [
-            [
-                'type'  => 'string',
-                'value' => $fakeQueryMapping
-            ],
-            [
-                'type'  => 'path',
-                'value' => $fake->getPersistedQueryMappingPath()
-            ]
-        ];
-
-        foreach ($configArr as $config) {
-            Config::modify()->set(Controller::class, 'persisted_query_mapping', $config);
-
-            /* @var $controller Controller */
-            $controller = Controller::create();
-            $reflection = new ReflectionClass($controller);
-            $method = $reflection->getMethod('getPersistedQueryFromID');
-            $method->setAccessible(true);
-
-            $expectMapping = array_flip(json_decode($fakeQueryMapping, true));
-            foreach ($expectMapping as $id => $query) {
-                $this->assertEquals($query, $method->invoke($controller, $id));
-            }
-        }
+        Config::modify()->set(JSONStringProvider::class, 'mapping_with_key', ['default' => $fakeQueryMapping]);
+        Injector::inst()->registerService(JSONStringProvider::create(), PersistedQueryMappingProvider::class);
+        $request = new HTTPRequest('POST', '', [], [
+            'id' => $expectedQueryID,
+            'variables' => json_encode($expectedVariables)
+        ]);
+        list($query, $variables) = $method->invoke($controller, $request);
+        $this->assertEquals($expectedQuery, $query);
+        $this->assertEquals($expectedVariables, $variables);
     }
 
     protected function getType(Manager $manager)

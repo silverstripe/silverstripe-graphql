@@ -16,6 +16,7 @@ use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\Deprecation;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
+use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 use SilverStripe\ORM\ValidationException;
@@ -529,6 +530,23 @@ class Manager implements ConfigurationApplier
     public function getMember()
     {
         return $this->member ?: Security::getCurrentUser();
+    }
+
+    /**
+     * get query from persisted id, return null if not found
+     *
+     * @param $id
+     * @return string | null
+     */
+    public function getQueryFromPersistedID($id)
+    {
+        /** @var PersistedQueryMappingProvider $provider */
+        $provider = Injector::inst()->create(PersistedQueryMappingProvider::class);
+        $invertMapping = $provider->getInvertedMapping();
+        if (!isset($invertMapping[$id])) {
+            return null;
+        }
+        return $invertMapping[$id];
     }
 
     /**

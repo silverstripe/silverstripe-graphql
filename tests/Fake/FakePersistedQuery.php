@@ -16,4 +16,9 @@ class FakePersistedQuery implements TestOnly
     {
         return implode(DIRECTORY_SEPARATOR, [dirname(__DIR__), 'Fixture', 'persisted_query_mapping.json']);
     }
+
+    public function getPersistedQueryMappingURL()
+    {
+        return 'https://raw.githubusercontent.com/zzdjk6/silverstripe-graphql/2-persisted-query/tests/Fixture/persisted_query_mapping.json';
+    }
 }

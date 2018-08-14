@@ -2,14 +2,22 @@
 
 namespace SilverStripe\GraphQL\Tests;
 
+use GraphQL\Error\Error;
+use GraphQL\Language\SourceLocation;
+use GraphQL\Schema;
+use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Manager;
-use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
-use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
-use SilverStripe\GraphQL\Tests\Fake\MutationCreatorFake;
-use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\PersistedQuery\FileProvider;
+use SilverStripe\GraphQL\PersistedQuery\HTTPProvider;
+use SilverStripe\GraphQL\PersistedQuery\JSONStringProvider;
+use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
+use SilverStripe\GraphQL\Tests\Fake\FakePersistedQuery;
+use SilverStripe\GraphQL\Tests\Fake\MutationCreatorFake;
+use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
+use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Member;
 use GraphQL\Error\Error;
@@ -209,6 +217,35 @@ class ManagerTest extends SapphireTest
         $member = Member::create();
         $manager->setMember($member);
         $this->assertSame($member, $manager->getMember());
+    }
+
+    public function testGetPersistedQueryByID()
+    {
+        $fake = new FakePersistedQuery();
+        $fakeQueryMapping = $fake->getPersistedQueryMappingString();
+        $expectMapping = array_flip(json_decode($fakeQueryMapping, true));
+        $manager = new Manager();
+
+        // JSONStringProvider
+        Config::modify()->set(JSONStringProvider::class, 'mapping_with_key', ['default' => $fakeQueryMapping]);
+        Injector::inst()->registerService(JSONStringProvider::create(), PersistedQueryMappingProvider::class);
+        foreach ($expectMapping as $id => $query) {
+            $this->assertEquals($query, $manager->getQueryFromPersistedID($id));
+        }
+
+        // FileProvider
+        Config::modify()->set(FileProvider::class, 'path_with_key', ['default' => $fake->getPersistedQueryMappingPath()]);
+        Injector::inst()->registerService(FileProvider::create(), PersistedQueryMappingProvider::class);
+        foreach ($expectMapping as $id => $query) {
+            $this->assertEquals($query, $manager->getQueryFromPersistedID($id));
+        }
+
+        // HTTPProvider
+        Config::modify()->set(HTTPProvider::class, 'url_with_key', ['default' => $fake->getPersistedQueryMappingURL()]);
+        Injector::inst()->registerService(HTTPProvider::create(), PersistedQueryMappingProvider::class);
+        foreach ($expectMapping as $id => $query) {
+            $this->assertEquals($query, $manager->getQueryFromPersistedID($id));
+        }
     }
 
     protected function getType(Manager $manager)
