@@ -100,22 +100,24 @@ class Manager
     /**
      * Call middleware to evaluate a graphql query
      *
+     * @param Schema $schema
      * @param string $query Query to invoke
+     * @param array $context
      * @param array $params Variables passed to this query
      * @param callable $last The callback to call after all middlewares
      * @return ExecutionResult|array
      */
-    protected function callMiddleware($query, $params, callable $last)
+    protected function callMiddleware(Schema $schema, $query, $context, $params, callable $last)
     {
         // Reverse middlewares
         $next = $last;
         /** @var QueryMiddleware $middleware */
         foreach (array_reverse($this->getMiddlewares()) as $middleware) {
-            $next = function ($query, $variables) use ($middleware, $next) {
-                return $middleware->process($query, $variables, $next);
+            $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
+                return $middleware->process($schema, $query, $context, $params, $next);
             };
         }
-        return $next($query, $params);
+        return $next($schema, $query, $context, $params);
     }
 
     /**
@@ -274,13 +276,14 @@ class Manager
      */
     public function queryAndReturnResult($query, $params = [])
     {
-        $last = function ($query, $params) {
-            $schema = $this->schema();
-            $context = $this->getContext();
+        $schema = $this->schema();
+        $context = $this->getContext();
+
+        $last = function ($schema, $query, $context, $params) {
             return GraphQL::executeAndReturnResult($schema, $query, null, $context, $params);
         };
 
-        return $this->callMiddleware($query, $params, $last);
+        return $this->callMiddleware($schema, $query, $context, $params, $last);
     }
 
     /**
