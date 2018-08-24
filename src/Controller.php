@@ -136,7 +136,7 @@ class Controller extends BaseController
         return $this->getRequest()->getHeader('X-CSRF-TOKEN');
     }
 
-    /**
+    /**yardpictu
      * Process the CORS config options and add the appropriate headers to the response.
      *
      * @param HTTPRequest $request
