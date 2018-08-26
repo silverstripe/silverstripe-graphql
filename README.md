@@ -49,6 +49,11 @@ composer require silverstripe/graphql
      - [Querying types that have descendants](#querying-types-that-have-descendants)
    - [Define interfaces](#define-interfaces)
    - [Define input types](#define-input-types)
+ - [Extending](#extending)
+   - [Adding/removing fields from thirdparty code](#adding-removing-fields-from-thirdparty-code)
+   - [Updating the core operations](#updating-the-core-operations)
+   - [Adding new operations](#adding-new-operations)
+   - [Changing behaviour with Middleware](#changing-behaviour-with-middleware)
  - [Testing/debugging queries and mutations](#testingdebugging-queries-and-mutations)
  - [Authentication](#authentication)
    - [Default authentication](#default-authentication)
@@ -1467,6 +1472,152 @@ TODO
 ### Define input types
 
 TODO
+
+## Extending
+
+Many of the scaffolding classes use the `Extensible` trait, allowing you to influence the scaffolding process
+with custom needs.
+
+### Adding/removing fields from thirdparty code
+Suppose you have a module that adds new fields to dataobjects that use your extension. You can write
+and extension for `DataObjectScaffolder` to update the scaffolding before it is sent to the `Manager`.
+
+```php
+class MyDataObjectScaffolderExtension extends Extension
+{
+
+  public function onBeforeAddToManager(Manager $manager)
+  {
+    if ($this->owner->getDataObjectInstance()->hasExtension(MyExtension::class)) {
+      $this->owner->addField('MyField');
+    }
+  }
+}
+```
+
+### Updating the core operations
+The basic `CRUD` operations that come with the module are all extensible with`updateArgs` and `augmentMutation` (or `updateList` for read operations).
+
+```php
+class MyCreateExtension extends Extension
+{
+
+  public function updateArgs(&$args, Manager $manager)
+  {
+    $args['SendEmail'] = ['type' => Type::bool()];
+  }
+
+
+  public function augmentMutation($obj, $args, $context, $info)
+  {
+    if ($args['SendEmail']) {
+      MyService::inst()->sendEmail();
+      $obj->EmailSent = true;
+    }
+  }
+}
+````
+
+### Adding new operations
+If you have a custom operation, in addition to `read`, `update`, `delete`, etc., that you want available
+to some or all types, you can write one and register it with the scaffolder. Let's suppose we have
+an ecommerce module that wants to offer an `addToCart` mutation to any dataobject that implements
+the `Product` interface.
+
+```php
+class AddToCartOperation extends MutationScaffolder
+{
+
+   public function __construct($dataObjectClass)
+   {
+      parent::__construct($this->createOperationName(), $dataObjectClass);
+      if (!$this->getDataObjectInstance() instanceof ProductInterace) {
+        throw new InvalidArgumentException(
+            'addToCart operation is only for implementors of ProductInterface'
+        );
+      }
+      $this->setResolver(function($obj, array $args) {
+        $record = DataObject::get_by_id($this->dataObjectClass, $args['ID']);
+        if (!$record) {
+          throw new Exception('ID not found');
+        }
+
+        $record->addToCart();
+
+        return $record;
+      });
+   }
+
+
+   protected function createArgs(Manager $manager)
+   {
+      return [
+        'ID' => ['type' => Type::nonNull(Type::id())]
+      ];
+   }
+
+
+   protected function createOperationName()
+   {
+        return 'add' . ucfirst($this->typeName()) . 'ToCart';
+   }
+
+}
+```
+
+Now, register it as an opt-in operation.
+
+```yaml
+SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder:
+  operations:
+    addToCart: My\Project\AddToCartOperation
+```
+
+### Changing behaviour with Middleware
+
+You can influence behaviour based on query data or passed-in parameters.
+This can be useful for features which would be too cumbersome on a resolver level,
+for example logging and caching.
+
+Note this is separate from [HTTP Middleware](https://docs.silverstripe.org/en/developer_guides/controllers/middlewares/)
+which are more suited to influence behaviour based on HTTP request introspection
+(for example, by enforcing authentication for any request matching `/graphql`).
+
+Example middleware to log all mutations (but not queries):
+
+```php
+<?php
+use GraphQL\Schema;
+use SilverStripe\GraphQL\Middleware\QueryMiddleware;
+
+class MyMutationLoggingMiddleware implements QueryMiddleware
+{
+    public function process(Schema $schema, $query, $context, $params, callable $next)
+    {
+        if (preg_match('/^mutation/', $query)) {
+            $this->log('Executed mutation: ' . $query);
+        }
+
+        return $next($schema, $query, $context, $params);
+    }
+
+    protected function log($str)
+    {
+        // ...
+    }
+}
+```
+
+```yml
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Manager:
+    properties:
+      Middlewares:
+        MyMutationLoggingMiddleware: '%$MyMutationLoggingMiddleware'
+```
+
+If you want to use middleware to cache responses,
+here's a more [comprehensive caching middleware example](https://gist.github.com/tractorcow/fe6571d2d00340a311ca31a677a05a29).
 
 ## Testing/debugging queries and mutations
 
