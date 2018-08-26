@@ -57,6 +57,7 @@ composer require silverstripe/graphql
    - [Adding/removing fields from thirdparty code](#adding-removing-fields-from-thirdparty-code)
    - [Updating the core operations](#updating-the-core-operations)
    - [Adding new operations](#adding-new-operations)
+   - [Changing behaviour with Middleware](#changing-behaviour-with-middleware)
  - [Testing/debugging queries and mutations](#testingdebugging-queries-and-mutations)
  - [Authentication](#authentication)
    - [Default authentication](#default-authentication)
@@ -1798,6 +1799,52 @@ SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder:
   operations:
     addToCart: My\Project\AddToCartOperation
 ```
+
+### Changing behaviour with Middleware
+
+You can influence behaviour based on query data or passed-in parameters.
+This can be useful for features which would be too cumbersome on a resolver level,
+for example logging and caching.
+
+Note this is separate from [HTTP Middleware](https://docs.silverstripe.org/en/developer_guides/controllers/middlewares/)
+which are more suited to influence behaviour based on HTTP request introspection
+(for example, by enforcing authentication for any request matching `/graphql`).
+
+Example middleware to log all mutations (but not queries):
+
+```php
+<?php
+use GraphQL\Schema;
+use SilverStripe\GraphQL\Middleware\QueryMiddleware;
+
+class MyMutationLoggingMiddleware implements QueryMiddleware
+{
+    public function process(Schema $schema, $query, $context, $params, callable $next)
+    {
+        if (preg_match('/^mutation/', $query)) {
+            $this->log('Executed mutation: ' . $query);
+        }
+
+        return $next($schema, $query, $context, $params);
+    }
+
+    protected function log($str)
+    {
+        // ...
+    }
+}
+```
+
+```yml
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Manager:
+    properties:
+      Middlewares:
+        MyMutationLoggingMiddleware: '%$MyMutationLoggingMiddleware'
+```
+
+If you want to use middleware to cache responses,
+here's a more [comprehensive caching middleware example](https://gist.github.com/tractorcow/fe6571d2d00340a311ca31a677a05a29).
 
 ## Testing/debugging queries and mutations
 

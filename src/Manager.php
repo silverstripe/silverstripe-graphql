@@ -63,63 +63,6 @@ class Manager
      */
     protected $member;
 
-
-    /**
-     * @var QueryMiddleware[]
-     */
-    protected $middlewares = [];
-
-    /**
-     * @return QueryMiddleware[]
-     */
-    public function getMiddlewares()
-    {
-        return $this->middlewares;
-    }
-
-    /**
-     * @param QueryMiddleware[] $middlewares
-     * @return $this
-     */
-    public function setMiddlewares($middlewares)
-    {
-        $this->middlewares = $middlewares;
-        return $this;
-    }
-
-    /**
-     * @param QueryMiddleware $middleware
-     * @return $this
-     */
-    public function addMiddleware($middleware)
-    {
-        $this->middlewares[] = $middleware;
-        return $this;
-    }
-
-    /**
-     * Call middleware to evaluate a graphql query
-     *
-     * @param Schema $schema
-     * @param string $query Query to invoke
-     * @param array $context
-     * @param array $params Variables passed to this query
-     * @param callable $last The callback to call after all middlewares
-     * @return ExecutionResult|array
-     */
-    protected function callMiddleware(Schema $schema, $query, $context, $params, callable $last)
-    {
-        // Reverse middlewares
-        $next = $last;
-        /** @var QueryMiddleware $middleware */
-        foreach (array_reverse($this->getMiddlewares()) as $middleware) {
-            $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
-                return $middleware->process($schema, $query, $context, $params, $next);
-            };
-        }
-        return $next($schema, $query, $context, $params);
-    }
-
     /**
      * @var QueryMiddleware[]
      */
@@ -172,10 +115,8 @@ class Manager
     {
         // Reverse middlewares
         $next = $last;
-        // Filter out any middlewares that are set to `false`, e.g. via config
-        $middlewares = array_reverse(array_filter($this->getMiddlewares()));
         /** @var QueryMiddleware $middleware */
-        foreach ($middlewares as $middleware) {
+        foreach (array_reverse($this->getMiddlewares()) as $middleware) {
             $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
                 return $middleware->process($schema, $query, $context, $params, $next);
             };
