@@ -118,7 +118,7 @@ GraphQL uses this information to validate queries and allow GraphQL clients to
 introspect your API capabilities. The GraphQL type system is hierarchical, so
 the `fields()` definition declares object properties as scalar types within
 your complex type. Refer to the
-[graphql-php type definitions](https://github.com/webonyx/graphql-php#type-system)
+[graphql-php type definitions](http://webonyx.github.io/graphql-php/type-system/)
 for available types.
 
 ```php
@@ -921,7 +921,7 @@ $scaffolder
                 'Title' => 'String'
             ])
             ->setResolver(function($object, array $args, $context, ResolveInfo $info) {
-                if (!singleton(Post::class)->canView($context['currentMember'])) {
+                if (!singleton(Post::class)->canView($context['currentUser'])) {
                     throw new \Exception('Cannot view Post');
                 }
                 $list = Post::get();
@@ -1002,7 +1002,7 @@ $scaffolder
                 'MinimumCommentCount' => 'Use this parameter to specify the minimum number of comments per post'
             ])
             ->setResolver(function($object, array $args, $context, ResolveInfo $info) {
-                if (!singleton(Post::class)->canView($context['currentMember'])) {
+                if (!singleton(Post::class)->canView($context['currentUser'])) {
                     throw new \Exception('Cannot view Post');
                 }
                 $list = Post::get();
@@ -1094,7 +1094,7 @@ $scaffolder
                 'Title' => 'String'
             ])
             ->setResolver(function ($object, array $args, $context, ResolveInfo $info) {
-                if (!singleton(Post::class)->canView($context['currentMember'])) {
+                if (!singleton(Post::class)->canView($context['currentUser'])) {
                     throw new \Exception('Cannot view Post');
                 }
                 $list = Post::get();
@@ -1184,7 +1184,7 @@ $scaffolder
                 'Title' => 'String'
             ])
             ->setResolver(function ($object, array $args, $context, ResolveInfo $info) {
-                if (!singleton(Post::class)->canView($context['currentMember'])) {
+                if (!singleton(Post::class)->canView($context['currentUser'])) {
                     throw new \Exception('Cannot view Post');
                 }
                 $list = Post::get();
@@ -1261,7 +1261,7 @@ SilverStripe\GraphQL\Manager:
             ## ...
           MyProject\Comment:
             ## ...
-          SilverStripe\Security\Member
+          SilverStripe\Security\Member:
             fields: [FirstName, Surname, Name, Email]
           SilverStripe\Assets\File:
             fields: [Filename, URL]
@@ -1297,7 +1297,7 @@ SilverStripe\GraphQL\Manager:
               Comments:
                 args:
                   OnlyToday: Boolean
-                  resolver: MyProject\CommentResolver
+                resolver: MyProject\CommentResolver
             ##...
           ##...
 ```
@@ -1311,7 +1311,7 @@ $scaffolder
                 'OnlyToday' => 'Boolean'
             ])
             ->setResolver(function($object, array $args, $context, ResolveInfo $info) {
-                if (!singleton(Comment::class)->canView($context['currentMember'])) {
+                if (!singleton(Comment::class)->canView($context['currentUser'])) {
                     throw new \Exception('Cannot view Comment');
                 }
                 $comments = $obj->Comments();
@@ -1402,7 +1402,7 @@ $scaffolder
         ])
         ->setResolver(function ($object, array $args, $context, ResolveInfo $info) {
             $post = Post::get()->byID($args['ID']);
-            if ($post->canEdit($context['currentMember'])) {
+            if ($post->canEdit($context['currentUser'])) {
                 $post->Title = $args['NewTitle'];
                 $post->write();
             }
@@ -1413,7 +1413,7 @@ $scaffolder
     ->query('latestPost', Post::class)
         ->setUsePagination(false)
         ->setResolver(function ($object, array $args, $context, ResolveInfo $info) {
-            if (singleton(Post::class)->canView($context['currentMember'])) {
+            if (singleton(Post::class)->canView($context['currentUser'])) {
                 return Post::get()->sort('Date', 'DESC')->first();
             }
         })

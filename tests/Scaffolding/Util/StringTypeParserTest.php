@@ -66,11 +66,10 @@ class StringTypeParserTest extends SapphireTest
         new StringTypeParser(['fail']);
     }
 
-    public function testTypeInvalidDefault()
+    public function testNonInternalType()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/Invalid type/');
-        $type = new StringTypeParser('Nothing!(bob)');
-        $type->getDefaultValue();
+        $type = new StringTypeParser('MyType!(bob)');
+        $this->assertNull($type->getType());
+        $this->assertEquals('MyType', $type->getType(false));
     }
 }

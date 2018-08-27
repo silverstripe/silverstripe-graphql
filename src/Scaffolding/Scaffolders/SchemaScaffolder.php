@@ -137,7 +137,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
             }
         }
 
-        $scaffold = (new DataObjectScaffolder($class))
+        $scaffold = Injector::inst()->create(DataObjectScaffolder::class, $class)
                 ->setChainableParent($this);
         $this->types[] = $scaffold;
 
