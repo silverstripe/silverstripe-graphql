@@ -324,7 +324,10 @@ class Controller extends BaseController implements Flushable
             $variables = json_decode($request->requestVar('variables'), true);
         }
 
-        if (!$query && $id) {
+        if ($id) {
+            if ($query) {
+                throw new Exception('Cannot pass a query when an ID has been specified.');
+            }
             $query = $this->manager->getQueryFromPersistedID($id);
         }
 

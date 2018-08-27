@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL\Tests;
 
 use GraphQL\Error\Error;
-use GraphQL\Language\SourceLocation;
 use GraphQL\Schema;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Config\Config;
@@ -20,8 +19,6 @@ use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Member;
-use GraphQL\Error\Error;
-use GraphQL\Schema;
 use GraphQL\Language\SourceLocation;
 use InvalidArgumentException;
 
