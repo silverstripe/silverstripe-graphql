@@ -1,1 +1,0 @@
-{"mutation($email:String!,$password:String!){createToken(Email:$email,Password:$password){ID Token}}":"199a87ea-e304-4912-829a-b03de146c9ac","query{validateToken{Valid Message Code}}":"592159a6-aa3a-411a-9ca6-fa3912fa929a","query($memberID:ID!){readOneMember(ID:$memberID){ID Email}}":"1cd63b53-472c-4844-9017-4e81b18b386d"}

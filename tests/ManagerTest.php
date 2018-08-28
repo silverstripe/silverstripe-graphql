@@ -218,31 +218,22 @@ class ManagerTest extends SapphireTest
 
     public function testGetPersistedQueryByID()
     {
-        $fake = new FakePersistedQuery();
-        $fakeQueryMapping = $fake->getPersistedQueryMappingString();
-        $expectMapping = array_flip(json_decode($fakeQueryMapping, true));
+        $mapper = $this->getMockBuilder(PersistedQueryMappingProvider::class)
+            ->setMethods(['getByID', 'getQueryMapping', 'setSchemaMapping', 'getSchemaMapping'])
+            ->getMock();
+        $mapper->expects($this->once())
+            ->method('getByID')
+            ->with(
+                $this->equalTo('someID'),
+                $this->equalTo('default')
+            )
+            ->willReturn('someQuery');
+        Injector::inst()->registerService($mapper, PersistedQueryMappingProvider::class);
+
         $manager = new Manager();
 
-        // JSONStringProvider
-        Config::modify()->set(JSONStringProvider::class, 'mapping_with_key', ['default' => $fakeQueryMapping]);
-        Injector::inst()->registerService(JSONStringProvider::create(), PersistedQueryMappingProvider::class);
-        foreach ($expectMapping as $id => $query) {
-            $this->assertEquals($query, $manager->getQueryFromPersistedID($id));
-        }
-
-        // FileProvider
-        Config::modify()->set(FileProvider::class, 'path_with_key', ['default' => $fake->getPersistedQueryMappingPath()]);
-        Injector::inst()->registerService(FileProvider::create(), PersistedQueryMappingProvider::class);
-        foreach ($expectMapping as $id => $query) {
-            $this->assertEquals($query, $manager->getQueryFromPersistedID($id));
-        }
-
-        // HTTPProvider
-        Config::modify()->set(HTTPProvider::class, 'url_with_key', ['default' => $fake->getPersistedQueryMappingURL()]);
-        Injector::inst()->registerService(HTTPProvider::create(), PersistedQueryMappingProvider::class);
-        foreach ($expectMapping as $id => $query) {
-            $this->assertEquals($query, $manager->getQueryFromPersistedID($id));
-        }
+        $result = $manager->getQueryFromPersistedID('someID');
+        $this->assertEquals('someQuery', $result);
     }
 
     protected function getType(Manager $manager)

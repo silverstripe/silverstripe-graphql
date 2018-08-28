@@ -4,6 +4,7 @@ namespace SilverStripe\GraphQL\PersistedQuery;
 
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
+use InvalidArgumentException;
 
 /**
  * Class FileProvider
@@ -16,9 +17,11 @@ class FileProvider implements PersistedQueryMappingProvider
     /**
      * Example:
      * <code>
-     * SilverStripe\GraphQL\PersistedQuery\FileProvider:
-     *   path_with_key:
-     *     default: '/var/www/project/persisted-graphql-query-mapping.json'
+     * SilverStripe\Core\Injector\Injector:
+     *   SilverStripe\GraphQL\PersistedQuery\FileProvider:
+     *     properties:
+     *       schemaMapping:
+     *         default: '/var/www/project/persisted-graphql-query-mapping.json'
      * </code>
      *
      * Note: The mapping supports multi-schema feature, you can have other schemaKey rather than 'default'
@@ -26,21 +29,21 @@ class FileProvider implements PersistedQueryMappingProvider
      * @var array
      * @config
      */
-    private static $path_with_key = [
+    protected $schemaToPath = [
         'default' => ''
     ];
 
     /**
-     * return a map from <query> to <id>
+     * return a map from <id> to <query>
      *
      * @param string $schemaKey
      * @return array
      */
-    public function getMapping($schemaKey = 'default')
+    public function getQueryMapping($schemaKey = 'default')
     {
         /** @noinspection PhpUndefinedFieldInspection */
         /** @noinspection StaticInvocationViaThisInspection */
-        $pathWithKey = $this->config()->path_with_key;
+        $pathWithKey = $this->getSchemaMapping();
         if (!isset($pathWithKey[$schemaKey])) {
             return [];
         }
@@ -56,13 +59,36 @@ class FileProvider implements PersistedQueryMappingProvider
     }
 
     /**
-     * return a map from <id> to <query>
+     * return a query given an ID
      *
+     * @param string $queryID
      * @param string $schemaKey
+     * @return string
+     */
+    public function getByID($queryID, $schemaKey = 'default')
+    {
+        $mapping = $this->getQueryMapping($schemaKey);
+
+        return isset($mapping[$queryID]) ? $mapping[$queryID] : null;
+    }
+
+    /**
+     * @param array $mapping
+     * @return $this
+     */
+    public function setSchemaMapping(array $mapping)
+    {
+        $this->schemaToPath = $mapping;
+
+        return $this;
+    }
+
+    /**
      * @return array
      */
-    public function getInvertedMapping($schemaKey = 'default')
+    public function getSchemaMapping()
     {
-        return array_flip($this->getMapping($schemaKey));
+        return $this->schemaToPath;
     }
+
 }

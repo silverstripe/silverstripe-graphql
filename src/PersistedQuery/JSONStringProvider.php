@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\PersistedQuery;
 
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
+use InvalidArgumentException;
 
 /**
  * Class ConfigStringProvider
@@ -19,9 +20,11 @@ class JSONStringProvider implements PersistedQueryMappingProvider
     /**
      * Example:
      * <code>
-     * SilverStripe\GraphQL\PersistedQuery\JSONStringProvider:
-     *   mapping_with_key:
-     *     default: '{"query{ID+Email}":"uuid-1"}'
+     * SilverStripe\Core\Injector\Injector:
+     *   SilverStripe\GraphQL\PersistedQuery\JSONStringProvider:
+     *     properties:
+     *       schemaMapping:
+     *         default: '{"uuid-1":"query{ID+Email}"}'
      * </code>
      *
      * Note: The mapping supports multi-schema feature, you can have other schemaKey rather than 'default'
@@ -29,21 +32,21 @@ class JSONStringProvider implements PersistedQueryMappingProvider
      * @var array
      * @config
      */
-    private static $mapping_with_key = [
+    protected $schemaToJSON = [
         'default' => ''
     ];
 
     /**
-     * return a map from <query> to <id>
+     * return a map from <id> to <query>
      *
      * @param string $schemaKey
      * @return array
      */
-    public function getMapping($schemaKey = 'default')
+    public function getQueryMapping($schemaKey = 'default')
     {
         /** @noinspection PhpUndefinedFieldInspection */
         /** @noinspection StaticInvocationViaThisInspection */
-        $mappingWithKey = $this->config()->mapping_with_key;
+        $mappingWithKey = $this->getSchemaMapping();
         if (!isset($mappingWithKey[$schemaKey])) {
             return [];
         }
@@ -58,13 +61,48 @@ class JSONStringProvider implements PersistedQueryMappingProvider
     }
 
     /**
-     * return a map from <id> to <query>
+     * return a query given an ID
      *
+     * @param string $queryID
      * @param string $schemaKey
+     * @return string
+     */
+    public function getByID($queryID, $schemaKey = 'default')
+    {
+        $mapping = $this->getQueryMapping($schemaKey);
+
+        return isset($mapping[$queryID]) ? $mapping[$queryID] : null;
+    }
+
+    /**
+     * @param array $mapping
+     * @return $this
+     */
+    public function setSchemaMapping(array $mapping)
+    {
+        foreach ($mapping as $schemaKey => $queryMap) {
+            if (!is_string($queryMap)) {
+                throw new InvalidArgumentException(
+                    'setSchemaMapping accepts an array of schema keys to JSON strings'
+                );
+            }
+            if (json_decode($queryMap) === null) {
+                throw new InvalidArgumentException(
+                    'setSchemaMapping passed an invalid string of JSON. Got error: ' . json_last_error()
+                );
+            }
+        }
+
+        $this->schemaToJSON = $mapping;
+
+        return $this;
+    }
+
+    /**
      * @return array
      */
-    public function getInvertedMapping($schemaKey = 'default')
+    public function getSchemaMapping()
     {
-        return array_flip($this->getMapping($schemaKey));
+        return $this->schemaToJSON;
     }
 }

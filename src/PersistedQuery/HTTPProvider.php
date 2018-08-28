@@ -2,11 +2,10 @@
 
 namespace SilverStripe\GraphQL\PersistedQuery;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Psr7\Request;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
+use InvalidArgumentException;
+use Exception;
 
 /**
  * Class HTTPProvider
@@ -17,11 +16,20 @@ class HTTPProvider implements PersistedQueryMappingProvider
     use Configurable, Injectable;
 
     /**
+     * Timeout for the HTTP request
+     * @var int
+     * @config
+     */
+    private static $timeout = 5;
+
+    /**
      * Example:
      * <code>
-     * SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
-     *   url_with_key:
-     *     default: 'http://example.com/mapping.json'
+     * SilverStripe\Core\Injector\Injector:
+     *   SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
+     *     properties:
+     *       schemaMapping:
+     *         default: 'http://example.com/mapping.json'
      * </code>
      *
      * Note: The mapping supports multi-schema feature, you can have other schemaKey rather than 'default'
@@ -29,45 +37,28 @@ class HTTPProvider implements PersistedQueryMappingProvider
      * @var array
      * @config
      */
-    private static $url_with_key = [
+    protected $schemaToURL = [
         'default' => ''
     ];
 
     /**
-     * return a map from <query> to <id>
-     *
-     * @param string $schemaKey
-     * @return array
+     * @var HTTPClient
      */
-    public function getMapping($schemaKey = 'default')
+    protected $client;
+
+    /**
+     * A cache of schema key to HTTP responses
+     * @var array
+     */
+    protected $responseCache = [];
+
+    /**
+     * HTTPProvider constructor.
+     * @param HTTPClient $client
+     */
+    public function __construct(HTTPClient $client)
     {
-        /** @noinspection PhpUndefinedFieldInspection */
-        /** @noinspection StaticInvocationViaThisInspection */
-        $urlWithKey = $this->config()->url_with_key;
-        if (!isset($urlWithKey[$schemaKey])) {
-            return [];
-        }
-
-        $url = trim($urlWithKey[$schemaKey]);
-        $request = new Request('GET', $url);
-        $client = new Client();
-        try {
-            $response = $client->send($request, ['timeout' => 5]);
-            $contents = trim($response->getBody()->getContents());
-        } catch (\RuntimeException $e) {
-            user_error($e->getMessage(), E_USER_WARNING);
-            return [];
-        } catch (GuzzleException $e) {
-            user_error($e->getMessage(), E_USER_WARNING);
-            return [];
-        }
-
-        $result = json_decode($contents, true);
-        if (!is_array($result)) {
-            return [];
-        }
-
-        return $result;
+        $this->setClient($client);
     }
 
     /**
@@ -76,8 +67,98 @@ class HTTPProvider implements PersistedQueryMappingProvider
      * @param string $schemaKey
      * @return array
      */
-    public function getInvertedMapping($schemaKey = 'default')
+    public function getQueryMapping($schemaKey = 'default')
     {
-        return array_flip($this->getMapping($schemaKey));
+        if (isset($this->responseCache[$schemaKey])) {
+            return $this->responseCache[$schemaKey];
+        }
+
+        /** @noinspection PhpUndefinedFieldInspection */
+        /** @noinspection StaticInvocationViaThisInspection */
+        $urlWithKey = $this->getSchemaMapping();
+        if (!isset($urlWithKey[$schemaKey])) {
+            return [];
+        }
+
+        $url = trim($urlWithKey[$schemaKey]);
+        $map = null;
+        try {
+            $contents = $this->getClient()->getURL($url, $this->config()->get('timeout'));
+            $map = json_decode($contents, true);
+        } catch (Exception $e) {
+            user_error($e->getMessage(), E_USER_WARNING);
+            $map = [];
+        }
+        if (!is_array($map)) {
+            $map = [];
+        }
+
+        $this->responseCache[$schemaKey] = $map;
+
+        return $map;
     }
+
+    /**
+     * return a query given an ID
+     *
+     * @param string $queryID
+     * @param string $schemaKey
+     * @return string
+     */
+    public function getByID($queryID, $schemaKey = 'default')
+    {
+        $mapping = $this->getQueryMapping($schemaKey);
+
+        return isset($mapping[$queryID]) ? $mapping[$queryID] : null;
+    }
+
+    /**
+     * @param array $mapping
+     * @return $this
+     */
+    public function setSchemaMapping(array $mapping)
+    {
+        foreach ($mapping as $schemaKey => $url) {
+            if (!filter_var($url, FILTER_VALIDATE_URL)) {
+                throw new InvalidArgumentException(
+                    'setSchemaMapping accepts an array of schema keys to URLs'
+                );
+            }
+        }
+
+        // If the URLs have changed, stale the cache.
+        $this->responseCache = [];
+
+        $this->schemaToURL = $mapping;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getSchemaMapping()
+    {
+        return $this->schemaToURL;
+    }
+
+    /**
+     * @param HTTPClient $client
+     * @return $this
+     */
+    public function setClient(HTTPClient $client)
+    {
+        $this->client = $client;
+
+        return $this;
+    }
+
+    /**
+     * @return HTTPClient
+     */
+    public function getClient()
+    {
+        return $this->client;
+    }
+
 }

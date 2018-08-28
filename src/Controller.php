@@ -17,6 +17,7 @@ use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\SecurityToken;
 use SilverStripe\Versioned\Versioned;
+use LogicException;
 
 /**
  * Top level controller for handling graphql requests.
@@ -307,6 +308,7 @@ class Controller extends BaseController implements Flushable
      *
      * @param HTTPRequest $request
      * @return array Array containing query and variables as a pair
+     * @throws LogicException
      */
     protected function getRequestQueryVariables(HTTPRequest $request)
     {
@@ -326,7 +328,7 @@ class Controller extends BaseController implements Flushable
 
         if ($id) {
             if ($query) {
-                throw new Exception('Cannot pass a query when an ID has been specified.');
+                throw new LogicException('Cannot pass a query when an ID has been specified.');
             }
             $query = $this->manager->getQueryFromPersistedID($id);
         }
@@ -339,6 +341,7 @@ class Controller extends BaseController implements Flushable
      *
      * @param HTTPRequest $request
      * @return Member
+     * @throws Exception
      */
     protected function getRequestUser(HTTPRequest $request)
     {
