@@ -160,5 +160,4 @@ class HTTPProvider implements PersistedQueryMappingProvider
     {
         return $this->client;
     }
-
 }

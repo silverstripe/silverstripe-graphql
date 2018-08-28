@@ -90,5 +90,4 @@ class FileProvider implements PersistedQueryMappingProvider
     {
         return $this->schemaToPath;
     }
-
 }

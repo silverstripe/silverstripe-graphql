@@ -37,5 +37,4 @@ interface PersistedQueryMappingProvider
      * @return array
      */
     public function getSchemaMapping();
-
 }
