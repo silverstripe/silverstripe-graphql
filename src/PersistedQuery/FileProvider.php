@@ -4,7 +4,6 @@ namespace SilverStripe\GraphQL\PersistedQuery;
 
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use InvalidArgumentException;
 
 /**
  * Class FileProvider
@@ -18,10 +17,11 @@ class FileProvider implements PersistedQueryMappingProvider
      * Example:
      * <code>
      * SilverStripe\Core\Injector\Injector:
-     *   SilverStripe\GraphQL\PersistedQuery\FileProvider:
-     *     properties:
-     *       schemaMapping:
-     *         default: '/var/www/project/persisted-graphql-query-mapping.json'
+     *   SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
+     *     class: SilverStripe\GraphQL\PersistedQuery\FileProvider:
+     *       properties:
+     *         schemaMapping:
+     *           default: '/var/www/project/persisted-graphql-query-mapping.json'
      * </code>
      *
      * Note: The mapping supports multi-schema feature, you can have other schemaKey rather than 'default'

@@ -69,7 +69,7 @@ composer require silverstripe/graphql
  - [CSRF tokens (required for mutations)](#csrf-tokens-required-for-mutations)
  - [Cross-Origin Resource Sharing (CORS)](#cross-origin-resource-sharing-cors)
    - [Sample Custom CORS Config](#sample-custom-cors-config)
- - [Persisting Queries](#peristing-queries)   
+ - [Persisting Queries](#persisting-queries)   
  - [Schema introspection](#schema-introspection)
  - [Setting up a new GraphQL endpoint](#setting-up-a-new-graphql-endpoint)
  - [Strict HTTP Method Checking](#strict-http-method-checking)
@@ -2142,7 +2142,7 @@ SilverStripe\GraphQL\Controller:
 
 A common pattern in GraphQL APIs is to store queries on the server by an identifier. This helps save
 on bandwidth, as the client need not put a fully expressed query in the request body, but rather a
-simple identifier. Also, it allows you to whitelist only specific query IDs, and blocking all other ad-hoc,
+simple identifier. Also, it allows you to whitelist only specific query IDs, and block all other ad-hoc,
 potentially malicious queries, which adds an extra layer of security to your API, particularly if it's public.
 
 To implement persisted queries, you need an implementation of the
@@ -2162,10 +2162,11 @@ own set of persisted queries. In these examples, we're using the `default`schema
 
 ```yaml
 SilverStripe\Core\Injector\Injector:
-  SilverStripe\GraphQL\PersistedQuery\FileProvider:
-    properties:
-     schemaMapping:
-       default: '/var/www/project/query-mapping.json'
+  SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
+    class: SilverStripe\GraphQL\PersistedQuery\FileProvider:
+      properties:
+       schemaMapping:
+         default: '/var/www/project/query-mapping.json'
 ```
 
 
@@ -2178,10 +2179,11 @@ A flat file in the path `/var/www/project/query-mapping.json` should contain som
 
 ```yaml
 SilverStripe\Core\Injector\Injector:
-  SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
-    properties:
-     schemaMapping:
-       default: 'http://example.com/myqueries.json'
+  SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
+    class: SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
+      properties:
+       schemaMapping:
+         default: 'http://example.com/myqueries.json'
 ```
 
 A flat file at the URL `http://example.com/myqueries.json` should contain something like:
@@ -2194,11 +2196,11 @@ A flat file at the URL `http://example.com/myqueries.json` should contain someth
 
 ```yaml
 SilverStripe\Core\Injector\Injector:
-  SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
-    properties:
-     schemaMapping:
-       default:
-         someID: 'mutation{createComment($comment:String!){Comment}}'
+  SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
+    class: SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
+      properties:
+       schemaMapping:
+         default: '{"myMutation":"mutation{createComment($comment:String!){Comment}}"}'
 ```
 
 The queries are hardcoded into the configuration.

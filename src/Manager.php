@@ -541,7 +541,7 @@ class Manager implements ConfigurationApplier
     public function getQueryFromPersistedID($id)
     {
         /** @var PersistedQueryMappingProvider $provider */
-        $provider = Injector::inst()->get(PersistedQueryMappingProvider::class);
+        $provider = Injector::inst()->create(PersistedQueryMappingProvider::class);
 
         return $provider->getByID($id);
     }

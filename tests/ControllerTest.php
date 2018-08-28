@@ -531,7 +531,7 @@ class ControllerTest extends SapphireTest
         $this->assertArrayHasKey($operation, $data['data']);
         $this->assertEquals('success', $data['data'][$operation]);
     }
-    
+
     /**
      * @throws \ReflectionException
      */

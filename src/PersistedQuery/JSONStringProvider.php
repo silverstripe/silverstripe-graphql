@@ -21,10 +21,11 @@ class JSONStringProvider implements PersistedQueryMappingProvider
      * Example:
      * <code>
      * SilverStripe\Core\Injector\Injector:
-     *   SilverStripe\GraphQL\PersistedQuery\JSONStringProvider:
-     *     properties:
-     *       schemaMapping:
-     *         default: '{"uuid-1":"query{ID+Email}"}'
+     *   SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
+     *     class: SilverStripe\GraphQL\PersistedQuery\JSONStringProvider:
+     *       properties:
+     *         schemaMapping:
+     *           default: '{"uuid-1":"query{ID+Email}"}'
      * </code>
      *
      * Note: The mapping supports multi-schema feature, you can have other schemaKey rather than 'default'

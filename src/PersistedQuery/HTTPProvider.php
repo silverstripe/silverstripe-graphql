@@ -6,6 +6,7 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use InvalidArgumentException;
 use Exception;
+use SilverStripe\Core\Injector\Injector;
 
 /**
  * Class HTTPProvider
@@ -26,10 +27,11 @@ class HTTPProvider implements PersistedQueryMappingProvider
      * Example:
      * <code>
      * SilverStripe\Core\Injector\Injector:
-     *   SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
-     *     properties:
-     *       schemaMapping:
-     *         default: 'http://example.com/mapping.json'
+     *   SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
+     *     class :SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
+     *       properties:
+     *         schemaMapping:
+     *           default: 'http://example.com/mapping.json'
      * </code>
      *
      * Note: The mapping supports multi-schema feature, you can have other schemaKey rather than 'default'
@@ -56,8 +58,11 @@ class HTTPProvider implements PersistedQueryMappingProvider
      * HTTPProvider constructor.
      * @param HTTPClient $client
      */
-    public function __construct(HTTPClient $client)
+    public function __construct(HTTPClient $client = null)
     {
+        if (!$client) {
+            $client = Injector::inst()->get(GuzzleHTTPClient::class);
+        }
         $this->setClient($client);
     }
 
