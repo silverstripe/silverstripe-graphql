@@ -16,12 +16,12 @@ trait DataObjectTypeTrait
     /**
      * @var string
      */
-    private $dataObjectClass;
+    protected $dataObjectClass;
 
     /**
      * @var DataObject
      */
-    private $dataObjectInstance;
+    protected $dataObjectInstance;
 
     /**
      * @return string
