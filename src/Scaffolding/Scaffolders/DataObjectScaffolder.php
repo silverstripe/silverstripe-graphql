@@ -82,7 +82,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function getTypeName()
     {
-        return $this->typeName();
+        return $this->getDataObjectTypeName();
     }
 
     /**

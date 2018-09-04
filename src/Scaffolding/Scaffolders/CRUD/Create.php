@@ -41,7 +41,7 @@ class Create extends MutationScaffolder implements OperationResolver, CRUDInterf
             return $name;
         }
 
-        return 'create' . ucfirst($this->getTypeName());
+        return 'create' . ucfirst($this->getResolvedTypeName());
     }
 
     /**
@@ -107,7 +107,7 @@ class Create extends MutationScaffolder implements OperationResolver, CRUDInterf
      */
     protected function inputTypeName()
     {
-        return $this->getTypeName() . 'CreateInputType';
+        return $this->getResolvedTypeName() . 'CreateInputType';
     }
 
     public function resolve($object, array $args, $context, ResolveInfo $info)
