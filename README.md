@@ -94,7 +94,7 @@ public-facing GraphQL server that ships with the module, just add a rule to `Dir
 ```yaml
 SilverStripe\Control\Director:
   rules:
-    'graphql': %$SilverStripe\GraphQL\Controller.default
+    'graphql': '%$SilverStripe\GraphQL\Controller.default'
 ```
 
 ## Examples
@@ -2191,7 +2191,7 @@ Lastly, we'll need to route the controller.
 ```yaml
 SilverStripe\Control\Director:
   rules:
-    'my-graphql': %$SilverStripe\GraphQL\Controller.myApp
+    'my-graphql': '%$SilverStripe\GraphQL\Controller.myApp'
 ```
 
 Now, configure your schema.
