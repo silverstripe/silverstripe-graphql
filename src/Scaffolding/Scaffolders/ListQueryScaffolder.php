@@ -109,6 +109,14 @@ class ListQueryScaffolder extends QueryScaffolder
     }
 
     /**
+     * @return array
+     */
+    public function getSortableFields()
+    {
+        return $this->sortableFields;
+    }
+
+    /**
      * @param array $config
      * @return $this
      */
@@ -193,7 +201,7 @@ class ListQueryScaffolder extends QueryScaffolder
             })
             ->setConnectionResolver($this->createResolverFunction())
             ->setArgs($this->createArgs($manager))
-            ->setSortableFields($this->sortableFields)
+            ->setSortableFields($this->getSortableFields())
             ->setDefaultLimit($this->getPaginationLimit())
             ->setMaximumLimit($this->getMaximumPaginationLimit());
     }
