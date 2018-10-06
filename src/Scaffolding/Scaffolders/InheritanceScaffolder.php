@@ -52,7 +52,6 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
      */
     public function getRootClass()
     {
-
         return $this->rootClass;
     }
 

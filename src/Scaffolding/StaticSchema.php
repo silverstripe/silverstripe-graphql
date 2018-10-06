@@ -136,6 +136,27 @@ class StaticSchema
     }
 
     /**
+     * Throws an InvalidArgumentException given the given field name is not valid for the given instance
+     *
+     * @param ViewableData $instance
+     * @param $fieldName
+     */
+    public function assertValidFieldName(ViewableData $instance, $fieldName)
+    {
+        if ($this->isValidFieldName($instance, $fieldName)) {
+            return;
+        }
+
+        throw new InvalidArgumentException(
+            sprintf(
+                'Invalid field "%s" on %s',
+                $fieldName,
+                get_class($instance)
+            )
+        );
+    }
+
+    /**
      * @param array $typesMap An associate array of classname => type name
      * @return $this
      */

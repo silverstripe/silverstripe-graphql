@@ -4,11 +4,13 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use Exception;
 use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\Deprecation;
+use SilverStripe\GraphQL\FieldDefinition;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
@@ -102,27 +104,31 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         foreach ($fieldData as $k => $data) {
             $assoc = !is_numeric($k);
             $name = $assoc ? $k : $data;
-            $field = ArrayData::create(
-                [
-                    'Name' => $name,
-                    'Description' => $assoc ? $data : null,
-                ]
-            );
-            $this->removeField($name);
-            $this->fields->add($field);
+
+            // If we're given a field definition we can accept that interface
+            if ($data instanceof FieldDefinition) {
+                $this->fields[$name] = $data;
+                continue;
+            }
+
+            // Keep the old "name" -> "description"
+            $this->fields[$name] = $assoc ? $data : null;
         }
 
         return $this;
     }
 
     /**
+     * Add a field to this Data query under the given field name, optionally providing a description or a
+     * `FieldDefinition` that defines how this field is returned.
+     *
      * @param string $field
-     * @param string $description
+     * @param FieldDefinition|string $definition
      * @return $this
      */
-    public function addField($field, $description = null)
+    public function addField($field, $definition = null)
     {
-        return $this->addFields([$field => $description]);
+        return $this->addFields([$field => $definition]);
     }
 
     /**
@@ -173,7 +179,9 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function removeFields(array $fields)
     {
-        $this->fields = $this->fields->exclude('Name', $fields);
+        foreach ($fields as $field) {
+            unset($this->fields[$field]);
+        }
 
         return $this;
     }
@@ -244,7 +252,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function getFieldDescription($field)
     {
-        $item = $this->fields->find('Name', $field);
+        $item = $this->fields[$field];
 
         if (!$item) {
             throw new Exception(
@@ -406,9 +414,9 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         $inst = $target->getDataObjectInstance();
 
-        foreach ($this->getFields() as $field) {
-            if (StaticSchema::inst()->isValidFieldName($inst, $field->Name)) {
-                $target->addField($field->Name, $field->Description);
+        foreach ($this->getFields() as $fieldName => $definition) {
+            if (StaticSchema::inst()->isValidFieldName($inst, $fieldName)) {
+                $target->addField($fieldName, $definition);
             }
         }
         foreach ($this->getOperations() as $op) {
@@ -614,7 +622,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         $types = [];
         $instance = $this->getDataObjectInstance();
-        $fields = $this->fields->column('Name');
+        $fields = array_keys($this->fields->toArray());
 
         foreach ($fields as $fieldName) {
             $result = $instance->obj($fieldName);
@@ -645,6 +653,20 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         return $queries;
     }
 
+    protected function assertValidFieldData($data, $fieldName)
+    {
+        if ($data instanceof SS_List) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Fieldname %s added to %s returns a list. This should be defined as a nested query using addNestedQuery(%s)',
+                    $fieldName,
+                    $this->getDataObjectClass(),
+                    $fieldName
+                )
+            );
+        }
+    }
+
     /**
      * Validates the raw field map and creates a map suitable for ObjectType
      *
@@ -656,7 +678,6 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         $fieldMap = [];
         $instance = $this->getDataObjectInstance();
         $extraDataObjects = $this->nestedDataObjectClasses();
-        $this->fields->removeDuplicates('Name');
 
         if (!$this->fields->exists()) {
             $this->addFields(
@@ -664,7 +685,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             );
         }
 
-        $resolver = function ($obj, $args, $context, $info) {
+        $defaultResolver = function($obj, $args, $context, $info) {
             /**
              * @var DataObject $obj
              */
@@ -676,37 +697,45 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             return $field;
         };
 
-        foreach ($this->fields as $fieldData) {
-            $fieldName = $fieldData->Name;
-            if (!StaticSchema::inst()->isValidFieldName($instance, $fieldName)) {
-                throw new InvalidArgumentException(
-                    sprintf(
-                        'Invalid field "%s" on %s',
-                        $fieldName,
-                        $this->getDataObjectClass()
-                    )
-                );
+        foreach ($this->fields as $fieldName => $definition) {
+            StaticSchema::inst()->assertValidFieldName($instance, $fieldName);
+
+            // Allow FieldDefinitions
+            if ($definition instanceof FieldDefinition) {
+                $type = $definition->getType();
+
+                if (is_string($type)) {
+                    $type = $manager->getType($type);
+                }
+
+                if (!$type instanceof Type) {
+                    throw new InvalidArgumentException(sprintf('Could not determine valid type from "%s"', $type));
+                }
+
+                $fieldMap[$fieldName] = [
+                    'type' => $type,
+                    'resolve' => $definition->getResolver(),
+                    'description' => $definition->getDescription(),
+                ];
+                continue;
             }
 
+            // Otherwise "definition" is just the description
+            $description = $definition;
+
+            // Validate that the field is acceptable.
             $result = $instance->obj($fieldName);
 
-            if ($result instanceof SS_List) {
-                throw new InvalidArgumentException(
-                    sprintf(
-                        'Fieldname %s added to %s returns a list. This should be defined as a nested query using addNestedQuery(%s)',
-                        $fieldName,
-                        $this->getDataObjectClass(),
-                        $fieldName
-                    )
-                );
-            }
+            $this->assertValidFieldData($result, $fieldName);
 
+            // Only accept DBFields
             if ($result instanceof DBField) {
                 /** @var DBField|TypeCreatorExtension $result */
-                $fieldMap[$fieldName] = [];
-                $fieldMap[$fieldName]['type'] = $result->getGraphQLType($manager);
-                $fieldMap[$fieldName]['resolve'] = $resolver;
-                $fieldMap[$fieldName]['description'] = $fieldData->Description;
+                $fieldMap[$fieldName] = [
+                    'type' => $result->getGraphQLType($manager),
+                    'resolve' => $defaultResolver,
+                    'description' => $description,
+                ];
             }
         }
 
@@ -715,7 +744,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             $fieldMap[$fieldName] = [
                 'type' => StaticSchema::inst()->fetchFromManager($className, $manager),
                 'description' => $description,
-                'resolve' => $resolver,
+                'resolve' => $defaultResolver,
             ];
         }
 
