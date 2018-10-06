@@ -698,13 +698,13 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         };
 
         foreach ($this->fields as $fieldName => $definition) {
-            StaticSchema::inst()->assertValidFieldName($instance, $fieldName);
-
             // Allow FieldDefinitions
             if ($definition instanceof FieldDefinition) {
                 $type = $definition->getType();
 
-                if (is_string($type)) {
+                if ($type instanceof DBField || DBField::has_extension($type, TypeCreatorExtension::class)) {
+                    $type = $type->getGraphQLType($manager);
+                } elseif (is_string($type)) {
                     $type = $manager->getType($type);
                 }
 
@@ -719,6 +719,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 ];
                 continue;
             }
+
+            StaticSchema::inst()->assertValidFieldName($instance, $fieldName);
 
             // Otherwise "definition" is just the description
             $description = $definition;

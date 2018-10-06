@@ -2,6 +2,7 @@
 namespace SilverStripe\GraphQL;
 
 use GraphQL\Type\Definition\Type;
+use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 
 class FieldDefinition
 {
@@ -15,7 +16,7 @@ class FieldDefinition
     /**
      * The GraphQL type (or string the type can be resolved from) of this field
      *
-     * @var Type|string
+     * @var Type|TypeCreatorExtension|string
      */
     protected $type;
 
@@ -33,7 +34,7 @@ class FieldDefinition
 
     /**
      * @param string $description
-     * @param Type|string $type
+     * @param Type|TypeCreatorExtension|string $type
      * @param callable $resolver
      */
     public function __construct($description, $type, callable $resolver)
@@ -52,7 +53,7 @@ class FieldDefinition
     }
 
     /**
-     * @return Type|string
+     * @return Type|TypeCreatorExtension|string
      */
     public function getType()
     {
