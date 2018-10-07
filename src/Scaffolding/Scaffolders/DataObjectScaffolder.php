@@ -107,12 +107,19 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
             // If we're given a field definition we can accept that interface
             if ($data instanceof FieldDefinition) {
-                $this->fields[$name] = $data;
+                $this->fields[$name] = ArrayData::create([
+                    'Name' => $name,
+                    'Definition' => $data,
+                    'Description' => $data->getDescription(),
+                ]);
                 continue;
             }
 
             // Keep the old "name" -> "description"
-            $this->fields[$name] = $assoc ? $data : null;
+            $this->fields[$name] = ArrayData::create([
+                'Name' => $name,
+                'Description' => $assoc ? $data : null,
+            ]);
         }
 
         return $this;
@@ -219,7 +226,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function setFieldDescription($field, $description)
     {
-        $existing = $this->fields->find('Name', $field);
+        $existing = isset($this->fields[$field]);
         if (!$existing) {
             throw new InvalidArgumentException(
                 sprintf(
@@ -230,14 +237,11 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             );
         }
 
-        $this->fields->replace(
-            $existing,
-            ArrayData::create(
-                [
-                    'Name' => $field,
-                    'Description' => $description
-                ]
-            )
+        $this->fields[$field] = ArrayData::create(
+            [
+                'Name' => $field,
+                'Description' => $description
+            ]
         );
 
         return $this;
@@ -414,9 +418,15 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     {
         $inst = $target->getDataObjectInstance();
 
-        foreach ($this->getFields() as $fieldName => $definition) {
-            if (StaticSchema::inst()->isValidFieldName($inst, $fieldName)) {
-                $target->addField($fieldName, $definition);
+        foreach ($this->getFields() as $field) {
+            if (StaticSchema::inst()->isValidFieldName($inst, $field->Name)) {
+                $arg = $field->Description;
+                // Work around `ArrayData` not supporting objects as values (unless they extend "ViewableData")
+                if ($field->hasField('Definition')) {
+                    $map = $field->toMap();
+                    $arg = $map['Definition'];
+                }
+                $target->addField($field->Name, $arg);
             }
         }
         foreach ($this->getOperations() as $op) {
@@ -685,7 +695,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             );
         }
 
-        $defaultResolver = function($obj, $args, $context, $info) {
+        $defaultResolver = function ($obj, $args, $context, $info) {
             /**
              * @var DataObject $obj
              */
@@ -697,9 +707,12 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             return $field;
         };
 
-        foreach ($this->fields as $fieldName => $definition) {
+        foreach ($this->fields as $fieldName => $data) {
+            $hasDefinition = $data->hasField('Definition');
+            $map = $data->toMap();
             // Allow FieldDefinitions
-            if ($definition instanceof FieldDefinition) {
+            if ($hasDefinition && $map['Definition'] instanceof FieldDefinition) {
+                $definition = $map['Definition'];
                 $type = $definition->getType();
 
                 if ($type instanceof DBField || DBField::has_extension($type, TypeCreatorExtension::class)) {
@@ -723,7 +736,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             StaticSchema::inst()->assertValidFieldName($instance, $fieldName);
 
             // Otherwise "definition" is just the description
-            $description = $definition;
+            $description = $data->Description;
 
             // Validate that the field is acceptable.
             $result = $instance->obj($fieldName);
