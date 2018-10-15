@@ -23,7 +23,6 @@ before_script:
   - phpenv config-rm xdebug.ini
 
 # Install composer dependencies
-  - export PATH=~/.composer/vendor/bin:$PATH
   - composer validate
   - composer install --prefer-dist
   - composer require --prefer-dist --no-update silverstripe/recipe-core:5.x-dev silverstripe/versioned:2.x-dev silverstripe/assets:2.x-dev --prefer-dist
