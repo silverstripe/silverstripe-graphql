@@ -2,13 +2,15 @@
     "name": "silverstripe/graphql",
     "description": "GraphQL server for SilverStripe models and other data",
     "type": "silverstripe-vendormodule",
+    "license": "BSD-3-Clause",
     "require": {
         "silverstripe/framework": "^5",
         "silverstripe/vendor-plugin": "^1.0",
         "webonyx/graphql-php": "~0.8.0"
     },
     "require-dev": {
-        "phpunit/PHPUnit": "^5.7"
+        "phpunit/PHPUnit": "^5.7",
+        "squizlabs/php_codesniffer": "^3.0"
     },
     "extra": {
         "branch-alias": {
@@ -17,11 +19,7 @@
     },
     "autoload": {
         "psr-4": {
-            "SilverStripe\\GraphQL\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
+            "SilverStripe\\GraphQL\\": "src/",
             "SilverStripe\\GraphQL\\Tests\\": "tests/"
         }
     },
@@ -29,8 +27,8 @@
         "process-timeout": 600
     },
     "scripts": {
-        "lint": "phpcs src/ tests/",
-        "lint-clean": "phpcbf src/ tests/"
+        "lint": "vendor/bin/phpcs src/ tests/",
+        "lint-clean": "vendor/bin/phpcbf src/ tests/"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
