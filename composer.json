@@ -11,7 +11,11 @@
         "phpunit/PHPUnit": "^5.7",
         "squizlabs/php_codesniffer": "^3.0"
     },
-    "extra": [],
+    "extra": {
+        "branch-alias": {
+            "3.x-dev": "3.1.x-dev"
+        }
+    },
     "autoload": {
         "psr-4": {
             "SilverStripe\\GraphQL\\": "src/"
