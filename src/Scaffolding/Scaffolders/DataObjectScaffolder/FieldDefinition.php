@@ -1,9 +1,12 @@
 <?php
-namespace SilverStripe\GraphQL;
+namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
 
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 
+/**
+ * Defines a field that will be scaffolded using the DataObjectScaffolder. Create a
+ */
 class FieldDefinition
 {
     /**
@@ -15,6 +18,11 @@ class FieldDefinition
 
     /**
      * The GraphQL type (or string the type can be resolved from) of this field
+     *
+     * This can be:
+     *  - A GraphQL type object
+     *  - A string that can be used to retrieve the type from the GraphQL manager ($manager->getGraphQLType())
+     *  - An object that has the `TypeCreatorExtension` extension
      *
      * @var Type|TypeCreatorExtension|string
      */
@@ -33,6 +41,7 @@ class FieldDefinition
     protected $resolver;
 
     /**
+     * @param string $name
      * @param string $description
      * @param Type|TypeCreatorExtension|string $type
      * @param callable $resolver
@@ -50,6 +59,17 @@ class FieldDefinition
     public function getDescription()
     {
         return $this->description;
+    }
+
+    /**
+     * @param string $description
+     * @return $this
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
+
+        return $this;
     }
 
     /**

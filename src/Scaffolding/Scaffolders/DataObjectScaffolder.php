@@ -10,7 +10,7 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\Deprecation;
-use SilverStripe\GraphQL\FieldDefinition;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder\FieldDefinition;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
@@ -28,7 +28,6 @@ use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\ORM\SS_List;
 use SilverStripe\ORM\UnsavedRelationList;
-use SilverStripe\View\ArrayData;
 
 /**
  * Scaffolds a DataObjectTypeCreator.
@@ -51,7 +50,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     ];
 
     /**
-     * @var ArrayList
+     * @var ArrayList|FieldDefinition[]
      */
     protected $fields;
 
@@ -88,12 +87,23 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     }
 
     /**
-     * Adds visible fields, and optional descriptions.
+     * Adds fields to the scaffolded query.
+     *
+     * If the key is omitted a fields is scaffolded from values in the DataObject
+     * Otherwise, the key is the name of the field and the value is either:
+     * - A string for the description of the auto-scaffolded field
+     * - A FieldDefinition object that defines how the field is resolved
+     * - An array containing the description and/or casting for the field
      *
      * Ex:
      * [
-     *    'MyField' => 'Some description',
      *    'MyOtherField' // No description
+     *    'MyField' => 'Some description',
+     *    'SpecialField' => new FieldDefinition(...),
+     *    'ArrayField' => [
+     *        'description' => 'Some description',
+     *        'casting' => 'Boolean',
+     *    ]
      * ]
      *
      * @param  array $fieldData
@@ -107,35 +117,83 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
             // If we're given a field definition we can accept that interface
             if ($data instanceof FieldDefinition) {
-                $this->fields[$name] = ArrayData::create([
-                    'Name' => $name,
-                    'Definition' => $data,
-                    'Description' => $data->getDescription(),
-                ]);
+                $this->addField($name, $data);
                 continue;
             }
 
-            // Keep the old "name" -> "description"
-            $this->fields[$name] = ArrayData::create([
-                'Name' => $name,
-                'Description' => $assoc ? $data : null,
-            ]);
+            $casting = null;
+
+            if (is_array($data)) {
+                if (isset($data['casting'])) {
+                    $casting = $data['casting'];
+
+                    // Convert to object if Injector has a definition for the given casting
+                    if (Injector::inst()->has($casting)) {
+                        $casting = Injector::inst()->create($casting);
+                    }
+                }
+                if (isset($data['description'])) {
+                    $data = $data['description'];
+                }
+            }
+
+            $this->scaffoldField($name, $data, $casting);
         }
 
         return $this;
     }
 
     /**
-     * Add a field to this Data query under the given field name, optionally providing a description or a
-     * `FieldDefinition` that defines how this field is returned.
+     * Add a field definition to this query under the given field name
      *
-     * @param string $field
-     * @param FieldDefinition|string $definition
+     * @param string $name
+     * @param FieldDefinition $definition
      * @return $this
      */
-    public function addField($field, $definition = null)
+    public function addField($name, FieldDefinition $definition)
     {
-        return $this->addFields([$field => $definition]);
+        $this->fields[$name] = $definition;
+
+        return $this;
+    }
+
+    /**
+     * Scaffold and add a field definition from the dataobject given only a field name that exists on the data object
+     * Optionally:
+     * - provide a description for the self-documenting GraphQL endpoints.
+     * - indicate what type this field should be if the GraphQL field type is different than the field type in the
+     *      DataObject
+     *
+     * @param $name
+     * @param null $description
+     * @param Type|TypeCreatorExtension|string|null $type
+     * @return $this
+     */
+    public function scaffoldField($name, $description = null, $type = null)
+    {
+        $instance = $this->getDataObjectInstance();
+
+        // Assert a valid field name
+        StaticSchema::inst()->assertValidFieldName($this->getDataObjectInstance(), $name);
+
+        // Get the DBField definition for this field
+        $field = $instance->obj($name);
+
+        if ($field instanceof DataObjectInterface) {
+            $type = StaticSchema::inst()->typeNameForDataObject(get_class($field));
+        }
+        elseif (!$field instanceof DBField) {
+            return $this;
+        }
+
+        // Create and add a FieldDefinition
+        $this->addField($name, new FieldDefinition(
+            $description,
+            $type ?: $field,
+            $this->getDefaultResolver()
+        ));
+
+        return $this;
     }
 
     /**
@@ -181,12 +239,14 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     }
 
     /**
+     * Provide an array of field names to remove from the scaffolder
+     *
      * @param array $fields
      * @return $this
      */
-    public function removeFields(array $fields)
+    public function removeFields(array $fieldNames)
     {
-        foreach ($fields as $field) {
+        foreach ($fieldNames as $field) {
             unset($this->fields[$field]);
         }
 
@@ -194,7 +254,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     }
 
     /**
-     * @return ArrayList
+     * @return ArrayList|FieldDefinition[]
      */
     public function getFields()
     {
@@ -223,6 +283,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      * @param  string $field
      * @param  string $description
      * @return $this
+     * @throws InvalidArgumentException When attempting to set the description of a non existant field
      */
     public function setFieldDescription($field, $description)
     {
@@ -237,12 +298,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             );
         }
 
-        $this->fields[$field] = ArrayData::create(
-            [
-                'Name' => $field,
-                'Description' => $description
-            ]
-        );
+        $this->fields[$field]->setDescription($description);
 
         return $this;
     }
@@ -268,7 +324,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             );
         }
 
-        return $item->Description;
+        return $item->getDescription();
     }
 
     /**
@@ -416,19 +472,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function cloneTo(DataObjectScaffolder $target)
     {
-        $inst = $target->getDataObjectInstance();
-
-        foreach ($this->getFields() as $field) {
-            if (StaticSchema::inst()->isValidFieldName($inst, $field->Name)) {
-                $arg = $field->Description;
-                // Work around `ArrayData` not supporting objects as values (unless they extend "ViewableData")
-                if ($field->hasField('Definition')) {
-                    $map = $field->toMap();
-                    $arg = $map['Definition'];
-                }
-                $target->addField($field->Name, $arg);
-            }
-        }
+        $target->addFields($this->getFields()->toArray());
         foreach ($this->getOperations() as $op) {
             $identifier = OperationScaffolder::getIdentifier($op);
             $target->operation($identifier);
@@ -663,6 +707,14 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         return $queries;
     }
 
+    /**
+     * Throw an exception if the data for this field appears to be a list of items. HasMany relations should be defined
+     * by nested queries in GraphQL
+     *
+     * @param $data
+     * @param $fieldName
+     * @throws InvalidArgumentException
+     */
     protected function assertValidFieldData($data, $fieldName)
     {
         if ($data instanceof SS_List) {
@@ -686,8 +738,6 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     protected function createFields(Manager $manager)
     {
         $fieldMap = [];
-        $instance = $this->getDataObjectInstance();
-        $extraDataObjects = $this->nestedDataObjectClasses();
 
         if (!$this->fields->exists()) {
             $this->addFields(
@@ -695,71 +745,26 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             );
         }
 
-        $defaultResolver = function ($obj, $args, $context, $info) {
-            /**
-             * @var DataObject $obj
-             */
-            $field = $obj->obj($info->fieldName);
-            // return the raw field value, or checks like `is_numeric()` fail
-            if ($field instanceof DBField && $field->isInternalGraphQLType()) {
-                return $field->getValue();
-            }
-            return $field;
-        };
+        foreach ($this->fields as $fieldName => $definition) {
+            $type = $definition->getType();
 
-        foreach ($this->fields as $fieldName => $data) {
-            $hasDefinition = $data->hasField('Definition');
-            $map = $data->toMap();
-            // Allow FieldDefinitions
-            if ($hasDefinition && $map['Definition'] instanceof FieldDefinition) {
-                $definition = $map['Definition'];
-                $type = $definition->getType();
-
-                if ($type instanceof DBField || DBField::has_extension($type, TypeCreatorExtension::class)) {
-                    $type = $type->getGraphQLType($manager);
-                } elseif (is_string($type)) {
-                    $type = $manager->getType($type);
+            if ($type instanceof DBField || DBField::has_extension($type, TypeCreatorExtension::class)) {
+                if (!is_object($type)) {
+                    $type = Injector::inst()->create($type);
                 }
-
-                if (!$type instanceof Type) {
-                    throw new InvalidArgumentException(sprintf('Could not determine valid type from "%s"', $type));
-                }
-
-                $fieldMap[$fieldName] = [
-                    'type' => $type,
-                    'resolve' => $definition->getResolver(),
-                    'description' => $definition->getDescription(),
-                ];
-                continue;
+                $type = $type->getGraphQLType($manager);
+            } elseif (is_string($type)) {
+                $type = $manager->getType($type);
             }
 
-            StaticSchema::inst()->assertValidFieldName($instance, $fieldName);
-
-            // Otherwise "definition" is just the description
-            $description = $data->Description;
-
-            // Validate that the field is acceptable.
-            $result = $instance->obj($fieldName);
-
-            $this->assertValidFieldData($result, $fieldName);
-
-            // Only accept DBFields
-            if ($result instanceof DBField) {
-                /** @var DBField|TypeCreatorExtension $result */
-                $fieldMap[$fieldName] = [
-                    'type' => $result->getGraphQLType($manager),
-                    'resolve' => $defaultResolver,
-                    'description' => $description,
-                ];
+            if (!$type instanceof Type) {
+                throw new InvalidArgumentException(sprintf('Could not determine valid type from "%s"', $type));
             }
-        }
 
-        foreach ($extraDataObjects as $fieldName => $className) {
-            $description = $this->getFieldDescription($fieldName);
             $fieldMap[$fieldName] = [
-                'type' => StaticSchema::inst()->fetchFromManager($className, $manager),
-                'description' => $description,
-                'resolve' => $defaultResolver,
+                'type' => $type,
+                'resolve' => $definition->getResolver(),
+                'description' => $definition->getDescription(),
             ];
         }
 
@@ -770,5 +775,23 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         return $fieldMap;
+    }
+
+    /**
+     * @return \Closure
+     */
+    protected function getDefaultResolver()
+    {
+        return function ($obj, $args, $context, $info) {
+            /**
+             * @var DataObject $obj
+             */
+            $field = $obj->obj($info->fieldName);
+            // return the raw field value, or checks like `is_numeric()` fail
+            if ($field instanceof DBField && $field->isInternalGraphQLType()) {
+                return $field->getValue();
+            }
+            return $field;
+        };
     }
 }

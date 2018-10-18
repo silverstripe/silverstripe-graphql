@@ -140,6 +140,7 @@ class StaticSchema
      *
      * @param ViewableData $instance
      * @param $fieldName
+     * @throws InvalidArgumentException
      */
     public function assertValidFieldName(ViewableData $instance, $fieldName)
     {

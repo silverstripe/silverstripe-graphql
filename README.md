@@ -860,6 +860,64 @@ class Post extends DataObject implements ScaffoldingProvider
 }
 ```
 
+#### Setting field casting
+
+Adding field casting may be necessary if the type of the GraphQL field should be different from the type of the field 
+within your DataObject:
+
+**Via YAML**:
+```yaml
+SilverStripe\GraphQL\Manager:
+  schemas:
+    default:
+      scaffolding:
+        types:
+          MyProject\Post:
+            fields:
+              ID: 
+                description: The unique identifier of the post
+                casting: Int
+              Title: 
+                description: The title of the post as a boolean for some reason
+                casting: Boolean
+            operations:
+              read: true
+              create: true
+```
+
+**...Or with code**:
+
+```php
+namespace MyProject;
+
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use SilverStripe\ORM\DataObject;
+
+class Post extends DataObject implements ScaffoldingProvider
+{
+    //...
+    public function provideGraphQLScaffolding(SchemaScaffolder $scaffolder)
+    {
+        $scaffolder
+            ->type(Post::class)
+                ->addFields([
+                    'ID' => [
+                        'description' => 'The unique identifier of the post',
+                        'casting' => 'Int',
+                    ],
+                ])
+                ->scaffoldField('Title', 'The title of the post as a boolean for some reason', DBBoolean::class)
+                ->operation(SchemaScaffolder::READ)
+                    ->end()
+                ->operation(SchemaScaffolder::UPDATE)
+                    ->end()
+                ->end();
+
+            return $scaffolder;
+    }
+}
+
 #### Wildcarding and whitelisting fields
 
 If you have a type you want to be fairly well exposed, it can be tedious to add each
