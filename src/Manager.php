@@ -63,6 +63,69 @@ class Manager
     protected $member;
 
     /**
+     * @var QueryMiddleware[]
+     */
+    protected $middlewares = [];
+
+    /**
+     * @var array
+     */
+    protected $extraContext = [];
+
+    /**
+     * @return QueryMiddleware[]
+     */
+    public function getMiddlewares()
+    {
+        return $this->middlewares;
+    }
+
+    /**
+     * @param QueryMiddleware[] $middlewares
+     * @return $this
+     */
+    public function setMiddlewares($middlewares)
+    {
+        $this->middlewares = $middlewares;
+        return $this;
+    }
+
+    /**
+     * @param QueryMiddleware $middleware
+     * @return $this
+     */
+    public function addMiddleware($middleware)
+    {
+        $this->middlewares[] = $middleware;
+        return $this;
+    }
+
+    /**
+     * Call middleware to evaluate a graphql query
+     *
+     * @param Schema $schema
+     * @param string $query Query to invoke
+     * @param array $context
+     * @param array $params Variables passed to this query
+     * @param callable $last The callback to call after all middlewares
+     * @return ExecutionResult|array
+     */
+    protected function callMiddleware(Schema $schema, $query, $context, $params, callable $last)
+    {
+        // Reverse middlewares
+        $next = $last;
+        // Filter out any middlewares that are set to `false`, e.g. via config
+        $middlewares = array_reverse(array_filter($this->getMiddlewares()));
+        /** @var QueryMiddleware $middleware */
+        foreach ($middlewares as $middleware) {
+            $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
+                return $middleware->process($schema, $query, $context, $params, $next);
+            };
+        }
+        return $next($schema, $query, $context, $params);
+    }
+
+    /**
      * @param array $config An array with optional 'types' and 'queries' keys
      * @return Manager
      */
@@ -368,8 +431,58 @@ class Manager
      */
     protected function getContext()
     {
+        return array_merge(
+            $this->getContextDefaults(),
+            $this->extraContext
+        );
+    }
+
+    /**
+     * @return array
+     */
+    protected function getContextDefaults()
+    {
         return [
-            'currentUser' => $this->getMember()
+            'currentUser' => $this->getMember(),
         ];
+    }
+
+    /**
+     * @param string $key
+     * @param any $value
+     * @return $this
+     */
+    public function addContext($key, $value)
+    {
+        if (!is_string($key)) {
+            throw new InvalidArgumentException(sprintf(
+                'Context key must be a string. Got %s',
+                gettype($key)
+            ));
+        }
+        $this->extraContext[$key] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Serialise a Graphql result object for output
+     *
+     * @param ExecutionResult $executionResult
+     * @return array
+     */
+    public function serialiseResult($executionResult)
+    {
+        // Format object
+        if (!empty($executionResult->errors)) {
+            return [
+                'data' => $executionResult->data,
+                'errors' => array_map($this->errorFormatter, $executionResult->errors),
+            ];
+        } else {
+            return [
+                'data' => $executionResult->data,
+            ];
+        }
     }
 }
