@@ -3,11 +3,14 @@
 namespace SilverStripe\GraphQL\Tests;
 
 use Exception;
+use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\Type;
 use PHPUnit_Framework_MockObject_MockBuilder;
 use ReflectionClass;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Control\HTTPResponse_Exception;
+use SilverStripe\Control\Session;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Kernel;
@@ -15,8 +18,11 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Controller;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Middleware\CSRFMiddleware;
+use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
+use SilverStripe\Security\SecurityToken;
 
 class ControllerTest extends SapphireTest
 {
@@ -336,6 +342,135 @@ class ControllerTest extends SapphireTest
         $request = new HTTPRequest('OPTIONS', '');
         $request->addHeader('Origin', 'localhost');
         $controller->index($request);
+    }
+
+    public function testCSRFProtectionBlocksMutations()
+    {
+        $manager = $this->getFakeManager();
+        $manager->addMiddleware(new CSRFMiddleware());
+        $request = $this->createGraphqlRequest('mutation { testMutation }', 'POST');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQueryError($controller, $request, '/CSRF token/');
+    }
+
+    public function testCSRFProtectionDisabled()
+    {
+        $manager = $this->getFakeManager();
+        $request = $this->createGraphqlRequest('mutation { testMutation }', 'POST');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQuerySuccess($controller, $request, 'testMutation');
+    }
+
+    public function testCSRFToken()
+    {
+        $manager = $this->getFakeManager();
+        $manager->addMiddleware(new CSRFMiddleware());
+        $request = $this->createGraphqlRequest('mutation { testMutation }', 'POST');
+        $request->addHeader('X-CSRF-TOKEN', SecurityToken::inst()->getValue());
+        $controller = $this->getFakeController($request, $manager, new Session([
+            'SecurityID' => SecurityToken::inst()->getValue(),
+        ]));
+        $this->assertQuerySuccess($controller, $request, 'testMutation');
+    }
+
+    public function testQueriesDontNeedCSRF()
+    {
+        $manager = $this->getFakeManager();
+        $manager->addMiddleware(new CSRFMiddleware());
+        $request = $this->createGraphqlRequest('query { testQuery }', 'POST');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQuerySuccess($controller, $request, 'testQuery');
+    }
+
+    public function testStrictHTTPMethodsGETMutationThrowsError()
+    {
+        $manager = $this->getFakeManager();
+        $manager->addMiddleware(new HTTPMethodMiddleware());
+        $request = $this->createGraphqlRequest('mutation { testMutation }', 'GET');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQueryError($controller, $request, '/must use the POST/');
+    }
+
+    public function testStrictHTTPMethodsDisabled()
+    {
+        $manager = $this->getFakeManager();
+        $request = $this->createGraphqlRequest('mutation { testMutation }', 'GET');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQuerySuccess($controller, $request, 'testMutation');
+    }
+
+    public function testStrictHTTPMethodsPOSTMutationIsAccepted()
+    {
+        $manager = $this->getFakeManager();
+        $manager->addMiddleware(new HTTPMethodMiddleware());
+        $request = $this->createGraphqlRequest('mutation { testMutation }', 'POST');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQuerySuccess($controller, $request, 'testMutation');
+    }
+
+    public function testStrictHTTPMethodsQueryCanBePOSTOrGET()
+    {
+        $manager = $this->getFakeManager();
+        $manager->addMiddleware(new HTTPMethodMiddleware());
+        $request = $this->createGraphqlRequest('query { testQuery }', 'POST');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQuerySuccess($controller, $request, 'testQuery');
+        $manager = $this->getFakeManager();
+        $request = $this->createGraphqlRequest('query { testQuery }', 'GET');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQuerySuccess($controller, $request, 'testQuery');
+    }
+
+    protected function getFakeManager()
+    {
+        $operation = [
+            'args' => [],
+            'type' => Type::string(),
+            'resolve' => function () {
+                return 'success';
+            },
+        ];
+        $manager = new Manager();
+        $manager->addMutation($operation, 'testMutation');
+        $manager->addQuery($operation, 'testQuery');
+        return $manager;
+    }
+
+    protected function getFakeController(HTTPRequest $request, Manager $manager, $session = null)
+    {
+        if (!$session) {
+            $session = new Session([]);
+        }
+        $controller = new Controller();
+        $controller->setManager($manager);
+        $request->setSession($session);
+        $controller->setRequest($request);
+        $controller->pushCurrent();
+        return $controller;
+    }
+
+    protected function createGraphqlRequest($graphql, $method = 'POST')
+    {
+        $postVars = $method === 'POST' ? ['query' => $graphql] : [];
+        $getVars = $method === 'GET' ? ['query' => $graphql] : [];
+        return new HTTPRequest($method, '/', $getVars, $postVars);
+    }
+
+    protected function assertQueryError(Controller $controller, HTTPRequest $request, $regExp)
+    {
+        $data = json_decode($controller->handleRequest($request)->getBody(), true);
+        $this->assertArrayHasKey('errors', $data);
+        $this->assertCount(1, $data['errors']);
+        $this->assertRegExp($regExp, $data['errors'][0]['message']);
+    }
+
+    protected function assertQuerySuccess(Controller $controller, HTTPRequest $request, $operation)
+    {
+        $data = json_decode($controller->handleRequest($request)->getBody(), true);
+        $this->assertArrayNotHasKey('errors', $data);
+        $this->assertArrayHasKey('data', $data);
+        $this->assertArrayHasKey($operation, $data['data']);
+        $this->assertEquals('success', $data['data'][$operation]);
     }
 
     protected function getType(Manager $manager)
