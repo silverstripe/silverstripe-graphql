@@ -15,6 +15,7 @@ use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
+use SilverStripe\Security\SecurityToken;
 use SilverStripe\Versioned\Versioned;
 
 /**
@@ -86,7 +87,6 @@ class Controller extends BaseController implements Flushable
         if ($stage && in_array($stage, [Versioned::DRAFT, Versioned::LIVE])) {
             Versioned::set_stage($stage);
         }
-
         // Check for a possible CORS preflight request and handle if necessary
         // Refer issue 66:  https://github.com/silverstripe/silverstripe-graphql/issues/66
         if ($request->httpMethod() === 'OPTIONS') {
@@ -96,6 +96,14 @@ class Controller extends BaseController implements Flushable
         // Main query handling
         try {
             $manager = $this->getManager();
+            $manager->addContext('token', $this->getToken());
+            $method = null;
+            if ($request->isGET()) {
+                $method = 'GET';
+            } elseif ($request->isPOST()) {
+                $method = 'POST';
+            }
+            $manager->addContext('httpMethod', $method);
 
             // Check and validate user for this request
             $member = $this->getRequestUser($request);
@@ -172,6 +180,14 @@ class Controller extends BaseController implements Flushable
     public function getAuthHandler()
     {
         return new Handler;
+    }
+
+    /**
+     * @return string
+     */
+    public function getToken()
+    {
+        return $this->getRequest()->getHeader('X-CSRF-TOKEN');
     }
 
     /**
