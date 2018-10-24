@@ -66,10 +66,12 @@ composer require silverstripe/graphql
    - [HTTP basic authentication](#http-basic-authentication)
      - [In GraphiQL](#in-graphiql)
    - [Defining your own authenticators](#defining-your-own-authenticators)
+ - [CSRF tokens (required for mutations)](#csrf-tokens-required-for-mutations)
  - [Cross-Origin Resource Sharing (CORS)](#cross-origin-resource-sharing-cors)
    - [Sample Custom CORS Config](#sample-custom-cors-config)
  - [Schema introspection](#schema-introspection)
  - [Setting up a new GraphQL endpoint](#setting-up-a-new-graphql-endpoint)
+ - [Strict HTTP Method Checking](#strict-http-method-checking)
  - [TODO](#todo)
 
 
@@ -2013,7 +2015,30 @@ SilverStripe\GraphQL\Auth\Handler:
     - class: SilverStripe\GraphQL\Auth\BasicAuthAuthenticator
       priority: 10
 ```
+## CSRF tokens (required for mutations)
 
+Even if your graphql endpoints are behind authentication, it is still possible for unauthorised
+users to access that endpoint through a [CSRF exploitation](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)). This involves
+forcing an already authenticated user to access an HTTP resource unknowingly (e.g. through a fake image), thereby hijacking the user's
+session.
+
+In the absence of a token-based authentication system, like OAuth, the best countermeasure to this
+is the use of a CSRF token for any requests that destroy or mutate data.
+
+By default, this module comes with a `CSRFMiddleware` implementation that forces all mutations to check 
+for the presence of a CSRF token in the request. That token must be applied to a header named` X-CSRF-TOKEN`.
+
+In SilverStripe, CSRF tokens are most commonly stored in the session as `SecurityID`, or accessed through
+the `SecurityToken` API, using `SecurityToken::inst()->getValue()`.
+
+Queries do not require CSRF tokens.
+
+```yaml
+  SilverStripe\GraphQL\Manager:
+    properties:
+      Middlewares:
+        CSRFMiddleware: false
+```
 ## Cross-Origin Resource Sharing (CORS)
 
 By default [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) is disabled in the GraphQL Server. This can be easily enabled via YAML:
@@ -2201,6 +2226,20 @@ SilverStripe\GraphQL\Manager:
   schemas:
     myApp:
       # Your config will go here..
+```
+
+## Strict HTTP Method Checking
+
+According to GraphQL best practices, mutations should be done over `POST`, while queries have the option
+to use either `GET` or `POST`. By default, this module enforces the `POST` request method for all mutations.
+
+To disable that requirement, you can remove the `HTTPMethodMiddleware` from your `Manager` implementation.
+
+```yaml
+  SilverStripe\GraphQL\Manager:
+    properties:
+      Middlewares:
+        HTTPMethodMiddleware: false
 ```
 
 ## TODO
