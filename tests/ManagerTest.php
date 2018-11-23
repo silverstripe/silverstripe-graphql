@@ -218,17 +218,15 @@ class ManagerTest extends SapphireTest
 
     public function testGetPersistedQueryByID()
     {
-        $mapper = $this->getMockBuilder(PersistedQueryMappingProvider::class)
-            ->setMethods(['getByID', 'getQueryMapping', 'setSchemaMapping', 'getSchemaMapping'])
-            ->getMock();
-        $mapper->expects($this->once())
+        $stub = $this->createMock(PersistedQueryMappingProvider::class);
+        $stub->expects($this->once())
             ->method('getByID')
             ->with(
                 $this->equalTo('someID'),
                 $this->equalTo('default')
             )
             ->willReturn('someQuery');
-        Injector::inst()->registerService($mapper, PersistedQueryMappingProvider::class);
+        Injector::inst()->registerService($stub, PersistedQueryMappingProvider::class);
 
         $manager = new Manager();
 
