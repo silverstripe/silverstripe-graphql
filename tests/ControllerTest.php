@@ -3,10 +3,9 @@
 namespace SilverStripe\GraphQL\Tests;
 
 use Exception;
-use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
+use LogicException;
 use PHPUnit_Framework_MockObject_MockBuilder;
-use ReflectionClass;
 use SilverStripe\Assets\Dev\TestAssetStore;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
@@ -24,12 +23,15 @@ use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Middleware\CSRFMiddleware;
 use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
+use SilverStripe\GraphQL\Tests\Fake\FakePersistedQuery;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\Security\SecurityToken;
 
 class ControllerTest extends SapphireTest
 {
+    protected $usesDatabase = true;
+
     public function setUp()
     {
         parent::setUp();
@@ -528,6 +530,77 @@ class ControllerTest extends SapphireTest
         $this->assertArrayHasKey('data', $data);
         $this->assertArrayHasKey($operation, $data['data']);
         $this->assertEquals('success', $data['data'][$operation]);
+    }
+
+    /**
+     * @throws \ReflectionException
+     */
+    public function testGetQueryWithNoID()
+    {
+        /* @var $controller Controller */
+        $controller = Controller::create();
+        $manager = $this->getMockBuilder(Manager::class)
+            ->setMethods(['getQueryFromPersistedID'])
+            ->getMock();
+        $manager->expects($this->never())
+            ->method('getQueryFromPersistedID');
+
+        $controller->setManager($manager);
+        $expectedQuery = 'query($memberID:ID!){readOneMember(ID:$memberID){ID Email}}';
+        $expectedVariables = ['memberID' => '1'];
+
+        // normal query request: query + variables
+        $request = new HTTPRequest('POST', '', [], [
+            'query' => $expectedQuery,
+            'variables' => json_encode($expectedVariables)
+        ]);
+        $controller->index($request);
+    }
+
+    public function testGetQueryWithID()
+    {
+        /* @var $controller Controller */
+        $controller = Controller::create();
+        $manager = $this->getMockBuilder(Manager::class)
+            ->setMethods(['getQueryFromPersistedID'])
+            ->getMock();
+        $manager->expects($this->once())
+            ->method('getQueryFromPersistedID')
+            ->with($this->equalTo('1cd63b53-472c-4844-9017-4e81b18b386d'));
+
+        $controller->setManager($manager);
+        $expectedVariables = ['memberID' => '1'];
+
+        // normal query request: query + variables
+        $request = new HTTPRequest('POST', '', [], [
+            'id' => '1cd63b53-472c-4844-9017-4e81b18b386d',
+            'variables' => json_encode($expectedVariables)
+        ]);
+        $controller->index($request);
+    }
+
+    public function testGetQueryWithQueryAndID()
+    {
+        /* @var $controller Controller */
+        $controller = Controller::create();
+        $manager = $this->getMockBuilder(Manager::class)
+            ->setMethods(['getQueryFromPersistedID'])
+            ->getMock();
+        $manager->expects($this->never())
+            ->method('getQueryFromPersistedID');
+
+        $controller->setManager($manager);
+        $expectedQuery = 'query($memberID:ID!){readOneMember(ID:$memberID){ID Email}}';
+        $expectedVariables = ['memberID' => '1'];
+
+        // normal query request: query + variables
+        $request = new HTTPRequest('POST', '', [], [
+            'query' => $expectedQuery,
+            'id' => '1cd63b53-472c-4844-9017-4e81b18b386d',
+            'variables' => json_encode($expectedVariables)
+        ]);
+        $result = $controller->index($request)->getBody();
+        $this->assertArrayHasKey('errors', json_decode($result, true));
     }
 
     protected function getType(Manager $manager)
