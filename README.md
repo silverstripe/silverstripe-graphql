@@ -319,6 +319,7 @@ To have a `Query` return a page-able list of records queries should extend the
 
 namespace MyProject\GraphQL;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Pagination\Connection;
@@ -441,6 +442,7 @@ return Connection::create('paginatedReadMembers')
 
 namespace MyProject\GraphQL;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\TypeCreator;
 use SilverStripe\GraphQL\Pagination\Connection;
@@ -471,7 +473,7 @@ class MemberTypeCreator extends TypeCreator
                 'args' => $groupsConnection->args(),
                 'resolve' => function($object, array $args, $context, ResolveInfo $info) use ($groupsConnection) {
                     return $groupsConnection->resolveList(
-                        $obj->Groups(),
+                        $object->Groups(),
                         $args,
                         $context
                     );
@@ -1317,7 +1319,7 @@ $scaffolder
                 if (!singleton(Comment::class)->canView($context['currentUser'])) {
                     throw new \Exception('Cannot view Comment');
                 }
-                $comments = $obj->Comments();
+                $comments = $object->Comments();
                 if (isset($args['OnlyToday']) && $args['OnlyToday']) {
                     $comments = $comments->where('DATE(Created) = DATE(NOW())');
                 }
@@ -1444,7 +1446,7 @@ inferred.
 ```php
 class MyCustomListQueryScaffolder extends ListQueryScaffolder
 {
-    public function resolve ($obj, array $args, $context, ResolveInfo $info)
+    public function resolve ($object, array $args, $context, ResolveInfo $info)
     {
         // .. custom query code
     }
@@ -1826,7 +1828,7 @@ class MyCreateExtension extends Extension
   {
     if ($args['SendEmail']) {
       MyService::inst()->sendEmail();
-      $obj->EmailSent = true;
+      $object->EmailSent = true;
     }
   }
 }
