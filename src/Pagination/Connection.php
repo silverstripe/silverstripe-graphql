@@ -370,46 +370,29 @@ class Connection implements OperationResolver
      */
     public function resolveList($list, array $args, $context = null, ResolveInfo $info = null)
     {
-        // Apply sort
+        return [
+            'edges' => $this->applyArgsToList($list, $args),
+            'pageInfo' => $this->getPageinfo($list, $args)
+        ];
+    }
+
+    /**
+     * Given the arguments, apply list mutations
+     * @param $list
+     * @param array $args
+     * @return SS_List
+     */
+    public function applyArgsToList($list, array $args)
+    {
+        if ($list instanceof Limitable) {
+            $list = $list->limit($this->getLimit($args), $this->getOffset($args));
+        }
+
         if (!empty($args['sortBy'])) {
             $list = $this->applySort($list, $args['sortBy']);
         }
 
-        // Default values
-        $count = $list->count();
-        $nextPage = false;
-        $previousPage = false;
-
-        // If list is limitable, apply pagination
-        if ($list instanceof Limitable) {
-            $offset = empty($args['offset']) ? 0 : $args['offset'];
-            $limit = empty($args['limit'])
-                ? $this->defaultLimit
-                : $args['limit'];
-            if ($limit > $this->maximumLimit) {
-                $limit = $this->maximumLimit;
-            }
-
-            // Apply limit
-            $list = $list->limit($limit, $offset);
-
-            // Flag prev-next page
-            if ($limit && (($limit + $offset) < $count)) {
-                $nextPage = true;
-            }
-            if ($offset > 0) {
-                $previousPage = true;
-            }
-        }
-
-        return [
-            'edges'    => $list,
-            'pageInfo' => [
-                'totalCount'      => $count,
-                'hasNextPage'     => $nextPage,
-                'hasPreviousPage' => $previousPage
-            ]
-        ];
+        return $list;
     }
 
     /**
@@ -450,5 +433,59 @@ class Connection implements OperationResolver
             $list = $list->sort($sort);
         }
         return $list;
+    }
+
+
+    /**
+     * @param SS_List $list
+     * @param array $args
+     * @return array
+     */
+    public function getPageinfo($list, array $args)
+    {
+        $nextPage = false;
+        $previousPage = false;
+        $limit = $this->getLimit($args);
+        $offset = $this->getOffset($args);
+        $count = $list->count();
+        if ($limit && (($limit + $offset) < $count)) {
+            $nextPage = true;
+        }
+
+        if ($offset > 0) {
+            $previousPage = true;
+        }
+
+        return [
+            'totalCount' => $count,
+            'hasNextPage' => $nextPage,
+            'hasPreviousPage' => $previousPage
+        ];
+    }
+
+    /**
+     * Resolve the limit value based on the args and fallbacks
+     * @param array $args
+     * @return int
+     */
+    protected function getLimit(array $args)
+    {
+        $limit = (isset($args['limit']) && $args['limit']) ? $args['limit'] : $this->defaultLimit;
+
+        if ($limit > $this->maximumLimit) {
+            $limit = $this->maximumLimit;
+        }
+
+        return $limit;
+    }
+
+    /**
+     * Resolve the offset based on the args and fallbacks
+     * @param array $args
+     * @return int
+     */
+    protected function getOffset(array $args)
+    {
+        return (isset($args['offset'])) ? $args['offset'] : 0;
     }
 }
