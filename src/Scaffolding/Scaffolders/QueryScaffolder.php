@@ -85,7 +85,7 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
     protected function getType(Manager $manager)
     {
         // If an explicit type name has been provided, use it.
-        $typeName = $this->getTypeName();
+        $typeName = parent::getTypeName();
         if ($typeName && $manager->hasType($typeName)) {
             return $manager->getType($typeName);
         }
