@@ -153,7 +153,6 @@ class ControllerTest extends SapphireTest
         $manager->addQuery($this->getQuery($manager), 'myquery');
 
         $response = $controller->index(new HTTPRequest('GET', ''));
-
         $assertion = ($shouldFail) ? 'assertContains' : 'assertNotContains';
         // See Fake\BrutalAuthenticatorFake::authenticate for failure message
         $this->{$assertion}('Never!', $response->getBody());
@@ -485,9 +484,9 @@ class ControllerTest extends SapphireTest
             $session = new Session([]);
         }
         $controller = new Controller();
+        $controller->setRequest($request);
         $controller->setManager($manager);
         $request->setSession($session);
-        $controller->setRequest($request);
         $controller->pushCurrent();
         return $controller;
     }
@@ -509,6 +508,7 @@ class ControllerTest extends SapphireTest
 
     protected function assertQuerySuccess(Controller $controller, HTTPRequest $request, $operation)
     {
+        $controller->setRequest($request);
         $data = json_decode($controller->handleRequest($request)->getBody(), true);
         $this->assertArrayNotHasKey('errors', $data);
         $this->assertArrayHasKey('data', $data);
