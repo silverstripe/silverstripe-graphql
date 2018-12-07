@@ -60,22 +60,7 @@ class Controller extends BaseController
 
         // Main query handling
         try {
-            $manager = $this->getManager();
-            $manager->addContext('token', $this->getToken());
-            $method = null;
-            if ($request->isGET()) {
-                $method = 'GET';
-            } elseif ($request->isPOST()) {
-                $method = 'POST';
-            }
-            $manager->addContext('httpMethod', $method);
-
-            // Check and validate user for this request
-            $member = $this->getRequestUser($request);
-            if ($member) {
-                $manager->setMember($member);
-            }
-
+            $manager = $this->getManager($request);
             // Parse input
             list($query, $variables) = $this->getRequestQueryVariables($request);
 
@@ -101,17 +86,23 @@ class Controller extends BaseController
     }
 
     /**
+     * @param HTTPRequest $request
      * @return Manager
      */
-    public function getManager()
+    public function getManager($request = null)
     {
-        if ($this->manager) {
-            return $this->manager;
+        $manager = null;
+        if (!$request) {
+            $request = $this->getRequest();
         }
-
-        // Get a service rather than an instance (to allow procedural configuration)
-        $config = Config::inst()->get(static::class, 'schema');
-        $manager = Manager::createFromConfig($config);
+        if ($this->manager) {
+            $manager = $this->manager;
+        } else {
+            // Get a service rather than an instance (to allow procedural configuration)
+            $config = Config::inst()->get(static::class, 'schema');
+            $manager = Manager::createFromConfig($config);
+        }
+        $this->applyManagerContext($manager, $request);
         $this->setManager($manager);
         return $manager;
     }
@@ -123,6 +114,7 @@ class Controller extends BaseController
     public function setManager($manager)
     {
         $this->manager = $manager;
+
         return $this;
     }
 
@@ -199,6 +191,30 @@ class Controller extends BaseController
             }
         }
         return false;
+    }
+
+    /**
+     * @param Manager $manager
+     * @param HTTPRequest $request
+     * @throws Exception
+     */
+    protected function applyManagerContext(Manager $manager, HTTPRequest $request)
+    {
+        // Add request context to Manager
+        $manager->addContext('token', $this->getToken());
+        $method = null;
+        if ($request->isGET()) {
+            $method = 'GET';
+        } elseif ($request->isPOST()) {
+            $method = 'POST';
+        }
+        $manager->addContext('httpMethod', $method);
+
+        // Check and validate user for this request
+        $member = $this->getRequestUser($request);
+        if ($member) {
+            $manager->setMember($member);
+        }
     }
 
     /**
