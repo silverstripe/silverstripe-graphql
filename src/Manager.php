@@ -12,6 +12,7 @@ use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
@@ -61,6 +62,69 @@ class Manager
      * @var Member
      */
     protected $member;
+
+    /**
+     * @var QueryMiddleware[]
+     */
+    protected $middlewares = [];
+
+    /**
+     * @var array
+     */
+    protected $extraContext = [];
+
+    /**
+     * @return QueryMiddleware[]
+     */
+    public function getMiddlewares()
+    {
+        return $this->middlewares;
+    }
+
+    /**
+     * @param QueryMiddleware[] $middlewares
+     * @return $this
+     */
+    public function setMiddlewares($middlewares)
+    {
+        $this->middlewares = $middlewares;
+        return $this;
+    }
+
+    /**
+     * @param QueryMiddleware $middleware
+     * @return $this
+     */
+    public function addMiddleware($middleware)
+    {
+        $this->middlewares[] = $middleware;
+        return $this;
+    }
+
+    /**
+     * Call middleware to evaluate a graphql query
+     *
+     * @param Schema $schema
+     * @param string $query Query to invoke
+     * @param array $context
+     * @param array $params Variables passed to this query
+     * @param callable $last The callback to call after all middlewares
+     * @return ExecutionResult|array
+     */
+    protected function callMiddleware(Schema $schema, $query, $context, $params, callable $last)
+    {
+        // Reverse middlewares
+        $next = $last;
+        // Filter out any middlewares that are set to `false`, e.g. via config
+        $middlewares = array_reverse(array_filter($this->getMiddlewares()));
+        /** @var QueryMiddleware $middleware */
+        foreach ($middlewares as $middleware) {
+            $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
+                return $middleware->process($schema, $query, $context, $params, $next);
+            };
+        }
+        return $next($schema, $query, $context, $params);
+    }
 
     /**
      * @param array $config An array with optional 'types' and 'queries' keys
@@ -188,7 +252,10 @@ class Manager
     }
 
     /**
-     * Execute an arbitrary operation (mutation / query) on this schema
+     * Execute an arbitrary operation (mutation / query) on this schema.
+     *
+     * Note because middleware may produce serialised responses we need to conditionally
+     * normalise to serialised array on output from object -> array.
      *
      * @param string $query Raw query
      * @param array $params List of arguments given for this operation
@@ -198,30 +265,30 @@ class Manager
     {
         $executionResult = $this->queryAndReturnResult($query, $params);
 
-        if (!empty($executionResult->errors)) {
-            return [
-                'data' => $executionResult->data,
-                'errors' => array_map($this->errorFormatter, $executionResult->errors),
-            ];
-        } else {
-            return [
-                'data' => $executionResult->data,
-            ];
+        // Already in array form
+        if (is_array($executionResult)) {
+            return $executionResult;
         }
+        return $this->serialiseResult($executionResult);
     }
 
     /**
+     * Evaluate query via middleware
+     *
      * @param string $query
      * @param array $params
-     * @return ExecutionResult
+     * @return ExecutionResult|array Result as either source object result, or serialised as array.
      */
     public function queryAndReturnResult($query, $params = [])
     {
         $schema = $this->schema();
         $context = $this->getContext();
-        $result = GraphQL::executeAndReturnResult($schema, $query, null, $context, $params);
 
-        return $result;
+        $last = function ($schema, $query, $context, $params) {
+            return GraphQL::executeAndReturnResult($schema, $query, null, $context, $params);
+        };
+
+        return $this->callMiddleware($schema, $query, $context, $params, $last);
     }
 
     /**
@@ -256,7 +323,7 @@ class Manager
     }
 
     /**
-     * @param  string  $name
+     * @param  string $name
      *
      * @return boolean
      */
@@ -367,8 +434,58 @@ class Manager
      */
     protected function getContext()
     {
+        return array_merge(
+            $this->getContextDefaults(),
+            $this->extraContext
+        );
+    }
+
+    /**
+     * @return array
+     */
+    protected function getContextDefaults()
+    {
         return [
-            'currentUser' => $this->getMember()
+            'currentUser' => $this->getMember(),
         ];
+    }
+
+    /**
+     * @param string $key
+     * @param any $value
+     * @return $this
+     */
+    public function addContext($key, $value)
+    {
+        if (!is_string($key)) {
+            throw new InvalidArgumentException(sprintf(
+                'Context key must be a string. Got %s',
+                gettype($key)
+            ));
+        }
+        $this->extraContext[$key] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Serialise a Graphql result object for output
+     *
+     * @param ExecutionResult $executionResult
+     * @return array
+     */
+    public function serialiseResult($executionResult)
+    {
+        // Format object
+        if (!empty($executionResult->errors)) {
+            return [
+                'data' => $executionResult->data,
+                'errors' => array_map($this->errorFormatter, $executionResult->errors),
+            ];
+        } else {
+            return [
+                'data' => $executionResult->data,
+            ];
+        }
     }
 }

@@ -8,7 +8,9 @@
     "webonyx/graphql-php": "~0.8.0"
   },
   "require-dev": {
-    "phpunit/PHPUnit": "^5.7"
+    "phpunit/PHPUnit": "^5.7",
+    "phpunit/PHPUnit": "^5.7",
+    "squizlabs/php_codesniffer": "^3.0"
   },
   "autoload": {
     "psr-4": {
@@ -24,7 +26,8 @@
     "process-timeout": 600
   },
   "scripts": {
-    "lint": "phpcs src/ tests/"
+    "lint": "vendor/bin/phpcs src/ tests/",
+    "lint-clean": "vendor/bin/phpcbf src/ tests/"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
@@ -32,3 +35,4 @@
     "silverstripe/graphql-devtools": "Adds in-browser tools for testing and debugging GraphQL queries"
   }
 }
+

@@ -49,14 +49,21 @@ composer require silverstripe/graphql
      - [Querying types that have descendants](#querying-types-that-have-descendants)
    - [Define interfaces](#define-interfaces)
    - [Define input types](#define-input-types)
+ - [Extending](#extending)
+   - [Adding/removing fields from thirdparty code](#adding-removing-fields-from-thirdparty-code)
+   - [Updating the core operations](#updating-the-core-operations)
+   - [Adding new operations](#adding-new-operations)
+   - [Changing behaviour with Middleware](#changing-behaviour-with-middleware)
  - [Testing/debugging queries and mutations](#testingdebugging-queries-and-mutations)
  - [Authentication](#authentication)
    - [Default authentication](#default-authentication)
    - [HTTP basic authentication](#http-basic-authentication)
      - [In GraphiQL](#in-graphiql)
    - [Defining your own authenticators](#defining-your-own-authenticators)
+ - [CSRF tokens (required for mutations)](#csrf-tokens-required-for-mutations)
  - [Cross-Origin Resource Sharing (CORS)](#cross-origin-resource-sharing-cors)
    - [Sample Custom CORS Config](#sample-custom-cors-config)
+ - [Strict HTTP Method Checking](#strict-http-method-checking)
  - [TODO](#todo)
    
    
@@ -1468,6 +1475,152 @@ TODO
 
 TODO
 
+## Extending
+
+Many of the scaffolding classes use the `Extensible` trait, allowing you to influence the scaffolding process
+with custom needs.
+
+### Adding/removing fields from thirdparty code
+Suppose you have a module that adds new fields to dataobjects that use your extension. You can write
+and extension for `DataObjectScaffolder` to update the scaffolding before it is sent to the `Manager`.
+
+```php
+class MyDataObjectScaffolderExtension extends Extension
+{
+
+  public function onBeforeAddToManager(Manager $manager)
+  {
+    if ($this->owner->getDataObjectInstance()->hasExtension(MyExtension::class)) {
+      $this->owner->addField('MyField');
+    }
+  }
+}
+```
+
+### Updating the core operations
+The basic `CRUD` operations that come with the module are all extensible with`updateArgs` and `augmentMutation` (or `updateList` for read operations).
+
+```php
+class MyCreateExtension extends Extension
+{
+
+  public function updateArgs(&$args, Manager $manager)
+  {
+    $args['SendEmail'] = ['type' => Type::bool()];
+  }
+
+
+  public function augmentMutation($obj, $args, $context, $info)
+  {
+    if ($args['SendEmail']) {
+      MyService::inst()->sendEmail();
+      $obj->EmailSent = true;
+    }
+  }
+}
+````
+
+### Adding new operations
+If you have a custom operation, in addition to `read`, `update`, `delete`, etc., that you want available
+to some or all types, you can write one and register it with the scaffolder. Let's suppose we have
+an ecommerce module that wants to offer an `addToCart` mutation to any dataobject that implements
+the `Product` interface.
+
+```php
+class AddToCartOperation extends MutationScaffolder
+{
+
+   public function __construct($dataObjectClass)
+   {
+      parent::__construct($this->createOperationName(), $dataObjectClass);
+      if (!$this->getDataObjectInstance() instanceof ProductInterace) {
+        throw new InvalidArgumentException(
+            'addToCart operation is only for implementors of ProductInterface'
+        );
+      }
+      $this->setResolver(function($obj, array $args) {
+        $record = DataObject::get_by_id($this->dataObjectClass, $args['ID']);
+        if (!$record) {
+          throw new Exception('ID not found');
+        }
+
+        $record->addToCart();
+
+        return $record;
+      });
+   }
+
+
+   protected function createArgs(Manager $manager)
+   {
+      return [
+        'ID' => ['type' => Type::nonNull(Type::id())]
+      ];
+   }
+
+
+   protected function createOperationName()
+   {
+        return 'add' . ucfirst($this->typeName()) . 'ToCart';
+   }
+
+}
+```
+
+Now, register it as an opt-in operation.
+
+```yaml
+SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder:
+  operations:
+    addToCart: My\Project\AddToCartOperation
+```
+
+### Changing behaviour with Middleware
+
+You can influence behaviour based on query data or passed-in parameters.
+This can be useful for features which would be too cumbersome on a resolver level,
+for example logging and caching.
+
+Note this is separate from [HTTP Middleware](https://docs.silverstripe.org/en/developer_guides/controllers/middlewares/)
+which are more suited to influence behaviour based on HTTP request introspection
+(for example, by enforcing authentication for any request matching `/graphql`).
+
+Example middleware to log all mutations (but not queries):
+
+```php
+<?php
+use GraphQL\Schema;
+use SilverStripe\GraphQL\Middleware\QueryMiddleware;
+
+class MyMutationLoggingMiddleware implements QueryMiddleware
+{
+    public function process(Schema $schema, $query, $context, $params, callable $next)
+    {
+        if (preg_match('/^mutation/', $query)) {
+            $this->log('Executed mutation: ' . $query);
+        }
+
+        return $next($schema, $query, $context, $params);
+    }
+
+    protected function log($str)
+    {
+        // ...
+    }
+}
+```
+
+```yml
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Manager:
+    properties:
+      Middlewares:
+        MyMutationLoggingMiddleware: '%$MyMutationLoggingMiddleware'
+```
+
+If you want to use middleware to cache responses,
+here's a more [comprehensive caching middleware example](https://gist.github.com/tractorcow/fe6571d2d00340a311ca31a677a05a29).
+
 ## Testing/debugging queries and mutations
 
 An in-browser IDE for the GraphQL server is available via the [silverstripe-graphql-devtools](https://github.com/silverstripe/silverstripe-graphql-devtools) module.
@@ -1550,7 +1703,30 @@ SilverStripe\GraphQL\Auth\Handler:
     - class: SilverStripe\GraphQL\Auth\BasicAuthAuthenticator
       priority: 10
 ```
+## CSRF tokens (required for mutations)
 
+Even if your graphql endpoints are behind authentication, it is still possible for unauthorised
+users to access that endpoint through a [CSRF exploitation](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)). This involves
+forcing an already authenticated user to access an HTTP resource unknowingly (e.g. through a fake image), thereby hijacking the user's
+session.
+
+In the absence of a token-based authentication system, like OAuth, the best countermeasure to this
+is the use of a CSRF token for any requests that destroy or mutate data.
+
+By default, this module comes with a `CSRFMiddleware` implementation that forces all mutations to check 
+for the presence of a CSRF token in the request. That token must be applied to a header named` X-CSRF-TOKEN`.
+
+In SilverStripe, CSRF tokens are most commonly stored in the session as `SecurityID`, or accessed through
+the `SecurityToken` API, using `SecurityToken::inst()->getValue()`.
+
+Queries do not require CSRF tokens.
+
+```yaml
+  SilverStripe\GraphQL\Manager:
+    properties:
+      Middlewares:
+        CSRFMiddleware: false
+```
 ## Cross-Origin Resource Sharing (CORS)
 
 By default [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) is disabled in the GraphQL Server. This can be easily enabled via YAML:
@@ -1649,6 +1825,20 @@ SilverStripe\GraphQL\Controller:
     Allow-Headers: 'Authorization, Content-Type'
     Allow-Methods:  'GET, POST, OPTIONS'
     Max-Age:  600  # 600 seconds = 10 minutes.
+```
+
+## Strict HTTP Method Checking
+
+According to GraphQL best practices, mutations should be done over `POST`, while queries have the option
+to use either `GET` or `POST`. By default, this module enforces the `POST` request method for all mutations.
+
+To disable that requirement, you can remove the `HTTPMethodMiddleware` from your `Manager` implementation.
+
+```yaml
+  SilverStripe\GraphQL\Manager:
+    properties:
+      Middlewares:
+        HTTPMethodMiddleware: false
 ```
 
 ## TODO
