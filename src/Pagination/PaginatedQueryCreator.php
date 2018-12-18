@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryCreator;
 use GraphQL\Type\Definition\ResolveInfo;
@@ -21,15 +22,15 @@ abstract class PaginatedQueryCreator extends QueryCreator implements OperationRe
 
     /**
      * Get connection for this query
-     *
+     * @param Manager $manager
      * @return Connection
      */
-    abstract public function createConnection();
+    abstract public function createConnection(Manager $manager);
 
     public function getConnection()
     {
         if (!$this->connection) {
-            $this->connection = $this->createConnection();
+            $this->connection = $this->createConnection($this->manager);
         }
 
         return $this->connection;

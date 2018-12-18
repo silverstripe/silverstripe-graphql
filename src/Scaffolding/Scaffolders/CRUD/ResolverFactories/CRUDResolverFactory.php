@@ -1,0 +1,44 @@
+<?php
+
+namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories;
+
+use SilverStripe\Core\Extensible;
+use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
+use Serializable;
+
+abstract class CRUDResolverFactory implements Serializable
+{
+    use Injectable;
+    use Extensible;
+    use DataObjectTypeTrait;
+
+    /**
+     * CRUDResolverFactory constructor.
+     * @param $dataObjectClass
+     */
+    public function __construct($dataObjectClass)
+    {
+        $this->setDataObjectClass($dataObjectClass);
+    }
+
+    /**
+     * @return string
+     */
+    public function serialize()
+    {
+        return serialize([
+            'dataObjectClass' => $this->dataObjectClass
+        ]);
+    }
+
+    /**
+     * @param string $serialized
+     */
+    public function unserialize($serialized)
+    {
+        $data = unserialize($serialized);
+        $this->setDataObjectClass($data['dataObjectClass']);
+    }
+
+}

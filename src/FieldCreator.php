@@ -2,8 +2,11 @@
 
 namespace SilverStripe\GraphQL;
 
+use GraphQL\Error\Error;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\Dev\Deprecation;
+use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
 
 /**
  * Base type for query types within graphql. I.e. mutations or queries
@@ -92,11 +95,22 @@ class FieldCreator
     /**
      * Convert the Fluent instance to an array.
      *
-     * @return array
+     * @return SerialisableFieldDefinition
+     * @deprecated 4.0 Use toField() instead
+     * @throws Error
      */
     public function toArray()
     {
-        return $this->getAttributes();
+        Deprecation::notice('4.0', 'Please use toField() instead');
+       return $this->toField();
+    }
+
+    /**
+     * @return SerialisableFieldDefinition
+     */
+    public function toField()
+    {
+        return SerialisableFieldDefinition::create($this->getAttributes());
     }
 
     /**

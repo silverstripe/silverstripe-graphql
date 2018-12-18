@@ -2,16 +2,29 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
+use GraphQL\Error\Error;
+use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
+use GraphQL\Utils\Utils;
 use InvalidArgumentException;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
+use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
+use SilverStripe\GraphQL\Serialisation\SerialisableObjectType;
+use SilverStripe\GraphQL\Serialisation\TypeSerialiserInterface;
+use SilverStripe\GraphQL\Serialisation\TypeStoreConsumer;
 use SilverStripe\ORM\Limitable;
 use SilverStripe\ORM\Sortable;
 use SilverStripe\ORM\SS_List;
+use Psr\Container\NotFoundExceptionInterface;
+use Serializable;
+use Closure;
 
 /**
  * A connection to a list of items on a object type. Collections are paginated
@@ -84,11 +97,33 @@ class Connection implements OperationResolver
     protected $maximumLimit = 100;
 
     /**
+     * @var Manager
+     */
+    protected $manager;
+
+    /**
+     * @var ResolverFactory
+     */
+    protected $resolverFactory;
+
+    /**
+     * The simple resolver that simply passes on the object
+     * @param $obj
+     * @return mixed
+     */
+    public static function nodeResolver($obj)
+    {
+        return $obj;
+    }
+
+    /**
+     * @param Manager $manager
      * @param string $connectionName
      */
-    public function __construct($connectionName)
+    public function __construct($connectionName, Manager $manager)
     {
         $this->connectionName = $connectionName;
+        $this->manager = $manager;
     }
 
     /**
@@ -100,6 +135,17 @@ class Connection implements OperationResolver
     {
         $this->connectionResolver = $func;
 
+        return $this;
+    }
+
+    /**
+     * @param ResolverFactory $factory
+     * @return $this
+     */
+    public function setResolverFactory(ResolverFactory $factory)
+    {
+        $this->resolverFactory = $factory;
+        $this->applyResolverFactory($factory);
         return $this;
     }
 
@@ -223,6 +269,14 @@ class Connection implements OperationResolver
     }
 
     /**
+     * @return int
+     */
+    public function getMaximumLimit()
+    {
+        return $this->maximumLimit;
+    }
+
+    /**
      * @return string
      */
     public function getConnectionTypeName()
@@ -236,6 +290,24 @@ class Connection implements OperationResolver
     public function getEdgeTypeName()
     {
         return $this->connectionName . 'Edge';
+    }
+
+    /**
+     * @return SortInputTypeCreator
+     */
+    public function getSortTypeCreator()
+    {
+        return Injector::inst()->create(SortInputTypeCreator::class, $this->connectionName, $this->manager)
+            ->setSortableFields($this->getSortableFields());
+    }
+
+    /**
+     * @return ObjectType
+     * @throws NotFoundExceptionInterface
+     */
+    public function getPageInfoType()
+    {
+        return Injector::inst()->get(PageInfoTypeCreator::class)->toType();
     }
 
     /**
@@ -261,13 +333,11 @@ class Connection implements OperationResolver
             ]
         ]);
 
-        if ($fields = $this->getSortableFields()) {
+        if ($this->getSortableFields()) {
             $args['sortBy'] = [
-                'type' => Type::listOf(
-                    Injector::inst()->create(SortInputTypeCreator::class, $this->connectionName)
-                        ->setSortableFields($fields)
-                        ->toType()
-                )
+                'type' => Type::listOf($this->manager->getType(
+                    $this->getSortTypeCreator()->getName()
+                )),
             ];
         }
 
@@ -276,20 +346,22 @@ class Connection implements OperationResolver
 
     /**
      * @return array
+     * @throws NotFoundExceptionInterface
      */
     public function fields()
     {
         return [
-            'pageInfo' => [
-                'type' => Type::nonNull(
-                    Injector::inst()->get(PageInfoTypeCreator::class)->toType()
-                ),
+            'pageInfo' => SerialisableFieldDefinition::create([
+                'name' => 'pageInfo',
+                'type' => Type::nonNull($this->getPageInfoType()),
                 'description' => 'Pagination information'
-            ],
-            'edges' => [
-                'type' => Type::listOf($this->getEdgeType()),
-                'description' => 'Collection of records'
-            ]
+            ]),
+            'edges' => SerialisableFieldDefinition::create([
+                'name' => 'edges',
+                'type' => Type::listOf($this->manager->getType($this->getEdgeTypeName())),
+                'description' => 'Collection of records',
+                'pure' => true,
+            ])
         ];
     }
 
@@ -302,18 +374,17 @@ class Connection implements OperationResolver
             throw new InvalidArgumentException('Missing connectedType callable');
         }
 
-        return new ObjectType([
+        return new SerialisableObjectType([
             'name' => $this->getEdgeTypeName(),
             'description' => 'The collections edge',
             'fields' => function () {
                 return [
-                    'node' => [
+                    'node' => SerialisableFieldDefinition::create([
+                        'name' => 'node',
                         'type' => $this->getConnectionType(),
                         'description' => 'The node at the end of the collections edge',
-                        'resolve' => function ($obj) {
-                            return $obj;
-                        }
-                    ]
+                        'resolve' => [static::class, 'nodeResolver']
+                    ])
                 ];
             }
         ]);
@@ -324,7 +395,7 @@ class Connection implements OperationResolver
      */
     public function toType()
     {
-        return new ObjectType([
+        return new SerialisableObjectType([
             'name' => $this->getConnectionTypeName(),
             'description' => $this->description,
             'fields' => function () {
@@ -432,4 +503,79 @@ class Connection implements OperationResolver
             ]
         ];
     }
+
+    /**
+     * @return array
+     * @throws NotFoundExceptionInterface
+     */
+    public function getExtraTypes()
+    {
+        return [
+            $this->getEdgeType(),
+            $this->getSortTypeCreator()->toType(),
+            $this->getSortTypeCreator()->getFieldType(),
+            $this->getSortTypeCreator()->getSortDirectionType(),
+            $this->getPageInfoType(),
+        ];
+    }
+
+    /**
+     * @throws Error
+     */
+    protected function assertSerialisable()
+    {
+        Utils::invariant(
+            $this->resolverFactory || !$this->connectionResolver instanceof Closure,
+            'Connection "%s" uses a closure for its connection resolver, which is not serialisable',
+            $this->connectionName
+        );
+    }
+
+    protected function applyResolverFactory(ResolverFactory $factory)
+    {
+        $this->connectionResolver = function (...$args) use ($factory) {
+            $resolver = $factory->createResolver();
+            $result = call_user_func($resolver, ...$args);
+            $this->connectionResolver = $resolver;
+
+            return $result;
+        };
+    }
+
+    /**
+     * @return void
+     */
+    public function __wakeup()
+    {
+        if ($this->resolverFactory) {
+            $this->applyResolverFactory($this->resolverFactory);
+        }
+    }
+
+    /**
+     * @return array
+     * @throws Error
+     */
+    public function __sleep()
+    {
+        $this->assertSerialisable();
+        $this->connectedType = $this->getConnectionType();
+        $this->args = $this->args();
+        if ($this->resolverFactory) {
+            $this->connectionResolver = null;
+        }
+
+        return [
+            'connectionName',
+            'connectedType',
+            'description',
+            'connectionResolver',
+            'args',
+            'sortableFields',
+            'defaultLimit',
+            'maximumLimit',
+            'resolverFactory',
+        ];
+    }
+
 }

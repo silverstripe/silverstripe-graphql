@@ -61,6 +61,7 @@ class Controller extends BaseController implements Flushable
 
     /**
      * @param Manager $manager
+     * @throws Exception
      */
     public function __construct(Manager $manager = null)
     {
@@ -71,8 +72,8 @@ class Controller extends BaseController implements Flushable
             // Side effect. This isn't ideal, but having multiple instances of StaticSchema
             // is a massive architectural change.
             StaticSchema::reset();
-
-            $this->manager->configure();
+            $regen = isset($_GET['regen']);
+            $this->manager->build($regen);
         }
     }
 

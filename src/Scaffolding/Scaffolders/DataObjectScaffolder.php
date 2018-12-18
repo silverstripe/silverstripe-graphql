@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use Exception;
+use GraphQL\Error\Error;
 use GraphQL\Type\Definition\ObjectType;
 use InvalidArgumentException;
 use SilverStripe\Core\Config\Config;
@@ -10,6 +11,7 @@ use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\Deprecation;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Resolvers\FieldAccessorResolver;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
@@ -18,6 +20,8 @@ use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
+use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
+use SilverStripe\GraphQL\Serialisation\SerialisableObjectType;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
@@ -543,7 +547,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function scaffold(Manager $manager)
     {
-        return new ObjectType(
+        return new SerialisableObjectType(
             [
                 'name' => $this->getTypeName(),
                 'fields' => function () use ($manager) {
@@ -617,7 +621,11 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         $fields = $this->fields->column('Name');
 
         foreach ($fields as $fieldName) {
-            $result = $instance->obj($fieldName);
+            try {
+                $result = $instance->obj($fieldName);
+            } catch (Exception $e) {
+                $result = null;
+            }
             if ($result instanceof DataObjectInterface) {
                 $types[$fieldName] = get_class($result);
             }
@@ -649,6 +657,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      * Validates the raw field map and creates a map suitable for ObjectType
      *
      * @param  Manager $manager
+     * @throws Error
      * @return array
      */
     protected function createFields(Manager $manager)
@@ -663,18 +672,6 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 Config::inst()->get(self::class, 'default_fields')
             );
         }
-
-        $resolver = function ($obj, $args, $context, $info) {
-            /**
-             * @var DataObject $obj
-             */
-            $field = $obj->obj($info->fieldName);
-            // return the raw field value, or checks like `is_numeric()` fail
-            if ($field instanceof DBField && $field->isInternalGraphQLType()) {
-                return $field->getValue();
-            }
-            return $field;
-        };
 
         foreach ($this->fields as $fieldData) {
             $fieldName = $fieldData->Name;
@@ -703,26 +700,35 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
             if ($result instanceof DBField) {
                 /** @var DBField|TypeCreatorExtension $result */
-                $fieldMap[$fieldName] = [];
-                $fieldMap[$fieldName]['type'] = $result->getGraphQLType($manager);
-                $fieldMap[$fieldName]['resolve'] = $resolver;
-                $fieldMap[$fieldName]['description'] = $fieldData->Description;
+                $fieldDef = ['name' => $fieldName];
+                $fieldDef['type'] = $result->getGraphQLType($manager);
+                $fieldDef['resolve'] = [
+                    FieldAccessorResolver::class,
+                    'resolve',
+                ];
+                $fieldDef['description'] = $fieldData->Description;
+                $fieldMap[$fieldName] = SerialisableFieldDefinition::create($fieldDef);
             }
         }
 
         foreach ($extraDataObjects as $fieldName => $className) {
             $description = $this->getFieldDescription($fieldName);
-            $fieldMap[$fieldName] = [
+            $fieldMap[$fieldName] = SerialisableFieldDefinition::create([
+                'name' => $fieldName,
                 'type' => StaticSchema::inst()->fetchFromManager($className, $manager),
                 'description' => $description,
-                'resolve' => $resolver,
-            ];
+                'resolve' => [
+                    FieldAccessorResolver::class,
+                    'resolve',
+                ],
+            ]);
         }
 
         foreach ($this->nestedQueries as $name => $scaffolder) {
-            $scaffold = $scaffolder->scaffold($manager);
-            $scaffold['name'] = $name;
-            $fieldMap[$name] = $scaffold;
+            /* @var SerialisableFieldDefinition $fieldDef*/
+            $fieldDef = $scaffolder->scaffold($manager);
+            $fieldDef->name = $name;
+            $fieldMap[$name] = $fieldDef;
         }
 
         return $fieldMap;

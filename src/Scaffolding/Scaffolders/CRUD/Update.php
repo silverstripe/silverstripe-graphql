@@ -2,25 +2,22 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
-use Exception;
 use GraphQL\Type\Definition\InputObjectType;
-use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
-use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\UpdateResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
-use SilverStripe\ORM\DataList;
-use SilverStripe\ORM\DataObjectInterface;
+use SilverStripe\GraphQL\Serialisation\SerialisableInputType;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
 
 /**
  * Scaffolds a generic update operation for DataObjects.
  */
-class Update extends MutationScaffolder implements OperationResolver, CRUDInterface
+class Update extends MutationScaffolder implements CRUDInterface
 {
     /**
      * Update constructor.
@@ -29,7 +26,8 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
      */
     public function __construct($dataObjectClass)
     {
-        parent::__construct(null, null, $this, $dataObjectClass);
+        parent::__construct(null, null, null, $dataObjectClass);
+        $this->setResolverFactory(UpdateResolverFactory::create($this->getDataObjectClass()));
     }
 
     /**
@@ -76,7 +74,7 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
      */
     protected function generateInputType(Manager $manager)
     {
-        return new InputObjectType([
+        return new SerialisableInputType([
             'name' => $this->inputTypeName(),
             'fields' => function () use ($manager) {
                 $fields = [
@@ -117,42 +115,4 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
         return $this->getTypeName() . 'UpdateInputType';
     }
 
-    /**
-     * @param DataObjectInterface $object
-     * @param array $args
-     * @param array $context
-     * @param ResolveInfo $info
-     * @return mixed
-     * @throws Exception
-     */
-    public function resolve($object, array $args, $context, ResolveInfo $info)
-    {
-        $input = $args['Input'];
-        $obj = DataList::create($this->getDataObjectClass())
-            ->byID($input['ID']);
-        if (!$obj) {
-            throw new Exception(sprintf(
-                '%s with ID %s not found',
-                $this->getDataObjectClass(),
-                $input['ID']
-            ));
-        }
-        unset($input['ID']);
-        if (!$obj->canEdit($context['currentUser'])) {
-            throw new Exception(sprintf(
-                'Cannot edit this %s',
-                $this->getDataObjectClass()
-            ));
-        }
-
-        // Extension points that return false should kill the write operation
-        $results = $this->extend('augmentMutation', $obj, $args, $context, $info);
-        if (in_array(false, $results, true)) {
-            return $obj;
-        }
-
-        $obj->update($input);
-        $obj->write();
-        return $obj;
-    }
 }

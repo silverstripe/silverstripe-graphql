@@ -7,6 +7,7 @@ use InvalidArgumentException;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\DataObject;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * Offers a few helper methods for classes that are DataObject subclass bound.
@@ -16,12 +17,12 @@ trait DataObjectTypeTrait
     /**
      * @var string
      */
-    private $dataObjectClass;
+    protected $dataObjectClass;
 
     /**
      * @var DataObject
      */
-    private $dataObjectInstance;
+    protected $dataObjectInstance;
 
     /**
      * @return string
@@ -48,6 +49,7 @@ trait DataObjectTypeTrait
 
     /**
      * @return DataObject
+     * @throws NotFoundExceptionInterface
      */
     public function getDataObjectInstance()
     {

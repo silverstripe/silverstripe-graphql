@@ -15,6 +15,7 @@ use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\View\ViewableData;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * The entry point for a GraphQL scaffolding definition. Holds DataObject type definitions,
@@ -57,6 +58,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
      * @param  array $config
      * @return self
      * @throws InvalidArgumentException
+     * @throws NotFoundExceptionInterface
      */
     public static function createFromConfig($config)
     {
@@ -280,6 +282,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
      * Adds every DataObject and its dependencies to the Manager.
      *
      * @param Manager $manager
+     * @throws NotFoundExceptionInterface
      */
     public function addToManager(Manager $manager)
     {
@@ -317,6 +320,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
      *
      * @param Manager $manager
      * @throws Exception
+     * @throws NotFoundExceptionInterface
      */
     protected function registerFixedTypes(Manager $manager)
     {

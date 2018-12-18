@@ -4,6 +4,8 @@ namespace SilverStripe\GraphQL\Scaffolding\Util;
 
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
+use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
+use SilverStripe\GraphQL\Serialisation\SerialisableObjectType;
 use SilverStripe\ORM\ArrayLib;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
@@ -62,15 +64,16 @@ class ArrayTypeParser implements TypeParserInterface
     {
         $fields = [];
         foreach ($this->fields as $field => $type) {
-            $fields[$field] = [
+            $fields[$field] = SerialisableFieldDefinition::create([
+                'name' => $field,
                 'type' => Injector::inst()->createWithArgs(
                     TypeParserInterface::class . '.string',
                     [$type]
                 )->getType(),
-            ];
+            ]);
         }
 
-        return new ObjectType([
+        return new SerialisableObjectType([
             'name' => $this->name,
             'fields' => $fields,
         ]);

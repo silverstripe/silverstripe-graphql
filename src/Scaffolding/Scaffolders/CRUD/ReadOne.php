@@ -2,20 +2,16 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
-use Exception;
-use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
-use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadOneResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder;
-use SilverStripe\ORM\DataList;
-use SilverStripe\ORM\DataObjectInterface;
 
 /**
  * Scaffolds a generic read operation for DataObjects.
  */
-class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInterface
+class ReadOne extends ItemQueryScaffolder implements CRUDInterface
 {
     /**
      * Read one constructor.
@@ -24,7 +20,8 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
      */
     public function __construct($dataObjectClass)
     {
-        parent::__construct(null, null, $this, $dataObjectClass);
+        parent::__construct(null, null, null, $dataObjectClass);
+        $this->setResolverFactory(ReadOneResolverFactory::create($this->getDataObjectClass()));
     }
 
     public function getName()
@@ -50,27 +47,4 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
         ];
     }
 
-    /**
-     * @param DataObjectInterface $object
-     * @param array $args
-     * @param array $context
-     * @param ResolveInfo $info
-     * @return mixed
-     * @throws Exception
-     */
-    public function resolve($object, array $args, $context, ResolveInfo $info)
-    {
-        if (!$this->getDataObjectInstance()->canView($context['currentUser'])) {
-            throw new Exception(sprintf(
-                'Cannot view %s',
-                $this->getDataObjectClass()
-            ));
-        }
-        // get as a list so extensions can influence it pre-query
-        $list = DataList::create($this->getDataObjectClass())
-            ->filter('ID', $args['ID']);
-        $this->extend('updateList', $list, $args, $context, $info);
-
-        return $list->first();
-    }
 }

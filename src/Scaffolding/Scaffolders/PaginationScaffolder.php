@@ -2,12 +2,15 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Error\Error;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
 use SilverStripe\GraphQL\Pagination\PaginatedQueryCreator;
+use SilverStripe\GraphQL\Resolvers\PaginationResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
+use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
+use Psr\Container\NotFoundExceptionInterface;
 
 class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutatorInterface, ScaffolderInterface
 {
@@ -31,10 +34,10 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
     /**
      * Connection is passed in through the constructor argument,
      * to allow the instance to be created by the external scaffolding logic.
-     *
+     * @param Manager $manager
      * @return Connection
      */
-    public function createConnection()
+    public function createConnection(Manager $manager)
     {
         return $this->connection;
     }
@@ -60,26 +63,29 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
 
     /**
      * @param Manager $manager
-     * @return array
+     * @throws Error
+     * @return SerialisableFieldDefinition
      */
     public function scaffold(Manager $manager)
     {
         $connectionName = $this->connection->getConnectionTypeName();
-        return [
+        return SerialisableFieldDefinition::create([
             'name' => $this->operationName,
             'args' => $this->connection->args(),
             'type' => $manager->getType($connectionName),
-            'resolve' => function ($obj, array $args, $context, ResolveInfo $info) {
-                return $this->connection->resolve($obj, $args, $context, $info);
-            }
-        ];
+            'resolverFactory' => PaginationResolverFactory::create($this->connection),
+        ]);
     }
 
     /**
      * @param Manager $manager
+     * @throws NotFoundExceptionInterface
      */
     public function addToManager(Manager $manager)
     {
         $manager->addType($this->connection->toType());
+        foreach ($this->connection->getExtraTypes() as $type) {
+            $manager->addType($type);
+        }
     }
 }

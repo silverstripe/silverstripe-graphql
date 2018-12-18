@@ -6,8 +6,9 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\Core\Injector\Injector;
 use GraphQL\Type\Definition\EnumType;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\TypeCreator;
-
+use Psr\Container\NotFoundExceptionInterface;
 /**
  * Type creator for an enum value for a list of possible sortable fields
  *
@@ -35,12 +36,12 @@ class SortInputTypeCreator extends TypeCreator
 
     /**
      * Build a sort input creator with a given name prefix.
-     *
      * @param string $name Prefix for this input type name.
+     * @param Manager $manager
      */
-    public function __construct($name)
+    public function __construct($name, Manager $manager = null)
     {
-        parent::__construct();
+        parent::__construct($manager);
         $this->inputName = $name;
     }
 
@@ -77,15 +78,25 @@ class SortInputTypeCreator extends TypeCreator
         );
     }
 
+    public function getName()
+    {
+        return ucfirst($this->inputName) .'SortInputType';
+    }
+
+    public function getFieldTypeName()
+    {
+        return ucfirst($this->inputName) . 'SortFieldType';
+    }
+
     public function attributes()
     {
         return [
-            'name' => ucfirst($this->inputName) .'SortInputType',
+            'name' => $this->getName(),
             'description' => 'Define the sorting',
         ];
     }
 
-    public function fields()
+    public function getFieldType()
     {
         $values = [];
         foreach ($this->sortableFields as $fieldAlias => $fieldName) {
@@ -94,19 +105,36 @@ class SortInputTypeCreator extends TypeCreator
             ];
         }
 
-        $sortableField = new EnumType([
-            'name' => ucfirst($this->inputName) . 'SortFieldType',
+        return new EnumType([
+            'name' => $this->getFieldTypeName(),
             'description' => 'Field name to sort by.',
             'values' => $values,
         ]);
 
+    }
+
+    /**
+     * @return mixed
+     * @throws NotFoundExceptionInterface
+     */
+    public function getSortDirectionType()
+    {
+        return Injector::inst()->get(SortDirectionTypeCreator::class)->toType();
+    }
+
+    /**
+     * @return array
+     * @throws NotFoundExceptionInterface
+     */
+    public function fields()
+    {
         return [
             'field' => [
-                'type' => Type::nonNull($sortableField),
+                'type' => Type::nonNull($this->manager->getType($this->getFieldTypeName())),
                 'description' => 'Sort field name.',
             ],
             'direction' => [
-                'type' => Injector::inst()->get(SortDirectionTypeCreator::class)->toType(),
+                'type' => $this->getSortDirectionType(),
                 'description' => 'Sort direction (ASC / DESC)',
             ]
         ];

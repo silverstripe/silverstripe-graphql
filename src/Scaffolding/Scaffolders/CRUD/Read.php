@@ -2,19 +2,14 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
-use Exception;
-use GraphQL\Type\Definition\ResolveInfo;
-use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
-use SilverStripe\ORM\DataList;
-use SilverStripe\ORM\DataObjectInterface;
-use SilverStripe\Security\Member;
 
 /**
  * Scaffolds a generic read operation for DataObjects.
  */
-class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterface
+class Read extends ListQueryScaffolder implements CRUDInterface
 {
     /**
      * Read constructor.
@@ -23,17 +18,11 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
      */
     public function __construct($dataObjectClass)
     {
-        parent::__construct(null, null, $this, $dataObjectClass);
+        parent::__construct(null, null, null, $dataObjectClass);
+        $this->setResolverFactory(ReadResolverFactory::create($this->getDataObjectClass()));
+
     }
 
-    /**
-     * @param array $args
-     * @return DataList
-     */
-    protected function getResults($args)
-    {
-        return DataList::create($this->getDataObjectClass());
-    }
 
     /**
      * @return string
@@ -49,36 +38,7 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
         return 'read' . ucfirst($typePlural);
     }
 
-    /**
-     * @param Member $member
-     * @return boolean
-     */
-    protected function checkPermission(Member $member = null)
-    {
-        return $this->getDataObjectInstance()->canView($member);
-    }
 
-    /**
-     * @param DataObjectInterface $object
-     * @param array $args
-     * @param array $context
-     * @param ResolveInfo $info
-     * @return mixed
-     * @throws Exception
-     */
-    public function resolve($object, array $args, $context, ResolveInfo $info)
-    {
-        if (!$this->checkPermission($context['currentUser'])) {
-            throw new Exception(sprintf(
-                'Cannot view %s',
-                $this->getDataObjectClass()
-            ));
-        }
-
-        $list = $this->getResults($args);
-        $this->extend('updateList', $list, $args, $context, $info);
-        return $list;
-    }
 
     /**
      * Pluralise a name

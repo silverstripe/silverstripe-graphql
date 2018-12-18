@@ -10,6 +10,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\ORM\ArrayList;
 
@@ -27,19 +28,24 @@ abstract class OperationScaffolder implements ConfigurationApplier
      *
      * @var string
      */
-    private $typeName;
+    protected $typeName;
 
     /**
      * Name of operation
      *
      * @var string
      */
-    private $operationName;
+    protected $operationName;
 
     /**
      * @var OperationResolver|callable
      */
-    private $resolver;
+    protected $resolver;
+
+    /**
+     * @var ResolverFactory
+     */
+    protected $resolverFactory;
 
     /**
      * List of argument scaffolders
@@ -363,6 +369,17 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
+     * @param ResolverFactory $factory
+     * @return $this
+     */
+    public function setResolverFactory($factory)
+    {
+        $this->resolverFactory = $factory;
+
+        return $this;
+    }
+
+    /**
      * @param array $config
      * @return $this
      * @throws Exception
@@ -402,6 +419,9 @@ abstract class OperationScaffolder implements ConfigurationApplier
         if (isset($config['resolver'])) {
             $this->setResolver($config['resolver']);
         }
+        if (isset($config['resolverFactory'])) {
+            $this->setResolverFactory($config['resolverFactory']);
+        }
         if (isset($config['name'])) {
             $this->setName($config['name']);
         }
@@ -412,12 +432,14 @@ abstract class OperationScaffolder implements ConfigurationApplier
     /**
      * Based on the type of resolver, create a function that invokes it.
      *
-     * @return callable
+     * @return callable|null
      */
     protected function createResolverFunction()
     {
         $resolver = $this->resolver;
-
+        if (!$resolver) {
+            return null;
+        }
         return function () use ($resolver) {
             $args = func_get_args();
             if (is_callable($resolver)) {

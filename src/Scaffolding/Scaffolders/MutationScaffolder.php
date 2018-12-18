@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
+use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
@@ -10,6 +11,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
+use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
 
 /**
  * Scaffolds a GraphQL mutation field.
@@ -48,17 +50,18 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
 
     /**
      * @param Manager $manager
-     *
-     * @return array
+     * @throws Error
+     * @return SerialisableFieldDefinition
      */
     public function scaffold(Manager $manager)
     {
-        return [
+        return SerialisableFieldDefinition::create([
             'name' => $this->getName(),
             'args' => $this->createArgs($manager),
             'type' => $this->getType($manager),
             'resolve' => $this->createResolverFunction(),
-        ];
+            'resolverFactory' => $this->resolverFactory,
+        ]);
     }
 
     public function getTypeName()

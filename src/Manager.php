@@ -2,28 +2,35 @@
 
 namespace SilverStripe\GraphQL;
 
+use GraphQL\Type\Definition\FieldDefinition;
+use GraphQL\Type\SchemaConfig;
 use InvalidArgumentException;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\Language\SourceLocation;
-use GraphQL\Schema;
+use GraphQL\Type\Schema;
 use GraphQL\GraphQL;
+use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Injector\Injectable;
-use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\Deprecation;
+use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
+use SilverStripe\GraphQL\Serialisation\SerialisableObjectType;
+use SilverStripe\GraphQL\Serialisation\TypeStoreConsumer;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use Closure;
+use Psr\Container\NotFoundExceptionInterface;
+use Psr\SimpleCache\InvalidArgumentException as CacheException;
 use SilverStripe\Security\Security;
 use BadMethodCallException;
 use Exception;
@@ -45,6 +52,12 @@ class Manager implements ConfigurationApplier
     const MUTATION_ROOT = 'mutation';
 
     const TYPES_ROOT = 'types';
+
+    const SCHEMA_CACHE_KEY = 'schema';
+
+    private static $dependencies = [
+        'typeStore' => '%$' . TypeStoreInterface::class,
+    ];
 
     /**
      * @var string
@@ -89,6 +102,21 @@ class Manager implements ConfigurationApplier
     protected $extraContext = [];
 
     /**
+     * @var CacheInterface
+     */
+    protected $cache;
+
+    /**
+     * @var array
+     */
+    protected $schemaConfig;
+
+    /**
+     * @var TypeStoreInterface
+     */
+    protected $typeStore;
+
+    /**
      * @return QueryMiddleware[]
      */
     public function getMiddlewares()
@@ -107,6 +135,25 @@ class Manager implements ConfigurationApplier
     }
 
     /**
+     * @return CacheInterface
+     */
+    public function getCache()
+    {
+        return $this->cache;
+    }
+
+    /**
+     * @param CacheInterface $cache
+     * @return $this
+     */
+    public function setCache(CacheInterface $cache)
+    {
+        $this->cache = $cache;
+
+        return $this;
+    }
+
+    /**
      * @param QueryMiddleware $middleware
      * @return $this
      */
@@ -114,6 +161,25 @@ class Manager implements ConfigurationApplier
     {
         $this->middlewares[] = $middleware;
         return $this;
+    }
+
+    /**
+     * @param TypeStoreInterface $typeStore
+     * @return $this
+     */
+    public function setTypeStore(TypeStoreInterface $typeStore)
+    {
+        $this->typeStore = $typeStore;
+
+        return $this;
+    }
+
+    /**
+     * @return TypeStoreInterface
+     */
+    public function getTypeStore()
+    {
+        return $this->typeStore;
     }
 
     /**
@@ -155,6 +221,7 @@ class Manager implements ConfigurationApplier
      * @param $config
      * @param string $schemaKey
      * @return Manager
+     * @throws NotFoundExceptionInterface
      * @deprecated 4.0
      */
     public static function createFromConfig($config, $schemaKey = null)
@@ -169,10 +236,13 @@ class Manager implements ConfigurationApplier
     /**
      * Applies a configuration based on the schemaKey property
      *
+     * @param bool $regenerate
      * @return Manager
      * @throws Exception
+     * @throws CacheException
+     * @throws NotFoundExceptionInterface
      */
-    public function configure()
+    public function build($regenerate = false)
     {
         if (!$this->getSchemaKey()) {
             throw new BadMethodCallException(sprintf(
@@ -182,15 +252,67 @@ class Manager implements ConfigurationApplier
             ));
         }
 
-        $schemas = $this->config()->get('schemas');
-        $config = isset($schemas[$this->getSchemaKey()]) ? $schemas[$this->getSchemaKey()] : [];
+        $cache = $this->getCache();
+        $schemaConfig = null;
 
-        return $this->applyConfig($config);
+        if (!$regenerate && $cache && $cache->get(self::SCHEMA_CACHE_KEY)) {
+            $serialised = $cache->get(self::SCHEMA_CACHE_KEY);
+            $cached = unserialize($serialised);
+            $typeStore = $cached['typeStore'];
+            $this->setTypeStore($typeStore);
+            $schemaConfig = $cached['schemaConfig'];
+        } else {
+            $schemas = $this->config()->get('schemas');
+            $config = isset($schemas[$this->getSchemaKey()]) ? $schemas[$this->getSchemaKey()] : [];
+            $this->applyConfig($config);
+            $schemaConfig = $this->buildSchemaConfig();
+            if ($cache) {
+                $cached = [
+                    'schemaConfig' => $schemaConfig,
+                    'typeStore' => $this->getTypeStore(),
+                ];
+                $serialised = serialize($cached);
+                $cache->clear();
+                $cache->set(self::SCHEMA_CACHE_KEY, $serialised);
+            }
+        }
+
+//        $schemaConfig->setTypeLoader(function ($name) {
+//            return $this->getTypeStore()->getType($name);
+//        });
+        foreach ($this->getTypeStore()->getAll() as $type) {
+            if ($type instanceof TypeStoreConsumer) {
+                $type->loadFromTypeStore($this->getTypeStore());
+            }
+        }
+        $schemaConfig->getQuery()->loadFromTypeStore($this->getTypeStore());
+
+        $this->schemaConfig = $schemaConfig;
+
+        return $this;
+    }
+
+    /**
+     * @deprecated 4.0 Use Manager::build() instead
+     */
+    public function configure()
+    {
+        Deprecation::notice(
+            '4.0',
+            sprintf(
+                '%s::%s is deprecated. Use %s::build() instead',
+                __CLASS__,
+                __FUNCTION__,
+                __CLASS__
+            )
+        );
     }
 
     /**
      * @param array $config An array with optional 'types' and 'queries' keys
      * @return Manager
+     * @throws NotFoundExceptionInterface
+     * @throws Error
      */
     public function applyConfig(array $config)
     {
@@ -228,9 +350,7 @@ class Manager implements ConfigurationApplier
                     ));
                 }
 
-                $this->addQuery(function () use ($queryCreator) {
-                    return $queryCreator->toArray();
-                }, $name);
+                $this->addQuery($queryCreator->toField(), $name);
             }
         }
 
@@ -245,9 +365,7 @@ class Manager implements ConfigurationApplier
                     ));
                 }
 
-                $this->addMutation(function () use ($mutationCreator) {
-                    return $mutationCreator->toArray();
-                }, $name);
+                $this->addMutation($mutationCreator->toField(), $name);
             }
         }
 
@@ -288,34 +406,40 @@ class Manager implements ConfigurationApplier
      */
     public function schema()
     {
-        $schema = [
-            // usually inferred from 'query', but required for polymorphism on InterfaceType-based query results
-            self::TYPES_ROOT => $this->types,
-        ];
+        if (!$this->schemaConfig) {
+            throw new BadMethodCallException(sprintf(
+                'No schema config available. Did you call %s before build()?',
+                __FUNCTION__
+            ));
+        }
+        return new Schema($this->schemaConfig);
+    }
 
+    /**
+     * @return SchemaConfig
+     */
+    protected function buildSchemaConfig()
+    {
+        $config = new SchemaConfig();
         if (!empty($this->queries)) {
-            $schema[self::QUERY_ROOT] = new ObjectType([
+            $config->setQuery(new SerialisableObjectType([
                 'name' => 'Query',
-                'fields' => function () {
-                    return array_map(function ($query) {
-                        return is_callable($query) ? $query() : $query;
-                    }, $this->queries);
-                },
-            ]);
+                'fields' => array_map(function ($query) {
+                    return is_callable($query) ? $query() : $query;
+                }, $this->queries),
+            ]));
         }
 
         if (!empty($this->mutations)) {
-            $schema[self::MUTATION_ROOT] = new ObjectType([
+            $config->setMutation(new SerialisableObjectType([
                 'name' => 'Mutation',
-                'fields' => function () {
-                    return array_map(function ($mutation) {
-                        return is_callable($mutation) ? $mutation() : $mutation;
-                    }, $this->mutations);
-                },
-            ]);
+                'fields' => array_map(function ($mutation) {
+                    return is_callable($mutation) ? $mutation() : $mutation;
+                }, $this->mutations),
+            ]));
         }
 
-        return new Schema($schema);
+        return $config;
     }
 
     /**
@@ -352,7 +476,7 @@ class Manager implements ConfigurationApplier
         $context = $this->getContext();
 
         $last = function ($schema, $query, $context, $params) {
-            return GraphQL::executeAndReturnResult($schema, $query, null, $context, $params);
+            return GraphQL::executeQuery($schema, $query, null, $context, $params);
         };
 
         return $this->callMiddleware($schema, $query, $context, $params, $last);
@@ -367,11 +491,7 @@ class Manager implements ConfigurationApplier
      */
     public function addType(Type $type, $name = '')
     {
-        if (!$name) {
-            $name = (string)$type;
-        }
-
-        $this->types[$name] = $type;
+        $this->getTypeStore()->addType($type, $name);
     }
 
     /**
@@ -382,11 +502,12 @@ class Manager implements ConfigurationApplier
      */
     public function getType($name)
     {
-        if (isset($this->types[$name])) {
-            return $this->types[$name];
-        } else {
+        $type = $this->getTypeStore()->getType($name);
+        if (!$type) {
             throw new InvalidArgumentException("Type '$name' is not a registered GraphQL type");
         }
+
+        return $type;
     }
 
     /**
@@ -396,14 +517,14 @@ class Manager implements ConfigurationApplier
      */
     public function hasType($name)
     {
-        return isset($this->types[$name]);
+        return $this->getTypeStore()->hasType($name);
     }
 
     /**
      * Register a new Query. Query can be defined as a closure to ensure
      * dependent types are lazy loaded.
      *
-     * @param array|Closure $query
+     * @param array|FieldDefinition|Closure $query
      * @param string $name Identifier for this query (unique in schema)
      */
     public function addQuery($query, $name)
@@ -426,7 +547,7 @@ class Manager implements ConfigurationApplier
      * Register a new mutation. Mutations can be callbacks to ensure
      * dependent types are lazy-loaded.
      *
-     * @param array|Closure $mutation
+     * @param array|FieldDefinition|Closure $mutation
      * @param string $name Identifier for this mutation (unique in schema)
      */
     public function addMutation($mutation, $name)
@@ -537,6 +658,7 @@ class Manager implements ConfigurationApplier
      *
      * @param $id
      * @return string | null
+     * @throws NotFoundExceptionInterface
      */
     public function getQueryFromPersistedID($id)
     {
@@ -571,7 +693,7 @@ class Manager implements ConfigurationApplier
 
     /**
      * @param string $key
-     * @param any $value
+     * @param mixed $value
      * @return $this
      */
     public function addContext($key, $value)
