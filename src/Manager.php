@@ -254,14 +254,7 @@ class Manager implements ConfigurationApplier
 
         $cache = $this->getCache();
         $schemaConfig = null;
-
-        if (!$regenerate && $cache && $cache->get(self::SCHEMA_CACHE_KEY)) {
-            $serialised = $cache->get(self::SCHEMA_CACHE_KEY);
-            $cached = unserialize($serialised);
-            $typeStore = $cached['typeStore'];
-            $this->setTypeStore($typeStore);
-            $schemaConfig = $cached['schemaConfig'];
-        } else {
+        if ($regenerate || !$cache || !$cache->get(self::SCHEMA_CACHE_KEY)) {
             $schemas = $this->config()->get('schemas');
             $config = isset($schemas[$this->getSchemaKey()]) ? $schemas[$this->getSchemaKey()] : [];
             $this->applyConfig($config);
@@ -277,15 +270,19 @@ class Manager implements ConfigurationApplier
             }
         }
 
-//        $schemaConfig->setTypeLoader(function ($name) {
-//            return $this->getTypeStore()->getType($name);
-//        });
+        $serialised = $cache->get(self::SCHEMA_CACHE_KEY);
+        $cached = unserialize($serialised);
+        $typeStore = $cached['typeStore'];
+        $this->setTypeStore($typeStore);
+        $schemaConfig = $cached['schemaConfig'];
+
         foreach ($this->getTypeStore()->getAll() as $type) {
             if ($type instanceof TypeStoreConsumer) {
                 $type->loadFromTypeStore($this->getTypeStore());
             }
         }
         $schemaConfig->getQuery()->loadFromTypeStore($this->getTypeStore());
+        $schemaConfig->getMutation()->loadFromTypeStore($this->getTypeStore());
 
         $this->schemaConfig = $schemaConfig;
 

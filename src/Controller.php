@@ -73,7 +73,7 @@ class Controller extends BaseController implements Flushable
             // is a massive architectural change.
             StaticSchema::reset();
             $regen = isset($_GET['regen']);
-            $this->manager->build($regen);
+            $this->manager->build(true);
         }
     }
 

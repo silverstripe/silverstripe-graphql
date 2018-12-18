@@ -142,10 +142,12 @@ class Connection implements OperationResolver
      * @param ResolverFactory $factory
      * @return $this
      */
-    public function setResolverFactory(ResolverFactory $factory)
+    public function setResolverFactory(ResolverFactory $factory = null)
     {
         $this->resolverFactory = $factory;
-        $this->applyResolverFactory($factory);
+        if ($factory) {
+            $this->applyResolverFactory($factory);
+        }
         return $this;
     }
 

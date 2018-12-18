@@ -360,10 +360,11 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             $queryScaffolder = new ListQueryScaffolder(
                 $fieldName,
                 null,
-                function ($obj) use ($fieldName) {
-                    /* @var DataObject $obj */
-                    return $obj->obj($fieldName);
-                },
+                [FieldAccessorResolver::class, 'resolve'],
+//                function ($obj) use ($fieldName) {
+//                    /* @var DataObject $obj */
+//                    return $obj->obj($fieldName);
+//                },
                 $result->dataClass()
             );
         }

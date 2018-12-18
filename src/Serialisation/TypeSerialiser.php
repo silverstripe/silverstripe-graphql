@@ -9,9 +9,9 @@ use Closure;
 
 class TypeSerialiser implements TypeSerialiserInterface
 {
-    const LIST_OF = 'ListOf';
+    const LIST_OF = '[]';
 
-    const NON_NULL = 'NonNull';
+    const NON_NULL = '!';
 
     const RXP_LIST_OF = '/^\[[A-Za-z0-9_!]+\]$/';
 
@@ -101,9 +101,9 @@ class TypeSerialiser implements TypeSerialiserInterface
     {
         switch ($symbol) {
             case self::LIST_OF:
-                return preg_replace(self::RXP_LIST_OF, '', $str);
+                return trim($str, self::LIST_OF);
             case self::NON_NULL:
-                return preg_replace(self::RXP_NON_NULL, '', $str);
+                return rtrim($str, self::NON_NULL);
             default:
                 throw new InvalidArgumentException(sprintf('Invalid symbol: "%s"', $symbol));
         }

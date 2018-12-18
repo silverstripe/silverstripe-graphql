@@ -202,6 +202,9 @@ class SerialisableFieldDefinition extends FieldDefinition implements TypeStoreCo
         } else {
             $this->type = $serialiser->serialiseType($this->getType());
         }
+        if ($this->resolverFactory) {
+            $this->resolveFn = null;
+        }
 
         return [
             'name',
@@ -210,6 +213,7 @@ class SerialisableFieldDefinition extends FieldDefinition implements TypeStoreCo
             'description',
             'deprecationReason',
             'resolverFactory',
+            'resolveFn',
         ];
     }
 
