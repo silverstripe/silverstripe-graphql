@@ -352,7 +352,7 @@ class Manager implements ConfigurationApplier
         $context = $this->getContext();
 
         $last = function ($schema, $query, $context, $params) {
-            return GraphQL::executeAndReturnResult($schema, $query, null, $context, $params);
+            return GraphQL::executeQuery($schema, $query, null, $context, $params);
         };
 
         return $this->callMiddleware($schema, $query, $context, $params, $last);
