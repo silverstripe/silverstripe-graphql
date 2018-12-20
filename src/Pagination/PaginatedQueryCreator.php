@@ -23,15 +23,14 @@ abstract class PaginatedQueryCreator extends QueryCreator implements OperationRe
 
     /**
      * Get connection for this query
-     * @param Manager $manager
      * @return Connection
      */
-    abstract public function createConnection(Manager $manager);
+    abstract public function createConnection();
 
     public function getConnection()
     {
         if (!$this->connection) {
-            $this->connection = $this->createConnection($this->manager);
+            $this->connection = $this->createConnection();
         }
 
         return $this->connection;

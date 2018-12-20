@@ -33,11 +33,10 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
 
     /**
      * Connection is passed in through the constructor argument,
-     * to allow the instance to be created by the external scaffolding logic.
-     * @param Manager $manager
+     * to allow the instance to be created by the external scaffolding logic.     
      * @return Connection
      */
-    public function createConnection(Manager $manager)
+    public function createConnection()
     {
         return $this->connection;
     }
