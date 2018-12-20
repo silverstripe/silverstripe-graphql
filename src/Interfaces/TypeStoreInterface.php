@@ -9,7 +9,7 @@ interface TypeStoreInterface
     /**
      * @param Type $type
      * @param string $name
-     * @return void
+     * @return $this
      */
     public function addType(Type $type, $name = null);
 
@@ -31,8 +31,13 @@ interface TypeStoreInterface
     public function getAll();
 
     /**
-     * @param array $types
-     * @return mixed
+     * @return $this
      */
-    public function initialise($types);
+    public function initialise();
+
+    /**
+     * @param array $types
+     * @return $this
+     */
+    public function addTypes($types);
 }

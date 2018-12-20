@@ -40,24 +40,28 @@ class TypeStore implements TypeStoreInterface
     /**
      * @param Type $type
      * @param string|null $name
+     * @return $this
      */
     public function addType(Type $type, $name = null)
     {
         if ($this->frozen) {
-            throw new BadMethodCallException(sprintf(
-                'Attempted to add type %s after type store was frozen',
-                $type->name
-            ));
+//            throw new BadMethodCallException(sprintf(
+//                'Attempted to add type %s after type store was frozen',
+//                $type->name
+//            ));
         }
         $typeName = $name ?: (string) $type;
         if (!$this->hasType($typeName)) {
-            $this->registry[$typeName] = function () use ($type) {
-                if ($type instanceof TypeStoreConsumer) {
-                    $type->loadFromTypeStore($this);
-                }
-                return $type;
-            };
+            $this->registry[$typeName] = $type;
+//            function () use ($type) {
+//                if ($type instanceof TypeStoreConsumer) {
+////                    $type->loadFromTypeStore($this);
+//                }
+//                return $type;
+//            };
         }
+
+        return $this;
     }
 
     /**
@@ -79,13 +83,29 @@ class TypeStore implements TypeStoreInterface
 
     /**
      * @param array $types
-     * @return $this|mixed
+     * @return $this
      */
-    public function initialise($types)
+    public function addTypes($types)
     {
         foreach ($types as $name => $type) {
             $this->addType($type, $name);
         }
+
+        return $this;
+    }
+
+    public function initialise()
+    {
+        if ($this->frozen) {
+            //throw new BadMethodCallException('Type store is already initialised.');
+        }
+        foreach ($this->registry as $type) {
+            if ($type instanceof TypeStoreConsumer) {
+                $type->loadFromTypeStore($this);
+            }
+        }
+
+        $this->frozen = true;
 
         return $this;
     }

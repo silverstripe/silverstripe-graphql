@@ -6,7 +6,7 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\Core\Injector\Injector;
 use GraphQL\Type\Definition\EnumType;
-use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Serialisation\SerialisableEnumType;
 use SilverStripe\GraphQL\TypeCreator;
 use Psr\Container\NotFoundExceptionInterface;
 /**
@@ -35,13 +35,17 @@ class SortInputTypeCreator extends TypeCreator
     protected $inputObject = true;
 
     /**
+     * @var EnumType
+     */
+    protected $fieldType;
+
+    /**
      * Build a sort input creator with a given name prefix.
      * @param string $name Prefix for this input type name.
-     * @param Manager $manager
      */
-    public function __construct($name, Manager $manager = null)
+    public function __construct($name)
     {
-        parent::__construct($manager);
+        parent::__construct();
         $this->inputName = $name;
     }
 
@@ -98,6 +102,10 @@ class SortInputTypeCreator extends TypeCreator
 
     public function getFieldType()
     {
+        if ($this->fieldType) {
+            return $this->fieldType;
+        }
+
         $values = [];
         foreach ($this->sortableFields as $fieldAlias => $fieldName) {
             $values[$fieldAlias] = [
@@ -105,12 +113,13 @@ class SortInputTypeCreator extends TypeCreator
             ];
         }
 
-        return new EnumType([
+        $this->fieldType = new SerialisableEnumType([
             'name' => $this->getFieldTypeName(),
             'description' => 'Field name to sort by.',
             'values' => $values,
         ]);
 
+        return $this->fieldType;
     }
 
     /**
@@ -130,7 +139,7 @@ class SortInputTypeCreator extends TypeCreator
     {
         return [
             'field' => [
-                'type' => Type::nonNull($this->manager->getType($this->getFieldTypeName())),
+                'type' => Type::nonNull($this->getFieldType()),
                 'description' => 'Sort field name.',
             ],
             'direction' => [

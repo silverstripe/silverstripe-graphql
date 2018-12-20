@@ -8,14 +8,17 @@ use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\UnionType;
 use GraphQL\Utils\Utils;
-use Serializable;
 use Closure;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
+use SilverStripe\GraphQL\Serialisation\CodeGen\ArrayDefinition;
+use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
+use SilverStripe\GraphQL\Serialisation\CodeGen\ConfigurableObjectInstantiator;
+use SilverStripe\GraphQL\Serialisation\CodeGen\Expression;
+use SilverStripe\GraphQL\Serialisation\CodeGen\FunctionDefinition;
 
-class SerialisableUnionType extends UnionType
+class SerialisableUnionType extends UnionType implements CodeGenerator
 {
     use Injectable;
 
@@ -93,5 +96,37 @@ class SerialisableUnionType extends UnionType
             'name',
             'description',
         ];
+    }
+
+    /**
+     * @return ConfigurableObjectInstantiator
+     * @throws
+     */
+    public function toCode()
+    {
+
+        /* @var TypeSerialiserInterface $serialiser */
+        $serialiser = Injector::inst()->get(TypeSerialiserInterface::class);
+
+        $types = array_map(function ($type) use ($serialiser) {
+            return new Expression($serialiser->exportType($type));
+        }, $this->getTypes());
+
+        $config = [
+            'types' => new FunctionDefinition(new ArrayDefinition($types)),
+            'name' => $this->name,
+            'description' => $this->description,
+        ];
+
+        if (isset($this->config['resolveTypeFactory'])) {
+            $config['resolveTypeFactory'] = $this->config['resolveTypeFactory'];
+        } else if (isset($this->config['resolveType'])) {
+            $config['resolveType'] = $this->config['resolveType'];
+        }
+
+        return new ConfigurableObjectInstantiator(
+            ObjectType::class,
+            $config
+        );
     }
 }

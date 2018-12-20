@@ -15,6 +15,7 @@ use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
+use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
 use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
 use SilverStripe\GraphQL\Serialisation\SerialisableObjectType;
 use SilverStripe\GraphQL\Serialisation\TypeSerialiserInterface;
@@ -45,7 +46,7 @@ use Closure;
  *   }
  * </code>
  */
-class Connection implements OperationResolver
+class Connection implements OperationResolver, CodeGenerator
 {
     use Injectable;
 
@@ -107,6 +108,11 @@ class Connection implements OperationResolver
     protected $resolverFactory;
 
     /**
+     * @var ObjectType
+     */
+    protected $edgeType;
+
+    /**
      * The simple resolver that simply passes on the object
      * @param $obj
      * @return mixed
@@ -145,10 +151,16 @@ class Connection implements OperationResolver
     public function setResolverFactory(ResolverFactory $factory = null)
     {
         $this->resolverFactory = $factory;
-        if ($factory) {
-            $this->applyResolverFactory($factory);
-        }
+
         return $this;
+    }
+
+    /**
+     * @return ResolverFactory
+     */
+    public function getResolverFactory()
+    {
+        return $this->resolverFactory;
     }
 
     /**
@@ -337,9 +349,7 @@ class Connection implements OperationResolver
 
         if ($this->getSortableFields()) {
             $args['sortBy'] = [
-                'type' => Type::listOf($this->manager->getType(
-                    $this->getSortTypeCreator()->getName()
-                )),
+                'type' => Type::listOf($this->getSortTypeCreator()->toType()),
             ];
         }
 
@@ -360,7 +370,7 @@ class Connection implements OperationResolver
             ]),
             'edges' => SerialisableFieldDefinition::create([
                 'name' => 'edges',
-                'type' => Type::listOf($this->manager->getType($this->getEdgeTypeName())),
+                'type' => Type::listOf($this->getEdgeType()),
                 'description' => 'Collection of records',
                 'pure' => true,
             ])
@@ -376,20 +386,24 @@ class Connection implements OperationResolver
             throw new InvalidArgumentException('Missing connectedType callable');
         }
 
-        return new SerialisableObjectType([
-            'name' => $this->getEdgeTypeName(),
-            'description' => 'The collections edge',
-            'fields' => function () {
-                return [
-                    'node' => SerialisableFieldDefinition::create([
-                        'name' => 'node',
-                        'type' => $this->getConnectionType(),
-                        'description' => 'The node at the end of the collections edge',
-                        'resolve' => [static::class, 'nodeResolver']
-                    ])
-                ];
-            }
-        ]);
+        if (!$this->edgeType) {
+            $this->edgeType = new SerialisableObjectType([
+                'name' => $this->getEdgeTypeName(),
+                'description' => 'The collections edge',
+                'fields' => function () {
+                    return [
+                        'node' => SerialisableFieldDefinition::create([
+                            'name' => 'node',
+                            'type' => $this->getConnectionType(),
+                            'description' => 'The node at the end of the collections edge',
+                            'resolve' => [static::class, 'nodeResolver']
+                        ])
+                    ];
+                }
+            ]);
+        }
+
+        return $this->edgeType;
     }
 
     /**
@@ -418,6 +432,9 @@ class Connection implements OperationResolver
      */
     public function resolve($value, array $args, $context, ResolveInfo $info)
     {
+        if ($this->resolverFactory) {
+            $this->applyResolverFactory($this->resolverFactory);
+        }
         $result = call_user_func_array(
             $this->connectionResolver,
             func_get_args()
@@ -427,7 +444,13 @@ class Connection implements OperationResolver
             throw new \Exception('Connection::resolve() must resolve to a SS_List instance.');
         }
 
-        return $this->resolveList($result, $args, $context, $info);
+        return $this->resolveList(
+            $result,
+            $args,
+            $this->getDefaultLimit(),
+            $this->getMaximumLimit(),
+            $this->getSortableFields()
+        );
     }
 
     /**
@@ -437,17 +460,23 @@ class Connection implements OperationResolver
      *
      * @param SS_List $list
      * @param array $args
-     * @param null $context
-     * @param ResolveInfo $info
+     * @param int $defaultLimit
+     * @param int $maximumLimit
+     * @param array $sortableFields
      * @return array
      */
-    public function resolveList($list, array $args, $context = null, ResolveInfo $info = null)
-    {
-        $limit = (isset($args['limit']) && $args['limit']) ? $args['limit'] : $this->defaultLimit;
+    public static function resolveList(
+        $list,
+        array $args,
+        $defaultLimit = 100,
+        $maximumLimit = 100,
+        $sortableFields = []
+    ) {
+        $limit = (isset($args['limit']) && $args['limit']) ? $args['limit'] : $defaultLimit;
         $offset = (isset($args['offset'])) ? $args['offset'] : 0;
 
-        if ($limit > $this->maximumLimit) {
-            $limit = $this->maximumLimit;
+        if ($limit > $maximumLimit) {
+            $limit = $maximumLimit;
         }
 
         $nextPage = false;
@@ -467,7 +496,6 @@ class Connection implements OperationResolver
         }
 
         if ($list instanceof Sortable) {
-            $sortableFields = $this->getSortableFields();
             if (isset($args['sortBy']) && !empty($args['sortBy'])) {
                 // convert the input from the input format of field, direction
                 // to an accepted SS_List sort format.
@@ -510,7 +538,7 @@ class Connection implements OperationResolver
      * @return array
      * @throws NotFoundExceptionInterface
      */
-    public function getExtraTypes()
+    public function extraTypes()
     {
         return [
             $this->getEdgeType(),
@@ -580,4 +608,8 @@ class Connection implements OperationResolver
         ];
     }
 
+    public function toCode()
+    {
+        return '';
+    }
 }

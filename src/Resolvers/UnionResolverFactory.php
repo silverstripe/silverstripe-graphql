@@ -6,27 +6,14 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
+use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
 use SilverStripe\ORM\DataObject;
 use Psr\Container\NotFoundExceptionInterface;
 use Exception;
 use Closure;
 
-class UnionResolverFactory implements ResolverFactory
+class UnionResolverFactory implements ResolverFactory, CodeGenerator
 {
-
-    /**
-     * @var array
-     */
-    protected $types = [];
-
-    /**
-     * UnionResolverFactory constructor.
-     * @param array $types
-     */
-    public function __construct($types)
-    {
-        $this->types = $types;
-    }
 
     /**
      * @return Closure
@@ -34,7 +21,9 @@ class UnionResolverFactory implements ResolverFactory
      */
     public function createResolver()
     {
+        // Todo: remove this coupling.
         $typeStore = Injector::inst()->get(TypeStoreInterface::class);
+
         return function ($obj) use ($typeStore) {
             if (!$obj instanceof DataObject) {
                 throw new Exception(sprintf(
@@ -55,5 +44,10 @@ class UnionResolverFactory implements ResolverFactory
                 get_class($obj)
             ));
         };
+    }
+
+    public function toCode()
+    {
+        return sprintf('new %s()', __CLASS__);
     }
 }

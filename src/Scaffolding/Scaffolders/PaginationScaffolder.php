@@ -68,12 +68,18 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
      */
     public function scaffold(Manager $manager)
     {
-        $connectionName = $this->connection->getConnectionTypeName();
+        $conn = $this->connection;
+        $connectionName = $conn->getConnectionTypeName();
         return SerialisableFieldDefinition::create([
             'name' => $this->operationName,
-            'args' => $this->connection->args(),
+            'args' => $conn->args(),
             'type' => $manager->getType($connectionName),
-            'resolverFactory' => PaginationResolverFactory::create($this->connection),
+            'resolverFactory' => PaginationResolverFactory::create(
+                $conn->getResolverFactory() ?: $conn->getConnectionResolver(),
+                $conn->getDefaultLimit(),
+                $conn->getMaximumLimit(),
+                $conn->getSortableFields()
+            )
         ]);
     }
 
@@ -84,7 +90,7 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
     public function addToManager(Manager $manager)
     {
         $manager->addType($this->connection->toType());
-        foreach ($this->connection->getExtraTypes() as $type) {
+        foreach ($this->connection->extraTypes() as $type) {
             $manager->addType($type);
         }
     }

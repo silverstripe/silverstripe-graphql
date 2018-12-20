@@ -11,6 +11,7 @@ use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Flushable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Injector\InjectorNotFoundException;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\Security\Member;
@@ -68,13 +69,6 @@ class Controller extends BaseController implements Flushable
         parent::__construct();
         $this->manager = $manager;
 
-        if ($this->manager && $this->manager->getSchemaKey()) {
-            // Side effect. This isn't ideal, but having multiple instances of StaticSchema
-            // is a massive architectural change.
-            StaticSchema::reset();
-            $regen = isset($_GET['regen']);
-            $this->manager->build(true);
-        }
     }
 
     /**
@@ -85,6 +79,13 @@ class Controller extends BaseController implements Flushable
      */
     public function index(HTTPRequest $request)
     {
+        if ($this->manager && $this->manager->getSchemaKey()) {
+            // Side effect. This isn't ideal, but having multiple instances of StaticSchema
+            // is a massive architectural change.
+            StaticSchema::reset();
+            $this->manager->build(false);
+        }
+
         $stage = $request->param('Stage');
         if ($stage && in_array($stage, [Versioned::DRAFT, Versioned::LIVE])) {
             Versioned::set_stage($stage);
@@ -444,20 +445,36 @@ class Controller extends BaseController implements Flushable
         }
     }
 
+    /**
+     * @return \Generator
+     * @throws InjectorNotFoundException
+     */
+    public static function getRoutedControllers()
+    {
+        $routes = Director::config()->get('rules');
+        foreach ($routes as $pattern => $controllerInfo) {
+            $routeClass = (is_string($controllerInfo)) ? $controllerInfo : $controllerInfo['Controller'];
+
+            try {
+                $routeController = Injector::inst()->get($routeClass);
+                if ($routeController instanceof self) {
+                    yield $pattern => $routeController;
+                }
+            } catch (InjectorNotFoundException $ex) {
+            }
+        }
+    }
+
+    /**
+     * @throws InjectorNotFoundException
+     */
     public static function flush()
     {
         // This is a bit of a hack to find all registered GraphQL servers. Depends on them
         // being routed through Director.
-        $routes = Director::config()->get('rules');
-        foreach ($routes as $pattern => $controllerInfo) {
-            $routeClass = (is_string($controllerInfo)) ? $controllerInfo : $controllerInfo['Controller'];
-            if (stristr($routeClass, Controller::class) !== false) {
-                $inst = Injector::inst()->convertServiceProperty($routeClass);
-                if ($inst instanceof Controller) {
-                    /* @var Controller $inst */
-                    $inst->processTypeCaching();
-                }
-            }
+        /* @var Controller */
+        foreach (static::getRoutedControllers() as $controller) {
+            $controller->processTypeCaching();
         }
     }
 

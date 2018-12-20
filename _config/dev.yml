@@ -1,0 +1,9 @@
+---
+Name: graphql-dev
+---
+SilverStripe\Dev\DevelopmentAdmin:
+  registered_controllers:
+    schema:
+      controller: SilverStripe\GraphQL\Dev\SchemaGeneratorController
+      links:
+        schema: 'Regenerate a GraphQL schema.'

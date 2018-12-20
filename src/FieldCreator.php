@@ -68,6 +68,16 @@ class FieldCreator
     }
 
     /**
+     * If the field creates types dynamically, use this hook to add them
+     * to the manager
+     * @return array
+     */
+    public function extraTypes()
+    {
+        return [];
+    }
+
+    /**
      * Merge all attributes for this query (type, attributes, resolvers, etc).
      *
      * @return array
@@ -92,6 +102,7 @@ class FieldCreator
 
         return $attributes;
     }
+
     /**
      * Convert the Fluent instance to an array.
      *
@@ -102,7 +113,7 @@ class FieldCreator
     public function toArray()
     {
         Deprecation::notice('4.0', 'Please use toField() instead');
-       return $this->toField();
+        return $this->toField();
     }
 
     /**
@@ -153,7 +164,7 @@ class FieldCreator
      */
     protected function getResolver()
     {
-        if (! method_exists($this, 'resolve')) {
+        if (!method_exists($this, 'resolve')) {
             return null;
         }
 

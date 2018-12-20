@@ -5,7 +5,7 @@
   "require": {
     "silverstripe/framework": "^4.2",
     "silverstripe/vendor-plugin": "^1.0",
-    "webonyx/graphql-php": "~0.8.0"
+    "webonyx/graphql-php": "~0.12.0"
   },
   "require-dev": {
     "phpunit/PHPUnit": "^5.7",

@@ -83,9 +83,11 @@ class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
         return SerialisableUnionType::create([
             'name' => $this->name,
             'types' => function () use ($manager, $types) {
-                return array_map(function ($item) use ($manager) {
-                    return $manager->getType($item);
-                }, $types);
+                return array_filter(
+                    array_map(function ($item) use ($manager) {
+                        return $manager->hasType($item)? $manager->getType($item) : null;
+                    }, $types)
+                );
             },
             'resolveType' => new UnionResolverFactory($types)
         ]);

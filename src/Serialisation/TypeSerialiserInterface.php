@@ -24,4 +24,10 @@ interface TypeSerialiserInterface
      * @return Closure
      */
     public function getTypeCreator($typeStr);
+
+    /**
+     * @param Type $type
+     * @return string
+     */
+    public function exportType(Type $type);
 }

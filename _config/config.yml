@@ -35,7 +35,7 @@ SilverStripe\Core\Injector\Injector:
       Middlewares:
         CSRFMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.csrf'
         HTTPMethodMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.httpMethod'
-      Cache: '%$Psr\SimpleCache\CacheInterface.managerAdmin'
+      Cache: '%$Psr\SimpleCache\CacheInterface.managerDefault'
   SilverStripe\GraphQL\Controller.default:
     class: SilverStripe\GraphQL\Controller
     constructor:

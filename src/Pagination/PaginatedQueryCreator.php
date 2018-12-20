@@ -6,6 +6,7 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryCreator;
 use GraphQL\Type\Definition\ResolveInfo;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * A helper class for making a paginated query. A paginated query uses the
@@ -42,6 +43,15 @@ abstract class PaginatedQueryCreator extends QueryCreator implements OperationRe
     public function args()
     {
         return $this->getConnection()->args();
+    }
+
+    /**
+     * @return array
+     * @throws NotFoundExceptionInterface
+     */
+    public function extraTypes()
+    {
+        return $this->getConnection()->extraTypes();
     }
 
     public function type()

@@ -11,13 +11,14 @@ use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
 use Closure;
+use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
 
 class SerialisableFieldArgument extends FieldArgument implements TypeStoreConsumer
 {
     /**
      * @var InputType
      */
-    protected $type;
+    public $type;
 
     /**
      * @var bool

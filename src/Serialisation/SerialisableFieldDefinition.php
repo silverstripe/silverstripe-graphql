@@ -3,9 +3,9 @@
 namespace SilverStripe\GraphQL\Serialisation;
 
 use GraphQL\Error\Error;
+use GraphQL\Type\Definition\FieldArgument;
 use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\Type;
-use GraphQL\Type\Definition\WrappingType;
 use GraphQL\Utils\Utils;
 use Closure;
 use LogicException;
@@ -14,8 +14,14 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
 use Psr\Container\NotFoundExceptionInterface;
+use SilverStripe\GraphQL\Serialisation\CodeGen\ArrayDefinition;
+use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
+use SilverStripe\GraphQL\Serialisation\CodeGen\ConfigurableObjectInstantiator;
+use SilverStripe\GraphQL\Serialisation\CodeGen\Expression;
+use SilverStripe\ORM\ArrayList;
+use SilverStripe\View\ArrayData;
 
-class SerialisableFieldDefinition extends FieldDefinition implements TypeStoreConsumer
+class SerialisableFieldDefinition extends FieldDefinition implements TypeStoreConsumer, CodeGenerator
 {
     use Injectable;
 
@@ -226,6 +232,113 @@ class SerialisableFieldDefinition extends FieldDefinition implements TypeStoreCo
             $this->resolveFn = null;
             $this->applyResolverFactory($this->resolverFactory);
         }
+    }
+
+    /**
+     * @param FieldArgument $argument
+     * @return ArrayDefinition
+     * @throws Error
+     * @throws NotFoundExceptionInterface
+     */
+    protected function createArgCode(FieldArgument $argument)
+    {
+        Utils::invariant(
+            !$argument->astNode,
+            'Field argument %s is not serialisable because it has an astNode property assigned',
+            $argument->name
+        );
+
+        /* @var TypeSerialiser $serialiser */
+        $serialiser = Injector::inst()->get(TypeSerialiserInterface::class);
+        $typeCode = $serialiser->exportType($argument->getType());
+
+        return new ArrayDefinition([
+            'name' => $argument->name,
+            'type' => new Expression($typeCode),
+            'description' => $argument->description,
+            'defaultValue' => $argument->defaultValue,
+        ]);
+    }
+
+    /**
+     * @param null $varName
+     * @return ConfigurableObjectInstantiator|string
+     * @throws Error
+     * @throws NotFoundExceptionInterface
+     */
+    public function toCode()
+    {
+        $this->assertSerialisable();
+        /* @var TypeSerialiser $serialiser */
+        $serialiser = Injector::inst()->get(TypeSerialiserInterface::class);
+
+        $typeCode = $serialiser->exportType($this->getType());
+        $args = [];
+        foreach ($this->args as $argName => $argDef) {
+            $args[$argName] = new Expression((string) $this->createArgCode($argDef));
+        }
+        $config = [
+            'name' => $this->name,
+            'type' => new Expression($typeCode),
+
+        ];
+        if (!empty($this->args)) {
+            $config['args'] = new ArrayDefinition($args, 3);
+        }
+        if ($this->description) {
+            $config['description'] = $this->description;
+        }
+        if ($this->deprecationReason) {
+            $config['deprecationReason'] = $this->deprecationReason;
+        }
+
+        if ($this->resolverFactory) {
+            $config['resolverFactory'] = $this->resolverFactory instanceof CodeGenerator
+                ? new Expression((string) $this->resolverFactory->toCode())
+                : $this->resolverFactory;
+        } else {
+            $config['resolve'] = $this->resolveFn;
+        }
+
+        return new ConfigurableObjectInstantiator(__CLASS__, $config);
+    }
+
+//    public function toCode()
+//    {
+//        $this->assertSerialisable();
+//        /* @var TypeSerialiser $serialiser */
+//        $serialiser = Injector::inst()->get(TypeSerialiserInterface::class);
+//
+//        $typeCode = $serialiser->exportType($this->getType());
+//        $args = ArrayList::create();
+//        foreach ($this->args as $argName => $argDef) {
+//            $args->push(ArrayData::create([
+//                'Name' => $argName,
+//                'Expression' => $this->createArgCode($argDef),
+//            ]));
+//        }
+//        return ArrayData::create([
+//            'ClassName' => SerialisableFieldDefinition::class,
+//            'Name' => $this->name,
+//            'Type' => $typeCode,
+//            'Args' => $args,
+//            'Description' => $this->description,
+//            'DeprecationReason' => $this->deprecationReason,
+//            'ResolverFactory' => $this->exportResolverFactory(),
+//            'Resolver' => $this->resolveFn ? var_export($this->resolveFn, true) : null,
+//        ]);
+//
+//    }
+
+    protected function exportResolverFactory()
+    {
+        if (!$this->resolverFactory) {
+            return null;
+        }
+        if ($this->resolverFactory instanceof CodeGenerator) {
+            return $this->resolverFactory->toCode();
+        }
+        return var_export($this->resolverFactory);
     }
 
 }

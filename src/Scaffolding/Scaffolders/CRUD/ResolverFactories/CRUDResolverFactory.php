@@ -6,8 +6,9 @@ use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use Serializable;
+use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
 
-abstract class CRUDResolverFactory implements Serializable
+abstract class CRUDResolverFactory implements Serializable, CodeGenerator
 {
     use Injectable;
     use Extensible;
@@ -41,4 +42,12 @@ abstract class CRUDResolverFactory implements Serializable
         $this->setDataObjectClass($data['dataObjectClass']);
     }
 
+    public function toCode()
+    {
+        return sprintf(
+            'new %s(%s)',
+            static::class,
+            var_export($this->dataObjectClass, true)
+        );
+    }
 }

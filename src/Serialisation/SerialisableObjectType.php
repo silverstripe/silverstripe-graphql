@@ -11,8 +11,15 @@ use SilverStripe\Dev\Deprecation;
 use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Closure;
+use SilverStripe\GraphQL\Serialisation\CodeGen\ArrayDefinition;
+use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
+use SilverStripe\GraphQL\Serialisation\CodeGen\ConfigurableObjectInstantiator;
+use SilverStripe\GraphQL\Serialisation\CodeGen\Expression;
+use SilverStripe\GraphQL\Serialisation\CodeGen\FunctionDefinition;
+use SilverStripe\ORM\ArrayList;
+use SilverStripe\View\ArrayData;
 
-class SerialisableObjectType extends ObjectType implements TypeStoreConsumer
+class SerialisableObjectType extends ObjectType implements TypeStoreConsumer, CodeGenerator
 {
     /**
      * @var SerialisableFieldDefinition[]
@@ -110,5 +117,44 @@ class SerialisableObjectType extends ObjectType implements TypeStoreConsumer
             'fields',
         ];
     }
+
+    public function toCode()
+    {
+        $this->assertSerialisable();
+        $fields = [];
+        foreach ($this->getFields() as $fieldName => $fieldDef) {
+            $fields[$fieldName] = new Expression((string) $fieldDef->toCode());
+        }
+        return new ConfigurableObjectInstantiator(
+            ObjectType::class,
+            [
+                'name' => $this->name,
+                'description' => $this->description,
+                'fields' => new FunctionDefinition(new ArrayDefinition($fields, 4), 3),
+            ]
+        );
+    }
+//    public function toCode($varName = null)
+//    {
+//        $this->assertSerialisable();
+//        $fields = ArrayList::create();
+//        foreach ($this->getFields() as $fieldName => $fieldDef) {
+//            $fields->push(ArrayData::create([
+//                'Name' => $fieldName,
+//                'Expression' => $fieldDef->toCode(),
+//            ]));
+//        }
+//        return ArrayData::create([
+//            'ClassName' => ObjectType::class,
+//            'Name' => $this->name,
+//            'Description' => $this->description,
+//            'Fields' => $fields
+//        ]);
+//    }
+//
+//    public function render()
+//    {
+//        return $this->toCode()->renderWith('GraphQLObjectType');
+//    }
 
 }

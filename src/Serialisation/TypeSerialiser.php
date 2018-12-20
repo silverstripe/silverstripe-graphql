@@ -2,7 +2,9 @@
 
 namespace SilverStripe\GraphQL\Serialisation;
 
+use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Definition\WrappingType;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
 use Closure;
@@ -21,6 +23,19 @@ class TypeSerialiser implements TypeSerialiserInterface
      * @var array
      */
     protected $wrap = [];
+
+    /**
+     * @var array|Type[]
+     */
+    protected $builtInTypes = [];
+
+    /**
+     * TypeSerialiser constructor.
+     */
+    public function __construct()
+    {
+        $this->builtInTypes = Type::getAllBuiltInTypes();
+    }
 
     /**
      * @param Type $type
@@ -49,6 +64,11 @@ class TypeSerialiser implements TypeSerialiserInterface
         return $wrap;
     }
 
+    public function tokeniseType(Type $type)
+    {
+        return $this->unserialiseType($type->toString());
+    }
+
     /**
      * @param string $typeStr
      * @return Closure
@@ -60,9 +80,9 @@ class TypeSerialiser implements TypeSerialiserInterface
         return function (TypeStoreInterface $typeStore) use ($wrap) {
             $namedType = null;
             $namedTypeStr = array_pop($wrap);
-            $builtIns = Type::getAllBuiltInTypes();
-            if (isset($builtIns[$namedTypeStr])) {
-                $namedType = $builtIns[$namedTypeStr];
+
+            if (isset($this->builtInTypes[$namedTypeStr])) {
+                $namedType = $this->builtInTypes[$namedTypeStr];
             } else {
                 $namedType = $typeStore->getType($namedTypeStr);
             }
@@ -132,5 +152,47 @@ class TypeSerialiser implements TypeSerialiserInterface
                 ));
         }
     }
+
+    /**
+     * @param string $symbol
+     * @param string $wrapppedTypeCode
+     * @return string
+     */
+    protected function getTypeCodeForSymbol($symbol, $wrapppedTypeCode)
+    {
+        switch ($symbol) {
+            case self::NON_NULL:
+                return sprintf('Type::nonNull(%s)', $wrapppedTypeCode);
+
+            case self::LIST_OF:
+                return sprintf('Type::listOf(%s)', $wrapppedTypeCode);
+            default:
+                throw new InvalidArgumentException(sprintf(
+                    'Invalid symbol "%s"',
+                    $symbol
+                ));
+        }
+    }
+
+    public function exportType(Type $type)
+    {
+        $wrap = $this->tokeniseType($type);
+        $namedType = null;
+        $namedTypeStr = array_pop($wrap);
+
+        if (isset($this->builtInTypes[$namedTypeStr])) {
+            $namedType = sprintf('Type::%s()', strtolower($namedTypeStr));
+        } else {
+            // Todo: coupling to TypeStore. Maybe pass this in as a param and have TypeStore export code
+            $namedType = sprintf('$this->get(\'%s\')', $namedTypeStr);
+        }
+        $type = $namedType;
+        foreach (array_reverse($wrap) as $symbol) {
+            $type = $this->getTypeCodeForSymbol($symbol, $type);
+        }
+
+        return $type;
+    }
+
 
 }

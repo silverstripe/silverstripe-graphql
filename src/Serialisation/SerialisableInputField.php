@@ -9,8 +9,12 @@ use GraphQL\Utils\Utils;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use SilverStripe\GraphQL\Serialisation\CodeGen\ArrayDefinition;
+use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
+use SilverStripe\GraphQL\Serialisation\CodeGen\ConfigurableObjectInstantiator;
+use SilverStripe\GraphQL\Serialisation\CodeGen\Expression;
 
-class SerialisableInputField extends InputObjectField implements TypeStoreConsumer
+class SerialisableInputField extends InputObjectField implements TypeStoreConsumer, CodeGenerator
 {
     public function loadFromTypeStore(TypeStoreInterface $typeStore)
     {
@@ -56,5 +60,23 @@ class SerialisableInputField extends InputObjectField implements TypeStoreConsum
             'defaultValue',
             'description',
         ];
+    }
+
+    /**
+     * @return ConfigurableObjectInstantiator|string
+     * @throws NotFoundExceptionInterface
+     */
+    public function toCode()
+    {
+        /* @var TypeSerialiser $serialiser */
+        $serialiser = Injector::inst()->get(TypeSerialiserInterface::class);
+        $config = [
+            'name' => $this->name,
+            'type' => new Expression($serialiser->exportType($this->getType())),
+            'defaultValue' => $this->defaultValue,
+            'description' => $this->description,
+        ];
+
+        return new ArrayDefinition($config);
     }
 }
