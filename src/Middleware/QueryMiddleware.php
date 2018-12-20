@@ -3,7 +3,7 @@
 namespace SilverStripe\GraphQL\Middleware;
 
 use GraphQL\Executor\ExecutionResult;
-use GraphQL\Schema;
+use GraphQL\Type\Schema;
 
 /**
  * Represents middleware for evaluating a graphql query

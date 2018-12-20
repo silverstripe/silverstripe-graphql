@@ -4,8 +4,8 @@ namespace SilverStripe\GraphQL\Tests;
 
 use GraphQL\Error\Error;
 use GraphQL\Language\SourceLocation;
-use GraphQL\Schema;
 use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Schema;
 use InvalidArgumentException;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;

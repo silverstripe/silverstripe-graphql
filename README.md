@@ -1903,7 +1903,7 @@ Example middleware to log all mutations (but not queries):
 
 ```php
 <?php
-use GraphQL\Schema;
+use GraphQL\Type\Schema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 
 class MyMutationLoggingMiddleware implements QueryMiddleware

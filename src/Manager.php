@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL;
 use InvalidArgumentException;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\Language\SourceLocation;
-use GraphQL\Schema;
+use GraphQL\Type\Schema;
 use GraphQL\GraphQL;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;

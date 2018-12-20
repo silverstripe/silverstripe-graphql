@@ -2,7 +2,7 @@
 
 namespace SilverStripe\GraphQL\Middleware;
 
-use GraphQL\Schema;
+use GraphQL\Type\Schema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 use Exception;
 
