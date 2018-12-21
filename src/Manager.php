@@ -270,11 +270,12 @@ class Manager implements ConfigurationApplier
             ));
         }
         $cache = BASE_PATH . '/schema.inc.php';
-        if (!file_exists($cache)) {
+        if (!file_exists($cache) || $regenerate) {
             $this->regenerate();
         }
 
         include($cache);
+
         $className = $this->getSchemaKey() . '_' . md5($this->getSchemaKey());
         $registry = new $className();
         $schemaConfig = $this->createSchemaConfig();
@@ -284,17 +285,7 @@ class Manager implements ConfigurationApplier
         $schemaConfig->setQuery($registry->get('Query'));
         $schemaConfig->setMutation($registry->get('Mutation'));
         $this->setSchemaConfig($schemaConfig);
-//        $cache = $this->getCache();
-//        if ($cache) {
-//            if ($regenerate || !$cache->get(self::SCHEMA_CACHE_KEY)) {
-//                $this->regenerate();
-//            }
-//            $this->loadFromCache();
-//        } else {
-//            $this->bootConfig();
-//            $this->setSchemaConfig($this->createSchemaConfig());
-//        }
-//
+
         return $this;
     }
 
@@ -756,46 +747,19 @@ class Manager implements ConfigurationApplier
 
     /**
      * @throws CacheException
-     */
-    protected function loadFromCache()
-    {
-        $cache = $this->getCache();
-        $serialised = $cache->get(self::SCHEMA_CACHE_KEY);
-        $cached = unserialize($serialised);
-        /* @var TypeStoreInterface $typeStore */
-        $typeStore = $cached['typeStore'];
-        /* @var SchemaConfig $schemaConfig */
-        $schemaConfig = $cached['schemaConfig'];
-        $schemaConfig->getQuery()->loadFromTypeStore($typeStore);
-        $schemaConfig->getMutation()->loadFromTypeStore($typeStore);
-
-        $typeStore->initialise();
-
-        $this->setTypeStore($typeStore);
-        $this->setSchemaConfig($schemaConfig);
-    }
-
-    /**
-     * @throws CacheException
      * @throws Error
      * @throws NotFoundExceptionInterface
      */
     public function regenerate()
     {
-        $cache = $this->getCache();
         $this->bootConfig();
         $schemaConfig = $this->createSchemaConfig();
-        if ($cache) {
-            $cached = [
-                'schemaConfig' => $schemaConfig,
-                'typeStore' => $this->getTypeStore(),
-            ];
-            $methods = [];
-            $types = $this->getTypeStore()->getAll();
-            $types[] = $schemaConfig->getQuery();
-            $types[] = $schemaConfig->getMutation();
-            foreach($types as $type) {
-                $methods[] = <<<PHP
+        $methods = [];
+        $types = $this->getTypeStore()->getAll();
+        $types[] = $schemaConfig->getQuery();
+        $types[] = $schemaConfig->getMutation();
+        foreach($types as $type) {
+            $methods[] = <<<PHP
 private function {$type->name}()
 {
     return {$type->toCode()};
@@ -824,10 +788,6 @@ class {$this->getSchemaKey()}_{$hash}
 }
 PHP;
 file_put_contents(BASE_PATH . '/schema.inc.php', $code);
-//            die();
-//            $serialised = serialize($cached);
-//            $cache->clear();
-//            $cache->set(self::SCHEMA_CACHE_KEY, $serialised);
-        }
+
     }
 }

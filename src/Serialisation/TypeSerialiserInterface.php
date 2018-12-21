@@ -5,6 +5,9 @@ namespace SilverStripe\GraphQL\Serialisation;
 use GraphQL\Type\Definition\Type;
 use Closure;
 
+/*
+ * TODO: Refactor to be a TypeTokeniser or something to that effect
+ */
 interface TypeSerialiserInterface
 {
     /**

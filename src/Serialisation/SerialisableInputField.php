@@ -14,20 +14,8 @@ use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
 use SilverStripe\GraphQL\Serialisation\CodeGen\ConfigurableObjectInstantiator;
 use SilverStripe\GraphQL\Serialisation\CodeGen\Expression;
 
-class SerialisableInputField extends InputObjectField implements TypeStoreConsumer, CodeGenerator
+class SerialisableInputField extends InputObjectField implements CodeGenerator
 {
-    public function loadFromTypeStore(TypeStoreInterface $typeStore)
-    {
-        /* @var TypeSerialiser $serialiser */
-        $serialiser = Injector::inst()->get(TypeSerialiserInterface::class);
-
-        // If the type is defined as a string, parse it and load it from the type store
-        if (!$this->getType() instanceof Type) {
-            $typeCreator = $serialiser->getTypeCreator($this->getType());
-            $this->type = $typeCreator($typeStore);
-        }
-    }
-
     /**
      * @throws Error
      */
@@ -38,28 +26,6 @@ class SerialisableInputField extends InputObjectField implements TypeStoreConsum
             'Cannot serialise input type "%s" with astNode assigned',
             $this->name
         );
-    }
-
-    /**
-     * @return array
-     * @throws NotFoundExceptionInterface
-     * @throws Error{
-     */
-    public function __sleep()
-    {
-        $this->assertSerialisable();
-
-        /* @var TypeSerialiser $serialiser */
-        $serialiser = Injector::inst()->get(TypeSerialiserInterface::class);
-
-        $this->type = $serialiser->serialiseType($this->type);
-
-        return [
-            'name',
-            'type',
-            'defaultValue',
-            'description',
-        ];
     }
 
     /**

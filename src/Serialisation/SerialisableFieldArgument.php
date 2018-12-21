@@ -7,13 +7,9 @@ use GraphQL\Type\Definition\FieldArgument;
 use GraphQL\Type\Definition\InputType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Utils\Utils;
-use Psr\Container\NotFoundExceptionInterface;
-use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
 use Closure;
-use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
 
-class SerialisableFieldArgument extends FieldArgument implements TypeStoreConsumer
+class SerialisableFieldArgument extends FieldArgument
 {
     /**
      * @var InputType
@@ -77,20 +73,6 @@ class SerialisableFieldArgument extends FieldArgument implements TypeStoreConsum
     }
 
     /**
-     * @param TypeStoreInterface $typeStore
-     * @throws NotFoundExceptionInterface
-     */
-    public function loadFromTypeStore(TypeStoreInterface $typeStore)
-    {
-        /* @var TypeSerialiser $serialiser */
-        $serialiser = Injector::inst()->get(TypeSerialiserInterface::class);
-        if (!$this->type instanceof Type) {
-            $typeCreator = $serialiser->getTypeCreator($this->getType());
-            $this->type = $typeCreator($typeStore);
-        }
-    }
-
-    /**
      * @return InputType
      */
     public function getType()
@@ -127,35 +109,6 @@ class SerialisableFieldArgument extends FieldArgument implements TypeStoreConsum
             'typeCreator must use the callable array syntax. Closures are not allowed'
         );
 
-    }
-
-    /**
-     * @throws Error
-     * @throws NotFoundExceptionInterface
-     */
-    public function __sleep()
-    {
-        $this->assertSerialisable();
-        /* @var TypeSerialiser $serialiser */
-        $serialiser = Injector::inst()->get(TypeSerialiserInterface::class);
-
-        // If the type is "pure" we can assume there will only be one instance of it,
-        // and we do not have to guarantee a singleton.
-        if ($this->pure) {
-            $this->type = $this->getType();
-        } else {
-            $this->type = $serialiser->serialiseType($this->getType());
-        }
-
-        return [
-            'type',
-            'name',
-            'description',
-            'defaultValue',
-            'defaultValueExists',
-            'pure',
-            'typeCreator',
-        ];
     }
 
 }

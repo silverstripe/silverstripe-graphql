@@ -11,17 +11,14 @@ use Closure;
 use LogicException;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
 use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\GraphQL\Serialisation\CodeGen\ArrayDefinition;
 use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
 use SilverStripe\GraphQL\Serialisation\CodeGen\ConfigurableObjectInstantiator;
 use SilverStripe\GraphQL\Serialisation\CodeGen\Expression;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\View\ArrayData;
 
-class SerialisableFieldDefinition extends FieldDefinition implements TypeStoreConsumer, CodeGenerator
+class SerialisableFieldDefinition extends FieldDefinition implements CodeGenerator
 {
     use Injectable;
 
@@ -34,16 +31,6 @@ class SerialisableFieldDefinition extends FieldDefinition implements TypeStoreCo
      * @var Type
      */
     protected $type;
-
-    /**
-     * @var bool
-     */
-    protected $pure = false;
-
-    /**
-     * @var callable
-     */
-    protected $typeCreator;
 
     /**
      * Parent class has its own create() signature, so Injector trait is not compatible.
@@ -63,10 +50,6 @@ class SerialisableFieldDefinition extends FieldDefinition implements TypeStoreCo
      */
     public function __construct(array $config)
     {
-        if (isset($config['typeCreator'])) {
-            $this->typeCreator = $config['typeCreator'];
-            $config['type'] = $this->getType();
-        }
         // Workaround for private visibility in parent class
         $this->type = $config['type'];
 
@@ -80,28 +63,6 @@ class SerialisableFieldDefinition extends FieldDefinition implements TypeStoreCo
 
         // Overwrite the parent implementation :-(
         $this->args = (isset($config['args'])) ? SerialisableFieldArgument::createMap($config['args']) : [];
-        $this->pure = isset($config['pure']) ? (bool) $config['pure'] : false;
-
-    }
-
-    /**
-     * @param TypeStoreInterface $typeStore
-     * @throws NotFoundExceptionInterface
-     */
-    public function loadFromTypeStore(TypeStoreInterface $typeStore)
-    {
-        /* @var TypeSerialiser $serialiser */
-        $serialiser = Injector::inst()->get(TypeSerialiserInterface::class);
-
-        // If the type is defined as a string, parse it and load it from the type store
-        if (!$this->getType() instanceof Type) {
-            $typeCreator = $serialiser->getTypeCreator($this->getType());
-            $this->type = $typeCreator($typeStore);
-        }
-
-        foreach ($this->args as $arg) {
-            $arg->loadFromTypeStore($typeStore);
-        }
     }
 
     /**
@@ -111,9 +72,6 @@ class SerialisableFieldDefinition extends FieldDefinition implements TypeStoreCo
     {
         if ($this->type instanceof Type) {
             return $this->type;
-        }
-        if ($this->typeCreator) {
-            $this->type = call_user_func($this->typeCreator);
         }
         return $this->type;
     }
@@ -183,55 +141,6 @@ class SerialisableFieldDefinition extends FieldDefinition implements TypeStoreCo
             $this->name
         );
 
-        Utils::invariant(
-            !$this->typeCreator || !$this->typeCreator instanceof Closure,
-            'typeCreator must use the callable array syntax. Closures are not allowed'
-        );
-
-    }
-
-    /**
-     * @return array
-     * @throws Error
-     * @throws NotFoundExceptionInterface
-     */
-    public function __sleep()
-    {
-        $this->assertSerialisable();
-        /* @var TypeSerialiser $serialiser */
-        $serialiser = Injector::inst()->get(TypeSerialiserInterface::class);
-
-        // If the type is "pure" we can assume there will only be one instance of it,
-        // and we do not have to guarantee a singleton.
-        if ($this->pure) {
-            $this->type = $this->getType();
-        } else {
-            $this->type = $serialiser->serialiseType($this->getType());
-        }
-        if ($this->resolverFactory) {
-            $this->resolveFn = null;
-        }
-
-        return [
-            'name',
-            'type',
-            'args',
-            'description',
-            'deprecationReason',
-            'resolverFactory',
-            'resolveFn',
-        ];
-    }
-
-    /**
-     * @throws Error
-     */
-    public function __wakeup()
-    {
-        if($this->resolverFactory) {
-            $this->resolveFn = null;
-            $this->applyResolverFactory($this->resolverFactory);
-        }
     }
 
     /**
@@ -303,33 +212,9 @@ class SerialisableFieldDefinition extends FieldDefinition implements TypeStoreCo
         return new ConfigurableObjectInstantiator(__CLASS__, $config);
     }
 
-//    public function toCode()
-//    {
-//        $this->assertSerialisable();
-//        /* @var TypeSerialiser $serialiser */
-//        $serialiser = Injector::inst()->get(TypeSerialiserInterface::class);
-//
-//        $typeCode = $serialiser->exportType($this->getType());
-//        $args = ArrayList::create();
-//        foreach ($this->args as $argName => $argDef) {
-//            $args->push(ArrayData::create([
-//                'Name' => $argName,
-//                'Expression' => $this->createArgCode($argDef),
-//            ]));
-//        }
-//        return ArrayData::create([
-//            'ClassName' => SerialisableFieldDefinition::class,
-//            'Name' => $this->name,
-//            'Type' => $typeCode,
-//            'Args' => $args,
-//            'Description' => $this->description,
-//            'DeprecationReason' => $this->deprecationReason,
-//            'ResolverFactory' => $this->exportResolverFactory(),
-//            'Resolver' => $this->resolveFn ? var_export($this->resolveFn, true) : null,
-//        ]);
-//
-//    }
-
+    /**
+     * @return string|null
+     */
     protected function exportResolverFactory()
     {
         if (!$this->resolverFactory) {

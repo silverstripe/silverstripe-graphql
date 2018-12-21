@@ -84,20 +84,6 @@ class SerialisableUnionType extends UnionType implements CodeGenerator
         return $this->types;
     }
 
-    public function __sleep()
-    {
-        $this->types = $this->getTypes();
-        unset($this->config['resolveType']);
-        unset($this->config['types']);
-
-        return [
-            'types',
-            'config',
-            'name',
-            'description',
-        ];
-    }
-
     /**
      * @return ConfigurableObjectInstantiator
      * @throws

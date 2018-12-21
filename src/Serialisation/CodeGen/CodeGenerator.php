@@ -2,13 +2,10 @@
 
 namespace SilverStripe\GraphQL\Serialisation\CodeGen;
 
-use SilverStripe\View\ViewableData;
-
 interface CodeGenerator
 {
     /**
-     * @param string|null $varName
-     * @return ViewableData
+     * @return string
      */
     public function toCode();
 }

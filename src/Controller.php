@@ -83,7 +83,7 @@ class Controller extends BaseController implements Flushable
             // Side effect. This isn't ideal, but having multiple instances of StaticSchema
             // is a massive architectural change.
             StaticSchema::reset();
-            $this->manager->build(false);
+            $this->manager->build();
         }
 
         $stage = $request->param('Stage');

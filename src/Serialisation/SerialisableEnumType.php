@@ -8,7 +8,6 @@ use GraphQL\Utils\Utils;
 use SilverStripe\GraphQL\Serialisation\CodeGen\ArrayDefinition;
 use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
 use SilverStripe\GraphQL\Serialisation\CodeGen\ConfigurableObjectInstantiator;
-use SilverStripe\GraphQL\Serialisation\CodeGen\Expression;
 
 class SerialisableEnumType extends EnumType implements CodeGenerator
 {

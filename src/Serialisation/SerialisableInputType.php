@@ -6,7 +6,6 @@ use GraphQL\Error\Error;
 use GraphQL\Error\InvariantViolation;
 use GraphQL\Type\Definition\InputObjectField;
 use GraphQL\Type\Definition\InputObjectType;
-use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Utils\Utils;
 use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
@@ -15,10 +14,9 @@ use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
 use SilverStripe\GraphQL\Serialisation\CodeGen\ConfigurableObjectInstantiator;
 use SilverStripe\GraphQL\Serialisation\CodeGen\Expression;
 use SilverStripe\GraphQL\Serialisation\CodeGen\FunctionDefinition;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\View\ArrayData;
 
-class SerialisableInputType extends InputObjectType implements TypeStoreConsumer, CodeGenerator
+
+class SerialisableInputType extends InputObjectType implements CodeGenerator
 {
 
     protected $fields;
@@ -51,13 +49,6 @@ class SerialisableInputType extends InputObjectType implements TypeStoreConsumer
         return $this->fields;
     }
 
-    public function loadFromTypeStore(TypeStoreInterface $typeStore)
-    {
-        foreach ($this->getFields() as $fieldName => $field) {
-            $field->loadFromTypeStore($typeStore);
-        }
-    }
-
     /**
      * @throws Error
      */
@@ -70,17 +61,10 @@ class SerialisableInputType extends InputObjectType implements TypeStoreConsumer
         );
     }
 
-    public function __sleep()
-    {
-        $this->assertSerialisable();
-
-        return [
-            'name',
-            'description',
-            'fields',
-        ];
-    }
-
+    /**
+     * @return ConfigurableObjectInstantiator|string
+     * @throws Error
+     */
     public function toCode()
     {
         $this->assertSerialisable();
@@ -98,27 +82,4 @@ class SerialisableInputType extends InputObjectType implements TypeStoreConsumer
         );
     }
 
-//    public function toCode()
-//    {
-//        $this->assertSerialisable();
-//        $fields = ArrayList::create();
-//        foreach ($this->getFields() as $fieldName => $fieldDef) {
-//            $fields->push(ArrayData::create([
-//                'Name' => $fieldName,
-//                'Expression' => $fieldDef->toCode(),
-//            ]));
-//        }
-//
-//        return ArrayData::create([
-//            'ClassName' => InputObjectType::class,
-//            'Name' => $this->name,
-//            'Description' => $this->description,
-//            'Fields' => $fields
-//        ]);
-//    }
-
-//    public function render()
-//    {
-//        return $this->toCode()->renderWith('GraphQLObjectType');
-//    }
 }

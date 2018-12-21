@@ -86,6 +86,9 @@ class PaginationResolverFactory implements ResolverFactory, CodeGenerator
         };
     }
 
+    /**
+     * @return string
+     */
     public function toCode()
     {
         $resolverCode = $this->parentResolver instanceof CodeGenerator
