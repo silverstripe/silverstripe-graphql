@@ -188,8 +188,7 @@ class ManagerTest extends SapphireTest
         $responseData->data = null;
         $responseData->errors = [
             Error::createLocatedError(
-                'Something went wrong',
-                [new SourceLocation(1, 10)]
+                'Something went wrong'
             ),
         ];
         $mock->method('queryAndReturnResult')
