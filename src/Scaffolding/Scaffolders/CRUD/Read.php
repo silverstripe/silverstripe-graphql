@@ -19,7 +19,7 @@ class Read extends ListQueryScaffolder implements CRUDInterface
     public function __construct($dataObjectClass)
     {
         parent::__construct(null, null, null, $dataObjectClass);
-        $this->setResolverFactory(ReadResolverFactory::create($this->getDataObjectClass()));
+        $this->setResolverFactory(ReadResolverFactory::create(['dataObjectClass' => $this->getDataObjectClass()]));
 
     }
 

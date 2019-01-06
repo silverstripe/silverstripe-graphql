@@ -2,30 +2,18 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
-use GraphQL\Error\Error;
-use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
-use GraphQL\Utils\Utils;
 use InvalidArgumentException;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
-use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
-use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
-use SilverStripe\GraphQL\Serialisation\SerialisableObjectType;
-use SilverStripe\GraphQL\Serialisation\TypeSerialiserInterface;
-use SilverStripe\GraphQL\Serialisation\TypeStoreConsumer;
 use SilverStripe\ORM\Limitable;
 use SilverStripe\ORM\Sortable;
 use SilverStripe\ORM\SS_List;
 use Psr\Container\NotFoundExceptionInterface;
-use Serializable;
-use Closure;
 
 /**
  * A connection to a list of items on a object type. Collections are paginated
@@ -46,7 +34,7 @@ use Closure;
  *   }
  * </code>
  */
-class Connection implements OperationResolver, CodeGenerator
+class Connection implements OperationResolver
 {
     use Injectable;
 
@@ -103,11 +91,6 @@ class Connection implements OperationResolver, CodeGenerator
     protected $manager;
 
     /**
-     * @var ResolverFactory
-     */
-    protected $resolverFactory;
-
-    /**
      * @var ObjectType
      */
     protected $edgeType;
@@ -142,25 +125,6 @@ class Connection implements OperationResolver, CodeGenerator
         $this->connectionResolver = $func;
 
         return $this;
-    }
-
-    /**
-     * @param ResolverFactory $factory
-     * @return $this
-     */
-    public function setResolverFactory(ResolverFactory $factory = null)
-    {
-        $this->resolverFactory = $factory;
-
-        return $this;
-    }
-
-    /**
-     * @return ResolverFactory
-     */
-    public function getResolverFactory()
-    {
-        return $this->resolverFactory;
     }
 
     /**
@@ -363,17 +327,16 @@ class Connection implements OperationResolver, CodeGenerator
     public function fields()
     {
         return [
-            'pageInfo' => SerialisableFieldDefinition::create([
+            'pageInfo' => [
                 'name' => 'pageInfo',
                 'type' => Type::nonNull($this->getPageInfoType()),
                 'description' => 'Pagination information'
-            ]),
-            'edges' => SerialisableFieldDefinition::create([
+            ],
+            'edges' => [
                 'name' => 'edges',
                 'type' => Type::listOf($this->getEdgeType()),
                 'description' => 'Collection of records',
-                'pure' => true,
-            ])
+            ]
         ];
     }
 
@@ -387,17 +350,17 @@ class Connection implements OperationResolver, CodeGenerator
         }
 
         if (!$this->edgeType) {
-            $this->edgeType = new SerialisableObjectType([
+            $this->edgeType = new ObjectType([
                 'name' => $this->getEdgeTypeName(),
                 'description' => 'The collections edge',
                 'fields' => function () {
                     return [
-                        'node' => SerialisableFieldDefinition::create([
+                        'node' => [
                             'name' => 'node',
                             'type' => $this->getConnectionType(),
                             'description' => 'The node at the end of the collections edge',
                             'resolve' => [static::class, 'nodeResolver']
-                        ])
+                        ]
                     ];
                 }
             ]);
@@ -411,7 +374,7 @@ class Connection implements OperationResolver, CodeGenerator
      */
     public function toType()
     {
-        return new SerialisableObjectType([
+        return new ObjectType([
             'name' => $this->getConnectionTypeName(),
             'description' => $this->description,
             'fields' => function () {
@@ -432,9 +395,6 @@ class Connection implements OperationResolver, CodeGenerator
      */
     public function resolve($value, array $args, $context, ResolveInfo $info)
     {
-        if ($this->resolverFactory) {
-            $this->applyResolverFactory($this->resolverFactory);
-        }
         $result = call_user_func_array(
             $this->connectionResolver,
             func_get_args()
@@ -549,67 +509,4 @@ class Connection implements OperationResolver, CodeGenerator
         ];
     }
 
-    /**
-     * @throws Error
-     */
-    protected function assertSerialisable()
-    {
-        Utils::invariant(
-            $this->resolverFactory || !$this->connectionResolver instanceof Closure,
-            'Connection "%s" uses a closure for its connection resolver, which is not serialisable',
-            $this->connectionName
-        );
-    }
-
-    protected function applyResolverFactory(ResolverFactory $factory)
-    {
-        $this->connectionResolver = function (...$args) use ($factory) {
-            $resolver = $factory->createResolver();
-            $result = call_user_func($resolver, ...$args);
-            $this->connectionResolver = $resolver;
-
-            return $result;
-        };
-    }
-
-    /**
-     * @return void
-     */
-    public function __wakeup()
-    {
-        if ($this->resolverFactory) {
-            $this->applyResolverFactory($this->resolverFactory);
-        }
-    }
-
-    /**
-     * @return array
-     * @throws Error
-     */
-    public function __sleep()
-    {
-        $this->assertSerialisable();
-        $this->connectedType = $this->getConnectionType();
-        $this->args = $this->args();
-        if ($this->resolverFactory) {
-            $this->connectionResolver = null;
-        }
-
-        return [
-            'connectionName',
-            'connectedType',
-            'description',
-            'connectionResolver',
-            'args',
-            'sortableFields',
-            'defaultLimit',
-            'maximumLimit',
-            'resolverFactory',
-        ];
-    }
-
-    public function toCode()
-    {
-        return '';
-    }
 }

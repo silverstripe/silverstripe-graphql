@@ -18,24 +18,7 @@ SilverStripe\Core\Injector\Injector:
       httpClient: %$SilverStripe\GraphQL\PersistedQuery\GuzzleHTTPClient
   SilverStripe\GraphQL\Serialisation\TypeAbstractionInterface:
     class: SilverStripe\GraphQL\Serialisation\TypeAbstraction
-  Psr\SimpleCache\CacheInterface.managerDefault:
-    factory: SilverStripe\Core\Cache\CacheFactory
-    constructor:
-      namespace: 'managerDefault'
-  SilverStripe\GraphQL\Interfaces\TypeStoreInterface:
-    class: SilverStripe\GraphQL\TypeStore
-  SilverStripe\GraphQL\Serialisation\TypeSerialiserInterface:
-    class: SilverStripe\GraphQL\Serialisation\TypeSerialiser
   # Set up a default endpoint that can be activated with a Director rule
-  SilverStripe\GraphQL\Manager.default:
-    class: SilverStripe\GraphQL\Manager
-    constructor:
-      schemaKey: default
-    properties:
-      Middlewares:
-        CSRFMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.csrf'
-        HTTPMethodMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.httpMethod'
-      Cache: '%$Psr\SimpleCache\CacheInterface.managerDefault'
   SilverStripe\GraphQL\Controller.default:
     class: SilverStripe\GraphQL\Controller
     constructor:

@@ -5,10 +5,10 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
-use Serializable;
-use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
+use SilverStripe\GraphQL\Storage\Encode\ResolverFactory;
+use InvalidArgumentException;
 
-abstract class CRUDResolverFactory implements Serializable, CodeGenerator
+abstract class CRUDResolverFactory extends ResolverFactory
 {
     use Injectable;
     use Extensible;
@@ -16,38 +16,18 @@ abstract class CRUDResolverFactory implements Serializable, CodeGenerator
 
     /**
      * CRUDResolverFactory constructor.
-     * @param $dataObjectClass
+     * @param array $context
      */
-    public function __construct($dataObjectClass)
+    public function __construct($context = [])
     {
-        $this->setDataObjectClass($dataObjectClass);
+        if (!isset($context['dataObjectClass'])) {
+            throw new InvalidArgumentException(sprintf(
+                '%s must have a dataObjectClass in its context array',
+                __CLASS__
+            ));
+        }
+        $this->setDataObjectClass($context['dataObjectClass']);
+        parent::__construct($context);
     }
 
-    /**
-     * @return string
-     */
-    public function serialize()
-    {
-        return serialize([
-            'dataObjectClass' => $this->dataObjectClass
-        ]);
-    }
-
-    /**
-     * @param string $serialized
-     */
-    public function unserialize($serialized)
-    {
-        $data = unserialize($serialized);
-        $this->setDataObjectClass($data['dataObjectClass']);
-    }
-
-    public function toCode()
-    {
-        return sprintf(
-            'new %s(%s)',
-            static::class,
-            var_export($this->dataObjectClass, true)
-        );
-    }
 }

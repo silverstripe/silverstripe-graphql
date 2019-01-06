@@ -2,29 +2,25 @@
 
 namespace SilverStripe\GraphQL\Resolvers;
 
-use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
-use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
+use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
 use SilverStripe\ORM\DataObject;
 use Psr\Container\NotFoundExceptionInterface;
+use SilverStripe\GraphQL\Storage\Encode\ResolverFactory;
 use Exception;
 use Closure;
 
-class UnionResolverFactory implements ResolverFactory, CodeGenerator
+class UnionResolverFactory extends ResolverFactory
 {
 
     /**
-     * @return Closure
+     * @param TypeRegistryInterface $registry
+     * @return callable|Closure
      * @throws NotFoundExceptionInterface
      */
-    public function createResolver()
+    public function createResolver(TypeRegistryInterface $registry)
     {
-        // Todo: remove this coupling.
-        $typeStore = Injector::inst()->get(TypeStoreInterface::class);
-
-        return function ($obj) use ($typeStore) {
+        return function ($obj) use ($registry) {
             if (!$obj instanceof DataObject) {
                 throw new Exception(sprintf(
                     'Type with class %s is not a DataObject',
@@ -34,8 +30,8 @@ class UnionResolverFactory implements ResolverFactory, CodeGenerator
             $class = get_class($obj);
             while ($class !== DataObject::class) {
                 $typeName = StaticSchema::inst()->typeNameForDataObject($class);
-                if ($typeStore->hasType($typeName)) {
-                    return $typeStore->getType($typeName);
+                if ($registry->has($typeName)) {
+                    return $registry->has($typeName);
                 }
                 $class = get_parent_class($class);
             }
@@ -44,10 +40,5 @@ class UnionResolverFactory implements ResolverFactory, CodeGenerator
                 get_class($obj)
             ));
         };
-    }
-
-    public function toCode()
-    {
-        return sprintf('new %s()', __CLASS__);
     }
 }

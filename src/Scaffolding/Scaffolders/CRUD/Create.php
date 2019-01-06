@@ -10,7 +10,6 @@ use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\CreateResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
-use SilverStripe\GraphQL\Serialisation\SerialisableInputType;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
 
@@ -27,7 +26,7 @@ class Create extends MutationScaffolder implements CRUDInterface
     public function __construct($dataObjectClass)
     {
         parent::__construct(null, null, null, $dataObjectClass);
-        $this->setResolverFactory(CreateResolverFactory::create($this->getDataObjectClass()));
+        $this->setResolverFactory(CreateResolverFactory::create(['dataObjectClass' => $this->getDataObjectClass()]));
     }
 
     /**
@@ -71,7 +70,7 @@ class Create extends MutationScaffolder implements CRUDInterface
      */
     protected function generateInputType(Manager $manager)
     {
-        return new SerialisableInputType([
+        return new InputObjectType([
             'name' => $this->inputTypeName(),
             'fields' => function () use ($manager) {
                 $fields = [];

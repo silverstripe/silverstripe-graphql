@@ -10,7 +10,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
+use SilverStripe\GraphQL\Storage\Encode\ResolverFactoryInterface;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\ORM\ArrayList;
 
@@ -43,7 +43,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     protected $resolver;
 
     /**
-     * @var ResolverFactory
+     * @var ResolverFactoryInterface
      */
     protected $resolverFactory;
 
@@ -369,7 +369,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @param ResolverFactory $factory
+     * @param ResolverFactoryInterface $factory
      * @return $this
      */
     public function setResolverFactory($factory)

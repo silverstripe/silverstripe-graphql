@@ -2,11 +2,10 @@
 
 namespace SilverStripe\GraphQL;
 
+use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
-use SilverStripe\GraphQL\Serialisation\SerialisableInputType;
-use SilverStripe\GraphQL\Serialisation\SerialisableObjectType;
 
 /**
  * Represents a GraphQL type in a way that allows customization through
@@ -112,10 +111,10 @@ class TypeCreator
     public function toType()
     {
         if ($this->isInputObject()) {
-            return new SerialisableInputType($this->toArray());
+            return new InputObjectType($this->toArray());
         }
 
-        return new SerialisableObjectType($this->toArray());
+        return new ObjectType($this->toArray());
     }
 
     /**

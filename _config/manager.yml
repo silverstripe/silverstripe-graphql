@@ -1,0 +1,37 @@
+---
+Name: graphql-manager
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Manager.default:
+    class: SilverStripe\GraphQL\Manager
+    constructor:
+      schemaKey: default
+      encoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeRegistryEncoderInterface.default'
+    properties:
+      Middlewares:
+        CSRFMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.csrf'
+        HTTPMethodMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.httpMethod'
+  SilverStripe\GraphQL\Storage\Encode\TypeRegistryEncoderInterface.default:
+    class: SilverStripe\GraphQL\Storage\Encode\GraphQLPHPTypeRegistryEncoder
+    constructor:
+      identifier: default
+      objectTypeEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.objectType'
+      unionTypeEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.unionType'
+      enumTypeEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.enumType'
+  SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.referential:
+    class: SilverStripe\GraphQL\Storage\Encode\ReferentialTypeEncoder
+    constructor:
+      builderFactory: '%$PhpParser\BuilderFactory'
+      typeFetcher: '%$SilverStripe\GraphQL\Storage\Encode\NamedTypeFetcherInterface'
+  SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.objectType:
+    class: SilverStripe\GraphQL\Storage\Encode\ObjectTypeEncoder
+    constructor:
+      referentialTypeEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.referential'
+  SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.unionType:
+    class: SilverStripe\GraphQL\Storage\Encode\UnionTypeEncoder
+  SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.enumType:
+    class: SilverStripe\GraphQL\Storage\Encode\EnumTypeEncoder
+  SilverStripe\GraphQL\Storage\Encode\NamedTypeFetcherInterface:
+    class: SilverStripe\GraphQL\Storage\Encode\RegistryFetcher
+    constructor:
+      builderFactory: '%$PhpParser\BuilderFactory'

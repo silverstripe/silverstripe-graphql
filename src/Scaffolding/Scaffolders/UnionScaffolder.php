@@ -2,15 +2,12 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use Exception;
 use GraphQL\Type\Definition\UnionType;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Resolvers\UnionResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
-use SilverStripe\GraphQL\Scaffolding\StaticSchema;
-use SilverStripe\GraphQL\Serialisation\SerialisableUnionType;
-use SilverStripe\ORM\DataObject;
+use SilverStripe\GraphQL\Storage\Encode\UnionTypeFactory;
 
 class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
 {
@@ -80,16 +77,10 @@ class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
     public function scaffold(Manager $manager)
     {
         $types = $this->types;
-        return SerialisableUnionType::create([
+        return new UnionType([
             'name' => $this->name,
-            'types' => function () use ($manager, $types) {
-                return array_filter(
-                    array_map(function ($item) use ($manager) {
-                        return $manager->hasType($item)? $manager->getType($item) : null;
-                    }, $types)
-                );
-            },
-            'resolveType' => new UnionResolverFactory($types)
+            'types' => new UnionTypeFactory(['types' => $types]),
+            'resolveType' => new UnionResolverFactory()
         ]);
     }
 

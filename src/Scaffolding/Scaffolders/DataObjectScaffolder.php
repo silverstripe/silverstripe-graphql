@@ -20,8 +20,6 @@ use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
-use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
-use SilverStripe\GraphQL\Serialisation\SerialisableObjectType;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
@@ -548,7 +546,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function scaffold(Manager $manager)
     {
-        return new SerialisableObjectType(
+        return new ObjectType(
             [
                 'name' => $this->getTypeName(),
                 'fields' => function () use ($manager) {
@@ -708,13 +706,13 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                     'resolve',
                 ];
                 $fieldDef['description'] = $fieldData->Description;
-                $fieldMap[$fieldName] = SerialisableFieldDefinition::create($fieldDef);
+                $fieldMap[$fieldName] = $fieldDef;
             }
         }
 
         foreach ($extraDataObjects as $fieldName => $className) {
             $description = $this->getFieldDescription($fieldName);
-            $fieldMap[$fieldName] = SerialisableFieldDefinition::create([
+            $fieldMap[$fieldName] = [
                 'name' => $fieldName,
                 'type' => StaticSchema::inst()->fetchFromManager($className, $manager),
                 'description' => $description,
@@ -722,11 +720,10 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                     FieldAccessorResolver::class,
                     'resolve',
                 ],
-            ]);
+            ];
         }
 
         foreach ($this->nestedQueries as $name => $scaffolder) {
-            /* @var SerialisableFieldDefinition $fieldDef*/
             $fieldDef = $scaffolder->scaffold($manager);
             $fieldDef->name = $name;
             $fieldMap[$name] = $fieldDef;

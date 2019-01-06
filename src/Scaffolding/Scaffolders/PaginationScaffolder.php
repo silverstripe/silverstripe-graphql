@@ -9,7 +9,6 @@ use SilverStripe\GraphQL\Pagination\PaginatedQueryCreator;
 use SilverStripe\GraphQL\Resolvers\PaginationResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
-use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
 use Psr\Container\NotFoundExceptionInterface;
 
 class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutatorInterface, ScaffolderInterface
@@ -63,23 +62,23 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
     /**
      * @param Manager $manager
      * @throws Error
-     * @return SerialisableFieldDefinition
+     * @return array
      */
     public function scaffold(Manager $manager)
     {
         $conn = $this->connection;
         $connectionName = $conn->getConnectionTypeName();
-        return SerialisableFieldDefinition::create([
+        return [
             'name' => $this->operationName,
             'args' => $conn->args(),
             'type' => $manager->getType($connectionName),
-            'resolverFactory' => PaginationResolverFactory::create(
-                $conn->getResolverFactory() ?: $conn->getConnectionResolver(),
-                $conn->getDefaultLimit(),
-                $conn->getMaximumLimit(),
-                $conn->getSortableFields()
-            )
-        ]);
+            'resolverFactory' => PaginationResolverFactory::create([
+                'parentResolver' => $conn->getResolverFactory() ?: $conn->getConnectionResolver(),
+                'defaultLimit' => $conn->getDefaultLimit(),
+                'maximumLimit' => $conn->getMaximumLimit(),
+                'sortableFields' => $conn->getSortableFields()
+            ])
+        ];
     }
 
     /**

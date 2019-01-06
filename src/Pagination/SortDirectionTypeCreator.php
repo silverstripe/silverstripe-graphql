@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL\Pagination;
 
 use GraphQL\Type\Definition\EnumType;
-use SilverStripe\GraphQL\Serialisation\SerialisableEnumType;
 use SilverStripe\GraphQL\TypeCreator;
 
 /**
@@ -23,7 +22,7 @@ class SortDirectionTypeCreator extends TypeCreator
     public function toType()
     {
         if (!$this->type) {
-            $this->type = new SerialisableEnumType( $this->toArray());
+            $this->type = new EnumType( $this->toArray());
         }
         return $this->type;
     }

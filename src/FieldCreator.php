@@ -6,7 +6,6 @@ use GraphQL\Error\Error;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\Deprecation;
-use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
 
 /**
  * Base type for query types within graphql. I.e. mutations or queries
@@ -106,7 +105,7 @@ class FieldCreator
     /**
      * Convert the Fluent instance to an array.
      *
-     * @return SerialisableFieldDefinition
+     * @return array
      * @deprecated 4.0 Use toField() instead
      * @throws Error
      */
@@ -117,11 +116,11 @@ class FieldCreator
     }
 
     /**
-     * @return SerialisableFieldDefinition
+     * @return array
      */
     public function toField()
     {
-        return SerialisableFieldDefinition::create($this->getAttributes());
+        return $this->getAttributes();
     }
 
     /**

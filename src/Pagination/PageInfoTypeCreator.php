@@ -4,7 +4,6 @@ namespace SilverStripe\GraphQL\Pagination;
 
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ObjectType;
-use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
 use SilverStripe\GraphQL\TypeCreator;
 
 /**
@@ -51,18 +50,18 @@ class PageInfoTypeCreator extends TypeCreator
     public function fields()
     {
         return [
-            'totalCount' => SerialisableFieldDefinition::create([
+            'totalCount' => [
                 'name' => 'totalCount',
                 'type' => Type::nonNull(Type::int())
-            ]),
-            'hasNextPage' => SerialisableFieldDefinition::create([
+            ],
+            'hasNextPage' => [
                 'name' => 'hasNextPage',
                 'type' => Type::nonNull(Type::boolean())
-            ]),
-            'hasPreviousPage' => SerialisableFieldDefinition::create([
+            ],
+            'hasPreviousPage' => [
                 'name' => 'hasPreviousPage',
                 'type' => Type::nonNull(Type::boolean())
-            ]),
+            ],
         ];
     }
 }

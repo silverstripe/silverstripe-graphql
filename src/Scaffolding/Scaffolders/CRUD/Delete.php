@@ -2,7 +2,6 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
-use GraphQL\Type\Definition\ListOfType;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
@@ -22,7 +21,7 @@ class Delete extends MutationScaffolder implements CRUDInterface
     public function __construct($dataObjectClass)
     {
         parent::__construct(null, null, null, $dataObjectClass);
-        $this->setResolverFactory(DeleteResolverFactory::create($this->getDataObjectClass()));
+        $this->setResolverFactory(DeleteResolverFactory::create(['dataObjectClass' => $this->getDataObjectClass()]));
 
     }
 

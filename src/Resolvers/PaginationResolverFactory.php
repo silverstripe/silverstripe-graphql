@@ -5,16 +5,16 @@ namespace SilverStripe\GraphQL\Resolvers;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Pagination\Connection;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
+use SilverStripe\GraphQL\Storage\Encode\ResolverFactory;
 use Closure;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
+use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
 use SilverStripe\ORM\SS_List;
 use Exception;
 
-class PaginationResolverFactory implements ResolverFactory, CodeGenerator
+class PaginationResolverFactory extends ResolverFactory
 {
-    use Injectable;
 
     /**
      * @var callable
@@ -38,17 +38,14 @@ class PaginationResolverFactory implements ResolverFactory, CodeGenerator
 
     /**
      * PaginationResolverFactory constructor.
-     * @param callable|ResolverFactory $parentResolver
-     * @param $defaultLimit
-     * @param $maximumLimit
-     * @param array $sortableFields
+     * @param array $context
      */
-    public function __construct($parentResolver, $defaultLimit, $maximumLimit, $sortableFields = [])
+    public function __construct($context = [])
     {
         if (
-            $parentResolver &&
-            !$parentResolver instanceof ResolverFactory &&
-            (!is_callable($parentResolver) || $parentResolver instanceof Closure)
+            isset($context['parentResolver']) &&
+            !$context['parentResolver'] instanceof ResolverFactory &&
+            (!is_callable($context['parentResolver']) || $context['parentResolver'] instanceof Closure)
         ) {
             throw new InvalidArgumentException(sprintf(
                 '%s must be passed a resolver using the callable array syntax. Closures are not allowed',
@@ -56,21 +53,29 @@ class PaginationResolverFactory implements ResolverFactory, CodeGenerator
             ));
         }
 
-        $this->parentResolver = $parentResolver;
-        $this->defaultLimit = $defaultLimit;
-        $this->maximumLimit = $maximumLimit;
-        $this->sortableFields = $sortableFields;
+        if (!isset($context['defaultLimit'])) {
+            $context['defaultLimit'] = 100;
+        }
+        if (!isset($context['maximumLimit'])) {
+            $context['maximumLimit'] = 100;
+        }
+        if (!isset($context['sortableFields'])) {
+            $context['sortableFields'] = [];
+        }
+
+        parent::__construct($context);
     }
 
     /**
-     * @return Closure
+     * @param TypeRegistryInterface $registry
+     * @return callable|Closure
      */
-    public function createResolver()
+    public function createResolver(TypeRegistryInterface $registry)
     {
-        return function ($obj, array $args, $context, ResolveInfo $info) {
-            $func = $this->parentResolver instanceof ResolverFactory
-                ? $this->parentResolver->createResolver()
-                : $this->parentResolver;
+        return function ($obj, array $args, $context, ResolveInfo $info) use ($registry) {
+            $func = $this->config['parentResolver'] instanceof ResolverFactory
+                ? $this->config['parentResolver']->createResolver($registry)
+                : $this->config['parentResolver'];
             $list = call_user_func_array($func, func_get_args());
             if (!$list instanceof SS_List) {
                 throw new Exception('Connection::resolve() must resolve to a SS_List instance.');
@@ -78,29 +83,12 @@ class PaginationResolverFactory implements ResolverFactory, CodeGenerator
             $args = [
                 $list,
                 $args,
-                $this->defaultLimit,
-                $this->maximumLimit,
-                $this->sortableFields,
+                $this->config['defaultLimit'],
+                $this->config['maximumLimit'],
+                $this->config['sortableFields'],
             ];
             return Connection::resolveList(...$args);
         };
     }
 
-    /**
-     * @return string
-     */
-    public function toCode()
-    {
-        $resolverCode = $this->parentResolver instanceof CodeGenerator
-            ? $this->parentResolver->toCode()
-            : var_export($this->parentResolver, true);
-        return sprintf(
-            'new %s(%s, %s, %s, %s)',
-            __CLASS__,
-            $resolverCode,
-            $this->defaultLimit,
-            $this->maximumLimit,
-            var_export($this->sortableFields, true)
-        );
-    }
 }

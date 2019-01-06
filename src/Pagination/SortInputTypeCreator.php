@@ -6,7 +6,6 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\Core\Injector\Injector;
 use GraphQL\Type\Definition\EnumType;
-use SilverStripe\GraphQL\Serialisation\SerialisableEnumType;
 use SilverStripe\GraphQL\TypeCreator;
 use Psr\Container\NotFoundExceptionInterface;
 /**
@@ -113,7 +112,7 @@ class SortInputTypeCreator extends TypeCreator
             ];
         }
 
-        $this->fieldType = new SerialisableEnumType([
+        $this->fieldType = new EnumType([
             'name' => $this->getFieldTypeName(),
             'description' => 'Field name to sort by.',
             'values' => $values,

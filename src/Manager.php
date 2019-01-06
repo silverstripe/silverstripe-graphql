@@ -9,21 +9,20 @@ use GraphQL\Executor\ExecutionResult;
 use GraphQL\Language\SourceLocation;
 use GraphQL\Type\Schema;
 use GraphQL\GraphQL;
-use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\Dev\Deprecation;
-use SilverStripe\GraphQL\Interfaces\TypeStoreInterface;
+use SilverStripe\GraphQL\Encode\TypeRegistryEncoderInterface;
+use SilverStripe\GraphQL\Interfaces\SchemaStorageInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
-use SilverStripe\GraphQL\Serialisation\SerialisableObjectType;
-use SilverStripe\GraphQL\Serialisation\TypeStoreConsumer;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
@@ -52,12 +51,6 @@ class Manager implements ConfigurationApplier
     const MUTATION_ROOT = 'mutation';
 
     const TYPES_ROOT = 'types';
-
-    const SCHEMA_CACHE_KEY = 'schema';
-
-    private static $dependencies = [
-        'typeStore' => '%$' . TypeStoreInterface::class,
-    ];
 
     /**
      * @var string
@@ -102,19 +95,14 @@ class Manager implements ConfigurationApplier
     protected $extraContext = [];
 
     /**
-     * @var CacheInterface
-     */
-    protected $cache;
-
-    /**
      * @var SchemaConfig
      */
     protected $schemaConfig;
 
     /**
-     * @var TypeStoreInterface
+     * @var SchemaStorageInterface
      */
-    protected $typeStore;
+    protected $schemaStore;
 
     /**
      * @return QueryMiddleware[]
@@ -135,25 +123,6 @@ class Manager implements ConfigurationApplier
     }
 
     /**
-     * @return CacheInterface
-     */
-    public function getCache()
-    {
-        return $this->cache;
-    }
-
-    /**
-     * @param CacheInterface $cache
-     * @return $this
-     */
-    public function setCache(CacheInterface $cache)
-    {
-        $this->cache = $cache;
-
-        return $this;
-    }
-
-    /**
      * @param QueryMiddleware $middleware
      * @return $this
      */
@@ -161,25 +130,6 @@ class Manager implements ConfigurationApplier
     {
         $this->middlewares[] = $middleware;
         return $this;
-    }
-
-    /**
-     * @param TypeStoreInterface $typeStore
-     * @return $this
-     */
-    public function setTypeStore(TypeStoreInterface $typeStore)
-    {
-        $this->typeStore = $typeStore;
-
-        return $this;
-    }
-
-    /**
-     * @return TypeStoreInterface
-     */
-    public function getTypeStore()
-    {
-        return $this->typeStore;
     }
 
     /**
@@ -200,6 +150,26 @@ class Manager implements ConfigurationApplier
     {
         return $this->schemaConfig;
     }
+
+    /**
+     * @return SchemaStorageInterface
+     */
+    public function getSchemaStore()
+    {
+        return $this->schemaStore;
+    }
+
+    /**
+     * @param SchemaStorageInterface $store
+     * @return $this
+     */
+    public function setSchemaStore(SchemaStorageInterface $store)
+    {
+        $this->schemaStore = $store;
+
+        return $this;
+    }
+
     /**
      * Call middleware to evaluate a graphql query
      *
@@ -227,12 +197,12 @@ class Manager implements ConfigurationApplier
 
     /**
      * @param string $schemaKey
+     * @param SchemaStorageInterface $store
      */
-    public function __construct($schemaKey = null)
+    public function __construct($schemaKey, SchemaStorageInterface $store)
     {
-        if ($schemaKey) {
-            $this->setSchemaKey($schemaKey);
-        }
+        $this->setSchemaKey($schemaKey);
+        $this->setSchemaStore($store);
     }
 
     /**
@@ -269,21 +239,15 @@ class Manager implements ConfigurationApplier
                 __CLASS__
             ));
         }
-        $cache = BASE_PATH . '/schema.inc.php';
-        if (!file_exists($cache) || $regenerate) {
-            $this->regenerate();
+        $schemaStore = $this->getSchemaStore();
+        if ($regenerate || !$schemaStore->exists()) {
+            $schemas = $this->config()->get('schemas');
+            $config = isset($schemas[$this->getSchemaKey()]) ? $schemas[$this->getSchemaKey()] : [];
+            $this->applyConfig($config);
+            $schemaConfig = $this->createSchemaConfig();
+            $schemaStore->persist($schemaConfig, $this->types);
         }
 
-        include($cache);
-
-        $className = $this->getSchemaKey() . '_' . md5($this->getSchemaKey());
-        $registry = new $className();
-        $schemaConfig = $this->createSchemaConfig();
-        $schemaConfig->setTypeLoader(function ($type) use ($registry) {
-            return $registry->get($type);
-        });
-        $schemaConfig->setQuery($registry->get('Query'));
-        $schemaConfig->setMutation($registry->get('Mutation'));
         $this->setSchemaConfig($schemaConfig);
 
         return $this;
@@ -410,23 +374,25 @@ class Manager implements ConfigurationApplier
      */
     public function schema()
     {
-        if (!$this->schemaConfig) {
+        if (!$this->getSchemaConfig()) {
             throw new BadMethodCallException(sprintf(
                 'No schema config available. Did you call %s before build()?',
                 __FUNCTION__
             ));
         }
-        return new Schema($this->schemaConfig);
+        return new Schema($this->getSchemaConfig());
     }
 
     /**
      * @return SchemaConfig
+     * @throws NotFoundExceptionInterface
+     * @throws Error
      */
     protected function createSchemaConfig()
     {
         $config = new SchemaConfig();
         if (!empty($this->queries)) {
-            $config->setQuery(new SerialisableObjectType([
+            $config->setQuery(new ObjectType([
                 'name' => 'Query',
                 'fields' => array_map(function ($query) {
                     return is_callable($query) ? $query() : $query;
@@ -435,7 +401,7 @@ class Manager implements ConfigurationApplier
         }
 
         if (!empty($this->mutations)) {
-            $config->setMutation(new SerialisableObjectType([
+            $config->setMutation(new ObjectType([
                 'name' => 'Mutation',
                 'fields' => array_map(function ($mutation) {
                     return is_callable($mutation) ? $mutation() : $mutation;
@@ -740,9 +706,6 @@ class Manager implements ConfigurationApplier
      */
     protected function bootConfig()
     {
-        $schemas = $this->config()->get('schemas');
-        $config = isset($schemas[$this->getSchemaKey()]) ? $schemas[$this->getSchemaKey()] : [];
-        $this->applyConfig($config);
     }
 
     /**

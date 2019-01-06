@@ -8,7 +8,6 @@ use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
 use Exception;
-use SilverStripe\GraphQL\Serialisation\SerialisableFieldDefinition;
 
 /**
  * Scaffolds a GraphQL query field.
@@ -171,7 +170,7 @@ class ListQueryScaffolder extends QueryScaffolder
     /**
      * @param Manager $manager
      * @throws Error
-     * @return SerialisableFieldDefinition
+     * @return array
      */
     public function scaffold(Manager $manager)
     {
@@ -181,13 +180,12 @@ class ListQueryScaffolder extends QueryScaffolder
             return $paginationScaffolder->scaffold($manager);
         }
 
-        return SerialisableFieldDefinition::create([
+        return [
             'name' => $this->getName(),
             'args' => $this->createArgs($manager),
             'type' => Type::listOf($this->getType($manager)),
-            'resolve' => $this->createResolverFunction(),
-            'resolverFactory' => $this->resolverFactory,
-        ]);
+            'resolve' => $this->resolverFactory ?: $this->createResolverFunction(),
+        ];
     }
 
     /**
