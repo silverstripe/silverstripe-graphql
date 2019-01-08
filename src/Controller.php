@@ -15,7 +15,9 @@ use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
+use SilverStripe\Security\SecurityToken;
 use SilverStripe\Versioned\Versioned;
+use LogicException;
 
 /**
  * Top level controller for handling graphql requests.
@@ -86,7 +88,6 @@ class Controller extends BaseController implements Flushable
         if ($stage && in_array($stage, [Versioned::DRAFT, Versioned::LIVE])) {
             Versioned::set_stage($stage);
         }
-
         // Check for a possible CORS preflight request and handle if necessary
         // Refer issue 66:  https://github.com/silverstripe/silverstripe-graphql/issues/66
         if ($request->httpMethod() === 'OPTIONS') {
@@ -95,14 +96,7 @@ class Controller extends BaseController implements Flushable
 
         // Main query handling
         try {
-            $manager = $this->getManager();
-
-            // Check and validate user for this request
-            $member = $this->getRequestUser($request);
-            if ($member) {
-                $manager->setMember($member);
-            }
-
+            $manager = $this->getManager($request);
             // Parse input
             list($query, $variables) = $this->getRequestQueryVariables($request);
 
@@ -128,11 +122,26 @@ class Controller extends BaseController implements Flushable
     }
 
     /**
+     * @param HTTPRequest $request
      * @return Manager
      */
-    public function getManager()
+    public function getManager($request = null)
     {
-        return $this->manager;
+        $manager = null;
+        if (!$request) {
+            $request = $this->getRequest();
+        }
+        if ($this->manager) {
+            $manager = $this->manager;
+        } else {
+            // Get a service rather than an instance (to allow procedural configuration)
+            $config = Config::inst()->get(static::class, 'schema');
+            $manager = Manager::createFromConfig($config);
+        }
+        $this->applyManagerContext($manager, $request);
+        $this->setManager($manager);
+
+        return $manager;
     }
 
     /**
@@ -142,6 +151,7 @@ class Controller extends BaseController implements Flushable
     public function setManager($manager)
     {
         $this->manager = $manager;
+
         return $this;
     }
 
@@ -172,6 +182,14 @@ class Controller extends BaseController implements Flushable
     public function getAuthHandler()
     {
         return new Handler;
+    }
+
+    /**
+     * @return string
+     */
+    public function getToken()
+    {
+        return $this->getRequest()->getHeader('X-CSRF-TOKEN');
     }
 
     /**
@@ -229,6 +247,30 @@ class Controller extends BaseController implements Flushable
             }
         }
         return false;
+    }
+
+    /**
+     * @param Manager $manager
+     * @param HTTPRequest $request
+     * @throws Exception
+     */
+    protected function applyManagerContext(Manager $manager, HTTPRequest $request)
+    {
+        // Add request context to Manager
+        $manager->addContext('token', $this->getToken());
+        $method = null;
+        if ($request->isGET()) {
+            $method = 'GET';
+        } elseif ($request->isPOST()) {
+            $method = 'POST';
+        }
+        $manager->addContext('httpMethod', $method);
+
+        // Check and validate user for this request
+        $member = $this->getRequestUser($request);
+        if ($member) {
+            $manager->setMember($member);
+        }
     }
 
     /**
@@ -291,6 +333,7 @@ class Controller extends BaseController implements Flushable
      *
      * @param HTTPRequest $request
      * @return array Array containing query and variables as a pair
+     * @throws LogicException
      */
     protected function getRequestQueryVariables(HTTPRequest $request)
     {
@@ -300,11 +343,21 @@ class Controller extends BaseController implements Flushable
             $rawBody = $request->getBody();
             $data = json_decode($rawBody ?: '', true);
             $query = isset($data['query']) ? $data['query'] : null;
+            $id = isset($data['id']) ? $data['id'] : null;
             $variables = isset($data['variables']) ? (array)$data['variables'] : null;
         } else {
             $query = $request->requestVar('query');
+            $id = $request->requestVar('id');
             $variables = json_decode($request->requestVar('variables'), true);
         }
+
+        if ($id) {
+            if ($query) {
+                throw new LogicException('Cannot pass a query when an ID has been specified.');
+            }
+            $query = $this->manager->getQueryFromPersistedID($id);
+        }
+
         return [$query, $variables];
     }
 
@@ -313,6 +366,7 @@ class Controller extends BaseController implements Flushable
      *
      * @param HTTPRequest $request
      * @return Member
+     * @throws Exception
      */
     protected function getRequestUser(HTTPRequest $request)
     {

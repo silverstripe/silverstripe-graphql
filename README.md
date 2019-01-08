@@ -66,10 +66,13 @@ composer require silverstripe/graphql
    - [HTTP basic authentication](#http-basic-authentication)
      - [In GraphiQL](#in-graphiql)
    - [Defining your own authenticators](#defining-your-own-authenticators)
+ - [CSRF tokens (required for mutations)](#csrf-tokens-required-for-mutations)
  - [Cross-Origin Resource Sharing (CORS)](#cross-origin-resource-sharing-cors)
    - [Sample Custom CORS Config](#sample-custom-cors-config)
+ - [Persisting Queries](#persisting-queries)   
  - [Schema introspection](#schema-introspection)
  - [Setting up a new GraphQL endpoint](#setting-up-a-new-graphql-endpoint)
+ - [Strict HTTP Method Checking](#strict-http-method-checking)
  - [TODO](#todo)
 
 
@@ -316,6 +319,7 @@ To have a `Query` return a page-able list of records queries should extend the
 
 namespace MyProject\GraphQL;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Pagination\Connection;
@@ -438,6 +442,7 @@ return Connection::create('paginatedReadMembers')
 
 namespace MyProject\GraphQL;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\TypeCreator;
 use SilverStripe\GraphQL\Pagination\Connection;
@@ -468,7 +473,7 @@ class MemberTypeCreator extends TypeCreator
                 'args' => $groupsConnection->args(),
                 'resolve' => function($object, array $args, $context, ResolveInfo $info) use ($groupsConnection) {
                     return $groupsConnection->resolveList(
-                        $obj->Groups(),
+                        $object->Groups(),
                         $args,
                         $context
                     );
@@ -1300,7 +1305,6 @@ SilverStripe\GraphQL\Manager:
                   OnlyToday: Boolean
                 resolver: MyProject\CommentResolver
             ##...
-          ##...
 ```
 
 **... Or with code**
@@ -1315,7 +1319,7 @@ $scaffolder
                 if (!singleton(Comment::class)->canView($context['currentUser'])) {
                     throw new \Exception('Cannot view Comment');
                 }
-                $comments = $obj->Comments();
+                $comments = $object->Comments();
                 if (isset($args['OnlyToday']) && $args['OnlyToday']) {
                     $comments = $comments->where('DATE(Created) = DATE(NOW())');
                 }
@@ -1442,7 +1446,7 @@ inferred.
 ```php
 class MyCustomListQueryScaffolder extends ListQueryScaffolder
 {
-    public function resolve ($obj, array $args, $context, ResolveInfo $info)
+    public function resolve ($object, array $args, $context, ResolveInfo $info)
     {
         // .. custom query code
     }
@@ -1824,7 +1828,7 @@ class MyCreateExtension extends Extension
   {
     if ($args['SendEmail']) {
       MyService::inst()->sendEmail();
-      $obj->EmailSent = true;
+      $object->EmailSent = true;
     }
   }
 }
@@ -2013,7 +2017,30 @@ SilverStripe\GraphQL\Auth\Handler:
     - class: SilverStripe\GraphQL\Auth\BasicAuthAuthenticator
       priority: 10
 ```
+## CSRF tokens (required for mutations)
 
+Even if your graphql endpoints are behind authentication, it is still possible for unauthorised
+users to access that endpoint through a [CSRF exploitation](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)). This involves
+forcing an already authenticated user to access an HTTP resource unknowingly (e.g. through a fake image), thereby hijacking the user's
+session.
+
+In the absence of a token-based authentication system, like OAuth, the best countermeasure to this
+is the use of a CSRF token for any requests that destroy or mutate data.
+
+By default, this module comes with a `CSRFMiddleware` implementation that forces all mutations to check 
+for the presence of a CSRF token in the request. That token must be applied to a header named` X-CSRF-TOKEN`.
+
+In SilverStripe, CSRF tokens are most commonly stored in the session as `SecurityID`, or accessed through
+the `SecurityToken` API, using `SecurityToken::inst()->getValue()`.
+
+Queries do not require CSRF tokens.
+
+```yaml
+  SilverStripe\GraphQL\Manager:
+    properties:
+      Middlewares:
+        CSRFMiddleware: false
+```
 ## Cross-Origin Resource Sharing (CORS)
 
 By default [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) is disabled in the GraphQL Server. This can be easily enabled via YAML:
@@ -2113,6 +2140,80 @@ SilverStripe\GraphQL\Controller:
     Allow-Methods:  'GET, POST, OPTIONS'
     Max-Age:  600  # 600 seconds = 10 minutes.
 ``` 
+## Persisting queries
+
+A common pattern in GraphQL APIs is to store queries on the server by an identifier. This helps save
+on bandwidth, as the client need not put a fully expressed query in the request body, but rather a
+simple identifier. Also, it allows you to whitelist only specific query IDs, and block all other ad-hoc,
+potentially malicious queries, which adds an extra layer of security to your API, particularly if it's public.
+
+To implement persisted queries, you need an implementation of the
+`SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider` interface. By default, three are provided,
+which cover most use cases:
+
+* `FileProvider`: Store your queries in a flat JSON file on the local filesystem.
+* `HTTPProvider`: Store your queries on a remote server and reference a JSON file by URL.
+* `JSONStringProvider`: Store your queries as hardcoded JSON
+
+### Configuring query mapping providers
+
+All of these implementations can be configured through `Injector`. Note that each schema gets its 
+own set of persisted queries. In these examples, we're using the `default`schema.
+
+#### FileProvider
+
+```yaml
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
+    class: SilverStripe\GraphQL\PersistedQuery\FileProvider:
+      properties:
+       schemaMapping:
+         default: '/var/www/project/query-mapping.json'
+```
+
+
+A flat file in the path `/var/www/project/query-mapping.json` should contain something like:
+
+```json
+{"someUniqueID":"query{validateToken{Valid Message Code}}"}
+```
+#### HTTPProvider
+
+```yaml
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
+    class: SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
+      properties:
+       schemaMapping:
+         default: 'http://example.com/myqueries.json'
+```
+
+A flat file at the URL `http://example.com/myqueries.json` should contain something like:
+
+```json
+{"someUniqueID":"query{readMembers{Name+Email}}"}
+```
+
+#### JSONStringProvider
+
+```yaml
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
+    class: SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
+      properties:
+       schemaMapping:
+         default: '{"myMutation":"mutation{createComment($comment:String!){Comment}}"}'
+```
+
+The queries are hardcoded into the configuration.
+
+### Requesting queries by identifier
+
+To access a persisted query, simply pass an `id` parameter in the request in lieu of `query`.
+
+`GET http://example.com/graphql?id=someID`
+
+Note that if you pass `query` along with `id`, an exception will be thrown.
 
 ## Schema introspection
 Some GraphQL clients such as [Apollo](http://apollographql.com) require some level of introspection 
@@ -2201,6 +2302,34 @@ SilverStripe\GraphQL\Manager:
   schemas:
     myApp:
       # Your config will go here..
+```
+
+## Strict HTTP Method Checking
+
+According to GraphQL best practices, mutations should be done over `POST`, while queries have the option
+to use either `GET` or `POST`. By default, this module enforces the `POST` request method for all mutations.
+
+To disable that requirement, you can remove the `HTTPMethodMiddleware` from your `Manager` implementation.
+
+```yaml
+  SilverStripe\GraphQL\Manager:
+    properties:
+      Middlewares:
+        HTTPMethodMiddleware: false
+```
+
+## Strict HTTP Method Checking
+
+According to GraphQL best practices, mutations should be done over `POST`, while queries have the option
+to use either `GET` or `POST`. By default, this module enforces the `POST` request method for all mutations.
+
+To disable that requirement, you can remove the `HTTPMethodMiddleware` from your `Manager` implementation.
+
+```yaml
+  SilverStripe\GraphQL\Manager:
+    properties:
+      Middlewares:
+        HTTPMethodMiddleware: false
 ```
 
 ## TODO

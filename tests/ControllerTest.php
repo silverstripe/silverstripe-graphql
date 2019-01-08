@@ -3,12 +3,13 @@
 namespace SilverStripe\GraphQL\Tests;
 
 use Exception;
+use GraphQL\Type\Definition\Type;
 use PHPUnit_Framework_MockObject_MockBuilder;
-use ReflectionClass;
 use SilverStripe\Assets\Dev\TestAssetStore;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Control\HTTPResponse_Exception;
+use SilverStripe\Control\Session;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Kernel;
@@ -17,13 +18,21 @@ use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Controller;
 use SilverStripe\GraphQL\Extensions\IntrospectionProvider;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Middleware\CSRFMiddleware;
+use SilverStripe\GraphQL\Middleware\CSRFMiddleware;
+use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
+use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FakePersistedQuery;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
+use SilverStripe\Security\SecurityToken;
 
 class ControllerTest extends SapphireTest
 {
+    protected $usesDatabase = true;
+
     public function setUp()
     {
         parent::setUp();
@@ -58,11 +67,11 @@ class ControllerTest extends SapphireTest
     public function testGetGetManagerPopulatesFromConfig()
     {
         Config::modify()->set(Manager::class, 'schemas', [
-            'testSchema' => [
-                'types' => [
-                    'mytype' => TypeCreatorFake::class,
-                ],
-            ]
+        'testSchema' => [
+            'types' => [
+                'mytype' => TypeCreatorFake::class,
+            ],
+        ]
         ]);
         $manager = new Manager('testSchema');
         $controller = new Controller($manager);
@@ -79,11 +88,11 @@ class ControllerTest extends SapphireTest
 
         /** @var Manager|PHPUnit_Framework_MockObject_MockBuilder $managerMock */
         $managerMock = $this->getMockBuilder(Manager::class)
-            ->setMethods(['query'])
-            ->getMock();
+        ->setMethods(['query'])
+        ->getMock();
 
         $managerMock->method('query')
-            ->will($this->throwException(new Exception('Failed')));
+        ->will($this->throwException(new Exception('Failed')));
 
         $controller = new Controller($managerMock);
         $response = $controller->index(new HTTPRequest('GET', ''));
@@ -99,11 +108,11 @@ class ControllerTest extends SapphireTest
     {
         /** @var Manager|PHPUnit_Framework_MockObject_MockBuilder $managerMock */
         $managerMock = $this->getMockBuilder(Manager::class)
-            ->setMethods(['query'])
-            ->getMock();
+        ->setMethods(['query'])
+        ->getMock();
 
         $managerMock->method('query')
-            ->will($this->throwException(new Exception('Failed')));
+        ->will($this->throwException(new Exception('Failed')));
 
         $controller = new Controller($managerMock);
         $response = $controller->index(new HTTPRequest('GET', ''));
@@ -134,7 +143,7 @@ class ControllerTest extends SapphireTest
     public function testAuthenticationProtectionOnQueries($authenticator, $shouldFail)
     {
         Handler::config()->update('authenticators', [
-            ['class' => $authenticator]
+        ['class' => $authenticator]
         ]);
 
         $controller = new Controller($manager = new Manager());
@@ -142,7 +151,6 @@ class ControllerTest extends SapphireTest
         $manager->addQuery($this->getQuery($manager), 'myquery');
 
         $response = $controller->index(new HTTPRequest('GET', ''));
-
         $assertion = ($shouldFail) ? 'assertContains' : 'assertNotContains';
         // See Fake\BrutalAuthenticatorFake::authenticate for failure message
         $this->{$assertion}('Never!', $response->getBody());
@@ -154,14 +162,14 @@ class ControllerTest extends SapphireTest
     public function authenticatorProvider()
     {
         return [
-            [
-                Fake\PushoverAuthenticatorFake::class,
-                false,
-            ],
-            [
-                Fake\BrutalAuthenticatorFake::class,
-                true
-            ]
+        [
+            Fake\PushoverAuthenticatorFake::class,
+            false,
+        ],
+        [
+            Fake\BrutalAuthenticatorFake::class,
+            true
+        ]
         ];
     }
 
@@ -171,11 +179,11 @@ class ControllerTest extends SapphireTest
     public function testAddCorsHeadersOriginDisallowed()
     {
         Config::modify()->set(Controller::class, 'cors', [
-            'Enabled' => true,
-            'Allow-Origin' => null,
-            'Allow-Headers' => 'Authorization, Content-Type',
-            'Allow-Methods' =>  'GET, POST, OPTIONS',
-            'Max-Age' => 86400
+        'Enabled' => true,
+        'Allow-Origin' => null,
+        'Allow-Headers' => 'Authorization, Content-Type',
+        'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Max-Age' => 86400
         ]);
 
         $controller = new Controller();
@@ -191,11 +199,11 @@ class ControllerTest extends SapphireTest
     public function testAddCorsHeadersOriginAllowed()
     {
         Config::modify()->set(Controller::class, 'cors', [
-            'Enabled' => true,
-            'Allow-Origin' => 'http://localhost',
-            'Allow-Headers' => 'Authorization, Content-Type',
-            'Allow-Methods' =>  'GET, POST, OPTIONS',
-            'Max-Age' => 86400
+        'Enabled' => true,
+        'Allow-Origin' => 'http://localhost',
+        'Allow-Headers' => 'Authorization, Content-Type',
+        'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Max-Age' => 86400
         ]);
 
         $controller = new Controller();
@@ -217,11 +225,11 @@ class ControllerTest extends SapphireTest
     public function testAddCorsHeadersRefererAllowed()
     {
         Config::modify()->set(Controller::class, 'cors', [
-            'Enabled' => true,
-            'Allow-Origin' => 'http://localhost',
-            'Allow-Headers' => 'Authorization, Content-Type',
-            'Allow-Methods' =>  'GET, POST, OPTIONS',
-            'Max-Age' => 86400
+        'Enabled' => true,
+        'Allow-Origin' => 'http://localhost',
+        'Allow-Headers' => 'Authorization, Content-Type',
+        'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Max-Age' => 86400
         ]);
 
         $controller = new Controller();
@@ -243,11 +251,11 @@ class ControllerTest extends SapphireTest
     public function testAddCorsHeadersRefererPortAllowed()
     {
         Config::modify()->set(Controller::class, 'cors', [
-            'Enabled' => true,
-            'Allow-Origin' => 'http://localhost:8181',
-            'Allow-Headers' => 'Authorization, Content-Type',
-            'Allow-Methods' =>  'GET, POST, OPTIONS',
-            'Max-Age' => 86400
+        'Enabled' => true,
+        'Allow-Origin' => 'http://localhost:8181',
+        'Allow-Headers' => 'Authorization, Content-Type',
+        'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Max-Age' => 86400
         ]);
 
         $controller = new Controller();
@@ -274,11 +282,11 @@ class ControllerTest extends SapphireTest
         $this->expectException(HTTPResponse_Exception::class);
 
         Config::modify()->set(Controller::class, 'cors', [
-            'Enabled' => true,
-            'Allow-Origin' => 'http://localhost:9090',
-            'Allow-Headers' => 'Authorization, Content-Type',
-            'Allow-Methods' =>  'GET, POST, OPTIONS',
-            'Max-Age' => 86400
+        'Enabled' => true,
+        'Allow-Origin' => 'http://localhost:9090',
+        'Allow-Headers' => 'Authorization, Content-Type',
+        'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Max-Age' => 86400
         ]);
 
         $controller = new Controller();
@@ -291,11 +299,11 @@ class ControllerTest extends SapphireTest
     public function testAddCorsHeadersOriginAllowedWildcard()
     {
         Controller::config()->set('cors', [
-            'Enabled' => true,
-            'Allow-Origin' => '*',
-            'Allow-Headers' => 'Authorization, Content-Type',
-            'Allow-Methods' =>  'GET, PUT, OPTIONS',
-            'Max-Age' => 600
+        'Enabled' => true,
+        'Allow-Origin' => '*',
+        'Allow-Headers' => 'Authorization, Content-Type',
+        'Allow-Methods' =>  'GET, PUT, OPTIONS',
+        'Max-Age' => 600
         ]);
 
         $controller = new Controller();
@@ -314,11 +322,11 @@ class ControllerTest extends SapphireTest
         $this->expectException(HTTPResponse_Exception::class);
 
         Controller::config()->set('cors', [
-            'Enabled' => true,
-            'Allow-Origin' => 'localhost',
-            'Allow-Headers' => 'Authorization, Content-Type',
-            'Allow-Methods' =>  'GET, POST, OPTIONS',
-            'Max-Age' => 86400
+        'Enabled' => true,
+        'Allow-Origin' => 'localhost',
+        'Allow-Headers' => 'Authorization, Content-Type',
+        'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Max-Age' => 86400
         ]);
 
         $controller = new Controller();
@@ -335,7 +343,7 @@ class ControllerTest extends SapphireTest
         $this->expectException(HTTPResponse_Exception::class);
 
         Config::modify()->set(Controller::class, 'cors', [
-            'Enabled' => false
+        'Enabled' => false
         ]);
 
         $controller = new Controller();
@@ -381,18 +389,219 @@ class ControllerTest extends SapphireTest
     public function testSchemaIsResetPerController()
     {
         $config = [
-            'schema1' => [
-                'typeNames' => [DataObjectFake::class => 'testone'],
-            ],
-            'schema2' => [
-                'typeNames' => [DataObjectFake::class => 'testtwo'],
-            ]
+        'schema1' => [
+            'typeNames' => [DataObjectFake::class => 'testone'],
+        ],
+        'schema2' => [
+            'typeNames' => [DataObjectFake::class => 'testtwo'],
+        ]
         ];
         Config::modify()->set(Manager::class, 'schemas', $config);
         $controller1 = new Controller(new Manager('schema1'));
         $this->assertEquals('testone', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
         $controller2 = new Controller(new Manager('schema2'));
         $this->assertEquals('testtwo', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
+    }
+
+    public function testCSRFProtectionBlocksMutations()
+    {
+        $manager = $this->getFakeManager();
+        $manager->addMiddleware(new CSRFMiddleware());
+        $request = $this->createGraphqlRequest('mutation { testMutation }', 'POST');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQueryError($controller, $request, '/CSRF token/');
+    }
+
+    public function testCSRFProtectionDisabled()
+    {
+        $manager = $this->getFakeManager();
+        $request = $this->createGraphqlRequest('mutation { testMutation }', 'POST');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQuerySuccess($controller, $request, 'testMutation');
+    }
+
+    public function testCSRFToken()
+    {
+        $manager = $this->getFakeManager();
+        $manager->addMiddleware(new CSRFMiddleware());
+        $request = $this->createGraphqlRequest('mutation { testMutation }', 'POST');
+        $request->addHeader('X-CSRF-TOKEN', SecurityToken::inst()->getValue());
+        $controller = $this->getFakeController($request, $manager, new Session([
+            'SecurityID' => SecurityToken::inst()->getValue(),
+        ]));
+        $this->assertQuerySuccess($controller, $request, 'testMutation');
+    }
+
+    public function testQueriesDontNeedCSRF()
+    {
+        $manager = $this->getFakeManager();
+        $manager->addMiddleware(new CSRFMiddleware());
+        $request = $this->createGraphqlRequest('query { testQuery }', 'POST');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQuerySuccess($controller, $request, 'testQuery');
+    }
+
+    public function testStrictHTTPMethodsGETMutationThrowsError()
+    {
+        $manager = $this->getFakeManager();
+        $manager->addMiddleware(new HTTPMethodMiddleware());
+        $request = $this->createGraphqlRequest('mutation { testMutation }', 'GET');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQueryError($controller, $request, '/must use the POST/');
+    }
+
+    public function testStrictHTTPMethodsDisabled()
+    {
+        $manager = $this->getFakeManager();
+        $request = $this->createGraphqlRequest('mutation { testMutation }', 'GET');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQuerySuccess($controller, $request, 'testMutation');
+    }
+
+    public function testStrictHTTPMethodsPOSTMutationIsAccepted()
+    {
+        $manager = $this->getFakeManager();
+        $manager->addMiddleware(new HTTPMethodMiddleware());
+        $request = $this->createGraphqlRequest('mutation { testMutation }', 'POST');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQuerySuccess($controller, $request, 'testMutation');
+    }
+
+    public function testStrictHTTPMethodsQueryCanBePOSTOrGET()
+    {
+        $manager = $this->getFakeManager();
+        $manager->addMiddleware(new HTTPMethodMiddleware());
+        $request = $this->createGraphqlRequest('query { testQuery }', 'POST');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQuerySuccess($controller, $request, 'testQuery');
+        $manager = $this->getFakeManager();
+        $request = $this->createGraphqlRequest('query { testQuery }', 'GET');
+        $controller = $this->getFakeController($request, $manager);
+        $this->assertQuerySuccess($controller, $request, 'testQuery');
+    }
+
+    protected function getFakeManager()
+    {
+        $operation = [
+            'args' => [],
+            'type' => Type::string(),
+            'resolve' => function () {
+                return 'success';
+            },
+        ];
+        $manager = new Manager();
+        $manager->addMutation($operation, 'testMutation');
+        $manager->addQuery($operation, 'testQuery');
+        return $manager;
+    }
+
+    protected function getFakeController(HTTPRequest $request, Manager $manager, $session = null)
+    {
+        if (!$session) {
+            $session = new Session([]);
+        }
+        $controller = new Controller();
+        $controller->setRequest($request);
+        $controller->setManager($manager);
+        $request->setSession($session);
+        $controller->pushCurrent();
+        return $controller;
+    }
+
+    protected function createGraphqlRequest($graphql, $method = 'POST')
+    {
+        $postVars = $method === 'POST' ? ['query' => $graphql] : [];
+        $getVars = $method === 'GET' ? ['query' => $graphql] : [];
+        return new HTTPRequest($method, '/', $getVars, $postVars);
+    }
+
+    protected function assertQueryError(Controller $controller, HTTPRequest $request, $regExp)
+    {
+        $data = json_decode($controller->handleRequest($request)->getBody(), true);
+        $this->assertArrayHasKey('errors', $data);
+        $this->assertCount(1, $data['errors']);
+        $this->assertRegExp($regExp, $data['errors'][0]['message']);
+    }
+
+    protected function assertQuerySuccess(Controller $controller, HTTPRequest $request, $operation)
+    {
+        $controller->setRequest($request);
+        $data = json_decode($controller->handleRequest($request)->getBody(), true);
+        $this->assertArrayNotHasKey('errors', $data);
+        $this->assertArrayHasKey('data', $data);
+        $this->assertArrayHasKey($operation, $data['data']);
+        $this->assertEquals('success', $data['data'][$operation]);
+    }
+
+    /**
+     * @throws \ReflectionException
+     */
+    public function testGetQueryWithNoID()
+    {
+        /* @var $controller Controller */
+        $controller = Controller::create();
+        $manager = $this->getMockBuilder(Manager::class)
+            ->setMethods(['getQueryFromPersistedID'])
+            ->getMock();
+        $manager->expects($this->never())
+            ->method('getQueryFromPersistedID');
+
+        $controller->setManager($manager);
+        $expectedQuery = 'query($memberID:ID!){readOneMember(ID:$memberID){ID Email}}';
+        $expectedVariables = ['memberID' => '1'];
+
+        // normal query request: query + variables
+        $request = new HTTPRequest('POST', '', [], [
+            'query' => $expectedQuery,
+            'variables' => json_encode($expectedVariables)
+        ]);
+        $controller->index($request);
+    }
+
+    public function testGetQueryWithID()
+    {
+        /* @var $controller Controller */
+        $controller = Controller::create();
+        $manager = $this->getMockBuilder(Manager::class)
+            ->setMethods(['getQueryFromPersistedID'])
+            ->getMock();
+        $manager->expects($this->once())
+            ->method('getQueryFromPersistedID')
+            ->with($this->equalTo('1cd63b53-472c-4844-9017-4e81b18b386d'));
+
+        $controller->setManager($manager);
+        $expectedVariables = ['memberID' => '1'];
+
+        // normal query request: query + variables
+        $request = new HTTPRequest('POST', '', [], [
+            'id' => '1cd63b53-472c-4844-9017-4e81b18b386d',
+            'variables' => json_encode($expectedVariables)
+        ]);
+        $controller->index($request);
+    }
+
+    public function testGetQueryWithQueryAndID()
+    {
+        /* @var $controller Controller */
+        $controller = Controller::create();
+        $manager = $this->getMockBuilder(Manager::class)
+            ->setMethods(['getQueryFromPersistedID'])
+            ->getMock();
+        $manager->expects($this->never())
+            ->method('getQueryFromPersistedID');
+
+        $controller->setManager($manager);
+        $expectedQuery = 'query($memberID:ID!){readOneMember(ID:$memberID){ID Email}}';
+        $expectedVariables = ['memberID' => '1'];
+
+        // normal query request: query + variables
+        $request = new HTTPRequest('POST', '', [], [
+            'query' => $expectedQuery,
+            'id' => '1cd63b53-472c-4844-9017-4e81b18b386d',
+            'variables' => json_encode($expectedVariables)
+        ]);
+        $result = $controller->index($request)->getBody();
+        $this->assertArrayHasKey('errors', json_decode($result, true));
     }
 
     protected function getType(Manager $manager)

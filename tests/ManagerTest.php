@@ -2,18 +2,23 @@
 
 namespace SilverStripe\GraphQL\Tests;
 
-use SilverStripe\Core\Config\Config;
-use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Manager;
-use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
-use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
-use SilverStripe\GraphQL\Tests\Fake\MutationCreatorFake;
-use GraphQL\Type\Definition\Type;
-use SilverStripe\Dev\SapphireTest;
-use SilverStripe\Security\IdentityStore;
-use SilverStripe\Security\Member;
 use GraphQL\Error\Error;
 use GraphQL\Schema;
+use GraphQL\Type\Definition\Type;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\PersistedQuery\FileProvider;
+use SilverStripe\GraphQL\PersistedQuery\HTTPProvider;
+use SilverStripe\GraphQL\PersistedQuery\JSONStringProvider;
+use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
+use SilverStripe\GraphQL\Tests\Fake\FakePersistedQuery;
+use SilverStripe\GraphQL\Tests\Fake\MutationCreatorFake;
+use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
+use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
+use SilverStripe\Security\IdentityStore;
+use SilverStripe\Security\Member;
 use GraphQL\Language\SourceLocation;
 use InvalidArgumentException;
 
@@ -209,6 +214,24 @@ class ManagerTest extends SapphireTest
         $member = Member::create();
         $manager->setMember($member);
         $this->assertSame($member, $manager->getMember());
+    }
+
+    public function testGetPersistedQueryByID()
+    {
+        $stub = $this->createMock(PersistedQueryMappingProvider::class);
+        $stub->expects($this->once())
+            ->method('getByID')
+            ->with(
+                $this->equalTo('someID'),
+                $this->equalTo('default')
+            )
+            ->willReturn('someQuery');
+        Injector::inst()->registerService($stub, PersistedQueryMappingProvider::class);
+
+        $manager = new Manager();
+
+        $result = $manager->getQueryFromPersistedID('someID');
+        $this->assertEquals('someQuery', $result);
     }
 
     protected function getType(Manager $manager)

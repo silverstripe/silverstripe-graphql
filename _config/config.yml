@@ -7,14 +7,32 @@ SilverStripe\Core\Injector\Injector:
     class: SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser
   SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.array:
     class: SilverStripe\GraphQL\Scaffolding\Util\ArrayTypeParser
+  SilverStripe\GraphQL\Middleware\QueryMiddleware.csrf:
+    class: SilverStripe\GraphQL\Middleware\CSRFMiddleware
+  SilverStripe\GraphQL\Middleware\QueryMiddleware.httpMethod:
+    class: SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware
+  SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
+    class: SilverStripe\GraphQL\PersistedQuery\JSONStringProvider
+  SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
+    constructor:
+      httpClient: %$SilverStripe\GraphQL\PersistedQuery\GuzzleHTTPClient
+
+  # Set up a default endpoint that can be activated with a Director rule
   SilverStripe\GraphQL\Manager.default:
     class: SilverStripe\GraphQL\Manager
     constructor:
       schemaKey: default
+    properties:
+      Middlewares:
+        CSRFMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.csrf'
+        HTTPMethodMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.httpMethod'
   SilverStripe\GraphQL\Controller.default:
     class: SilverStripe\GraphQL\Controller
     constructor:
       manager: '%$SilverStripe\GraphQL\Manager.default'
+  SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
+    class: SilverStripe\GraphQL\PersistedQuery\JSONStringProvider
+
 # Assign each DBField subclass with an associated internal type
 SilverStripe\ORM\FieldType\DBField:
   extensions:

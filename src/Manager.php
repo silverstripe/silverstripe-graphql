@@ -16,6 +16,7 @@ use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\Deprecation;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
+use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 use SilverStripe\ORM\ValidationException;
@@ -77,11 +78,15 @@ class Manager implements ConfigurationApplier
      */
     protected $member;
 
-
     /**
      * @var QueryMiddleware[]
      */
     protected $middlewares = [];
+
+    /**
+     * @var array
+     */
+    protected $extraContext = [];
 
     /**
      * @return QueryMiddleware[]
@@ -125,8 +130,10 @@ class Manager implements ConfigurationApplier
     {
         // Reverse middlewares
         $next = $last;
+        // Filter out any middlewares that are set to `false`, e.g. via config
+        $middlewares = array_reverse(array_filter($this->getMiddlewares()));
         /** @var QueryMiddleware $middleware */
-        foreach (array_reverse($this->getMiddlewares()) as $middleware) {
+        foreach ($middlewares as $middleware) {
             $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
                 return $middleware->process($schema, $query, $context, $params, $next);
             };
@@ -526,15 +533,58 @@ class Manager implements ConfigurationApplier
     }
 
     /**
+     * get query from persisted id, return null if not found
+     *
+     * @param $id
+     * @return string | null
+     */
+    public function getQueryFromPersistedID($id)
+    {
+        /** @var PersistedQueryMappingProvider $provider */
+        $provider = Injector::inst()->get(PersistedQueryMappingProvider::class);
+
+        return $provider->getByID($id);
+    }
+
+    /**
      * Get global context to pass to $context for all queries
      *
      * @return array
      */
     protected function getContext()
     {
+        return array_merge(
+            $this->getContextDefaults(),
+            $this->extraContext
+        );
+    }
+
+    /**
+     * @return array
+     */
+    protected function getContextDefaults()
+    {
         return [
-            'currentUser' => $this->getMember()
+            'currentUser' => $this->getMember(),
         ];
+    }
+
+    /**
+     * @param string $key
+     * @param any $value
+     * @return $this
+     */
+    public function addContext($key, $value)
+    {
+        if (!is_string($key)) {
+            throw new InvalidArgumentException(sprintf(
+                'Context key must be a string. Got %s',
+                gettype($key)
+            ));
+        }
+        $this->extraContext[$key] = $value;
+
+        return $this;
     }
 
     /**
