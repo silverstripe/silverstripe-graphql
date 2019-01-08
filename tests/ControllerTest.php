@@ -3,10 +3,8 @@
 namespace SilverStripe\GraphQL\Tests;
 
 use Exception;
-use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use PHPUnit_Framework_MockObject_MockBuilder;
-use ReflectionClass;
 use SilverStripe\Assets\Dev\TestAssetStore;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
@@ -20,10 +18,10 @@ use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Controller;
 use SilverStripe\GraphQL\Extensions\IntrospectionProvider;
 use SilverStripe\GraphQL\Manager;
-use SilverStripe\GraphQL\Scaffolding\StaticSchema;
-use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Middleware\CSRFMiddleware;
 use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
+use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\Security\SecurityToken;

@@ -2242,6 +2242,20 @@ To disable that requirement, you can remove the `HTTPMethodMiddleware` from your
         HTTPMethodMiddleware: false
 ```
 
+## Strict HTTP Method Checking
+
+According to GraphQL best practices, mutations should be done over `POST`, while queries have the option
+to use either `GET` or `POST`. By default, this module enforces the `POST` request method for all mutations.
+
+To disable that requirement, you can remove the `HTTPMethodMiddleware` from your `Manager` implementation.
+
+```yaml
+  SilverStripe\GraphQL\Manager:
+    properties:
+      Middlewares:
+        HTTPMethodMiddleware: false
+```
+
 ## TODO
 
  * Permission checks
