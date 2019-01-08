@@ -416,6 +416,7 @@ class Connection implements OperationResolver
      * @param SS_List $list
      * @param array   $sortBy
      * @return SS_List Sorted list, if sortable
+     * @throws InvalidArgumentException If an invalid sort column is specified
      */
     protected function applySort($list, $sortBy)
     {
