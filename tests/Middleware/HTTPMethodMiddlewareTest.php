@@ -1,12 +1,11 @@
 <?php
+
 namespace SilverStripe\GraphQL\Tests\Middleware;
 
-require_once(__DIR__ . '/MiddlewareProcessTest.php');
-
-use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
 use Exception;
+use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
 
-class HTTPMethodMiddlewareTest extends MiddlewareProcessTest
+class HTTPMethodMiddlewareTest extends MiddlewareProcessTestBase
 {
     public function testItDoesntDoAnythingIfNotAMutation()
     {

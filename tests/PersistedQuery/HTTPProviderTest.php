@@ -2,11 +2,11 @@
 
 namespace SilverStripe\GraphQL\Tests\PersistedQuery;
 
+use InvalidArgumentException;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\PersistedQuery\HTTPClient;
 use SilverStripe\GraphQL\PersistedQuery\HTTPProvider;
-use InvalidArgumentException;
 
 class HTTPProviderTest extends SapphireTest
 {

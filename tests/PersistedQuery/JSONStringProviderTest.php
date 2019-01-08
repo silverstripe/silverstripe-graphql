@@ -2,8 +2,8 @@
 
 namespace SilverStripe\GraphQL\Tests\PersistedQuery;
 
-use SilverStripe\Dev\SapphireTest;
 use InvalidArgumentException;
+use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\PersistedQuery\JSONStringProvider;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 

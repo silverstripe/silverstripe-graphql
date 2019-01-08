@@ -6,8 +6,8 @@ use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\IntType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\StringType;
-use SilverStripe\Dev\SapphireTest;
 use InvalidArgumentException;
+use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Scaffolding\Util\ArrayTypeParser;
 
 /**
@@ -30,7 +30,7 @@ class ArrayTypeParserTest extends SapphireTest
         $type = $parser->getType();
 
         $this->assertInstanceOf(ObjectType::class, $type);
-        
+
         $this->assertInstanceOf(FieldDefinition::class, $type->getField('FieldOne'));
         $this->assertInstanceOf(FieldDefinition::class, $type->getField('FieldTwo'));
 

@@ -1,13 +1,14 @@
 <?php
+
 namespace SilverStripe\GraphQL\Tests\Middleware;
 
+use GraphQL\Schema;
+use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
-use GraphQL\Schema;
-use GraphQL\Type\Definition\Type;
-use GraphQL\Type\Definition\ObjectType;
 
-abstract class MiddlewareProcessTest extends SapphireTest
+abstract class MiddlewareProcessTestBase extends SapphireTest
 {
     /**
      * @var callable

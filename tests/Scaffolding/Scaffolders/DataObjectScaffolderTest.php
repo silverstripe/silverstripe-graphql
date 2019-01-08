@@ -2,26 +2,26 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
-use SilverStripe\Core\Config\Config;
-use SilverStripe\GraphQL\Manager;
-use SilverStripe\Dev\SapphireTest;
-use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
-use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
-use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
-use SilverStripe\GraphQL\Tests\Fake\FakePage;
-use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
-use InvalidArgumentException;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
+use Exception;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
-use Exception;
+use InvalidArgumentException;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FakePage;
+use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
+use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 use SilverStripe\ORM\FieldType\DBInt;
 
 class DataObjectScaffolderTest extends SapphireTest

@@ -2,22 +2,22 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
+use Exception;
 use GraphQL\Type\Definition\BooleanType;
 use GraphQL\Type\Definition\NonNull;
-use SilverStripe\Dev\SapphireTest;
-use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
-use SilverStripe\GraphQL\Tests\Fake\OperationScaffolderFake;
-use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
+use GraphQL\Type\Definition\StringType;
 use InvalidArgumentException;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
+use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ArgumentScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
-use GraphQL\Type\Definition\StringType;
-use Exception;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FakeResolver;
+use SilverStripe\GraphQL\Tests\Fake\OperationScaffolderFake;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 
 /**

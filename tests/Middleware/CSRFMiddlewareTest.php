@@ -1,13 +1,12 @@
 <?php
+
 namespace SilverStripe\GraphQL\Tests\Middleware;
 
-require_once(__DIR__ . '/MiddlewareProcessTest.php');
-
+use Exception;
 use SilverStripe\GraphQL\Middleware\CSRFMiddleware;
 use SilverStripe\Security\SecurityToken;
-use Exception;
 
-class CSRFMiddlewareTest extends MiddlewareProcessTest
+class CSRFMiddlewareTest extends MiddlewareProcessTestBase
 {
     public function testItDoesntDoAnythingIfNotAMutation()
     {

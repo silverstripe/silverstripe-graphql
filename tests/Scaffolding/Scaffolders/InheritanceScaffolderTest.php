@@ -3,8 +3,8 @@
 namespace SilverStripe\GraphQL\Tests\Scaffolding\Scaffolding;
 
 use GraphQL\Type\Definition\ObjectType;
-use SilverStripe\Dev\SapphireTest;
 use InvalidArgumentException;
+use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Controller;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\InheritanceScaffolder;

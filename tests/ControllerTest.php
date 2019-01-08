@@ -22,7 +22,6 @@ use SilverStripe\GraphQL\Middleware\CSRFMiddleware;
 use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
-use SilverStripe\GraphQL\Tests\Fake\FakePersistedQuery;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\Security\SecurityToken;

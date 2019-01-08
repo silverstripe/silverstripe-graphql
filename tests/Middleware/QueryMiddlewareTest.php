@@ -23,8 +23,9 @@ class QueryMiddlewareTest extends SapphireTest
                 'mymutation' => MutationCreatorFake::class,
             ],
         ];
-        $manager = Manager::createFromConfig($config);
 
+        $manager = new Manager();
+        $manager->applyConfig($config);
         $manager->setMiddlewares([
             new DummyResponseMiddleware(),
         ]);

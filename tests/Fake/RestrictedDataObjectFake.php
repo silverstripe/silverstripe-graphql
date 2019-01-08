@@ -2,9 +2,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
-use SilverStripe\Dev\TestOnly;
-
-class RestrictedDataObjectFake extends DataObjectFake implements TestOnly
+class RestrictedDataObjectFake extends DataObjectFake
 {
     private static $table_name = "GraphQL_RestrictedDataObjectFake";
 
