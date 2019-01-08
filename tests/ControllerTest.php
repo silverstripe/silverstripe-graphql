@@ -19,8 +19,6 @@ use SilverStripe\GraphQL\Controller;
 use SilverStripe\GraphQL\Extensions\IntrospectionProvider;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Middleware\CSRFMiddleware;
-use SilverStripe\GraphQL\Middleware\CSRFMiddleware;
-use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
 use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
