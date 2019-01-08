@@ -370,66 +370,85 @@ class Connection implements OperationResolver
      */
     public function resolveList($list, array $args, $context = null, ResolveInfo $info = null)
     {
-        $limit = (isset($args['limit']) && $args['limit']) ? $args['limit'] : $this->defaultLimit;
-        $offset = (isset($args['offset'])) ? $args['offset'] : 0;
-
-        if ($limit > $this->maximumLimit) {
-            $limit = $this->maximumLimit;
+        // Apply sort
+        if (!empty($args['sortBy'])) {
+            $list = $this->applySort($list, $args['sortBy']);
         }
 
+        // Default values
+        $count = $list->count();
         $nextPage = false;
         $previousPage = false;
-        $count = $list->count();
 
+        // If list is limitable, apply pagination
         if ($list instanceof Limitable) {
+            $offset = empty($args['offset']) ? 0 : $args['offset'];
+            $limit = empty($args['limit'])
+                ? $this->defaultLimit
+                : $args['limit'];
+            if ($limit > $this->maximumLimit) {
+                $limit = $this->maximumLimit;
+            }
+
+            // Apply limit
             $list = $list->limit($limit, $offset);
 
+            // Flag prev-next page
             if ($limit && (($limit + $offset) < $count)) {
                 $nextPage = true;
             }
-
             if ($offset > 0) {
                 $previousPage = true;
             }
         }
 
-        if ($list instanceof Sortable) {
-            $sortableFields = $this->getSortableFields();
-            if (isset($args['sortBy']) && !empty($args['sortBy'])) {
-                // convert the input from the input format of field, direction
-                // to an accepted SS_List sort format.
-                // https://github.com/graphql/graphql-relay-js/issues/20#issuecomment-220494222
-                $sort = [];
-
-                foreach ($args['sortBy'] as $sortInput) {
-                    $direction = (isset($sortInput['direction'])) ? $sortInput['direction'] : 'ASC';
-
-                    if (isset($sortInput['field'])) {
-                        if (!array_key_exists($sortInput['field'], $sortableFields)) {
-                            throw new InvalidArgumentException(sprintf(
-                                '"%s" is not a valid sort column',
-                                $sortInput['field']
-                            ));
-                        }
-
-                        $column = $sortableFields[$sortInput['field']];
-                        $sort[$column] = $direction;
-                    }
-                }
-
-                if ($sort) {
-                    $list = $list->sort($sort);
-                }
-            }
-        }
-
         return [
-            'edges' => $list,
+            'edges'    => $list,
             'pageInfo' => [
-                'totalCount' => $count,
-                'hasNextPage' => $nextPage,
+                'totalCount'      => $count,
+                'hasNextPage'     => $nextPage,
                 'hasPreviousPage' => $previousPage
             ]
         ];
+    }
+
+    /**
+     * @param SS_List $list
+     * @param array   $sortBy
+     * @return SS_List Sorted list, if sortable
+     * @throws InvalidArgumentException If an invalid sort column is specified
+     */
+    protected function applySort($list, $sortBy)
+    {
+        // Ensure list is sortable
+        if (!$list instanceof Sortable) {
+            return $list;
+        }
+
+        $sortableFields = $this->getSortableFields();
+
+        // convert the input from the input format of field, direction
+        // to an accepted SS_List sort format.
+        // https://github.com/graphql/graphql-relay-js/issues/20#issuecomment-220494222
+        $sort = [];
+        foreach ($sortBy as $sortInput) {
+            if (isset($sortInput['field'])) {
+                $direction = isset($sortInput['direction']) ? $sortInput['direction'] : 'ASC';
+                if (!array_key_exists($sortInput['field'], $sortableFields)) {
+                    throw new InvalidArgumentException(sprintf(
+                        '"%s" is not a valid sort column',
+                        $sortInput['field']
+                    ));
+                }
+
+                $column = $sortableFields[$sortInput['field']];
+                $sort[$column] = $direction;
+            }
+        }
+
+        if ($sort) {
+            $list = $list->sort($sort);
+        }
+        return $list;
     }
 }
