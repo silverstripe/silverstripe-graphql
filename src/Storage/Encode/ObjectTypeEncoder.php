@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Storage\Encode;
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\FieldArgument;
 use GraphQL\Type\Definition\FieldDefinition;
+use GraphQL\Type\Definition\InputObjectField;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
@@ -21,13 +22,13 @@ use PhpParser\Node\Expr\Closure as ClosureExpression;
 class ObjectTypeEncoder implements TypeEncoderInterface
 {
     /**
-     * @var TypeEncoderInterface
+     * @var TypeExpressionProvider
      */
     protected $referentialTypeEncoder;
 
-    public function __construct(TypeEncoderInterface $referentialTypeEncoder)
+    public function __construct(TypeExpressionProvider $referentialTypeEncoder)
     {
-        $this->typeEncoder = $referentialTypeEncoder;
+        $this->referentialTypeEncoder = $referentialTypeEncoder;
     }
 
     /**
@@ -69,25 +70,44 @@ class ObjectTypeEncoder implements TypeEncoderInterface
     protected function buildFieldsExpression(array $fields)
     {
         $items = array_map(function ($field) {
-            /* @var FieldDefinition $field */
-            $this->assertFieldValid($field);
-            $fieldItems = Helpers::buildArrayItems($field->config, ['type', 'args', 'resolve']);
-
+            $fieldItems = Helpers::buildArrayItems($field->config, ['type', 'args', 'resolve', 'resolverFactory']);
             // type
-            $fieldItems[] = new ArrayItem(
-                $this->referentialTypeEncoder->getExpression($field->getType()),
-                Helpers::normaliseValue('type')
-            );
+            if ($field instanceof FieldDefinition || $field instanceof InputObjectField) {
+                if ($field instanceof FieldDefinition) {
+                    $this->assertFieldValid($field);
+                }
+                $fieldItems[] = new ArrayItem(
+                    $this->referentialTypeEncoder->getExpression($field->getType()),
+                    Helpers::normaliseValue('type')
+                );
+                // Input object field doesn't need args or resolve
+                if ($field instanceof InputObjectField) {
+                    return new ArrayItem(new Array_($fieldItems));
+                }
+
+            } else {
+                /* @var Type $field */
+                $this->assertValid($field);
+                $fieldItems[] = new ArrayItem(
+                    $this->referentialTypeEncoder->getExpression($field),
+                    Helpers::normaliseValue('type')
+                );
+            }
 
             // resolve
-            /* @var ResolverFactory|callable $resolver */
-            $resolver = $field->config['resolve'];
-            $fieldItems[] = new ArrayItem(
-                Helpers::normaliseValue('resolve'),
-                $resolver instanceof ResolverFactory
-                    ? $resolver->getExpression()
-                    : Helpers::normaliseValue($resolver)
-            );
+            if (isset($field->config['resolverFactory'])) {
+                /* @var ExpressionProvider $resolver */
+                $resolver = $field->config['resolverFactory'];
+                $fieldItems[] = new ArrayItem(
+                    $resolver->getExpression(),
+                    Helpers::normaliseValue('resolve')
+                );
+            } else if (isset($field->config['resolve'])) {
+                $fieldItems[] = new ArrayItem(
+                    Helpers::normaliseValue($field->config['resolve']),
+                    Helpers::normaliseValue('resolve')
+                );
+            }
 
             // args
             $args = array_map(function ($arg) {
@@ -110,11 +130,11 @@ class ObjectTypeEncoder implements TypeEncoderInterface
 
         }, $fields);
 
-        return new ClosureExpression(
-            new Return_(
-                new Array_($items)
-            )
-        );
+        return new ClosureExpression([
+            'stmts' => [
+                new Return_(new Array_($items))
+            ]
+        ]);
     }
     /**
      * @param Type $type
@@ -129,25 +149,27 @@ class ObjectTypeEncoder implements TypeEncoderInterface
         );
         Utils::invariant(
             !isset($type->config['isTypeOf']) || !$type->config['isTypeOf'] instanceof Closure,
-            'Type "%s" is using a closure for the isTypeOf property and cannot be serialised.',
+            'Type "%s" is using a closure for the isTypeOf property and cannot be encoded.',
             $type->name
         );
         Utils::invariant(
-            !$type->resolveFieldFn || !$type->resolveFieldFn instanceof Closure,
-            'Type "%s" is using a closure for the resolveField property and cannot be serialised.',
+            !isset($type->config['resolveField']) || !$type->config['resolveField'] instanceof Closure,
+            'Type "%s" cannot be encoded because it has a closure as a resolveField setting.',
             $type->name
         );
 
     }
 
     /**
-     * @param FieldDefinition $field
+     * @param FieldDefinition
      * @throws Error
      */
     protected function assertFieldValid(FieldDefinition $field)
     {
         Utils::invariant(
-            !$field->resolveFn instanceof Closure,
+
+            !$field->resolveFn instanceof Closure ||
+            (isset($field->config['resolverFactory']) && $field->config['resolverFactory'] instanceof ExpressionProvider),
             'Resolver function for field "%s" cannot be a closure. Use callable array syntax instead.',
             $field->name
         );

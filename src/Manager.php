@@ -17,8 +17,8 @@ use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\Dev\Deprecation;
-use SilverStripe\GraphQL\Encode\TypeRegistryEncoderInterface;
-use SilverStripe\GraphQL\Interfaces\SchemaStorageInterface;
+use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
+use SilverStripe\GraphQL\Storage\SchemaStorageInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
@@ -40,7 +40,7 @@ use Exception;
  *
  * Instantiate with {@see Manager::createFromConfig()} with a config array.
  */
-class Manager implements ConfigurationApplier
+class Manager implements ConfigurationApplier, TypeRegistryInterface
 {
     use Injectable;
     use Extensible;
@@ -95,11 +95,6 @@ class Manager implements ConfigurationApplier
     protected $extraContext = [];
 
     /**
-     * @var SchemaConfig
-     */
-    protected $schemaConfig;
-
-    /**
      * @var SchemaStorageInterface
      */
     protected $schemaStore;
@@ -130,25 +125,6 @@ class Manager implements ConfigurationApplier
     {
         $this->middlewares[] = $middleware;
         return $this;
-    }
-
-    /**
-     * @param SchemaConfig $schemaConfig
-     * @return $this
-     */
-    public function setSchemaConfig(SchemaConfig $schemaConfig)
-    {
-        $this->schemaConfig = $schemaConfig;
-
-        return $this;
-    }
-
-    /**
-     * @return SchemaConfig
-     */
-    public function getSchemaConfig()
-    {
-        return $this->schemaConfig;
     }
 
     /**
@@ -222,58 +198,9 @@ class Manager implements ConfigurationApplier
     }
 
     /**
-     * Applies a configuration based on the schemaKey property
-     *
-     * @param bool $regenerate
-     * @return Manager
-     * @throws Exception
-     * @throws CacheException
-     * @throws NotFoundExceptionInterface
-     */
-    public function build($regenerate = false)
-    {
-        if (!$this->getSchemaKey()) {
-            throw new BadMethodCallException(sprintf(
-                'Attempted to run build() on a %s instance without a schema key set. See setSchemaKey(),
-                or specify one in the constructor.',
-                __CLASS__
-            ));
-        }
-        $schemaStore = $this->getSchemaStore();
-        if ($regenerate || !$schemaStore->exists()) {
-            $schemas = $this->config()->get('schemas');
-            $config = isset($schemas[$this->getSchemaKey()]) ? $schemas[$this->getSchemaKey()] : [];
-            $this->applyConfig($config);
-            $schemaConfig = $this->createSchemaConfig();
-            $schemaStore->persist($schemaConfig, $this->types);
-        }
-
-        $this->setSchemaConfig($schemaConfig);
-
-        return $this;
-    }
-
-    /**
-     * @deprecated 4.0 Use Manager::build() instead
-     */
-    public function configure()
-    {
-        Deprecation::notice(
-            '4.0',
-            sprintf(
-                '%s::%s is deprecated. Use %s::build() instead',
-                __CLASS__,
-                __FUNCTION__,
-                __CLASS__
-            )
-        );
-    }
-
-    /**
      * @param array $config An array with optional 'types' and 'queries' keys
      * @return Manager
      * @throws NotFoundExceptionInterface
-     * @throws Error
      */
     public function applyConfig(array $config)
     {
@@ -371,22 +298,25 @@ class Manager implements ConfigurationApplier
      * Build the main Schema instance that represents the final schema for this endpoint
      *
      * @return Schema
+     * @throws NotFoundExceptionInterface
      */
     public function schema()
     {
-        if (!$this->getSchemaConfig()) {
+        if (!$this->getSchemaStore()->exists()) {
             throw new BadMethodCallException(sprintf(
-                'No schema config available. Did you call %s before build()?',
-                __FUNCTION__
+                'No stored schema available. Did you forget to generate it using %s::regenerate() or through the dev task?',
+                __CLASS__
             ));
         }
-        return new Schema($this->getSchemaConfig());
+        $schemaConfig = $this->createSchemaConfig();
+        $this->getSchemaStore()->loadIntoConfig($schemaConfig);
+
+        return new Schema($schemaConfig);
     }
 
     /**
      * @return SchemaConfig
      * @throws NotFoundExceptionInterface
-     * @throws Error
      */
     protected function createSchemaConfig()
     {
@@ -439,6 +369,7 @@ class Manager implements ConfigurationApplier
      * @param string $query
      * @param array $params
      * @return ExecutionResult|array Result as either source object result, or serialised as array.
+     * @throws NotFoundExceptionInterface
      */
     public function queryAndReturnResult($query, $params = [])
     {
@@ -461,7 +392,10 @@ class Manager implements ConfigurationApplier
      */
     public function addType(Type $type, $name = '')
     {
-        $this->getTypeStore()->addType($type, $name);
+        if (!$name) {
+            $name = (string)$type;
+        }
+        $this->types[$name] = $type;
     }
 
     /**
@@ -472,12 +406,11 @@ class Manager implements ConfigurationApplier
      */
     public function getType($name)
     {
-        $type = $this->getTypeStore()->getType($name);
-        if (!$type) {
-            throw new InvalidArgumentException("Type '$name' is not a registered GraphQL type");
+        if (isset($this->types[$name])) {
+            return $this->types[$name];
         }
 
-        return $type;
+        throw new InvalidArgumentException("Type '$name' is not a registered GraphQL type");
     }
 
     /**
@@ -487,7 +420,7 @@ class Manager implements ConfigurationApplier
      */
     public function hasType($name)
     {
-        return $this->getTypeStore()->hasType($name);
+        return isset($this->types[$name]);
     }
 
     /**
@@ -701,56 +634,16 @@ class Manager implements ConfigurationApplier
     }
 
     /**
-     * @throws Error
-     * @throws NotFoundExceptionInterface
-     */
-    protected function bootConfig()
-    {
-    }
-
-    /**
      * @throws CacheException
      * @throws Error
      * @throws NotFoundExceptionInterface
      */
     public function regenerate()
     {
-        $this->bootConfig();
+        $schemas = $this->config()->get('schemas');
+        $config = isset($schemas[$this->getSchemaKey()]) ? $schemas[$this->getSchemaKey()] : [];
+        $this->applyConfig($config);
         $schemaConfig = $this->createSchemaConfig();
-        $methods = [];
-        $types = $this->getTypeStore()->getAll();
-        $types[] = $schemaConfig->getQuery();
-        $types[] = $schemaConfig->getMutation();
-        foreach($types as $type) {
-            $methods[] = <<<PHP
-private function {$type->name}()
-{
-    return {$type->toCode()};
-}
-PHP;
-            }
-            $hash = md5($this->getSchemaKey());
-            $functions = implode("\n\n", $methods);
-$code = <<<PHP
-<?php
-use GraphQL\Type\Definition\Type;
-
-class {$this->getSchemaKey()}_{$hash}
-{
-  private \$types = [];
-  
-  public function get(\$name)
-  {
-        if (!isset(\$this->types[\$name])) {
-            \$this->types[\$name] = \$this->{\$name}();
-        }
-        return \$this->types[\$name];
-  }
-  
-  {$functions}
-}
-PHP;
-file_put_contents(BASE_PATH . '/schema.inc.php', $code);
-
+        $this->getSchemaStore()->persist($schemaConfig, $this->types);
     }
 }

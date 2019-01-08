@@ -50,15 +50,23 @@ class CodeGenerationSchemaStore implements SchemaStorageInterface
      * @param SchemaConfig $schemaConfig
      * @return $this
      */
-    public function load(SchemaConfig $schemaConfig)
+    public function loadIntoConfig(SchemaConfig $schemaConfig)
     {
         $registry = $this->encoder->getRegistry();
         $schemaConfig->setTypeLoader(function ($type) use ($registry) {
-            return $registry->get($type);
+            return $registry->getType($type);
         });
-        $schemaConfig->setQuery($registry->get('Query'));
-        $schemaConfig->setMutation($registry->get('Mutation'));
+        $schemaConfig->setQuery($registry->getType('Query'));
+        $schemaConfig->setMutation($registry->getType('Mutation'));
 
         return $this;
+    }
+
+    /**
+     * @return TypeRegistryEncoderInterface
+     */
+    public function getEncoder()
+    {
+        return $this->encoder;
     }
 }

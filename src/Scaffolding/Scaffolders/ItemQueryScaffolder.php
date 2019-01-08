@@ -19,7 +19,8 @@ class ItemQueryScaffolder extends QueryScaffolder
             'name' => $this->getName(),
             'args' => $this->createArgs($manager),
             'type' => $this->getType($manager),
-            'resolve' => $this->resolverFactory ?: $this->createResolverFunction(),
+            'resolve' => $this->createResolverFunction(),
+            'resolverFactory' => $this->getResolverFactory(),
         ];
     }
 }

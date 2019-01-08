@@ -27,11 +27,6 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
     protected $suffix;
 
     /**
-     * @var string
-     */
-    private $mode;
-
-    /**
      * AncestryScaffolder constructor.
      * @param string $rootDataObjectClass
      * @param string $suffix

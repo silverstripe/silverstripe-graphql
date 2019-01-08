@@ -12,11 +12,11 @@ interface TypeRegistryInterface
      * @param string $name
      * @return Type|ObjectType|InputObjectType
      */
-    public function get($name);
+    public function getType($name);
 
     /**
      * @param $name
      * @return bool
      */
-    public function has($name);
+    public function hasType($name);
 }

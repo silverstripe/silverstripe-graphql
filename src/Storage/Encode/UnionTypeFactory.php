@@ -2,7 +2,7 @@
 
 namespace SilverStripe\GraphQL\Storage\Encode;
 
-class UnionTypeFactory extends ResolverFactory
+class UnionTypeFactory extends RegistryAwareClosureFactory
 {
     /**
      * UnionTypeFactory constructor.
@@ -21,13 +21,13 @@ class UnionTypeFactory extends ResolverFactory
      * @param TypeRegistryInterface $registry
      * @return callable|\Closure
      */
-    public function createResolver(TypeRegistryInterface $registry)
+    public function createClosure(TypeRegistryInterface $registry)
     {
         $types = $this->context['types'];
         return function () use ($registry, $types) {
             return array_filter(
                 array_map(function ($item) use ($registry) {
-                    return $registry->has($item)? $registry->get($item) : null;
+                    return $registry->hasType($item)? $registry->getType($item) : null;
                 }, $types)
             );
         };

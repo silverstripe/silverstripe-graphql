@@ -13,6 +13,7 @@ use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
+use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\View\ViewableData;
 use Psr\Container\NotFoundExceptionInterface;
@@ -151,7 +152,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
      *
      * @param  string                     $name
      * @param  string                     $class
-     * @param  callable|OperationResolver $resolver
+     * @param  callable|OperationResolver|ClosureFactoryInterface $resolver
      * @return QueryScaffolder|ListQueryScaffolder
      */
     public function query($name, $class, $resolver = null)
@@ -177,7 +178,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
      *
      * @param  string                     $name
      * @param  string                     $class
-     * @param  callable|OperationResolver $resolver
+     * @param  callable|OperationResolver|ClosureFactoryInterface $resolver
      * @return bool|MutationScaffolder
      */
     public function mutation($name, $class, $resolver = null)

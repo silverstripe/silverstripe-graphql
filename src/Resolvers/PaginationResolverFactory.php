@@ -5,36 +5,18 @@ namespace SilverStripe\GraphQL\Resolvers;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Pagination\Connection;
-use SilverStripe\GraphQL\Storage\Encode\ResolverFactory;
+use SilverStripe\GraphQL\Storage\Encode\ClosureFactory;
 use Closure;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
+use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
+use SilverStripe\GraphQL\Storage\Encode\Helpers;
 use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
 use SilverStripe\ORM\SS_List;
 use Exception;
 
-class PaginationResolverFactory extends ResolverFactory
+class PaginationResolverFactory extends ClosureFactory
 {
-
-    /**
-     * @var callable
-     */
-    protected $parentResolver;
-
-    /**
-     * @var int
-     */
-    protected $defaultLimit;
-
-    /**
-     * @var int
-     */
-    protected $maximumLimit;
-
-    /**
-     * @var array
-     */
-    protected $sortableFields = [];
 
     /**
      * PaginationResolverFactory constructor.
@@ -42,14 +24,31 @@ class PaginationResolverFactory extends ResolverFactory
      */
     public function __construct($context = [])
     {
+        if (!isset($context['parentResolver']) && !isset($context['parentResolverFactory'])) {
+            throw new InvalidArgumentException(sprintf(
+                '%s constructor must be passed a parentResolver or parentResolverFactory setting',
+                __CLASS__
+            ));
+        }
         if (
             isset($context['parentResolver']) &&
-            !$context['parentResolver'] instanceof ResolverFactory &&
-            (!is_callable($context['parentResolver']) || $context['parentResolver'] instanceof Closure)
+            $context['parentResolverFactory'] instanceof Closure &&
+            !isset($context['parentResolverFactory'])
         ) {
             throw new InvalidArgumentException(sprintf(
-                '%s must be passed a resolver using the callable array syntax. Closures are not allowed',
+                '%s must be passed a resolver using the callable array syntax, or use a parentResolverFactory setting.',
                 __CLASS__
+            ));
+        }
+
+        if (
+            isset($context['parentResolverFactory']) &&
+            !$context['parentResolverFactory'] instanceof ClosureFactoryInterface
+        ) {
+            throw new InvalidArgumentException(sprintf(
+                '%s: parentResolverFactory setting must be an instance of %s',
+                __CLASS__,
+                ClosureFactoryInterface::class
             ));
         }
 
@@ -67,15 +66,19 @@ class PaginationResolverFactory extends ResolverFactory
     }
 
     /**
-     * @param TypeRegistryInterface $registry
      * @return callable|Closure
      */
-    public function createResolver(TypeRegistryInterface $registry)
+    public function createClosure()
     {
-        return function ($obj, array $args, $context, ResolveInfo $info) use ($registry) {
-            $func = $this->config['parentResolver'] instanceof ResolverFactory
-                ? $this->config['parentResolver']->createResolver($registry)
-                : $this->config['parentResolver'];
+        return function ($obj, array $args, $context, ResolveInfo $info) {
+            $func = null;
+            if (isset($this->config['parentResolver'])) {
+                $func = $this->config['parentResolver'];
+            } else {
+                /* @var ClosureFactoryInterface $factory */
+                $factory = $this->config['parentResolverFactory'];
+                $func = $factory->createClosure();
+            }
             $list = call_user_func_array($func, func_get_args());
             if (!$list instanceof SS_List) {
                 throw new Exception('Connection::resolve() must resolve to a SS_List instance.');
@@ -89,6 +92,17 @@ class PaginationResolverFactory extends ResolverFactory
             ];
             return Connection::resolveList(...$args);
         };
+    }
+
+    protected function getContextExpression()
+    {
+        $context = $this->context;
+        if (isset($context['parentResolverFactory'])) {
+            $context['parentResolver'] = $context['parentResolverFactory']->getExpression();
+            unset($context['parentResolverFactory']);
+        }
+
+        return Helpers::normaliseValue($context);
     }
 
 }

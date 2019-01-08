@@ -5,14 +5,13 @@ namespace SilverStripe\GraphQL\Dev;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
-use SilverStripe\Core\Injector\Injector;
-use SilverStripe\Core\Injector\InjectorNotFoundException;
 use SilverStripe\GraphQL\Controller as GraphQLController;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\Security;
 use Psr\Container\NotFoundExceptionInterface;
 use GraphQL\Error\Error;
 use Psr\SimpleCache\InvalidArgumentException as CacheException;
+use SilverStripe\GraphQL\Manager;
 use RuntimeException;
 
 class SchemaGeneratorController extends Controller
@@ -73,11 +72,13 @@ class SchemaGeneratorController extends Controller
         }
 
         $start = microtime(true);
+        /* @var Manager $selectedManager */
         $selectedManager->regenerate();
         $end = microtime(true);
         $diff = $end - $start;
+        $path = $selectedManager->getSchemaStore()->getEncoder()->getCacheFile();
 
-        echo sprintf('Schema "%s" rebuilt in %s seconds', $schemaKey, number_format($diff, 2));
+        echo sprintf('Schema "%s" rebuilt in %s seconds to %s', $schemaKey, number_format($diff, 2), $path);
     }
 
 }

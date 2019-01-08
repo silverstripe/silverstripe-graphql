@@ -2,7 +2,6 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
@@ -11,6 +10,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
+use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
 
 /**
  * Scaffolds a GraphQL mutation field.
@@ -24,7 +24,7 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
      *
      * @param string $operationName
      * @param string $typeName
-     * @param OperationResolver|callable|null $resolver
+     * @param OperationResolver|callable|ClosureFactoryInterface|null $resolver
      * @param string $class
      */
     public function __construct($operationName = null, $typeName = null, $resolver = null, $class = null)
@@ -49,7 +49,6 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
 
     /**
      * @param Manager $manager
-     * @throws Error
      * @return array
      */
     public function scaffold(Manager $manager)
@@ -58,7 +57,8 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
             'name' => $this->getName(),
             'args' => $this->createArgs($manager),
             'type' => $this->getType($manager),
-            'resolve' => $this->resolverFactory ?: $this->createResolverFunction(),
+            'resolve' => $this->createResolverFunction(),
+            'resolverFactory' => $this->getResolverFactory(),
         ];
     }
 

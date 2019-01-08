@@ -10,7 +10,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
-use SilverStripe\GraphQL\Storage\Encode\ResolverFactoryInterface;
+use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\ORM\ArrayList;
 
@@ -43,7 +43,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     protected $resolver;
 
     /**
-     * @var ResolverFactoryInterface
+     * @var ClosureFactoryInterface
      */
     protected $resolverFactory;
 
@@ -101,7 +101,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
      *
      * @param string $operationName
      * @param string $typeName
-     * @param OperationResolver|callable|null $resolver
+     * @param OperationResolver|callable|ClosureFactoryInterface|null $resolver
      */
     public function __construct($operationName = null, $typeName = null, $resolver = null)
     {
@@ -109,7 +109,9 @@ abstract class OperationScaffolder implements ConfigurationApplier
         $this->setTypeName($typeName);
         $this->args = ArrayList::create([]);
 
-        if ($resolver) {
+        if ($resolver instanceof ClosureFactoryInterface) {
+            $this->setResolverFactory($resolver);
+        } else if ($resolver) {
             $this->setResolver($resolver);
         }
     }
@@ -369,7 +371,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @param ResolverFactoryInterface $factory
+     * @param ClosureFactoryInterface $factory
      * @return $this
      */
     public function setResolverFactory($factory)
@@ -377,6 +379,14 @@ abstract class OperationScaffolder implements ConfigurationApplier
         $this->resolverFactory = $factory;
 
         return $this;
+    }
+
+    /**
+     * @return ClosureFactoryInterface
+     */
+    public function getResolverFactory()
+    {
+        return $this->resolverFactory;
     }
 
     /**
@@ -436,6 +446,9 @@ abstract class OperationScaffolder implements ConfigurationApplier
      */
     protected function createResolverFunction()
     {
+        if ($this->resolverFactory) {
+            return $this->resolverFactory->createClosure();
+        }
         $resolver = $this->resolver;
         if (!$resolver) {
             return null;

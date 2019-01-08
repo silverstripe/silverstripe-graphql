@@ -29,9 +29,9 @@ class RegistryFetcher implements NamedTypeFetcherInterface
     {
         return $this->factory->methodCall(
             $this->factory->var('this'),
-            'get',
+            'getType',
             [
-                $type->name
+                Helpers::normaliseValue($type),
             ]
         );
     }

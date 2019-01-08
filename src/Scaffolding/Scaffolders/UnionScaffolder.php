@@ -8,6 +8,7 @@ use SilverStripe\GraphQL\Resolvers\UnionResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Storage\Encode\UnionTypeFactory;
+use Psr\Container\NotFoundExceptionInterface;
 
 class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
 {
@@ -73,19 +74,25 @@ class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
     /**
      * @param Manager $manager
      * @return UnionType
+     * @throws NotFoundExceptionInterface
      */
     public function scaffold(Manager $manager)
     {
         $types = $this->types;
+        $typeFactory = new UnionTypeFactory(['types' => $types]);
+        $resolverFactory = new UnionResolverFactory();
         return new UnionType([
             'name' => $this->name,
-            'types' => new UnionTypeFactory(['types' => $types]),
-            'resolveType' => new UnionResolverFactory()
+            'types' => $typeFactory->createClosure($manager),
+            'resolveType' => $resolverFactory->createClosure($manager),
+            'typesFactory' => $typeFactory,
+            'resolveTypeFactory' => $resolverFactory,
         ]);
     }
 
     /**
      * @param Manager $manager
+     * @throws NotFoundExceptionInterface
      */
     public function addToManager(Manager $manager)
     {

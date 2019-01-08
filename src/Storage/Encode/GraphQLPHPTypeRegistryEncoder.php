@@ -8,6 +8,7 @@ use PhpParser\BuilderFactory;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
+use PhpParser\Node\Stmt\Expression;
 use PhpParser\Node\Stmt\If_;
 use PhpParser\Node\Expr\BooleanNot;
 use PhpParser\Node\Expr\Isset_;
@@ -84,7 +85,8 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
     }
 
     /**
-     * @return string|void
+     * @return string
+     * @throws Error
      */
     public function encode()
     {
@@ -96,7 +98,7 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
             ->makeFinal()
             ->addStmt($factory->property('types')->makePrivate()->setDefault([]))
             ->addStmt(
-                $factory->method('has')
+                $factory->method('hasType')
                     ->makePublic()
                     ->addParam($factory->param('name'))
                     ->setDocComment('/**
@@ -116,7 +118,7 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
                     )
             )
             ->addStmt(
-                $factory->method('get')
+                $factory->method('getType')
                     ->makePublic()
                     ->addParam($factory->param('name'))
                     ->setDocComment('/**
@@ -134,16 +136,20 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
                                 ])
                             ),
                             [
-                                new Assign(
-                                    new ArrayDimFetch(
-                                        $factory->propertyFetch($factory->var('this'), 'types'),
-                                        $factory->var('name')
-                                    ),
-                                    new MethodCall(
-                                        $factory->var('this'),
-                                        $factory->var('name')
+                                'stmts' => [
+                                    new Expression(
+                                        new Assign(
+                                            new ArrayDimFetch(
+                                                $factory->propertyFetch($factory->var('this'), 'types'),
+                                                $factory->var('name')
+                                            ),
+                                            new MethodCall(
+                                                $factory->var('this'),
+                                                $factory->var('name')
+                                            )
+                                        )
                                     )
-                                )
+                                ]
                             ]
                         )
                     )
@@ -166,7 +172,8 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
         $stmts = [$use->getNode(), $class->getNode()];
         $prettyPrinter = new Standard();
 
-        return $prettyPrinter->prettyPrintFile($stmts);
+        $code = $prettyPrinter->prettyPrintFile($stmts);
+        file_put_contents($this->getCacheFile(), $code);
     }
 
     /**
@@ -193,9 +200,9 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
     /**
      * @return string
      */
-    protected function getCacheFile()
+    public function getCacheFile()
     {
-        return TEMP_PATH . DIRECTORY_SEPARATOR . ".cache.{$this->identifier}";
+        return TEMP_PATH . DIRECTORY_SEPARATOR . ".cache.schema.{$this->identifier}";
     }
 
     /**
@@ -203,9 +210,7 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
      */
     protected function getRegistryClassName()
     {
-        $types = implode('', array_keys($this->types));
-
-        return self::CLASS_NAME_PREFIX . '_' . sha1($this->identifier . $types);
+        return self::CLASS_NAME_PREFIX . '_' . sha1($this->identifier);
     }
 
     /**

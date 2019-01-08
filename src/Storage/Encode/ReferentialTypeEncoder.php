@@ -146,7 +146,7 @@ class ReferentialTypeEncoder implements TypeExpressionProvider
         $namedTypeStr = array_pop($wrap);
 
         if (isset($this->builtInTypes[$namedTypeStr])) {
-            $namedType = $this->factory->staticCall(Type::class, $namedTypeStr);
+            $namedType = $this->factory->staticCall(Type::class, strtolower($namedTypeStr));
         } else {
             $namedType = $this->customTypeFetcher->getExpression($namedTypeStr);
         }

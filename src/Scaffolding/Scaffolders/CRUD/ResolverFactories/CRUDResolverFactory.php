@@ -5,10 +5,10 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
-use SilverStripe\GraphQL\Storage\Encode\ResolverFactory;
+use SilverStripe\GraphQL\Storage\Encode\ClosureFactory;
 use InvalidArgumentException;
 
-abstract class CRUDResolverFactory extends ResolverFactory
+abstract class CRUDResolverFactory extends ClosureFactory
 {
     use Injectable;
     use Extensible;

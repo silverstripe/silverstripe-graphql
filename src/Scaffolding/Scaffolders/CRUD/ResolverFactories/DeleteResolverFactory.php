@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories;
 
 use GraphQL\Type\Definition\ResolveInfo;
-use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
@@ -14,10 +13,9 @@ class DeleteResolverFactory extends CRUDResolverFactory
 {
 
     /**
-     * @param TypeRegistryInterface $registry
      * @return callable|Closure
      */
-    public function createResolver(TypeRegistryInterface $registry)
+    public function createClosure()
     {
         $class = $this->getDataObjectClass();
 

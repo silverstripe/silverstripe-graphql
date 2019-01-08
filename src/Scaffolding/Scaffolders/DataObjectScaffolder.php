@@ -359,10 +359,6 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 $fieldName,
                 null,
                 [FieldAccessorResolver::class, 'resolve'],
-//                function ($obj) use ($fieldName) {
-//                    /* @var DataObject $obj */
-//                    return $obj->obj($fieldName);
-//                },
                 $result->dataClass()
             );
         }
@@ -725,7 +721,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         foreach ($this->nestedQueries as $name => $scaffolder) {
             $fieldDef = $scaffolder->scaffold($manager);
-            $fieldDef->name = $name;
+            $fieldDef['name'] = $name;
             $fieldMap[$name] = $fieldDef;
         }
 

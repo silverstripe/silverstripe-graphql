@@ -15,6 +15,7 @@ class Helpers
      * floats, strings and arrays into their respective nodes
      *
      * Copied from BuilderHelpers class marked as internal in PhpParser package.
+     * Enhanced with recognition of ExpressionProvider instances
      *
      * @param Expr|bool|null|int|float|string|array $value The value to normalize
      *
@@ -24,11 +25,13 @@ class Helpers
     {
         if ($value instanceof Expr) {
             return $value;
-        } elseif (is_null($value)) {
+        } else if ($value instanceof ExpressionProvider) {
+            return $value->getExpression();
+        } else if (is_null($value)) {
             return new Expr\ConstFetch(
                 new Name('null')
             );
-        } elseif (is_bool($value)) {
+        } else if (is_bool($value)) {
             return new Expr\ConstFetch(
                 new Name($value ? 'true' : 'false')
             );
@@ -90,7 +93,7 @@ class Helpers
             });
         }
         $items = array_map(function ($key) use ($data) {
-            return static::buildArrayItem($key, $data[$key]);
+            return static::buildArrayItem($data[$key], $key);
         }, $validKeys);
 
         return $items;

@@ -8,30 +8,18 @@ use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Name;
 use PhpParser\Node\Expr\Variable;
+use Closure;
 
-abstract class ResolverFactory implements ResolverFactoryInterface, ExpressionProvider
+abstract class RegistryAwareClosureFactory implements RegistryAwareClosureFactoryInterface, ExpressionProvider
 {
     use Injectable;
-
-    /**
-     * @var array
-     */
-    protected $context = [];
-
-    /**
-     * ResolverFactory constructor.
-     * @param array $context
-     */
-    public function __construct($context = [])
-    {
-        $this->context = $context;
-    }
+    use FactoryContext;
 
     /**
      * @param TypeRegistryInterface $registry
-     * @return callable
+     * @return Closure
      */
-    abstract public function createResolver(TypeRegistryInterface $registry);
+    abstract public function createClosure(TypeRegistryInterface $registry);
 
     /**
      * @return Expr
@@ -46,7 +34,7 @@ abstract class ResolverFactory implements ResolverFactoryInterface, ExpressionPr
                     Helpers::normaliseValue($this->context)
                 ]
             ),
-            'createResolver',
+            'createClosure',
             [
                 new Variable('this')
             ]

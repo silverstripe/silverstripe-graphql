@@ -19,15 +19,24 @@ class UnionTypeEncoder implements TypeEncoderInterface
      */
     public function getExpression(Type $type)
     {
-        $excludes = ['types', 'resolveType'];
-        $items = Helpers::buildArrayItems($type->config, $excludes);
-        foreach ($excludes as $key) {
-            if ($type->config[$key] instanceof ResolverFactory) {
-                /* @var ResolverFactory $factory */
-                $factory = $type->config[$key];
+        $factories = [
+            'resolveTypeFactory' => 'resolveType',
+            'typesFactory' => 'types'
+        ];
+        $items = Helpers::buildArrayItems(
+            $type->config,
+            array_merge(
+                array_keys($factories),
+                array_values($factories)
+            )
+        );
+        foreach ($factories as $factoryName => $setting) {
+            if ($type->config[$factoryName] instanceof ExpressionProvider) {
+                /* @var ExpressionProvider $factory */
+                $factory = $type->config[$factoryName];
                 $items[] = new ArrayItem(
                     $factory->getExpression(),
-                    Helpers::normaliseValue($key)
+                    Helpers::normaliseValue($setting)
                 );
             }
         }
@@ -71,8 +80,16 @@ class UnionTypeEncoder implements TypeEncoderInterface
         );
 
         Utils::invariant(
-            !$type->config['resolveType'] instanceof Closure,
-            'Cannot encode type %s with a closure for a "types" property. Use callable array syntax instead.'
+            !$type->config['resolveType'] instanceof Closure ||
+            (isset($type->config['resolveTypeFactory']) && $type->config['resolveTypeFactory'] instanceof RegistryAwareClosureFactory),
+            'Cannot encode type %s with a closure for a "resolveType" property. Use callable array syntax, or a resolveTypeFactory setting'
         );
+
+        Utils::invariant(
+            !$type->config['types'] instanceof Closure ||
+            (isset($type->config['typesFactory']) && $type->config['typesFactory'] instanceof RegistryAwareClosureFactory),
+            'Cannot encode type %s with a closure for a "types" property. Use callable array syntax, or a typesFactory setting'
+        );
+
     }
 }

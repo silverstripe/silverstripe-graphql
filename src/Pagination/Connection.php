@@ -10,6 +10,7 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
+use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
 use SilverStripe\ORM\Limitable;
 use SilverStripe\ORM\Sortable;
 use SilverStripe\ORM\SS_List;
@@ -60,6 +61,11 @@ class Connection implements OperationResolver
      * @var Callable
      */
     protected $connectionResolver;
+
+    /**
+     * @var ClosureFactoryInterface
+     */
+    protected $connectionResolverFactory;
 
     /**
      * @var array
@@ -116,7 +122,7 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @param Callable
+     * @param Callable|ClosureFactoryInterface
      *
      * @return $this
      */
@@ -125,6 +131,25 @@ class Connection implements OperationResolver
         $this->connectionResolver = $func;
 
         return $this;
+    }
+
+    /**
+     * @param ClosureFactoryInterface $factory
+     * @return $this
+     */
+    public function setResolverFactory(ClosureFactoryInterface $factory)
+    {
+        $this->connectionResolverFactory = $factory;
+
+        return $this;
+    }
+
+    /**
+     * @return ClosureFactoryInterface
+     */
+    public function getResolverFactory()
+    {
+        return $this->connectionResolverFactory;
     }
 
     /**
@@ -154,10 +179,14 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @return Callable
+     * @return Callable|
      */
     public function getConnectionResolver()
     {
+        if ($this->getResolverFactory()) {
+            return $this->getResolverFactory()->createClosure();
+        }
+
         return $this->connectionResolver;
     }
 

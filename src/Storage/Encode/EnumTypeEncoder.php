@@ -17,7 +17,7 @@ class EnumTypeEncoder implements TypeEncoderInterface
         /* @var EnumType $type */
         $items = Helpers::buildArrayItems($type->config, ['values']);
         $items[] = new ArrayItem(
-            Helpers::normaliseValue($type->getValues()),
+            Helpers::normaliseValue($type->config['values']),
             Helpers::normaliseValue('values')
         );
 

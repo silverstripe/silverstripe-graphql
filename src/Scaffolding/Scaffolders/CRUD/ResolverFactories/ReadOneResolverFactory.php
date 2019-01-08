@@ -4,18 +4,16 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories;
 
 use GraphQL\Type\Definition\ResolveInfo;
 use Exception;
-use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
 use SilverStripe\ORM\DataList;
 use Psr\Container\NotFoundExceptionInterface;
 
 class ReadOneResolverFactory extends CRUDResolverFactory
 {
     /**
-     * @param TypeRegistryInterface $registry
      * @return callable|\Closure
      * @throws NotFoundExceptionInterface
      */
-    public function createResolver(TypeRegistryInterface $registry)
+    public function createClosure()
     {
         $class = $this->getDataObjectClass();
         $singleton = $this->getDataObjectInstance();

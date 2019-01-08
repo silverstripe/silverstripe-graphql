@@ -3,14 +3,15 @@
 namespace SilverStripe\GraphQL\Resolvers;
 
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
+use SilverStripe\GraphQL\Storage\Encode\RegistryAwareClosureFactory;
 use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
 use SilverStripe\ORM\DataObject;
 use Psr\Container\NotFoundExceptionInterface;
-use SilverStripe\GraphQL\Storage\Encode\ResolverFactory;
+use SilverStripe\GraphQL\Storage\Encode\ClosureFactory;
 use Exception;
 use Closure;
 
-class UnionResolverFactory extends ResolverFactory
+class UnionResolverFactory extends RegistryAwareClosureFactory
 {
 
     /**
@@ -18,7 +19,7 @@ class UnionResolverFactory extends ResolverFactory
      * @return callable|Closure
      * @throws NotFoundExceptionInterface
      */
-    public function createResolver(TypeRegistryInterface $registry)
+    public function createClosure(TypeRegistryInterface $registry)
     {
         return function ($obj) use ($registry) {
             if (!$obj instanceof DataObject) {
@@ -30,8 +31,8 @@ class UnionResolverFactory extends ResolverFactory
             $class = get_class($obj);
             while ($class !== DataObject::class) {
                 $typeName = StaticSchema::inst()->typeNameForDataObject($class);
-                if ($registry->has($typeName)) {
-                    return $registry->has($typeName);
+                if ($registry->hasType($typeName)) {
+                    return $registry->hasType($typeName);
                 }
                 $class = get_parent_class($class);
             }

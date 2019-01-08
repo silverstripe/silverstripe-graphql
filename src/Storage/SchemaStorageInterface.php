@@ -18,7 +18,7 @@ interface SchemaStorageInterface
      * @param SchemaConfig $config
      * @return $this
      */
-    public function load(SchemaConfig $config);
+    public function loadIntoConfig(SchemaConfig $config);
 
     /**
      * @return bool

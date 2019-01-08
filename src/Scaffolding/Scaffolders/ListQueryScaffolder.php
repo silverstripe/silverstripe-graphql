@@ -7,6 +7,7 @@ use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
+use Psr\Container\NotFoundExceptionInterface;
 use Exception;
 
 /**
@@ -120,6 +121,7 @@ class ListQueryScaffolder extends QueryScaffolder
     /**
      * @param array $config
      * @return $this
+     * @throws Exception
      */
     public function applyConfig(array $config)
     {
@@ -156,6 +158,7 @@ class ListQueryScaffolder extends QueryScaffolder
     /**
      * @param Manager $manager
      * @throws Exception
+     * @throws NotFoundExceptionInterface
      */
     public function addToManager(Manager $manager)
     {
@@ -184,7 +187,8 @@ class ListQueryScaffolder extends QueryScaffolder
             'name' => $this->getName(),
             'args' => $this->createArgs($manager),
             'type' => Type::listOf($this->getType($manager)),
-            'resolve' => $this->resolverFactory ?: $this->createResolverFunction(),
+            'resolve' => $this->createResolverFunction(),
+            'resolverFactory' => $this->getResolverFactory(),
         ];
     }
 
@@ -196,16 +200,21 @@ class ListQueryScaffolder extends QueryScaffolder
      */
     protected function createConnection(Manager $manager)
     {
-        return Connection::create($this->getName(), $manager)
+        $conn = Connection::create($this->getName(), $manager)
             ->setConnectionType(function () use ($manager) {
                 return $this->getType($manager);
             })
             ->setConnectionResolver($this->createResolverFunction())
-            ->setResolverFactory($this->resolverFactory)
             ->setArgs($this->createArgs($manager))
             ->setSortableFields($this->getSortableFields())
             ->setDefaultLimit($this->getPaginationLimit())
             ->setMaximumLimit($this->getMaximumPaginationLimit());
+
+        if ($this->getResolverFactory()) {
+            $conn->setResolverFactory($this->getResolverFactory());
+        }
+
+        return $conn;
     }
 
     /**
