@@ -14,11 +14,7 @@
     },
     "autoload": {
         "psr-4": {
-            "SilverStripe\\GraphQL\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
+            "SilverStripe\\GraphQL\\": "src/",
             "SilverStripe\\GraphQL\\Tests\\": "tests/"
         }
     },
