@@ -509,6 +509,7 @@ class ControllerTest extends SapphireTest
 
     protected function assertQuerySuccess(Controller $controller, HTTPRequest $request, $operation)
     {
+        $controller->setRequest($request);
         $data = json_decode($controller->handleRequest($request)->getBody(), true);
         $this->assertArrayNotHasKey('errors', $data);
         $this->assertArrayHasKey('data', $data);
