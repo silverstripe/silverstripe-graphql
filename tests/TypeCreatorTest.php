@@ -3,10 +3,10 @@
 namespace SilverStripe\GraphQL\Tests;
 
 use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\Type;
 use PHPUnit_Framework_MockObject_MockObject;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\TypeCreator;
-use GraphQL\Type\Definition\Type;
 
 class TypeCreatorTest extends SapphireTest
 {

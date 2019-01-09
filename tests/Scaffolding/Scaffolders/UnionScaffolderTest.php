@@ -2,16 +2,16 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\UnionScaffolder;
+use Exception;
+use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\UnionScaffolder;
+use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
-use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
-use GraphQL\Type\Definition\ResolveInfo;
-use Exception;
 
 class UnionScaffolderTest extends SapphireTest
 {

@@ -3,13 +3,13 @@
 namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
 use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\NonNull;
+use GraphQL\Type\Definition\StringType;
 use GraphQL\Type\Definition\Type;
+use InvalidArgumentException;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ArgumentScaffolder;
-use GraphQL\Type\Definition\StringType;
-use GraphQL\Type\Definition\NonNull;
-use InvalidArgumentException;
 
 class ArgumentScaffolderTest extends SapphireTest
 {

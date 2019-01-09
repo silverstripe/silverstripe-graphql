@@ -7,6 +7,7 @@ use GraphQL\Type\Definition\InputObjectField;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
+use InvalidArgumentException;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
@@ -15,7 +16,6 @@ use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\PaginatedQueryFake;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\ORM\ArrayList;
-use InvalidArgumentException;
 
 class ConnectionTest extends SapphireTest
 {

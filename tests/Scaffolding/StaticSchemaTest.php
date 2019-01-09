@@ -3,10 +3,9 @@
 namespace SilverStripe\GraphQL\Tests\Scaffolding;
 
 use GraphQL\Type\Definition\ObjectType;
-use const Grpc\STATUS_INTERNAL;
+use InvalidArgumentException;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
-use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;

@@ -2,11 +2,11 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
-use SilverStripe\GraphQL\Manager;
-use SilverStripe\Dev\SapphireTest;
-use InvalidArgumentException;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 use GraphQL\Type\Definition\ObjectType;
+use InvalidArgumentException;
+use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 
 class ListQueryScaffolderTest extends SapphireTest
 {

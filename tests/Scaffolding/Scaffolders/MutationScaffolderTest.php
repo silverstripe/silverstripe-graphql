@@ -2,10 +2,10 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
-use SilverStripe\GraphQL\Manager;
-use SilverStripe\Dev\SapphireTest;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use GraphQL\Type\Definition\ObjectType;
+use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 
 class MutationScaffolderTest extends SapphireTest
 {

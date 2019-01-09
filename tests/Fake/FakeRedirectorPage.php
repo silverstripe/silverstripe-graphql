@@ -2,13 +2,11 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
-use SilverStripe\Dev\TestOnly;
-
 /**
  * Because otherwise we have to include silverstripe-cms as a dependency just
  * to get the test to work.
  */
-class FakeRedirectorPage extends FakePage implements TestOnly
+class FakeRedirectorPage extends FakePage
 {
     private static $table_name = "GraphQL_FakeRedirectorPage";
 

@@ -2,10 +2,10 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolding\Util;
 
-use SilverStripe\Dev\SapphireTest;
-use InvalidArgumentException;
-use SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser;
 use GraphQL\Type\Definition\StringType;
+use InvalidArgumentException;
+use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser;
 
 /**
  * @skipUpgrade
