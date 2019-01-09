@@ -1918,6 +1918,17 @@ resources are accessed.
 
 The `MemberAuthenticator` class is configured as the default option for authentication,
 and will attempt to use the current CMS `Member` session for authentication context.
+It uses PHP session cookies. 
+
+### JSON Web Token (JWT)
+
+[JWT](https://en.wikipedia.org/wiki/JSON_Web_Token) is becoming an increasingly popular way to securely transfer
+encrypted payloads to the client. Since this payload can contain
+authentication data (like a member identifier or a set of permissions),
+it makes processing fast and stateless (no server-side sessions involved).
+JWTs are commonly used for untrusted client environments, such as web or mobile apps.
+Creating a JWT usually relies on existing member authentication.
+Check out [firesphere/silverstripe-graphql-jwt](https://github.com/Firesphere/silverstripe-graphql-jwt) for details.
 
 ### HTTP basic authentication
 
