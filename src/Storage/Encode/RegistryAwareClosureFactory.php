@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Storage\Encode;
 
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\New_;
 use SilverStripe\Core\Injector\Injectable;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\MethodCall;
@@ -27,17 +28,17 @@ abstract class RegistryAwareClosureFactory implements RegistryAwareClosureFactor
     public function getExpression()
     {
         return new MethodCall(
-            new StaticCall(
+            new New_(
                 new Name(get_class($this)),
-                'create',
                 [
-                    Helpers::normaliseValue($this->context)
+                    $this->getContextExpression()
                 ]
             ),
-            'createClosure',
+            new Name('createClosure'),
             [
                 new Variable('this')
             ]
         );
     }
+
 }

@@ -2,6 +2,8 @@
 
 namespace SilverStripe\GraphQL\Storage\Encode;
 
+use PhpParser\Node\Expr;
+
 trait FactoryContext
 {
     /**
@@ -16,6 +18,14 @@ trait FactoryContext
     public function __construct($context = [])
     {
         $this->context = $context;
+    }
+
+    /**
+     * @return Expr
+     */
+    protected function getContextExpression()
+    {
+        return Helpers::normaliseValue($this->context);
     }
 
 }

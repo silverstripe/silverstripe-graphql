@@ -7,6 +7,7 @@ use SilverStripe\Core\Injector\Injectable;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Name;
+use PhpParser\Node\Expr\New_;
 use Closure;
 
 abstract class ClosureFactory implements ClosureFactoryInterface, ExpressionProvider
@@ -25,22 +26,13 @@ abstract class ClosureFactory implements ClosureFactoryInterface, ExpressionProv
     public function getExpression()
     {
         return new MethodCall(
-            new StaticCall(
+            new New_(
                 new Name(get_class($this)),
-                'create',
                 [
-                    $this->getContextExpression(),
+                    $this->getContextExpression()
                 ]
             ),
-            'createClosure'
+            new Name('createClosure')
         );
-    }
-
-    /**
-     * @return Expr
-     */
-    protected function getContextExpression()
-    {
-        return Helpers::normaliseValue($this->context);
     }
 }

@@ -92,11 +92,6 @@ class Connection implements OperationResolver
     protected $maximumLimit = 100;
 
     /**
-     * @var Manager
-     */
-    protected $manager;
-
-    /**
      * @var ObjectType
      */
     protected $edgeType;
@@ -112,13 +107,11 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @param Manager $manager
      * @param string $connectionName
      */
-    public function __construct($connectionName, Manager $manager)
+    public function __construct($connectionName)
     {
         $this->connectionName = $connectionName;
-        $this->manager = $manager;
     }
 
     /**
@@ -304,7 +297,7 @@ class Connection implements OperationResolver
      */
     public function getSortTypeCreator()
     {
-        return Injector::inst()->create(SortInputTypeCreator::class, $this->connectionName, $this->manager)
+        return Injector::inst()->create(SortInputTypeCreator::class, $this->connectionName)
             ->setSortableFields($this->getSortableFields());
     }
 

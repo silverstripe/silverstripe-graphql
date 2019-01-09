@@ -102,6 +102,9 @@ class Controller extends BaseController implements Flushable
             list($query, $variables) = $this->getRequestQueryVariables($request);
 
             // Run query
+            if ($request->getVar('kill')) {
+                die();
+            }
             $result = $manager->query($query, $variables);
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
@@ -456,7 +459,7 @@ class Controller extends BaseController implements Flushable
 
             try {
                 $routeController = Injector::inst()->get($routeClass);
-                if ($routeController instanceof self) {
+                if ($routeController instanceof static) {
                     yield $pattern => $routeController;
                 }
             } catch (InjectorNotFoundException $ex) {
