@@ -31,17 +31,6 @@ class PaginationResolverFactory extends ClosureFactory
             ));
         }
         if (
-            isset($context['parentResolver']) &&
-            $context['parentResolverFactory'] instanceof Closure &&
-            !isset($context['parentResolverFactory'])
-        ) {
-            throw new InvalidArgumentException(sprintf(
-                '%s must be passed a resolver using the callable array syntax, or use a parentResolverFactory setting.',
-                __CLASS__
-            ));
-        }
-
-        if (
             isset($context['parentResolverFactory']) &&
             !$context['parentResolverFactory'] instanceof ClosureFactoryInterface
         ) {

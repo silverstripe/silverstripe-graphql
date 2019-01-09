@@ -13,7 +13,7 @@ use Exception;
 /**
  * Scaffolds a GraphQL query field.
  */
-class ListQueryScaffolder extends QueryScaffolder
+class   ListQueryScaffolder extends QueryScaffolder
 {
     /**
      * @var bool
