@@ -4,13 +4,13 @@ namespace SilverStripe\GraphQL\Tests\Scaffolding\Scaffolders\CRUD;
 
 use GraphQL\Type\Definition\IDType;
 use GraphQL\Type\Definition\NonNull;
-use GraphQL\Type\Definition\StringType;
-use SilverStripe\GraphQL\Manager;
-use SilverStripe\Dev\SapphireTest;
-use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use GraphQL\Type\Definition\ObjectType;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ReadOne;
 use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\StringType;
+use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ReadOne;
+use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 use SilverStripe\Security\Member;
 

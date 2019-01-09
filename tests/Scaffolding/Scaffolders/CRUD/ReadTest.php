@@ -2,17 +2,13 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolding\Scaffolders\CRUD;
 
-use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\StringType;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
-use SilverStripe\GraphQL\Tests\Fake\FakePage;
-use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 use SilverStripe\ORM\DataList;
 use SilverStripe\Security\Member;

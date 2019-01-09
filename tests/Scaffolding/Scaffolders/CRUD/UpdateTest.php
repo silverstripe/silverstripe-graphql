@@ -2,21 +2,21 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolding\Scaffolders\CRUD;
 
+use Exception;
 use GraphQL\Type\Definition\IDType;
 use GraphQL\Type\Definition\InputObjectType;
-use SilverStripe\GraphQL\Manager;
+use GraphQL\Type\Definition\IntType;
+use GraphQL\Type\Definition\NonNull;
+use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\StringType;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeCRUDExtension;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update;
-use GraphQL\Type\Definition\StringType;
-use GraphQL\Type\Definition\NonNull;
-use GraphQL\Type\Definition\IntType;
-use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Security\Member;
-use Exception;
 
 class UpdateTest extends SapphireTest
 {

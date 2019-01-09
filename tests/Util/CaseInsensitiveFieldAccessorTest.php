@@ -2,9 +2,9 @@
 
 namespace SilverStripe\GraphQL\Tests\Util;
 
-use SilverStripe\GraphQL\Util\CaseInsensitiveFieldAccessor;
-use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Util\CaseInsensitiveFieldAccessor;
 
 class CaseInsensitiveFieldAccessorTest extends SapphireTest
 {

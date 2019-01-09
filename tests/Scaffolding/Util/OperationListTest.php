@@ -2,8 +2,8 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolding\Util;
 
-use SilverStripe\Dev\SapphireTest;
 use InvalidArgumentException;
+use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 

@@ -2,14 +2,14 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolding\Extensions;
 
+use GraphQL\Type\Definition\IntType;
 use GraphQL\Type\Definition\ObjectType;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
-use SilverStripe\Core\Config\Config;
-use GraphQL\Type\Definition\IntType;
 use SilverStripe\ORM\FieldType\DBInt;
 
 class TypeCreatorExtensionTest extends SapphireTest
