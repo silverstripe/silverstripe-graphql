@@ -18,4 +18,11 @@ class ReferentialTypeAbstraction extends TypeAbstraction
     {
         return $this->name;
     }
+
+    public function toArray()
+    {
+        return [
+            'name' => $this->name
+        ];
+    }
 }

@@ -72,7 +72,6 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
         $connectionName = $conn->getConnectionTypeName();
         $factory = PaginationResolverFactory::create([
             'parentResolver' => $conn->getConnectionResolver(),
-            'parentResolverFactory' => $conn->getResolverFactory(),
             'defaultLimit' => $conn->getDefaultLimit(),
             'maximumLimit' => $conn->getMaximumLimit(),
             'sortableFields' => $conn->getSortableFields()

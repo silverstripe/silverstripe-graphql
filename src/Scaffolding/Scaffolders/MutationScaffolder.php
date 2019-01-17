@@ -42,9 +42,7 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
     public function addToManager(Manager $manager)
     {
         $this->extend('onBeforeAddToManager', $this, $manager);
-        $manager->addMutation(function () use ($manager) {
-            return $this->scaffold($manager);
-        }, $this->getName());
+        $manager->addMutation($this->scaffold($manager), $this->getName());
     }
 
 

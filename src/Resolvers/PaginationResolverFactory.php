@@ -12,6 +12,7 @@ use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
 use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
 use SilverStripe\GraphQL\Storage\Encode\Helpers;
 use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
+use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
 use SilverStripe\ORM\SS_List;
 use Exception;
 
@@ -24,23 +25,13 @@ class PaginationResolverFactory extends ClosureFactory
      */
     public function __construct($context = [])
     {
-        if (!isset($context['parentResolver']) && !isset($context['parentResolverFactory'])) {
+        if (!isset($context['parentResolver']) || !$context['parentResolver'] instanceof ResolverAbstraction) {
             throw new InvalidArgumentException(sprintf(
-                '%s constructor must be passed a parentResolver or parentResolverFactory setting',
-                __CLASS__
-            ));
-        }
-        if (
-            isset($context['parentResolverFactory']) &&
-            !$context['parentResolverFactory'] instanceof ClosureFactoryInterface
-        ) {
-            throw new InvalidArgumentException(sprintf(
-                '%s: parentResolverFactory setting must be an instance of %s',
+                '%s constructor must be passed a %s instance as the parentResolver setting',
                 __CLASS__,
-                ClosureFactoryInterface::class
+                ResolverAbstraction::class
             ));
         }
-
         if (!isset($context['defaultLimit'])) {
             $context['defaultLimit'] = 100;
         }
@@ -61,13 +52,9 @@ class PaginationResolverFactory extends ClosureFactory
     {
         return function ($obj, array $args, $context, ResolveInfo $info) {
             $func = null;
-            if (isset($this->config['parentResolver'])) {
-                $func = $this->config['parentResolver'];
-            } else {
-                /* @var ClosureFactoryInterface $factory */
-                $factory = $this->config['parentResolverFactory'];
-                $func = $factory->createClosure();
-            }
+            /* @var ResolverAbstraction $resolver */
+            $resolver = $this->config['parentResolver'];
+            $func = $resolver->export()->createClosure();
             $list = call_user_func_array($func, func_get_args());
             if (!$list instanceof SS_List) {
                 throw new Exception('Connection::resolve() must resolve to a SS_List instance.');

@@ -13,6 +13,7 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
 use SilverStripe\GraphQL\TypeAbstractions\ArgumentAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\InputTypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\ReferentialTypeAbstraction;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
 
@@ -63,7 +64,7 @@ class Create extends MutationScaffolder implements CRUDInterface
         return [
             new ArgumentAbstraction(
                 'Input',
-                $manager->getType($this->inputTypeName())
+                (new ReferentialTypeAbstraction($this->inputTypeName()))
                     ->setRequired(true)
             ),
         ];

@@ -129,6 +129,14 @@ class Connection implements OperationResolver
         return $this;
     }
 
+    /**
+     * @return ResolverAbstraction
+     */
+    public function getConnectionResolver()
+    {
+        return $this->connectionResolver;
+    }
+
 
     /**
      * Pass in the {@link ObjectType}.
@@ -341,7 +349,7 @@ class Connection implements OperationResolver
         }
 
         if (!$this->edgeType) {
-            $this->edgeType = new ObjectTypeAbstraction([
+            $this->edgeType = new ObjectTypeAbstraction(
                 $this->getEdgeTypeName(),
                 'The collections edge',
                 [
@@ -351,7 +359,7 @@ class Connection implements OperationResolver
                         new StaticResolverAbstraction([static::class, 'nodeResolver'])
                     ))->setDescription('The node at the end of the collections edge')
                 ]
-            ]);
+            );
 
         }
 

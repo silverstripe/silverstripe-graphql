@@ -50,6 +50,4 @@ class RegistryResolverEncoder implements ResolverEncoderInterface
         );
 
     }
-
-    }
 }

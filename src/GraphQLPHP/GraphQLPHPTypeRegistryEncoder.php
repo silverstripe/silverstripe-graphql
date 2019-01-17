@@ -19,6 +19,7 @@ use PhpParser\Node\Stmt\Return_;
 use PhpParser\PrettyPrinter\Standard;
 use LogicException;
 use SilverStripe\GraphQL\Storage\Encode\TypeEncoderRegistryInterface;
+use SilverStripe\GraphQL\Storage\Encode\TypeRegistryEncoderInterface;
 use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
 
 class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
@@ -231,5 +232,5 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
         }
 
     }
-    
+
 }

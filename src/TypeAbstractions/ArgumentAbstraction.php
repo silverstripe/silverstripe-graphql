@@ -37,8 +37,7 @@ class ArgumentAbstraction
     public function __construct($name, ReferentialTypeAbstraction $type)
     {
         $this->setName($name)
-            ->setType($type)
-            ->setDescription($description);
+            ->setType($type);
     }
 
     /**

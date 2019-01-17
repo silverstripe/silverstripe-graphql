@@ -290,35 +290,6 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
         return $next($schema, $query, $context, $params);
     }
 
-
-    /**
-     * @return SchemaConfig
-     * @throws NotFoundExceptionInterface
-     */
-//    protected function createSchemaConfig()
-//    {
-//        $config = new SchemaConfig();
-//        if (!empty($this->queries)) {
-//            $config->setQuery(new ObjectType([
-//                'name' => 'Query',
-//                'fields' => array_map(function ($query) {
-//                    return is_callable($query) ? $query() : $query;
-//                }, $this->queries),
-//            ]));
-//        }
-//
-//        if (!empty($this->mutations)) {
-//            $config->setMutation(new ObjectType([
-//                'name' => 'Mutation',
-//                'fields' => array_map(function ($mutation) {
-//                    return is_callable($mutation) ? $mutation() : $mutation;
-//                }, $this->mutations),
-//            ]));
-//        }
-//
-//        return $config;
-//    }
-
     /**
      * Execute an arbitrary operation (mutation / query) on this schema.
      *
@@ -477,7 +448,17 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
         return $this;
     }
 
+    /**
+     * @param SchemaStorageInterface $store
+     * @return $this
+     */
+    public function setSchemaStore(SchemaStorageInterface $store)
+    {
+        $this->schemaStore = $store;
 
+        return $this;
+    }
+    
     /**
      * @return string
      */

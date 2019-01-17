@@ -40,6 +40,14 @@ class UnionTypeAbstraction extends TypeAbstraction
     /**
      * @return string
      */
+    public function getName()
+    {
+        return $this->name;
+    }
+    
+    /**
+     * @return string
+     */
     public function getDescription()
     {
         return $this->description;

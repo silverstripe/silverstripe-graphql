@@ -55,8 +55,7 @@ class FieldAbstraction
         $this->setName($name)
             ->setType($type)
             ->setResolver($resolver)
-            ->setArgs($args)
-            ->setDescription($description);
+            ->setArgs($args);
     }
 
     /**
@@ -108,7 +107,7 @@ class FieldAbstraction
      * @param ResolverAbstraction $resolverCallable
      * @return FieldAbstraction
      */
-    public function setResolver(ResolverAbstraction $resolver)
+    public function setResolver(ResolverAbstraction $resolver = null)
     {
         $this->resolver = $resolver;
 

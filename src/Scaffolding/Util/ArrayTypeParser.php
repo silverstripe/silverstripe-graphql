@@ -76,7 +76,7 @@ class ArrayTypeParser implements TypeParserInterface
         return new ObjectTypeAbstraction(
             $this->name,
             null,
-            $fields,
+            $fields
         );
     }
 }
