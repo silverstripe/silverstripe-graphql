@@ -12,7 +12,7 @@ SilverStripe\Core\Injector\Injector:
         CSRFMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.csrf'
         HTTPMethodMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.httpMethod'
   SilverStripe\GraphQL\Storage\SchemaStorageInterface.default:
-    class: SilverStripe\GraphQL\Storage\Encode\CodeGenerationSchemaStore
+    class: SilverStripe\GraphQL\Schema\Storage\Encoding\CodeGenerationSchemaStore
     constructor:
       registryEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeRegistryEncoderInterface.default'
   SilverStripe\GraphQL\Storage\Encode\TypeRegistryEncoderInterface.default:

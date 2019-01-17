@@ -23,6 +23,7 @@ use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
@@ -541,7 +542,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     /**
      * @param Manager $manager
      *
-     * @return ObjectType
+     * @return ObjectTypeAbstraction
+     * @throws Error
      */
     public function scaffold(Manager $manager)
     {
@@ -652,7 +654,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      * Validates the raw field map and creates a map suitable for ObjectType
      *
      * @param  Manager $manager
-     * @throws Error
+     * @throws Exception
      * @return array
      */
     protected function createFields(Manager $manager)
@@ -695,27 +697,30 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
             if ($result instanceof DBField) {
                 /** @var DBField|TypeCreatorExtension $result */
-                $fieldDef = new FieldAbstraction(
+                $fieldDef = FieldAbstraction::create(
                     $fieldName,
-                    $result->getGraphQLType($manager),
+                    TypeReference::create($result->getGraphQLType()),
                     new StaticResolverAbstraction([
                         FieldAccessorResolver::class,
                         'resolve',
                     ])
                 );
                 $fieldDef->setDescription($fieldData->Description);
+                $fieldMap[$fieldName] = $fieldDef;
             }
         }
 
         foreach ($extraDataObjects as $fieldName => $className) {
             $description = $this->getFieldDescription($fieldName);
-            $fieldMap[$fieldName] = new FieldAbstraction(
+            $fieldMap[$fieldName] = FieldAbstraction::create(
                 $fieldName,
-                StaticSchema::inst()->fetchFromManager($className, $manager),
-                new StaticResolverAbstraction(
+                TypeReference::create(
+                    StaticSchema::inst()->fetchFromManager($className, $manager)
+                ),
+                new StaticResolverAbstraction([
                     FieldAccessorResolver::class,
                     'resolve'
-                )
+                ])
             );
             $fieldMap[$fieldName]->setDescription($description);
         }

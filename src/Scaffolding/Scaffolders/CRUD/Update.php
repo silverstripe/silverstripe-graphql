@@ -10,11 +10,11 @@ use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\UpdateResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
-use SilverStripe\GraphQL\TypeAbstractions\ArgumentAbstraction;
+use SilverStripe\GraphQL\Schema\Components\ArgumentAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\InputTypeAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\InternalType;
-use SilverStripe\GraphQL\TypeAbstractions\ReferentialTypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
 
@@ -67,7 +67,7 @@ class Update extends MutationScaffolder implements CRUDInterface
         return [
             new ArgumentAbstraction(
                 'Input',
-                (new ReferentialTypeAbstraction($this->inputTypeName()))
+                TypeReference::create($this->inputTypeName())
                     ->setRequired(true)
             ),
         ];
@@ -76,7 +76,7 @@ class Update extends MutationScaffolder implements CRUDInterface
     /**
      * Based on the args provided, create an Input type to add to the Manager.
      * @param Manager $manager
-     * @return InputObjectType
+     * @return InputTypeAbstraction
      */
     protected function generateInputType(Manager $manager)
     {
@@ -109,6 +109,7 @@ class Update extends MutationScaffolder implements CRUDInterface
 
         return new InputTypeAbstraction(
             $this->inputTypeName(),
+            null,
             $fields
         );
     }

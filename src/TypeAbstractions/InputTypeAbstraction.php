@@ -23,7 +23,7 @@ class InputTypeAbstraction extends TypeAbstraction
      * ObjectTypeAbstraction constructor.
      * @param $name
      * @param string $description
-     * @param array $fields
+     * @param FieldAbstraction[] $fields
      */
     public function __construct($name, $description = null, $fields = [])
     {

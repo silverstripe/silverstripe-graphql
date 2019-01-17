@@ -284,6 +284,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
      *
      * @param Manager $manager
      * @throws NotFoundExceptionInterface
+     * @throws Exception
      */
     public function addToManager(Manager $manager)
     {

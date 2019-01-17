@@ -4,6 +4,10 @@
 namespace SilverStripe\GraphQL\Storage\Encode;
 
 
+use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\New_;
+use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Name;
 use SilverStripe\GraphQL\TypeAbstractions\RegistryResolverAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
 
@@ -38,9 +42,9 @@ class RegistryResolverEncoder implements ResolverEncoderInterface
 
         return new MethodCall(
             new New_(
-                new Name(get_class($field)),
+                new Name(get_class($factory)),
                 [
-                    Helpers::normaliseValue($exprArray)
+                    !empty($exprArray) ? Helpers::normaliseValue($exprArray) : null
                 ]
             ),
             new Name('createClosure'),

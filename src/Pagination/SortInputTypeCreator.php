@@ -9,7 +9,7 @@ use GraphQL\Type\Definition\EnumType;
 use SilverStripe\GraphQL\TypeAbstractions\EnumAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\InputTypeAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\ReferentialTypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
 use SilverStripe\GraphQL\TypeCreator;
 use Psr\Container\NotFoundExceptionInterface;
 /**
@@ -128,14 +128,14 @@ class SortInputTypeCreator extends TypeCreator
     public function fields()
     {
         return [
-            (new FieldAbstraction(
+            FieldAbstraction::create(
                 'field',
-                new ReferentialTypeAbstraction($this->getFieldTypeName())
-            ))->setDescription('Sort field name.'),
-            (new FieldAbstraction(
+                TypeReference::create($this->getFieldTypeName())
+            )->setDescription('Sort field name.'),
+            FieldAbstraction::create(
                 'direction',
-                new ReferentialTypeAbstraction($this->getSortDirectionType()->getName())
-            ))->setDescription('Sort direction (ASC / DESC)')
+                TypeReference::create($this->getSortDirectionType()->getName())
+            )->setDescription('Sort direction (ASC / DESC)')
         ];
     }
 }

@@ -12,7 +12,8 @@ use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
-use SilverStripe\GraphQL\TypeAbstractions\DynamicResolverAbstraction;
+use SilverStripe\GraphQL\Schema\Components\DynamicResolverAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
 use SilverStripe\ORM\ArrayList;
 use Closure;
@@ -441,7 +442,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     /**
      * Based on the type of resolver, create a function that invokes it.
      *
-     * @return callable|null
+     * @return ResolverAbstraction
      */
     protected function createResolverAbstraction()
     {

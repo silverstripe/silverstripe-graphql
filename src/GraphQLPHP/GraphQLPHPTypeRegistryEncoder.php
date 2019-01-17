@@ -20,6 +20,7 @@ use PhpParser\PrettyPrinter\Standard;
 use LogicException;
 use SilverStripe\GraphQL\Storage\Encode\TypeEncoderRegistryInterface;
 use SilverStripe\GraphQL\Storage\Encode\TypeRegistryEncoderInterface;
+use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
 use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
 
 class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
@@ -44,7 +45,7 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
     /**
      * GraphQLPHPTypeRegistryEncoder constructor.
      * @param string $identifier
-     * @param TypeEncoderInterface[] $encoders
+     * @param TypeEncoderRegistryInterface $encoderRegistry
      */
     public function __construct($identifier, TypeEncoderRegistryInterface $encoderRegistry)
     {
@@ -226,7 +227,7 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
         foreach ($this->types as $type) {
             $generator = $this->encoderRegistry->getEncoderForType($type);
             $expr = $generator->getExpression($type);
-            $name = $generator->getName($type);
+            $name = $type->getName();
 
             yield $name => $expr;
         }

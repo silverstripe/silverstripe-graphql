@@ -4,10 +4,12 @@
 namespace SilverStripe\GraphQL\TypeAbstractions;
 
 
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
-use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
+use GraphQL\Type\Definition\Type;
+use InvalidArgumentException;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
+use SilverStripe\GraphQL\Schema\Components\ArgumentAbstraction;
 
-class FieldAbstraction
+class FieldAbstraction implements ConfigurationApplier
 {
     /**
      * @var string
@@ -20,7 +22,7 @@ class FieldAbstraction
     protected $description;
 
     /**
-     * @var TypeAbstraction
+     * @var TypeReference
      */
     protected $type;
 
@@ -40,20 +42,54 @@ class FieldAbstraction
     protected $deprecationReason;
 
     /**
+     * @param $name
+     * @param mixed $type
+     * @param ResolverAbstraction $resolver
+     * @param array $args
+     * @return FieldAbstraction
+     */
+    public static function create($name, $type, ResolverAbstraction $resolver = null, $args = [])
+    {
+        return new static($name, $type, $resolver, $args);
+    }
+
+    /**
+     * @param array $config
+     * @return FieldAbstraction
+     */
+    public static function createFromConfig(array $config)
+    {
+        if (!isset($config['name']) || !isset($config['type'])) {
+            throw new InvalidArgumentException(sprintf(
+                '%s::%s requires "name" and "type" settings',
+                __CLASS__,
+                __FUNCTION__
+            ));
+        }
+        $inst = new static($config['name'], $config['type']);
+        $inst->applyConfig($config);
+
+        return $inst;
+    }
+
+    /**
      * FieldAbstraction constructor.
      * @param string $name
-     * @param TypeAbstraction $type
+     * @param mixed $type
      * @param ResolverAbstraction $resolver
      * @param array $args
      */
-    public function __construct(
-        $name,
-        TypeAbstraction $type,
-        ResolverAbstraction $resolver = null,
-        $args = []
-    ) {
+    public function __construct($name, $type, ResolverAbstraction $resolver = null, $args = []) {
+        if ($type instanceof TypeAbstraction) {
+            $ref = TypeReference::create($type->getName());
+        } else if ($type instanceof Type) {
+            // Deprecated. @todo convert graphql type
+            $ref = TypeReference::create((string) $type);
+        } else {
+            $ref = TypeReference::create($type);
+        }
         $this->setName($name)
-            ->setType($type)
+            ->setType($ref)
             ->setResolver($resolver)
             ->setArgs($args);
     }
@@ -104,7 +140,7 @@ class FieldAbstraction
     }
 
     /**
-     * @param ResolverAbstraction $resolverCallable
+     * @param ResolverAbstraction $resolver
      * @return FieldAbstraction
      */
     public function setResolver(ResolverAbstraction $resolver = null)
@@ -147,7 +183,7 @@ class FieldAbstraction
     }
 
     /**
-     * @return TypeAbstraction
+     * @return TypeReference
      */
     public function getType()
     {
@@ -155,10 +191,10 @@ class FieldAbstraction
     }
 
     /**
-     * @param TypeAbstraction $type
+     * @param TypeReference $type
      * @return $this
      */
-    public function setType(TypeAbstraction $type)
+    public function setType(TypeReference $type)
     {
         $this->type = $type;
 
@@ -196,5 +232,24 @@ class FieldAbstraction
             'args' => $this->getArgs(),
             'deprecationReason' => $this->getDeprecationReason(),
         ];
+    }
+
+    /**
+     * @param array $config
+     */
+    public function applyConfig(array $config)
+    {
+        if (isset($config['resolver'])) {
+            $this->setResolver($config['resolver']);
+        }
+        if (isset($config['args'])) {
+            $this->setArgs($config['args']);
+        }
+        if (isset($config['description'])) {
+            $this->setDescription($config['description']);
+        }
+        if (isset($config['deprecationReason'])) {
+            $this->setDeprecationReason($config['deprecationReason']);
+        }
     }
 }

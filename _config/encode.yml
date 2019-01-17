@@ -28,7 +28,7 @@ SilverStripe\Core\Injector\Injector:
 
   SilverStripe\GraphQL\Storage\Encode\TypeEncoderRegistryInterface:
     class: SilverStripe\GraphQL\Storage\Encode\TypeEncoderRegistry
-    contstructor:
+    constructor:
       objectTypeEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.objectType'
       unionTypeEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.unionType'
       enumTypeEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.enumType'
@@ -37,13 +37,13 @@ SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface.static:
     class: SilverStripe\GraphQL\Storage\Encode\StaticResolverEncoder
   SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface.dynamic:
-    class: SilverStripe\GraphQL\Storage\Encode\DynamicResolverEncoder
+    class: SilverStripe\GraphQL\Schema\Storage\Encoding\Encoders\DynamicResolverEncoder
   SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface.registry:
     class: SilverStripe\GraphQL\Storage\Encode\RegistryResolverEncoder
 
   SilverStripe\GraphQL\Storage\Encode\ResolverEncoderRegistryInterface:
     class: SilverStripe\GraphQL\Storage\Encode\ResolverEncoderRegistry
-    contstructor:
+    constructor:
       staticResolverEncoder: '%$SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface.static'
       dynamicResolverEncoder: '%$SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface.dynamic'
       registryResolverEncoder: '%$SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface.registry'

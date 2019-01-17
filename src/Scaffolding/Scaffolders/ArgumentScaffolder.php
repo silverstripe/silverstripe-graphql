@@ -9,8 +9,8 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
 use SilverStripe\Core\Injector\Injector;
 use InvalidArgumentException;
-use SilverStripe\GraphQL\TypeAbstractions\ArgumentAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\ReferentialTypeAbstraction;
+use SilverStripe\GraphQL\Schema\Components\ArgumentAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
 
 class ArgumentScaffolder implements ConfigurationApplier, ScaffolderInterface
 {
@@ -26,7 +26,7 @@ class ArgumentScaffolder implements ConfigurationApplier, ScaffolderInterface
     protected $description;
 
     /**
-     * @var Type;
+     * @var string
      */
     protected $type;
 
@@ -144,7 +144,7 @@ class ArgumentScaffolder implements ConfigurationApplier, ScaffolderInterface
     {
         $arg = new ArgumentAbstraction(
             $this->argName,
-            (new ReferentialTypeAbstraction($this->type))
+            TypeReference::create($this->type)
                 ->setRequired($this->required)
         );
         $arg->setDescription($this->description);

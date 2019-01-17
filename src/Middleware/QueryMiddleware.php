@@ -4,6 +4,7 @@ namespace SilverStripe\GraphQL\Middleware;
 
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\Type\Schema;
+use SilverStripe\GraphQL\TypeAbstractions\SchemaAbstraction;
 
 /**
  * Represents middleware for evaluating a graphql query
@@ -11,12 +12,12 @@ use GraphQL\Type\Schema;
 interface QueryMiddleware
 {
     /**
-     * @param Schema $schema
+     * @param SchemaAbstraction $schema
      * @param string $query
      * @param array $context
      * @param array $params
      * @param callable $next
      * @return ExecutionResult|array Result either as an ExecutionResult object or raw array
      */
-    public function process(Schema $schema, $query, $context, $params, callable $next);
+    public function process(SchemaAbstraction $schema, $query, $context, $params, callable $next);
 }

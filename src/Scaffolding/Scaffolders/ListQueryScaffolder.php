@@ -10,6 +10,7 @@ use SilverStripe\GraphQL\Pagination\Connection;
 use Psr\Container\NotFoundExceptionInterface;
 use Exception;
 use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
 
 /**
  * Scaffolds a GraphQL query field.
@@ -174,7 +175,7 @@ class ListQueryScaffolder extends QueryScaffolder
     /**
      * @param Manager $manager
      * @throws Error
-     * @return array
+     * @return FieldAbstraction
      */
     public function scaffold(Manager $manager)
     {
@@ -184,9 +185,9 @@ class ListQueryScaffolder extends QueryScaffolder
             return $paginationScaffolder->scaffold($manager);
         }
 
-        return new FieldAbstraction(
+        return FieldAbstraction::create(
             $this->getName(),
-            $this->getType($manager)
+            TypeReference::create($this->getType($manager)->getName())
                 ->setList(true),
             $this->createResolverAbstraction(),
             $this->createArgs($manager)
@@ -202,9 +203,7 @@ class ListQueryScaffolder extends QueryScaffolder
     protected function createConnection(Manager $manager)
     {
         $conn = Connection::create($this->getName())
-            ->setConnectionType(function () use ($manager) {
-                return $this->getType($manager);
-            })
+            ->setConnectionType(TypeReference::create($this->getType($manager)->getName()))
             ->setConnectionResolver($this->createResolverAbstraction())
             ->setArgs($this->createArgs($manager))
             ->setSortableFields($this->getSortableFields())

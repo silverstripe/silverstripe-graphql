@@ -25,11 +25,10 @@ class PaginationResolverFactory extends ClosureFactory
      */
     public function __construct($context = [])
     {
-        if (!isset($context['parentResolver']) || !$context['parentResolver'] instanceof ResolverAbstraction) {
+        if (!isset($context['parentResolver'])) {
             throw new InvalidArgumentException(sprintf(
-                '%s constructor must be passed a %s instance as the parentResolver setting',
-                __CLASS__,
-                ResolverAbstraction::class
+                '%s constructor must be passed a "parentResolver" setting',
+                __CLASS__
             ));
         }
         if (!isset($context['defaultLimit'])) {

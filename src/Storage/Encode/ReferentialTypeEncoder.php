@@ -8,6 +8,7 @@ use PhpParser\BuilderFactory;
 use PhpParser\Node\Expr;
 use SilverStripe\GraphQL\TypeAbstractions\InternalType;
 use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
 
 class ReferentialTypeEncoder implements TypeExpressionProvider
 {
@@ -38,19 +39,20 @@ class ReferentialTypeEncoder implements TypeExpressionProvider
      */
     public function getExpression(TypeAbstraction $type)
     {
+        /* @var TypeReference $type */
         $namedTypeStr = $type->getName();
         if (InternalType::exists($namedTypeStr)) {
-            $type = $this->factory->staticCall(Type::class, strtolower($namedTypeStr));
+            $typeExpr = $this->factory->staticCall(Type::class, strtolower($namedTypeStr));
         } else {
-            $type = $this->customTypeFetcher->getExpression($namedTypeStr);
+            $typeExpr = $this->customTypeFetcher->getExpression($namedTypeStr);
         }
         if ($type->isList()) {
-            $type = $this->factory->staticCall(Type::class, 'listOf', [$namedType]);
+            $typeExpr = $this->factory->staticCall(Type::class, 'listOf', [$typeExpr]);
         }
         if ($type->isRequired()) {
-            $type = $this->factory->staticCall(Type::class, 'nonNull', [$namedType]);
+            $typeExpr = $this->factory->staticCall(Type::class, 'nonNull', [$typeExpr]);
         }
 
-        return $type;
+        return $typeExpr;
     }
 }

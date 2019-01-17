@@ -17,43 +17,43 @@ class InternalType
     const TYPE_BOOLEAN = 'Boolean';
 
     /**
-     * @return ReferentialTypeAbstraction
+     * @return TypeReference
      */
     public static function id()
     {
-        return new ReferentialTypeAbstraction(self::TYPE_ID);
+        return new TypeReference(self::TYPE_ID);
     }
 
     /**
-     * @return ReferentialTypeAbstraction
+     * @return TypeReference
      */
     public static function int()
     {
-        return new ReferentialTypeAbstraction(self::TYPE_INT);
+        return new TypeReference(self::TYPE_INT);
     }
 
     /**
-     * @return ReferentialTypeAbstraction
+     * @return TypeReference
      */
     public static function string()
     {
-        return new ReferentialTypeAbstraction(self::TYPE_STRING);
+        return new TypeReference(self::TYPE_STRING);
     }
 
     /**
-     * @return ReferentialTypeAbstraction
+     * @return TypeReference
      */
     public static function float()
     {
-        return new ReferentialTypeAbstraction(self::TYPE_FLOAT);
+        return new TypeReference(self::TYPE_FLOAT);
     }
 
     /**
-     * @return ReferentialTypeAbstraction
+     * @return TypeReference
      */
     public static function boolean()
     {
-        return new ReferentialTypeAbstraction(self::TYPE_BOOLEAN);
+        return new TypeReference(self::TYPE_BOOLEAN);
     }
 
     /*

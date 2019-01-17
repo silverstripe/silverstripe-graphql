@@ -17,6 +17,7 @@ use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\Dev\Deprecation;
+use SilverStripe\GraphQL\Schema\QueryResultInterface;
 use SilverStripe\GraphQL\Schema\SchemaHandlerInterface;
 use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
 use SilverStripe\GraphQL\Storage\SchemaStorageInterface;
@@ -25,6 +26,7 @@ use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\SchemaAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
@@ -268,14 +270,14 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     /**
      * Call middleware to evaluate a graphql query
      *
-     * @param Schema $schema
+     * @param SchemaAbstraction $schema
      * @param string $query Query to invoke
      * @param array $context
      * @param array $params Variables passed to this query
      * @param callable $last The callback to call after all middlewares
      * @return ExecutionResult|array
      */
-    protected function callMiddleware(Schema $schema, $query, $context, $params, callable $last)
+    protected function callMiddleware(SchemaAbstraction $schema, $query, $context, $params, callable $last)
     {
         // Reverse middlewares
         $next = $last;
@@ -322,7 +324,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      *
      * @param string $query
      * @param array $params
-     * @return ExecutionResult|array Result as either source object result, or serialised as array.
+     * @return QueryResultInterface|array Result as either source object result, or serialised as array.
      * @throws NotFoundExceptionInterface
      */
     public function queryAndReturnResult($query, $params = [])
@@ -458,7 +460,15 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
 
         return $this;
     }
-    
+
+    /**
+     * @return SchemaStorageInterface
+     */
+    public function getSchemaStore()
+    {
+        return $this->schemaStore;
+    }
+
     /**
      * @return string
      */
@@ -605,27 +615,25 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     /**
      * Serialise a Graphql result object for output
      *
-     * @param ExecutionResult $executionResult
+     * @param QueryResultInterface $executionResult
      * @return array
      */
     public function serialiseResult($executionResult)
     {
         // Format object
-        if (!empty($executionResult->errors)) {
+        if (!empty($executionResult->getErrors())) {
             return [
-                'data' => $executionResult->data,
-                'errors' => array_map($this->errorFormatter, $executionResult->errors),
+                'data' => $executionResult->getData(),
+                'errors' => array_map($this->errorFormatter, $executionResult->getErrors()),
             ];
         } else {
             return [
-                'data' => $executionResult->data,
+                'data' => $executionResult->getData(),
             ];
         }
     }
 
     /**
-     * @throws CacheException
-     * @throws Error
      * @throws NotFoundExceptionInterface
      */
     public function regenerate()

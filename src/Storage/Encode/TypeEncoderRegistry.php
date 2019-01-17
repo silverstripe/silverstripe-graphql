@@ -24,7 +24,7 @@ class TypeEncoderRegistry implements TypeEncoderRegistryInterface
     }
 
     /**
-     * @param TypeAbstraction
+     * @param TypeAbstraction $type
      * @return TypeEncoderInterface
      */
     public function getEncoderForType(TypeAbstraction $type)

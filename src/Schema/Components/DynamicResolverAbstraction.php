@@ -1,11 +1,12 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\TypeAbstractions;
+namespace SilverStripe\GraphQL\Schema\Components;
 
 
 use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
 use Closure;
+use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
 
 class DynamicResolverAbstraction extends ResolverAbstraction
 {

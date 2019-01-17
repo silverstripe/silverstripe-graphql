@@ -4,10 +4,15 @@ namespace SilverStripe\GraphQL;
 
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
+use LogicException;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
+use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\InputTypeAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
 
 /**
  * Represents a GraphQL type in a way that allows customization through
@@ -84,10 +89,25 @@ class TypeCreator
         $fields = $this->fields();
         $allFields = [];
 
-        foreach ($fields as $name => $field) {
+        foreach ($fields as $key => $field) {
+            $name = null;
+            if ($field instanceof FieldAbstraction) {
+                $name = $field->getName();
+            } else if (is_numeric($key)) {
+                if (is_array($field) && isset($field['name'])) {
+                    $name = $field['name'];
+                } else {
+                    throw new LogicException(sprintf(
+                        'Enumerated lists of fields must be instances of %s or an array that contains a "name" key',
+                        FieldAbstraction::class
+                    ));
+                }
+            } else {
+                $name = $key;
+            }
             $resolver = $this->getFieldResolver($name, $field);
             if ($resolver) {
-                $field['resolve'] = $resolver;
+                $field->setResolver($resolver);
             }
             $allFields[$name] = $field;
         }
@@ -122,7 +142,7 @@ class TypeCreator
     /**
      * Build the constructed type backing this object.
      *
-     * @return Type
+     * @return TypeAbstraction
      */
     public function toType()
     {
@@ -130,14 +150,14 @@ class TypeCreator
             return new InputTypeAbstraction(
                 $this->getName(),
                 $this->getDescription(),
-                $this->fields()
+                $this->getFields()
             );
         }
 
         return new ObjectTypeAbstraction(
             $this->getName(),
             $this->getDescription(),
-            $this->fields(),
+            $this->getFields(),
             $this->interfaces()
         );
     }
@@ -168,9 +188,7 @@ class TypeCreator
         $attributes = array_merge(
             $this->attributes(),
             [
-                'fields' => function () {
-                    return $this->getFields();
-                },
+                'fields' => $this->getFields(),
             ]
         );
 
@@ -188,31 +206,24 @@ class TypeCreator
      * or resolveField().
      *
      * @param string $name Name of the field
-     * @param array $field Field array specification
-     * @return callable|null The callback, or null if there is no field resolver
+     * @param FieldAbstraction $field Field array specification
+     * @return ResolverAbstraction
      */
-    protected function getFieldResolver($name, $field)
+    protected function getFieldResolver($name, FieldAbstraction $field)
     {
         // Preconfigured method
-        if (isset($field['resolve'])) {
-            return $field['resolve'];
+        if ($field->getResolver()) {
+            return $field->getResolver();
         }
         $candidateMethods = [
             'resolve'.ucfirst($name).'Field',
             'resolveField',
         ];
         foreach ($candidateMethods as $resolveMethod) {
-            if (!method_exists($this, $resolveMethod)) {
-                continue;
+            $callable = [static::class, $resolveMethod];
+            if (is_callable($callable)) {
+                return new StaticResolverAbstraction($callable);
             }
-
-            // Method for a particular field
-            $resolver = array($this, $resolveMethod);
-            return function () use ($resolver) {
-                $args = func_get_args();
-                // See 'resolveType' on https://github.com/webonyx/graphql-php
-                return call_user_func_array($resolver, $args);
-            };
         }
 
         return null;

@@ -2,6 +2,8 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Interfaces;
 
+use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
+
 /**
  * Defines the interface used for services that create GraphQL types
  * based on simple input, e.g. a formatted string or array
@@ -14,7 +16,7 @@ interface TypeParserInterface
     public function getName();
 
     /**
-     * @return \GraphQL\Type\Definition\Type
+     * @return TypeAbstraction
      */
     public function getType();
 }

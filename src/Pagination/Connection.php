@@ -11,11 +11,11 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
-use SilverStripe\GraphQL\TypeAbstractions\ArgumentAbstraction;
+use SilverStripe\GraphQL\Schema\Components\ArgumentAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\InternalType;
 use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\ReferentialTypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
 use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
@@ -54,9 +54,8 @@ class Connection implements OperationResolver
 
     /**
      * Return a thunk function, which in turn returns the lazy-evaluated
-     * {@link ObjectType}.
      *
-     * @var ObjectType|Callable
+     * @var TypeReference
      */
     protected $connectedType;
 
@@ -118,7 +117,7 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @param ResolverAbstraction
+     * @param ResolverAbstraction $resolver
      *
      * @return $this
      */
@@ -141,10 +140,10 @@ class Connection implements OperationResolver
     /**
      * Pass in the {@link ObjectType}.
      *
-     * @param ObjectType|Callable $type Type, or callable to evaluate type
+     * @param TypeReference $type
      * @return $this
      */
-    public function setConnectionType($type)
+    public function setConnectionType(TypeReference $type)
     {
         $this->connectedType = $type;
 
@@ -154,14 +153,11 @@ class Connection implements OperationResolver
     /**
      * Evaluate Connection type
      *
-     * @param bool $evaluate
-     * @return ObjectType|Callable
+     * @return TypeReference
      */
-    public function getConnectionType($evaluate = true)
+    public function getConnectionType()
     {
-        return ($evaluate && is_callable($this->connectedType))
-            ? call_user_func($this->connectedType)
-            : $this->connectedType;
+        return $this->connectedType;
     }
 
     /**
@@ -313,7 +309,7 @@ class Connection implements OperationResolver
         if ($this->getSortableFields()) {
             $args[] = new ArgumentAbstraction(
                 'type',
-                $this->getSortTypeCreator()->toType()
+                TypeReference::create($this->getSortTypeCreator()->getName())
                     ->setList(true)
             );
         }
@@ -328,14 +324,16 @@ class Connection implements OperationResolver
     public function fields()
     {
         return [
-            (new FieldAbstraction(
+            FieldAbstraction::create(
                 'pageInfo',
-                $this->getPageInfoType()->setRequired(true)
-            ))->setDescription('Pagination information'),
-            (new FieldAbstraction(
+                TypeReference::create($this->getPageInfoType()->getName())
+                    ->setRequired(true)
+            )->setDescription('Pagination information'),
+            FieldAbstraction::create(
                 'edges',
-                $this->getEdgeType()->setList(true)
-            ))->setDescription('Collection of records'),
+                TypeReference::create($this->getEdgeTypeName())
+                    ->setList(true)
+            )->setDescription('Collection of records'),
         ];
     }
 
@@ -353,11 +351,11 @@ class Connection implements OperationResolver
                 $this->getEdgeTypeName(),
                 'The collections edge',
                 [
-                    (new FieldAbstraction(
+                    FieldAbstraction::create(
                         'node',
-                        $this->getConnectionType(),
+                        TypeReference::create($this->getConnectionTypeName()),
                         new StaticResolverAbstraction([static::class, 'nodeResolver'])
-                    ))->setDescription('The node at the end of the collections edge')
+                    )->setDescription('The node at the end of the collections edge')
                 ]
             );
 

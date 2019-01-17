@@ -19,8 +19,8 @@ use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Expr\Closure as ClosureExpression;
-use SilverStripe\GraphQL\TypeAbstractions\ArgumentAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\DynamicResolverAbstraction;
+use SilverStripe\GraphQL\Schema\Components\ArgumentAbstraction;
+use SilverStripe\GraphQL\Schema\Components\DynamicResolverAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\InputTypeAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
@@ -60,12 +60,14 @@ class ObjectTypeEncoder implements TypeEncoderInterface
      */
     public function getExpression(TypeAbstraction $type)
     {
+        /* @var ObjectTypeAbstraction|InputTypeAbstraction $type */
         $items = Helpers::buildArrayItems($type->toArray(), ['fields']);
         $items[] = new ArrayItem(
             $this->buildFieldsExpression($type->getFields()),
             Helpers::normaliseValue('fields')
         );
-        return new New_(new FullyQualified(get_class($type)), [new Array_($items)]);
+        $class = $type instanceof InputTypeAbstraction ? InputObjectType::class : ObjectType::class;
+        return new New_(new FullyQualified($class), [new Array_($items)]);
     }
 
     /**
@@ -87,7 +89,7 @@ class ObjectTypeEncoder implements TypeEncoderInterface
             /* @var FieldAbstraction $field */
             $fieldItems = Helpers::buildArrayItems(
                 $field->toArray(),
-                ['type', 'args', 'resolve', 'resolverFactory']
+                ['type', 'args', 'resolver']
             );
             $fieldItems[] = new ArrayItem(
                 $this->referentialTypeEncoder->getExpression($field->getType()),
@@ -113,11 +115,12 @@ class ObjectTypeEncoder implements TypeEncoderInterface
                 );
                 return new ArrayItem(new Array_($argItems));
             }, $field->getArgs());
-
-            $fieldItems[] = new ArrayItem(
-                new Array_($args),
-                Helpers::normaliseValue('args')
-            );
+            if (!empty($args)) {
+                $fieldItems[] = new ArrayItem(
+                    new Array_($args),
+                    Helpers::normaliseValue('args')
+                );
+            }
 
             return new ArrayItem(new Array_($fieldItems));
 

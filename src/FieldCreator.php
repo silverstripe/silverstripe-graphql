@@ -7,7 +7,9 @@ use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\Deprecation;
 use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
 
 /**
  * Base type for query types within graphql. I.e. mutations or queries
@@ -50,7 +52,7 @@ class FieldCreator
      * Gets the type for elements within this query, or callback to lazy-load this type
      *
      * @link https://github.com/webonyx/graphql-php#type-system
-     * @return Type|callable
+     * @return TypeReference
      */
     public function type()
     {
@@ -118,16 +120,14 @@ class FieldCreator
     }
 
     /**
-     * @return array
+     * @return FieldAbstraction
      */
     public function toField()
     {   
-        return new FieldAbstraction(
+        return FieldAbstraction::create(
             $this->name,
             $this->type(),
-            // Temporary hack
-            new StaticResolverAbstraction([static::class, 'resolve']),
-            /////////
+            $this->getResolver(),
             $this->args()
         );
     }
@@ -168,21 +168,15 @@ class FieldCreator
      *
      * @link https://github.com/webonyx/graphql-php#query-resolution
      * @see OperationResolver::resolve() for method signature.
-     * @return \Closure|null
+     * @return StaticResolverAbstraction
      */
     protected function getResolver()
     {
-        if (!method_exists($this, 'resolve')) {
+        $callable = [static::class, 'resolve'];
+        if (!is_callable($callable)) {
             return null;
         }
 
-        $resolver = array($this, 'resolve');
-
-        return function () use ($resolver) {
-            $args = func_get_args();
-            $result = call_user_func_array($resolver, $args);
-
-            return $result;
-        };
+        return new StaticResolverAbstraction($callable);
     }
 }

@@ -41,15 +41,15 @@ class PageInfoTypeCreator extends TypeCreator
     public function fields()
     {
         return [
-            new FieldAbstraction(
+            FieldAbstraction::create(
                 'totalCount',
                 InternalType::int()->setRequired(true)
             ),
-            new FieldAbstraction(
+            FieldAbstraction::create(
                 'hasNextPage',
                 InternalType::boolean()->setRequired(true)
             ),
-            new FieldAbstraction(
+            FieldAbstraction::create(
                 'hasPreviousPage',
                 InternalType::boolean()->setRequired(true)
             ),

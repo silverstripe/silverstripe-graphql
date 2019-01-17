@@ -10,8 +10,9 @@ use SilverStripe\GraphQL\Resolvers\PaginationResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use SilverStripe\GraphQL\TypeAbstractions\DynamicResolverAbstraction;
+use SilverStripe\GraphQL\Schema\Components\DynamicResolverAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
 
 class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutatorInterface, ScaffolderInterface
 {
@@ -64,7 +65,7 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
     /**
      * @param Manager $manager
      * @throws Error
-     * @return array
+     * @return FieldAbstraction
      */
     public function scaffold(Manager $manager)
     {
@@ -77,9 +78,9 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
             'sortableFields' => $conn->getSortableFields()
         ]);
 
-        return new FieldAbstraction(
+        return FieldAbstraction::create(
             $this->operationName,
-            $manager->getType($connectionName),
+            TypeReference::create($connectionName),
             new DynamicResolverAbstraction($factory),
             $conn->args()
         );

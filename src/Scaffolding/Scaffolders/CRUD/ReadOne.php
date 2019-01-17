@@ -7,7 +7,7 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadOneResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder;
-use SilverStripe\GraphQL\TypeAbstractions\ArgumentAbstraction;
+use SilverStripe\GraphQL\Schema\Components\ArgumentAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\InternalType;
 
 /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Storage\Encode;
+namespace SilverStripe\GraphQL\Schema\Storage\Encoding\Encoders;
 
 use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\Type;
@@ -23,7 +23,7 @@ class EnumTypeEncoder implements TypeEncoderInterface
             Helpers::normaliseValue('values')
         );
 
-        return new New_(new FullyQualified(get_class($type)), [new Array_($items)]);
+        return new New_(new FullyQualified(EnumType::class), [new Array_($items)]);
 
     }
 

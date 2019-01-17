@@ -1,11 +1,16 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\Storage\Encode;
+namespace SilverStripe\GraphQL\Schema\Storage\Encoding\Encoders;
 
 
 use PhpParser\Node\Expr\MethodCall;
-use SilverStripe\GraphQL\TypeAbstractions\DynamicResolverAbstraction;
+use PhpParser\Node\Expr\New_;
+use PhpParser\Node\Name;
+use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
+use SilverStripe\GraphQL\Storage\Encode\Helpers;
+use SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface;
+use SilverStripe\GraphQL\Schema\Components\DynamicResolverAbstraction;
 use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
 
 class DynamicResolverEncoder implements ResolverEncoderInterface
@@ -38,7 +43,7 @@ class DynamicResolverEncoder implements ResolverEncoderInterface
         }
         return new MethodCall(
             new New_(
-                new Name(get_class($field)),
+                new Name(get_class($factory)),
                 [
                     Helpers::normaliseValue($exprArray)
                 ]

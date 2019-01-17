@@ -48,36 +48,35 @@ class TypeCreatorExtension extends DataExtension implements ManagerMutatorInterf
     /**
      * Creates the type using appropriate parser
      *
-     * @param  Manager|null $manager
-     * @return TypeAbstraction
+     * @return string
+     * @throws Exception
      */
-    public function getGraphQLType(Manager $manager = null)
+    public function getGraphQLType()
     {
         $type = $this->createTypeParser()->getType();
-        $name = $type->name;
-        if (!$this->isInternal($name)) {
-            return $manager->getType($name);
-        }
+        $name = $type->getName();
 
-        return $type;
+        return $name;
     }
 
     /**
      * Returns true if the type parser creates an internal type e.g. String
      *
      * @return bool
+     * @throws Exception
      */
     public function isInternalGraphQLType()
     {
         $type = $this->createTypeParser()->getType();
 
-        return $this->isInternal($type->name);
+        return $this->isInternal($type->getName());
     }
 
     /**
      * Adds this object's GraphQL type to the Manager
      *
      * @param Manager $manager
+     * @throws Exception
      */
     public function addToManager(Manager $manager)
     {

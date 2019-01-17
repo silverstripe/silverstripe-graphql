@@ -81,15 +81,15 @@ class Helpers
     /**
      * @param array $data
      * @param array $omittedKeys
-     * @param bool $removeNull
+     * @param bool $removeEmpty
      * @return ArrayItem[]
      */
-    public static function buildArrayItems(array $data, $omittedKeys = [], $removeNull = true)
+    public static function buildArrayItems(array $data, $omittedKeys = [], $removeEmpty = true)
     {
         $validKeys = array_diff(array_keys($data), $omittedKeys);
-        if ($removeNull) {
+        if ($removeEmpty) {
             $validKeys = array_filter($validKeys, function ($key) use ($data) {
-                return $data[$key] !== null;
+                return !empty($data[$key]);
             });
         }
         $items = array_map(function ($key) use ($data) {

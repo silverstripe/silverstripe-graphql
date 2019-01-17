@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Storage\Encode;
+namespace SilverStripe\GraphQL\Schema\Storage\Encoding;
 
 use PhpParser\Node\Expr;
 use SilverStripe\Core\Injector\Injectable;

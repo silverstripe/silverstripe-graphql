@@ -40,21 +40,25 @@ class UnionTypeEncoder implements TypeEncoderInterface
             $type->toArray(),
             ['resolveType', 'types']
         );
-        if ($type->getTypeFactory()) {
+        $typeFactory = $type->getTypeFactory();
+        $resolveTypeFactory = $type->getResolveTypeFactory();
+        if ($typeFactory) {
+            $encoder = $this->encoderRegistry->getEncoderForResolver($typeFactory);
             $items[] = new ArrayItem(
-                $this->encoderRegistry->getEncoderForResolver($type->getTypeFactory()),
+                $encoder->getExpression($typeFactory),
                 Helpers::normaliseValue('types')
             );
         }
-        if ($type->getResolveTypeFactory()) {
+        if ($resolveTypeFactory) {
+            $encoder = $this->encoderRegistry->getEncoderForResolver($resolveTypeFactory);
             $items[] = new ArrayItem(
-                $this->encoderRegistry->getEncoderForResolver($type->getResolveTypeFactory()),
+                $encoder->getExpression($resolveTypeFactory),
                 Helpers::normaliseValue('resolveType')
             );
         }
 
         return new New_(
-            new FullyQualified(get_class($type)),
+            new FullyQualified(UnionType::class),
             [
                 new Array_($items)
             ]

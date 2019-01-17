@@ -1,8 +1,9 @@
 <?php
 
-namespace SilverStripe\GraphQL\Storage\Encode;
+namespace SilverStripe\GraphQL\Schema\Storage\Encoding;
 
 use GraphQL\Type\SchemaConfig;
+use SilverStripe\GraphQL\Storage\Encode\TypeRegistryEncoderInterface;
 use SilverStripe\GraphQL\Storage\SchemaStorageInterface;
 use Exception;
 use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
@@ -59,7 +60,7 @@ class CodeGenerationSchemaStore implements SchemaStorageInterface
      */
     public function load()
     {
-        $schema = new SchemaAbstraction(
+        return new SchemaAbstraction(
             $this->getEncoder()->getRegistry()
         );
         
@@ -80,7 +81,7 @@ class CodeGenerationSchemaStore implements SchemaStorageInterface
     protected function createQuery(array $queries)
     {
         $type = new ObjectTypeAbstraction('Query');
-        $type->addFields($queries);
+        $type->setFields($queries);
 
         return $type;
     }
@@ -92,7 +93,7 @@ class CodeGenerationSchemaStore implements SchemaStorageInterface
     protected function createMutation(array $mutations)
     {
         $type = new ObjectTypeAbstraction('Mutation');
-        $type->addFields($mutations);
+        $type->setFields($mutations);
 
         return $type;
     }

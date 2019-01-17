@@ -1,11 +1,12 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\TypeAbstractions;
+namespace SilverStripe\GraphQL\Schema\Components;
 
 
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ResolverFactory;
 use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
+use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
 
 class ArgumentAbstraction
 {
@@ -20,7 +21,7 @@ class ArgumentAbstraction
     protected $description;
 
     /**
-     * @var ReferentialTypeAbstraction
+     * @var TypeReference
      */
     protected $type;
 
@@ -32,9 +33,9 @@ class ArgumentAbstraction
     /**
      * FieldAbstraction constructor.
      * @param string $name
-     * @param ReferentialTypeAbstraction $type
+     * @param TypeReference $type
      */
-    public function __construct($name, ReferentialTypeAbstraction $type)
+    public function __construct($name, TypeReference $type)
     {
         $this->setName($name)
             ->setType($type);
@@ -50,7 +51,7 @@ class ArgumentAbstraction
 
     /**
      * @param string $name
-     * @return FieldAbstraction
+     * @return $this
      */
     public function setName($name)
     {
@@ -69,16 +70,17 @@ class ArgumentAbstraction
 
     /**
      * @param string $description
-     * @return FieldAbstraction
+     * @return $this
      */
     public function setDescription($description)
     {
         $this->description = $description;
+
         return $this;
     }
 
     /**
-     * @return ReferentialTypeAbstraction
+     * @return TypeReference
      */
     public function getType()
     {
@@ -86,10 +88,10 @@ class ArgumentAbstraction
     }
 
     /**
-     * @param ReferentialTypeAbstraction $type
+     * @param TypeReference $type
      * @return $this
      */
-    public function setType(ReferentialTypeAbstraction $type)
+    public function setType(TypeReference $type)
     {
         $this->type = $type;
 
