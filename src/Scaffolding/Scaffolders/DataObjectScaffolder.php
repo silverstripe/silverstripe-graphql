@@ -20,6 +20,9 @@ use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
+use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
@@ -542,13 +545,10 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     public function scaffold(Manager $manager)
     {
-        return new ObjectType(
-            [
-                'name' => $this->getTypeName(),
-                'fields' => function () use ($manager) {
-                    return $this->createFields($manager);
-                },
-            ]
+        return new ObjectTypeAbstraction(
+            $this->getTypeName(),
+            null,
+            $this->createFields($manager)
         );
     }
 
@@ -695,33 +695,34 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
             if ($result instanceof DBField) {
                 /** @var DBField|TypeCreatorExtension $result */
-                $fieldDef = ['name' => $fieldName];
-                $fieldDef['type'] = $result->getGraphQLType($manager);
-                $fieldDef['resolve'] = [
-                    FieldAccessorResolver::class,
-                    'resolve',
-                ];
-                $fieldDef['description'] = $fieldData->Description;
-                $fieldMap[$fieldName] = $fieldDef;
+                $fieldDef = new FieldAbstraction(
+                    $fieldName,
+                    $result->getGraphQLType($manager),
+                    new StaticResolverAbstraction([
+                        FieldAccessorResolver::class,
+                        'resolve',
+                    ])
+                );
+                $fieldDef->setDescription($fieldData->Description);
             }
         }
 
         foreach ($extraDataObjects as $fieldName => $className) {
             $description = $this->getFieldDescription($fieldName);
-            $fieldMap[$fieldName] = [
-                'name' => $fieldName,
-                'type' => StaticSchema::inst()->fetchFromManager($className, $manager),
-                'description' => $description,
-                'resolve' => [
+            $fieldMap[$fieldName] = new FieldAbstraction(
+                $fieldName,
+                StaticSchema::inst()->fetchFromManager($className, $manager),
+                new StaticResolverAbstraction(
                     FieldAccessorResolver::class,
-                    'resolve',
-                ],
-            ];
+                    'resolve'
+                )
+            );
+            $fieldMap[$fieldName]->setDescription($description);
         }
 
         foreach ($this->nestedQueries as $name => $scaffolder) {
             $fieldDef = $scaffolder->scaffold($manager);
-            $fieldDef['name'] = $name;
+            $fieldDef->setName($name);
             $fieldMap[$name] = $fieldDef;
         }
 

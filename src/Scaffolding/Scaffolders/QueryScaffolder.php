@@ -11,6 +11,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
+use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
 
 /**
  * Scaffolds a GraphQL query field.
@@ -54,9 +55,10 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
 
         $this->extend('onBeforeAddToManager', $manager);
         if (!$this->isNested) {
-            $manager->addQuery(function () use ($manager) {
-                return $this->scaffold($manager);
-            }, $this->getName());
+            $manager->addQuery(
+                $this->scaffold($manager),
+                $this->getName()
+            );
         }
     }
 
@@ -72,6 +74,9 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
         return $this;
     }
 
+    /**
+     * @return string
+     */
     public function getTypeName()
     {
         return parent::getTypeName() ?: $this->typeName();
@@ -81,7 +86,7 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
      * Get the type from Manager
      *
      * @param Manager $manager
-     * @return Type
+     * @return TypeAbstraction
      */
     protected function getType(Manager $manager)
     {

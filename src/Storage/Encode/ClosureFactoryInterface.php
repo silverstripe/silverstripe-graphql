@@ -10,4 +10,9 @@ interface ClosureFactoryInterface
      * @return Closure
      */
     public function createClosure();
+
+    /**
+     * @return array
+     */
+    public function getContext();
 }

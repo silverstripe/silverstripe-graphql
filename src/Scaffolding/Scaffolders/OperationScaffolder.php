@@ -12,7 +12,10 @@ use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
+use SilverStripe\GraphQL\TypeAbstractions\DynamicResolverAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
 use SilverStripe\ORM\ArrayList;
+use Closure;
 
 /**
  * Provides functionality common to both operation scaffolders. Cannot
@@ -348,33 +351,29 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @param callable|OperationResolver|string $resolver Callable, instance of (or classname of) a OperationResolver
+     * @param callable $resolver
      * @return $this
      * @throws InvalidArgumentException
      */
     public function setResolver($resolver)
     {
-        if (is_callable($resolver) || $resolver instanceof OperationResolver) {
-            $this->resolver = $resolver;
-            return $this;
+        if (!is_callable($resolver) || $resolver instanceof Closure) {
+            throw new InvalidArgumentException(sprintf(
+                '%s::%s must be passed a callable that is not a closure',
+                __CLASS__,
+                __FUNCTION__
+            ));
         }
-        if (is_subclass_of($resolver, OperationResolver::class)) {
-            $this->resolver = Injector::inst()->create($resolver);
-            return $this;
-        }
+        $this->resolver = $resolver;
 
-        throw new InvalidArgumentException(sprintf(
-            '%s::setResolver() accepts closures, instances of %s or names of resolver subclasses.',
-            __CLASS__,
-            OperationResolver::class
-        ));
+        return $this;
     }
 
     /**
      * @param ClosureFactoryInterface $factory
      * @return $this
      */
-    public function setResolverFactory($factory)
+    public function setResolverFactory(ClosureFactoryInterface $factory)
     {
         $this->resolverFactory = $factory;
 
@@ -444,30 +443,13 @@ abstract class OperationScaffolder implements ConfigurationApplier
      *
      * @return callable|null
      */
-    protected function createResolverFunction()
+    protected function createResolverAbstraction()
     {
         if ($this->resolverFactory) {
-            return $this->resolverFactory->createClosure();
+            return new DynamicResolverAbstraction($this->resolverFactory);
         }
-        $resolver = $this->resolver;
-        if (!$resolver) {
-            return null;
-        }
-        if (is_callable($resolver)) {
-            return $resolver;
-        }
-        return function () use ($resolver) {
-            $args = func_get_args();
-            if ($resolver instanceof OperationResolver) {
-                return call_user_func_array([$resolver, 'resolve'], $args);
-            } else {
-                throw new \Exception(sprintf(
-                    '%s resolver must be a closure or implement %s',
-                    __CLASS__,
-                    OperationResolver::class
-                ));
-            }
-        };
+
+        return new StaticResolverAbstraction($this->resolver);
     }
 
     /**
@@ -491,7 +473,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     {
         $args = $this->createDefaultArgs($manager);
         foreach ($this->args as $scaffolder) {
-            $args[$scaffolder->argName] = $scaffolder->toArray($manager);
+            $args[$scaffolder->argName] = $scaffolder->scaffold($manager);
         }
         $this->extend('updateArgs', $args, $manager);
         return $args;

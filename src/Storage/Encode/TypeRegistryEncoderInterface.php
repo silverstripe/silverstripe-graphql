@@ -4,27 +4,28 @@ namespace SilverStripe\GraphQL\Storage\Encode;
 
 use GraphQL\Type\Definition\Type;
 use Exception;
+use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
 
 interface TypeRegistryEncoderInterface
 {
     /**
-     * @param Type $type
+     * @param TypeAbstraction $type
      * @return $this
      */
-    public function addType(Type $type);
+    public function addType(TypeAbstraction $type);
 
     /**
-     * @param Type[] $types
+     * @param TypeAbstraction[] $types
      * @return $this
      */
     public function addTypes($types);
 
     /**
-     * @param Type $type
+     * @param TypeAbstraction $type
      * @return $this
      * @throws Exception
      */
-    public function removeType(Type $type);
+    public function removeType(TypeAbstraction $type);
 
     /**
      * @return void

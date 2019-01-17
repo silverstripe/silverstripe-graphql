@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Pagination;
 
 use GraphQL\Type\Definition\EnumType;
+use SilverStripe\GraphQL\TypeAbstractions\EnumAbstraction;
 use SilverStripe\GraphQL\TypeCreator;
 
 /**
@@ -22,31 +23,22 @@ class SortDirectionTypeCreator extends TypeCreator
     public function toType()
     {
         if (!$this->type) {
-            $this->type = new EnumType( $this->toArray());
+            $this->type = new EnumAbstraction(
+                'SortDirection',
+                'Set order order to either ASC or DESC',
+                [
+                    'ASC' => [
+                        'value' => 'ASC',
+                        'description' => 'Lowest value to highest.',
+                    ],
+                    'DESC' => [
+                        'value' => 'DESC',
+                        'description' => 'Highest value to lowest.',
+                    ],
+                ]
+            );
         }
         return $this->type;
     }
-
-    public function getAttributes()
-    {
-        return $this->attributes();
-    }
-
-    public function attributes()
-    {
-        return [
-            'name' => 'SortDirection',
-            'description' => 'Set order order to either ASC or DESC',
-            'values' => [
-                'ASC' => [
-                    'value' => 'ASC',
-                    'description' => 'Lowest value to highest.',
-                ],
-                'DESC' => [
-                    'value' => 'DESC',
-                    'description' => 'Highest value to lowest.',
-                ],
-            ],
-        ];
-    }
+    
 }

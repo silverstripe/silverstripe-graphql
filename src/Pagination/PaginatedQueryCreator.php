@@ -46,7 +46,6 @@ abstract class PaginatedQueryCreator extends QueryCreator implements OperationRe
 
     /**
      * @return array
-     * @throws NotFoundExceptionInterface
      */
     public function extraTypes()
     {

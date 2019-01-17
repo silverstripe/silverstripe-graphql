@@ -9,6 +9,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Storage\Encode\UnionTypeFactory;
 use Psr\Container\NotFoundExceptionInterface;
+use SilverStripe\GraphQL\TypeAbstractions\UnionTypeAbstraction;
 
 class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
 {
@@ -78,16 +79,11 @@ class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
      */
     public function scaffold(Manager $manager)
     {
-        $types = $this->types;
-        $typeFactory = new UnionTypeFactory(['types' => $types]);
-        $resolverFactory = new UnionResolverFactory();
-        return new UnionType([
-            'name' => $this->name,
-            'types' => $typeFactory->createClosure($manager),
-            'resolveType' => $resolverFactory->createClosure($manager),
-            'typesFactory' => $typeFactory,
-            'resolveTypeFactory' => $resolverFactory,
-        ]);
+        return new UnionTypeAbstraction(
+            $this->name,
+            new UnionTypeFactory(['types' => $this->types]),
+            new UnionResolverFactory()
+        );
     }
 
     /**

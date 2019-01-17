@@ -17,12 +17,15 @@ use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\Dev\Deprecation;
+use SilverStripe\GraphQL\Schema\SchemaHandlerInterface;
 use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
 use SilverStripe\GraphQL\Storage\SchemaStorageInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
+use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
@@ -53,6 +56,13 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     const TYPES_ROOT = 'types';
 
     /**
+     * @var array
+     */
+    private static $dependencies = [
+        'schemaHandler' => '%$' . SchemaHandlerInterface::class,
+    ];
+
+    /**
      * @var string
      */
     protected $schemaKey;
@@ -80,6 +90,11 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     protected $errorFormatter = [self::class, 'formatError'];
 
     /**
+     * @var SchemaHandlerInterface
+     */
+    protected $schemaHandler;
+
+    /**
      * @var Member
      */
     protected $member;
@@ -98,6 +113,32 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * @var SchemaStorageInterface
      */
     protected $schemaStore;
+
+    /**
+     * @param string $schemaKey
+     * @param SchemaStorageInterface $schemaStore
+     */
+    public function __construct($schemaKey, SchemaStorageInterface $schemaStore)
+    {
+        $this->setSchemaKey($schemaKey);
+        $this->setSchemaStore($schemaStore);
+    }
+
+    /**
+     * @param $config
+     * @param string $schemaKey
+     * @return Manager
+     * @throws NotFoundExceptionInterface
+     * @deprecated 4.0
+     */
+    public static function createFromConfig($config, $schemaKey = null)
+    {
+        Deprecation::notice('4.0', 'Use applyConfig() on a new instance instead');
+
+        $manager = new static($schemaKey);
+
+        return $manager->applyConfig($config);
+    }
 
     /**
      * @return QueryMiddleware[]
@@ -125,76 +166,6 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     {
         $this->middlewares[] = $middleware;
         return $this;
-    }
-
-    /**
-     * @return SchemaStorageInterface
-     */
-    public function getSchemaStore()
-    {
-        return $this->schemaStore;
-    }
-
-    /**
-     * @param SchemaStorageInterface $store
-     * @return $this
-     */
-    public function setSchemaStore(SchemaStorageInterface $store)
-    {
-        $this->schemaStore = $store;
-
-        return $this;
-    }
-
-    /**
-     * Call middleware to evaluate a graphql query
-     *
-     * @param Schema $schema
-     * @param string $query Query to invoke
-     * @param array $context
-     * @param array $params Variables passed to this query
-     * @param callable $last The callback to call after all middlewares
-     * @return ExecutionResult|array
-     */
-    protected function callMiddleware(Schema $schema, $query, $context, $params, callable $last)
-    {
-        // Reverse middlewares
-        $next = $last;
-        // Filter out any middlewares that are set to `false`, e.g. via config
-        $middlewares = array_reverse(array_filter($this->getMiddlewares()));
-        /** @var QueryMiddleware $middleware */
-        foreach ($middlewares as $middleware) {
-            $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
-                return $middleware->process($schema, $query, $context, $params, $next);
-            };
-        }
-        return $next($schema, $query, $context, $params);
-    }
-
-    /**
-     * @param string $schemaKey
-     * @param SchemaStorageInterface $store
-     */
-    public function __construct($schemaKey, SchemaStorageInterface $store)
-    {
-        $this->setSchemaKey($schemaKey);
-        $this->setSchemaStore($store);
-    }
-
-    /**
-     * @param $config
-     * @param string $schemaKey
-     * @return Manager
-     * @throws NotFoundExceptionInterface
-     * @deprecated 4.0
-     */
-    public static function createFromConfig($config, $schemaKey = null)
-    {
-        Deprecation::notice('4.0', 'Use applyConfig() on a new instance instead');
-
-        $manager = new static($schemaKey);
-
-        return $manager->applyConfig($config);
     }
 
     /**
@@ -295,52 +266,58 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     }
 
     /**
-     * Build the main Schema instance that represents the final schema for this endpoint
+     * Call middleware to evaluate a graphql query
      *
-     * @return Schema
-     * @throws NotFoundExceptionInterface
+     * @param Schema $schema
+     * @param string $query Query to invoke
+     * @param array $context
+     * @param array $params Variables passed to this query
+     * @param callable $last The callback to call after all middlewares
+     * @return ExecutionResult|array
      */
-    public function schema()
+    protected function callMiddleware(Schema $schema, $query, $context, $params, callable $last)
     {
-        if (!$this->getSchemaStore()->exists()) {
-            throw new BadMethodCallException(sprintf(
-                'No stored schema available. Did you forget to generate it using %s::regenerate() or through the dev task?',
-                __CLASS__
-            ));
+        // Reverse middlewares
+        $next = $last;
+        // Filter out any middlewares that are set to `false`, e.g. via config
+        $middlewares = array_reverse(array_filter($this->getMiddlewares()));
+        /** @var QueryMiddleware $middleware */
+        foreach ($middlewares as $middleware) {
+            $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
+                return $middleware->process($schema, $query, $context, $params, $next);
+            };
         }
-        $schemaConfig = $this->createSchemaConfig();
-        $this->getSchemaStore()->loadIntoConfig($schemaConfig);
-
-        return new Schema($schemaConfig);
+        return $next($schema, $query, $context, $params);
     }
+
 
     /**
      * @return SchemaConfig
      * @throws NotFoundExceptionInterface
      */
-    protected function createSchemaConfig()
-    {
-        $config = new SchemaConfig();
-        if (!empty($this->queries)) {
-            $config->setQuery(new ObjectType([
-                'name' => 'Query',
-                'fields' => array_map(function ($query) {
-                    return is_callable($query) ? $query() : $query;
-                }, $this->queries),
-            ]));
-        }
-
-        if (!empty($this->mutations)) {
-            $config->setMutation(new ObjectType([
-                'name' => 'Mutation',
-                'fields' => array_map(function ($mutation) {
-                    return is_callable($mutation) ? $mutation() : $mutation;
-                }, $this->mutations),
-            ]));
-        }
-
-        return $config;
-    }
+//    protected function createSchemaConfig()
+//    {
+//        $config = new SchemaConfig();
+//        if (!empty($this->queries)) {
+//            $config->setQuery(new ObjectType([
+//                'name' => 'Query',
+//                'fields' => array_map(function ($query) {
+//                    return is_callable($query) ? $query() : $query;
+//                }, $this->queries),
+//            ]));
+//        }
+//
+//        if (!empty($this->mutations)) {
+//            $config->setMutation(new ObjectType([
+//                'name' => 'Mutation',
+//                'fields' => array_map(function ($mutation) {
+//                    return is_callable($mutation) ? $mutation() : $mutation;
+//                }, $this->mutations),
+//            ]));
+//        }
+//
+//        return $config;
+//    }
 
     /**
      * Execute an arbitrary operation (mutation / query) on this schema.
@@ -354,8 +331,14 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      */
     public function query($query, $params = [])
     {
-        $executionResult = $this->queryAndReturnResult($query, $params);
+        if (!$this->getSchemaStore()->exists()) {
+            throw new BadMethodCallException(sprintf(
+                'No stored schema available. Did you forget to generate it using %s::regenerate() or through the dev task?',
+                __CLASS__
+            ));
+        }
 
+        $executionResult = $this->queryAndReturnResult($query, $params);
         // Already in array form
         if (is_array($executionResult)) {
             return $executionResult;
@@ -373,27 +356,33 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      */
     public function queryAndReturnResult($query, $params = [])
     {
-        $schema = $this->schema();
+        $schemaAbstract = $this->getSchemaStore()->load();
         $context = $this->getContext();
 
-        $last = function ($schema, $query, $context, $params) {
-            return GraphQL::executeQuery($schema, $query, null, $context, $params);
+        $last = function ($schemaAbstract, $query, $context, $params) {
+            return $this->getSchemaHandler()->query(
+                $schemaAbstract,
+                $query,
+                null,
+                $context,
+                $params
+            );
         };
 
-        return $this->callMiddleware($schema, $query, $context, $params, $last);
+        return $this->callMiddleware($schemaAbstract, $query, $context, $params, $last);
     }
 
     /**
      * Register a new type
      *
-     * @param Type $type
+     * @param TypeAbstraction $type
      * @param string $name An optional identifier for this type (defaults to 'name'
      * attribute in type definition). Needs to be unique in schema.
      */
-    public function addType(Type $type, $name = '')
+    public function addType(TypeAbstraction $type, $name = '')
     {
         if (!$name) {
-            $name = (string)$type;
+            $name = $type->getName();
         }
         $this->types[$name] = $type;
     }
@@ -402,7 +391,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * Return a type definition by name
      *
      * @param string $name
-     * @return Type
+     * @return TypeAbstraction
      */
     public function getType($name)
     {
@@ -427,10 +416,10 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * Register a new Query. Query can be defined as a closure to ensure
      * dependent types are lazy loaded.
      *
-     * @param array|FieldDefinition|Closure $query
+     * @param FieldAbstraction $query
      * @param string $name Identifier for this query (unique in schema)
      */
-    public function addQuery($query, $name)
+    public function addQuery(FieldAbstraction $query, $name)
     {
         $this->queries[$name] = $query;
     }
@@ -439,7 +428,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * Get a query by name
      *
      * @param string $name
-     * @return array
+     * @return FieldAbstraction
      */
     public function getQuery($name)
     {
@@ -450,10 +439,10 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * Register a new mutation. Mutations can be callbacks to ensure
      * dependent types are lazy-loaded.
      *
-     * @param array|FieldDefinition|Closure $mutation
+     * @param FieldAbstraction
      * @param string $name Identifier for this mutation (unique in schema)
      */
-    public function addMutation($mutation, $name)
+    public function addMutation(FieldAbstraction $mutation, $name)
     {
         $this->mutations[$name] = $mutation;
     }
@@ -462,12 +451,32 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * Get a mutation by name
      *
      * @param string $name
-     * @return array
+     * @return FieldAbstraction
      */
     public function getMutation($name)
     {
         return $this->mutations[$name];
     }
+
+    /**
+     * @return SchemaHandlerInterface
+     */
+    public function getSchemaHandler()
+    {
+        return $this->schemaHandler;
+    }
+
+    /**
+     * @param SchemaHandlerInterface $schemaHandler
+     * @return Manager
+     */
+    public function setSchemaHandler(SchemaHandlerInterface $schemaHandler)
+    {
+        $this->schemaHandler = $schemaHandler;
+
+        return $this;
+    }
+
 
     /**
      * @return string
@@ -643,7 +652,10 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
         $schemas = $this->config()->get('schemas');
         $config = isset($schemas[$this->getSchemaKey()]) ? $schemas[$this->getSchemaKey()] : [];
         $this->applyConfig($config);
-        $schemaConfig = $this->createSchemaConfig();
-        $this->getSchemaStore()->persist($schemaConfig, $this->types);
+        $this->getSchemaStore()->persist(
+            $this->types,
+            $this->queries,
+            $this->mutations
+        );
     }
 }

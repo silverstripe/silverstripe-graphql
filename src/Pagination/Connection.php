@@ -11,6 +11,14 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
+use SilverStripe\GraphQL\TypeAbstractions\ArgumentAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\InternalType;
+use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\ReferentialTypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
 use SilverStripe\ORM\Limitable;
 use SilverStripe\ORM\Sortable;
 use SilverStripe\ORM\SS_List;
@@ -58,14 +66,9 @@ class Connection implements OperationResolver
     protected $description;
 
     /**
-     * @var Callable
+     * @var ResolverAbstraction
      */
     protected $connectionResolver;
-
-    /**
-     * @var ClosureFactoryInterface
-     */
-    protected $connectionResolverFactory;
 
     /**
      * @var array
@@ -115,35 +118,17 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @param Callable|ClosureFactoryInterface
+     * @param ResolverAbstraction
      *
      * @return $this
      */
-    public function setConnectionResolver($func)
+    public function setConnectionResolver(ResolverAbstraction $resolver)
     {
-        $this->connectionResolver = $func;
+        $this->connectionResolver = $resolver;
 
         return $this;
     }
 
-    /**
-     * @param ClosureFactoryInterface $factory
-     * @return $this
-     */
-    public function setResolverFactory(ClosureFactoryInterface $factory)
-    {
-        $this->connectionResolverFactory = $factory;
-
-        return $this;
-    }
-
-    /**
-     * @return ClosureFactoryInterface
-     */
-    public function getResolverFactory()
-    {
-        return $this->connectionResolverFactory;
-    }
 
     /**
      * Pass in the {@link ObjectType}.
@@ -169,18 +154,6 @@ class Connection implements OperationResolver
         return ($evaluate && is_callable($this->connectedType))
             ? call_user_func($this->connectedType)
             : $this->connectedType;
-    }
-
-    /**
-     * @return Callable|
-     */
-    public function getConnectionResolver()
-    {
-        if ($this->getResolverFactory()) {
-            return $this->getResolverFactory()->createClosure();
-        }
-
-        return $this->connectionResolver;
     }
 
     /**
@@ -302,7 +275,7 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @return ObjectType
+     * @return ObjectTypeAbstraction
      * @throws NotFoundExceptionInterface
      */
     public function getPageInfoType()
@@ -325,18 +298,16 @@ class Connection implements OperationResolver
         }
 
         $args = array_merge($existing, [
-            'limit' => [
-                'type' => Type::int(),
-            ],
-            'offset' => [
-                'type' => Type::int()
-            ]
+            new ArgumentAbstraction('limit', InternalType::int()),
+            new ArgumentAbstraction('offset', InternalType::int())
         ]);
 
         if ($this->getSortableFields()) {
-            $args['sortBy'] = [
-                'type' => Type::listOf($this->getSortTypeCreator()->toType()),
-            ];
+            $args[] = new ArgumentAbstraction(
+                'type',
+                $this->getSortTypeCreator()->toType()
+                    ->setList(true)
+            );
         }
 
         return $args;
@@ -349,21 +320,19 @@ class Connection implements OperationResolver
     public function fields()
     {
         return [
-            'pageInfo' => [
-                'name' => 'pageInfo',
-                'type' => Type::nonNull($this->getPageInfoType()),
-                'description' => 'Pagination information'
-            ],
-            'edges' => [
-                'name' => 'edges',
-                'type' => Type::listOf($this->getEdgeType()),
-                'description' => 'Collection of records',
-            ]
+            (new FieldAbstraction(
+                'pageInfo',
+                $this->getPageInfoType()->setRequired(true)
+            ))->setDescription('Pagination information'),
+            (new FieldAbstraction(
+                'edges',
+                $this->getEdgeType()->setList(true)
+            ))->setDescription('Collection of records'),
         ];
     }
 
     /**
-     * @return ObjectType
+     * @return ObjectTypeAbstraction
      */
     public function getEdgeType()
     {
@@ -372,37 +341,33 @@ class Connection implements OperationResolver
         }
 
         if (!$this->edgeType) {
-            $this->edgeType = new ObjectType([
-                'name' => $this->getEdgeTypeName(),
-                'description' => 'The collections edge',
-                'fields' => function () {
-                    return [
-                        'node' => [
-                            'name' => 'node',
-                            'type' => $this->getConnectionType(),
-                            'description' => 'The node at the end of the collections edge',
-                            'resolve' => [static::class, 'nodeResolver']
-                        ]
-                    ];
-                }
+            $this->edgeType = new ObjectTypeAbstraction([
+                $this->getEdgeTypeName(),
+                'The collections edge',
+                [
+                    (new FieldAbstraction(
+                        'node',
+                        $this->getConnectionType(),
+                        new StaticResolverAbstraction([static::class, 'nodeResolver'])
+                    ))->setDescription('The node at the end of the collections edge')
+                ]
             ]);
+
         }
 
         return $this->edgeType;
     }
 
     /**
-     * @return ObjectType
+     * @return ObjectTypeAbstraction
      */
     public function toType()
     {
-        return new ObjectType([
-            'name' => $this->getConnectionTypeName(),
-            'description' => $this->description,
-            'fields' => function () {
-                return $this->fields();
-            },
-        ]);
+        return new ObjectTypeAbstraction(
+            $this->getConnectionTypeName(),
+            $this->description,
+            $this->fields()
+        );
     }
 
     /**
@@ -417,10 +382,8 @@ class Connection implements OperationResolver
      */
     public function resolve($value, array $args, $context, ResolveInfo $info)
     {
-        $result = call_user_func_array(
-            $this->connectionResolver,
-            func_get_args()
-        );
+        $func = $this->connectionResolver->create();
+        $result = call_user_func_array($func, func_get_args());
 
         if (!$result instanceof SS_List) {
             throw new \Exception('Connection::resolve() must resolve to a SS_List instance.');
@@ -517,8 +480,7 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @return array
-     * @throws NotFoundExceptionInterface
+     * @return TypeAbstraction[]
      */
     public function extraTypes()
     {

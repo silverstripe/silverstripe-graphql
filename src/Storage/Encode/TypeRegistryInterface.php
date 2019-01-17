@@ -10,7 +10,7 @@ interface TypeRegistryInterface
 {
     /**
      * @param string $name
-     * @return Type|ObjectType|InputObjectType
+     * @return mixed
      */
     public function getType($name);
 

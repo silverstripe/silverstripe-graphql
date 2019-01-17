@@ -9,15 +9,17 @@ use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayItem;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Name\FullyQualified;
+use SilverStripe\GraphQL\TypeAbstractions\EnumAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
 
 class EnumTypeEncoder implements TypeEncoderInterface
 {
-    public function getExpression(Type $type)
+    public function getExpression(TypeAbstraction $type)
     {
-        /* @var EnumType $type */
-        $items = Helpers::buildArrayItems($type->config, ['values']);
+        /* @var EnumAbstraction $type */
+        $items = Helpers::buildArrayItems($type->toArray(), ['values']);
         $items[] = new ArrayItem(
-            Helpers::normaliseValue($type->config['values']),
+            Helpers::normaliseValue($type->getValues()),
             Helpers::normaliseValue('values')
         );
 
@@ -27,33 +29,11 @@ class EnumTypeEncoder implements TypeEncoderInterface
 
     /**
      * @param Type $type
-     * @return string
-     */
-    public function getName(Type $type)
-    {
-        return $type->config['name'];
-    }
-
-    /**
-     * @param Type $type
      * @return bool
      */
-    public function appliesTo(Type $type)
+    public function appliesTo(TypeAbstraction $type)
     {
-        return $type instanceof EnumType;
+        return $type instanceof EnumAbstraction;
     }
 
-    /**
-     * @param Type $type
-     * @throws \GraphQL\Error\Error
-     */
-    public function assertValid(Type $type)
-    {
-        Utils::invariant(
-            !$type->astNode,
-            'Type "%s" has ASTNodes assigned and cannot be serialised.',
-            $type->name
-        );
-
-    }
 }

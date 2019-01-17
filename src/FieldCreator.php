@@ -6,6 +6,8 @@ use GraphQL\Error\Error;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\Deprecation;
+use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
 
 /**
  * Base type for query types within graphql. I.e. mutations or queries
@@ -119,8 +121,15 @@ class FieldCreator
      * @return array
      */
     public function toField()
-    {
-        return $this->getAttributes();
+    {   
+        return new FieldAbstraction(
+            $this->name,
+            $this->type(),
+            // Temporary hack
+            new StaticResolverAbstraction([static::class, 'resolve']),
+            /////////
+            $this->args()
+        );
     }
 
     /**

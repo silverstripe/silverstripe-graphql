@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
 
 /**
  * Scaffolds a GraphQL query field.
@@ -15,12 +16,11 @@ class ItemQueryScaffolder extends QueryScaffolder
      */
     public function scaffold(Manager $manager)
     {
-        return [
-            'name' => $this->getName(),
-            'args' => $this->createArgs($manager),
-            'type' => $this->getType($manager),
-            'resolve' => $this->createResolverFunction(),
-            'resolverFactory' => $this->getResolverFactory(),
-        ];
+        return new FieldAbstraction(
+            $this->getName(),
+            $this->getType($manager),
+            $this->createResolverAbstraction(),
+            $this->createArgs($manager)
+        );
     }
 }

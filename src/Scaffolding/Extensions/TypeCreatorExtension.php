@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Scaffolding\Extensions;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser;
+use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
@@ -48,7 +49,7 @@ class TypeCreatorExtension extends DataExtension implements ManagerMutatorInterf
      * Creates the type using appropriate parser
      *
      * @param  Manager|null $manager
-     * @return \GraphQL\Type\Definition\Type
+     * @return TypeAbstraction
      */
     public function getGraphQLType(Manager $manager = null)
     {

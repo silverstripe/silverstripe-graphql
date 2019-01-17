@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Storage\Encode;
+namespace SilverStripe\GraphQL\GraphQLPHP;
 
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
@@ -18,6 +18,8 @@ use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\PrettyPrinter\Standard;
 use LogicException;
+use SilverStripe\GraphQL\Storage\Encode\TypeEncoderRegistryInterface;
+use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
 
 class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
 {
@@ -29,39 +31,39 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
     protected $identifier;
 
     /**
-     * @var array
+     * @var TypeAbstraction[]
      */
     protected $types = [];
 
     /**
-     * @var TypeEncoderInterface[]
+     * @var TypeEncoderRegistryInterface
      */
-    protected $typeEncoders = [];
+    protected $encoderRegistry;
 
     /**
      * GraphQLPHPTypeRegistryEncoder constructor.
      * @param string $identifier
      * @param TypeEncoderInterface[] $encoders
      */
-    public function __construct($identifier, ...$encoders)
+    public function __construct($identifier, TypeEncoderRegistryInterface $encoderRegistry)
     {
         $this->identifier = $identifier;
-        $this->typeEncoders = $encoders;
+        $this->encoderRegistry = $encoderRegistry;
     }
 
     /**
-     * @param Type $type
+     * @param TypeAbstraction $type
      * @return $this
      */
-    public function addType(Type $type)
+    public function addType(TypeAbstraction $type)
     {
-        $this->types[(string) $type] = $type;
+        $this->types[$type->getName()] = $type;
 
         return $this;
     }
 
     /**
-     * @param Type[] $types
+     * @param TypeAbstraction[] $types
      * @return $this
      */
     public function addTypes($types)
@@ -74,12 +76,12 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
     }
 
     /**
-     * @param Type $type
+     * @param TypeAbstraction $type
      * @return $this
      */
-    public function removeType(Type $type)
+    public function removeType(TypeAbstraction $type)
     {
-        unset($this->types[(string) $type]);
+        unset($this->types[$type->getName()]);
 
         return $this;
     }
@@ -221,14 +223,7 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
     protected function generateTypeFunctions()
     {
         foreach ($this->types as $type) {
-            $generator = $this->getGeneratorForType($type);
-            if (!$generator) {
-                throw new LogicException(sprintf(
-                    'Could not find a generator for type %s',
-                    get_class($type)
-                ));
-            }
-
+            $generator = $this->encoderRegistry->getEncoderForType($type);
             $expr = $generator->getExpression($type);
             $name = $generator->getName($type);
 
@@ -236,21 +231,5 @@ class GraphQLPHPTypeRegistryEncoder implements TypeRegistryEncoderInterface
         }
 
     }
-
-    /**
-     * @param Type $type
-     * @return null|TypeEncoderInterface
-     * @throws Error
-     */
-    protected function getGeneratorForType(Type $type)
-    {
-        foreach ($this->typeEncoders as $encoder) {
-            if ($encoder->appliesTo($type)) {
-                $encoder->assertValid($type);
-                return $encoder;
-            }
-        }
-
-        return null;
-    }
+    
 }

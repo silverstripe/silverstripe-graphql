@@ -9,11 +9,12 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
 use Psr\Container\NotFoundExceptionInterface;
 use Exception;
+use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
 
 /**
  * Scaffolds a GraphQL query field.
  */
-class   ListQueryScaffolder extends QueryScaffolder
+class ListQueryScaffolder extends QueryScaffolder
 {
     /**
      * @var bool
@@ -183,13 +184,13 @@ class   ListQueryScaffolder extends QueryScaffolder
             return $paginationScaffolder->scaffold($manager);
         }
 
-        return [
-            'name' => $this->getName(),
-            'args' => $this->createArgs($manager),
-            'type' => Type::listOf($this->getType($manager)),
-            'resolve' => $this->createResolverFunction(),
-            'resolverFactory' => $this->getResolverFactory(),
-        ];
+        return new FieldAbstraction(
+            $this->getName(),
+            $this->getType($manager)
+                ->setList(true),
+            $this->createResolverAbstraction(),
+            $this->createArgs($manager)
+        );
     }
 
     /**
@@ -200,19 +201,15 @@ class   ListQueryScaffolder extends QueryScaffolder
      */
     protected function createConnection(Manager $manager)
     {
-        $conn = Connection::create($this->getName(), $manager)
+        $conn = Connection::create($this->getName())
             ->setConnectionType(function () use ($manager) {
                 return $this->getType($manager);
             })
-            ->setConnectionResolver($this->createResolverFunction())
+            ->setConnectionResolver($this->createResolverAbstraction())
             ->setArgs($this->createArgs($manager))
             ->setSortableFields($this->getSortableFields())
             ->setDefaultLimit($this->getPaginationLimit())
             ->setMaximumLimit($this->getMaximumPaginationLimit());
-
-        if ($this->getResolverFactory()) {
-            $conn->setResolverFactory($this->getResolverFactory());
-        }
 
         return $conn;
     }

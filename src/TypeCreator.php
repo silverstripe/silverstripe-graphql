@@ -6,6 +6,8 @@ use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
+use SilverStripe\GraphQL\TypeAbstractions\InputTypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
 
 /**
  * Represents a GraphQL type in a way that allows customization through
@@ -103,6 +105,20 @@ class TypeCreator
         return $this->inputObject;
     }
 
+    public function getName()
+    {
+        $attrs = $this->attributes();
+
+        return isset($attrs['name']) ? $attrs['name'] : null;
+    }
+
+    public function getDescription()
+    {
+        $attrs = $this->attributes();
+
+        return isset($attrs['description']) ? $attrs['description'] : null;
+    }
+
     /**
      * Build the constructed type backing this object.
      *
@@ -111,10 +127,19 @@ class TypeCreator
     public function toType()
     {
         if ($this->isInputObject()) {
-            return new InputObjectType($this->toArray());
+            return new InputTypeAbstraction(
+                $this->getName(),
+                $this->getDescription(),
+                $this->fields()
+            );
         }
 
-        return new ObjectType($this->toArray());
+        return new ObjectTypeAbstraction(
+            $this->getName(),
+            $this->getDescription(),
+            $this->fields(),
+            $this->interfaces()
+        );
     }
 
     /**

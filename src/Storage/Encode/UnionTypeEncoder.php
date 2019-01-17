@@ -10,35 +10,47 @@ use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayItem;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Name\FullyQualified;
+use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\UnionTypeAbstraction;
 
 class UnionTypeEncoder implements TypeEncoderInterface
 {
     /**
-     * @param Type $type
+     * @var ResolverEncoderRegistryInterface
+     */
+    protected $encoderRegistry;
+
+    /**
+     * UnionTypeEncoder constructor.
+     * @param ResolverEncoderRegistryInterface $encoderRegistry
+     */
+    public function __construct(ResolverEncoderRegistryInterface $encoderRegistry)
+    {
+        $this->encoderRegistry = $encoderRegistry;
+    }
+
+    /**
+     * @param TypeAbstraction $type
      * @return \PhpParser\Node\Expr|New_
      */
-    public function getExpression(Type $type)
-    {
-        $factories = [
-            'resolveTypeFactory' => 'resolveType',
-            'typesFactory' => 'types'
-        ];
+    public function getExpression(TypeAbstraction $type)
+    {   
+        /* @var UnionTypeAbstraction $type */
         $items = Helpers::buildArrayItems(
-            $type->config,
-            array_merge(
-                array_keys($factories),
-                array_values($factories)
-            )
+            $type->toArray(),
+            ['resolveType', 'types']
         );
-        foreach ($factories as $factoryName => $setting) {
-            if ($type->config[$factoryName] instanceof ExpressionProvider) {
-                /* @var ExpressionProvider $factory */
-                $factory = $type->config[$factoryName];
-                $items[] = new ArrayItem(
-                    $factory->getExpression(),
-                    Helpers::normaliseValue($setting)
-                );
-            }
+        if ($type->getTypeFactory()) {
+            $items[] = new ArrayItem(
+                $this->encoderRegistry->getEncoderForResolver($type->getTypeFactory()),
+                Helpers::normaliseValue('types')
+            );
+        }
+        if ($type->getResolveTypeFactory()) {
+            $items[] = new ArrayItem(
+                $this->encoderRegistry->getEncoderForResolver($type->getResolveTypeFactory()),
+                Helpers::normaliseValue('resolveType')
+            );
         }
 
         return new New_(
@@ -50,46 +62,12 @@ class UnionTypeEncoder implements TypeEncoderInterface
     }
 
     /**
-     * @param Type $type
-     * @return string
-     */
-    public function getName(Type $type)
-    {
-        return $type->name;
-    }
-
-    /**
-     * @param Type $type
+     * @param TypeAbstraction $type
      * @return bool
      */
-    public function appliesTo(Type $type)
+    public function appliesTo(TypeAbstraction $type)
     {
-        return $type instanceof UnionType;
+        return $type instanceof UnionTypeAbstraction;
     }
 
-    /**
-     * @param Type $type
-     * @throws \GraphQL\Error\Error
-     */
-    public function assertValid(Type $type)
-    {
-        Utils::invariant(
-            !$type->astNode,
-            'Cannot encode type %s with an ASTNode assigned',
-            $type->name
-        );
-
-        Utils::invariant(
-            !$type->config['resolveType'] instanceof Closure ||
-            (isset($type->config['resolveTypeFactory']) && $type->config['resolveTypeFactory'] instanceof RegistryAwareClosureFactory),
-            'Cannot encode type %s with a closure for a "resolveType" property. Use callable array syntax, or a resolveTypeFactory setting'
-        );
-
-        Utils::invariant(
-            !$type->config['types'] instanceof Closure ||
-            (isset($type->config['typesFactory']) && $type->config['typesFactory'] instanceof RegistryAwareClosureFactory),
-            'Cannot encode type %s with a closure for a "types" property. Use callable array syntax, or a typesFactory setting'
-        );
-
-    }
 }

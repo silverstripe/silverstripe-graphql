@@ -7,6 +7,8 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\DeleteResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
+use SilverStripe\GraphQL\TypeAbstractions\ArgumentAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\InternalType;
 
 /**
  * A generic delete operation.
@@ -45,9 +47,12 @@ class Delete extends MutationScaffolder implements CRUDInterface
     protected function createDefaultArgs(Manager $manager)
     {
         return [
-            'IDs' => [
-                'type' => Type::nonNull(Type::listOf(Type::id())),
-            ],
+            new ArgumentAbstraction(
+                'IDs',
+                InternalType::id()
+                    ->setList(true)
+                    ->setRequired(true)
+            ),
         ];
     }
 

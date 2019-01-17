@@ -5,6 +5,9 @@ namespace SilverStripe\GraphQL\Storage\Encode;
 use GraphQL\Type\SchemaConfig;
 use SilverStripe\GraphQL\Storage\SchemaStorageInterface;
 use Exception;
+use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\SchemaAbstraction;
 
 class CodeGenerationSchemaStore implements SchemaStorageInterface
 {
@@ -23,19 +26,24 @@ class CodeGenerationSchemaStore implements SchemaStorageInterface
     }
 
     /**
-     * @param SchemaConfig $schemaConfig
      * @param array $types
-     * @return $this
+     * @param array $queries
+     * @param array $mutations
+     * @return SchemaStorageInterface|void
      * @throws Exception
      */
-    public function persist(SchemaConfig $schemaConfig, array $types)
+    public function persist(array $types, $queries = [], $mutations = [])
     {
         $this->encoder->addTypes($types);
-        $this->encoder->addType($schemaConfig->getQuery());
-        $this->encoder->addType($schemaConfig->getMutation());
-        $this->encoder->encode();
+        if (!empty($queries)) {
+            $this->encoder->addType($this->createQuery($queries));
+        }
 
-        return $this;
+        if (!empty($mutations)) {
+            $this->encoder->addType($this->createMutation($mutations));
+        }
+
+        $this->encoder->encode();
     }
 
     /**
@@ -47,19 +55,14 @@ class CodeGenerationSchemaStore implements SchemaStorageInterface
     }
 
     /**
-     * @param SchemaConfig $schemaConfig
-     * @return $this
+     * @return SchemaAbstraction
      */
-    public function loadIntoConfig(SchemaConfig $schemaConfig)
+    public function load()
     {
-        $registry = $this->encoder->getRegistry();
-        $schemaConfig->setTypeLoader(function ($type) use ($registry) {
-            return $registry->getType($type);
-        });
-        $schemaConfig->setQuery($registry->getType('Query'));
-        $schemaConfig->setMutation($registry->getType('Mutation'));
-
-        return $this;
+        $schema = new SchemaAbstraction(
+            $this->getEncoder()->getRegistry()
+        );
+        
     }
 
     /**
@@ -69,4 +72,29 @@ class CodeGenerationSchemaStore implements SchemaStorageInterface
     {
         return $this->encoder;
     }
+
+    /**
+     * @param FieldAbstraction[] $queries
+     * @return ObjectTypeAbstraction
+     */
+    protected function createQuery(array $queries)
+    {
+        $type = new ObjectTypeAbstraction('Query');
+        $type->addFields($queries);
+
+        return $type;
+    }
+
+    /**
+     * @param FieldAbstraction[] $mutations
+     * @return ObjectTypeAbstraction
+     */
+    protected function createMutation(array $mutations)
+    {
+        $type = new ObjectTypeAbstraction('Mutation');
+        $type->addFields($mutations);
+
+        return $type;
+    }
+
 }

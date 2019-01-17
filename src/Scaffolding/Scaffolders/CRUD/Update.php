@@ -10,6 +10,10 @@ use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\UpdateResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
+use SilverStripe\GraphQL\TypeAbstractions\ArgumentAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\InputTypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\InternalType;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
 
@@ -60,9 +64,11 @@ class Update extends MutationScaffolder implements CRUDInterface
     protected function createDefaultArgs(Manager $manager)
     {
         return [
-            'Input' => [
-                'type' => Type::nonNull($manager->getType($this->inputTypeName())),
-            ],
+            new ArgumentAbstraction(
+                'Input',
+                $manager->getType($this->inputTypeName())
+                    ->setRequired(true)
+            ),
         ];
     }
 
@@ -73,37 +79,37 @@ class Update extends MutationScaffolder implements CRUDInterface
      */
     protected function generateInputType(Manager $manager)
     {
-        return new InputObjectType([
-            'name' => $this->inputTypeName(),
-            'fields' => function () use ($manager) {
-                $fields = [
-                    'ID' => [
-                        'type' => Type::nonNull(Type::id()),
-                    ],
-                ];
-                $instance = $this->getDataObjectInstance();
+        $fields = [
+            new FieldAbstraction(
+                'ID',
+                InternalType::id()->setRequired(true)
+            ),
+        ];
+        $instance = $this->getDataObjectInstance();
 
-                // Setup default input args.. Placeholder!
-                $schema = Injector::inst()->get(DataObjectSchema::class);
-                $db = $schema->fieldSpecs($this->getDataObjectClass());
+        // Setup default input args.. Placeholder!
+        $schema = Injector::inst()->get(DataObjectSchema::class);
+        $db = $schema->fieldSpecs($this->getDataObjectClass());
 
-                unset($db['ID']);
+        unset($db['ID']);
 
-                foreach ($db as $dbFieldName => $dbFieldType) {
-                    /** @var DBField|TypeCreatorExtension $result */
-                    $result = $instance->obj($dbFieldName);
-                    // Skip complex fields, e.g. composite, as that would require scaffolding a new input type.
-                    if (!$result->isInternalGraphQLType()) {
-                        continue;
-                    }
-                    $arr = [
-                        'type' => $result->getGraphQLType($manager),
-                    ];
-                    $fields[$dbFieldName] = $arr;
-                }
-                return $fields;
+        foreach ($db as $dbFieldName => $dbFieldType) {
+            /** @var DBField|TypeCreatorExtension $result */
+            $result = $instance->obj($dbFieldName);
+            // Skip complex fields, e.g. composite, as that would require scaffolding a new input type.
+            if (!$result->isInternalGraphQLType()) {
+                continue;
             }
-        ]);
+            $fields[] = new FieldAbstraction(
+                $dbFieldName,
+                $result->getGraphQLType($manager)
+            );
+        }
+
+        return new InputTypeAbstraction(
+            $this->inputTypeName(),
+            $fields
+        );
     }
 
     /**

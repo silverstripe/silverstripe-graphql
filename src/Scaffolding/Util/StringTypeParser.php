@@ -6,6 +6,7 @@ use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\TypeAbstractions\InternalType;
 
 /**
  * Parses a type, e.g. Int!(20) into an array defining the arg type
@@ -42,9 +43,7 @@ class StringTypeParser implements TypeParserInterface
      */
     public static function isInternalType($type)
     {
-        $types = array_keys(Type::getInternalTypes());
-
-        return in_array($type, $types);
+        return InternalType::exists($type);
     }
 
     /**
@@ -103,15 +102,15 @@ class StringTypeParser implements TypeParserInterface
         }
 
         switch ($this->typeStr) {
-            case Type::ID:
+            case InternalType::TYPE_ID:
                 return (int)$this->defaultValue;
-            case Type::STRING:
+            case InteralType::TYPE_STRING:
                 return (string)$this->defaultValue;
-            case Type::BOOLEAN:
+            case InteralType::TYPE_BOOLEAN:
                 return (boolean)$this->defaultValue;
-            case Type::INT:
+            case InteralType::TYPE_INT:
                 return (int)$this->defaultValue;
-            case Type::FLOAT:
+            case InteralType::TYPE_FLOAT:
                 return (float)$this->defaultValue;
             default:
                 return $this->defaultValue;
@@ -126,16 +125,16 @@ class StringTypeParser implements TypeParserInterface
     public function getType($nullable = true)
     {
         switch ($this->typeStr) {
-            case Type::ID:
-                return Type::id();
-            case Type::STRING:
-                return Type::string();
-            case Type::BOOLEAN:
-                return Type::boolean();
-            case Type::INT:
-                return Type::int();
-            case Type::FLOAT:
-                return Type::float();
+            case InternalType::TYPE_ID:
+                return InternalType::id();
+            case InternalType::TYPE_STRING:
+                return InternalType::string();
+            case InternalType::TYPE_BOOLEAN:
+                return InternalType::boolean();
+            case InternalType::TYPE_INT:
+                return InternalType::int();
+            case InternalType::TYPE_FLOAT:
+                return InternalType::float();
             default:
                 return $nullable ? null : $this->typeStr;
         }

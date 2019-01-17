@@ -6,6 +6,10 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\Core\Injector\Injector;
 use GraphQL\Type\Definition\EnumType;
+use SilverStripe\GraphQL\TypeAbstractions\EnumAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\InputTypeAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\ReferentialTypeAbstraction;
 use SilverStripe\GraphQL\TypeCreator;
 use Psr\Container\NotFoundExceptionInterface;
 /**
@@ -16,7 +20,7 @@ use Psr\Container\NotFoundExceptionInterface;
 class SortInputTypeCreator extends TypeCreator
 {
     /**
-     * @var InputObjectType
+     * @var InputTypeAbstraction
      */
     protected $type;
 
@@ -67,20 +71,6 @@ class SortInputTypeCreator extends TypeCreator
         }
         return $this->type;
     }
-
-    public function getAttributes()
-    {
-        // Don't wrap static fields in callback
-        return array_merge(
-            $this->attributes(),
-            [
-                'fields' => function () {
-                    return $this->fields();
-                }
-            ]
-        );
-    }
-
     public function getName()
     {
         return ucfirst($this->inputName) .'SortInputType';
@@ -96,6 +86,7 @@ class SortInputTypeCreator extends TypeCreator
         return [
             'name' => $this->getName(),
             'description' => 'Define the sorting',
+            'fields' => $this->fields()
         ];
     }
 
@@ -112,17 +103,17 @@ class SortInputTypeCreator extends TypeCreator
             ];
         }
 
-        $this->fieldType = new EnumType([
-            'name' => $this->getFieldTypeName(),
-            'description' => 'Field name to sort by.',
-            'values' => $values,
-        ]);
+        $this->fieldType = new EnumAbstraction(
+            $this->getFieldTypeName(),
+            'Field name to sort by.',
+            $values
+        );
 
         return $this->fieldType;
     }
 
     /**
-     * @return mixed
+     * @return EnumAbstraction
      * @throws NotFoundExceptionInterface
      */
     public function getSortDirectionType()
@@ -137,14 +128,14 @@ class SortInputTypeCreator extends TypeCreator
     public function fields()
     {
         return [
-            'field' => [
-                'type' => Type::nonNull($this->getFieldType()),
-                'description' => 'Sort field name.',
-            ],
-            'direction' => [
-                'type' => $this->getSortDirectionType(),
-                'description' => 'Sort direction (ASC / DESC)',
-            ]
+            (new FieldAbstraction(
+                'field',
+                new ReferentialTypeAbstraction($this->getFieldTypeName())
+            ))->setDescription('Sort field name.'),
+            (new FieldAbstraction(
+                'direction',
+                new ReferentialTypeAbstraction($this->getSortDirectionType()->getName())
+            ))->setDescription('Sort direction (ASC / DESC)')
         ];
     }
 }

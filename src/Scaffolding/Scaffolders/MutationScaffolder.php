@@ -11,6 +11,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
+use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
 
 /**
  * Scaffolds a GraphQL mutation field.
@@ -53,13 +54,12 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
      */
     public function scaffold(Manager $manager)
     {
-        return [
-            'name' => $this->getName(),
-            'args' => $this->createArgs($manager),
-            'type' => $this->getType($manager),
-            'resolve' => $this->createResolverFunction(),
-            'resolverFactory' => $this->getResolverFactory(),
-        ];
+        return new FieldAbstraction(
+            $this->getName(),
+            $this->getType($manager),
+            $this->createResolverAbstraction(),
+            $this->createArgs($manager)
+        );
     }
 
     public function getTypeName()

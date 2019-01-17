@@ -21,6 +21,14 @@ trait FactoryContext
     }
 
     /**
+     * @return array
+     */
+    public function getContext()
+    {
+        return $this->context;
+    }
+
+    /**
      * @return Expr
      */
     protected function getContextExpression()

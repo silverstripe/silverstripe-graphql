@@ -4,6 +4,9 @@ namespace SilverStripe\GraphQL\Pagination;
 
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ObjectType;
+use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
+use SilverStripe\GraphQL\TypeAbstractions\InternalType;
+use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
 use SilverStripe\GraphQL\TypeCreator;
 
 /**
@@ -14,7 +17,7 @@ class PageInfoTypeCreator extends TypeCreator
     /**
      * Cached type
      *
-     * @var ObjectType
+     * @var ObjectTypeAbstraction
      */
     protected $type;
 
@@ -26,42 +29,30 @@ class PageInfoTypeCreator extends TypeCreator
         return $this->type;
     }
 
-    public function getAttributes()
-    {
-        // Don't wrap static fields in callback
-        return array_merge(
-            $this->attributes(),
-            [
-                'fields' => function () {
-                    return $this->fields();
-                }
-            ]
-        );
-    }
-
     public function attributes()
     {
         return [
             'name' => 'PageInfo',
             'description' => 'Information about pagination in a connection.',
+            'fields' => $this->fields()
         ];
     }
 
     public function fields()
     {
         return [
-            'totalCount' => [
-                'name' => 'totalCount',
-                'type' => Type::nonNull(Type::int())
-            ],
-            'hasNextPage' => [
-                'name' => 'hasNextPage',
-                'type' => Type::nonNull(Type::boolean())
-            ],
-            'hasPreviousPage' => [
-                'name' => 'hasPreviousPage',
-                'type' => Type::nonNull(Type::boolean())
-            ],
+            new FieldAbstraction(
+                'totalCount',
+                InternalType::int()->setRequired(true)
+            ),
+            new FieldAbstraction(
+                'hasNextPage',
+                InternalType::boolean()->setRequired(true)
+            ),
+            new FieldAbstraction(
+                'hasPreviousPage',
+                InternalType::boolean()->setRequired(true)
+            ),
         ];
     }
 }
