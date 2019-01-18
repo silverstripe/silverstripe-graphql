@@ -3,8 +3,8 @@
 namespace SilverStripe\GraphQL\Resolvers;
 
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
-use SilverStripe\GraphQL\Storage\Encode\RegistryAwareClosureFactory;
-use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
+use SilverStripe\GraphQL\Schema\Encoding\Factories\RegistryAwareClosureFactory;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryInterface;
 use SilverStripe\ORM\DataObject;
 use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\GraphQL\Storage\Encode\ClosureFactory;
@@ -15,7 +15,7 @@ class UnionResolverFactory extends RegistryAwareClosureFactory
 {
 
     /**
-     * @param TypeRegistryInterface $registry
+     * @param \SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryInterface $registry
      * @return callable|Closure
      * @throws NotFoundExceptionInterface
      */

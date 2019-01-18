@@ -2,7 +2,6 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
@@ -10,8 +9,8 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
-use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
-use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface;
+use SilverStripe\GraphQL\Schema\Components\AbstractType;
 
 /**
  * Scaffolds a GraphQL query field.
@@ -86,7 +85,7 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
      * Get the type from Manager
      *
      * @param Manager $manager
-     * @return TypeAbstraction
+     * @return AbstractType
      */
     protected function getType(Manager $manager)
     {

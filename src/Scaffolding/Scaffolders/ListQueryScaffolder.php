@@ -2,15 +2,13 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use GraphQL\Error\Error;
-use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
 use Psr\Container\NotFoundExceptionInterface;
 use Exception;
-use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\TypeReference;
 
 /**
  * Scaffolds a GraphQL query field.
@@ -174,8 +172,7 @@ class ListQueryScaffolder extends QueryScaffolder
 
     /**
      * @param Manager $manager
-     * @throws Error
-     * @return FieldAbstraction
+     * @return Field
      */
     public function scaffold(Manager $manager)
     {
@@ -185,7 +182,7 @@ class ListQueryScaffolder extends QueryScaffolder
             return $paginationScaffolder->scaffold($manager);
         }
 
-        return FieldAbstraction::create(
+        return Field::create(
             $this->getName(),
             TypeReference::create($this->getType($manager)->getName())
                 ->setList(true),

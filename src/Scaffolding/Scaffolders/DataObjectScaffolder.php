@@ -3,8 +3,6 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use Exception;
-use GraphQL\Error\Error;
-use GraphQL\Type\Definition\ObjectType;
 use InvalidArgumentException;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extensible;
@@ -20,10 +18,10 @@ use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
-use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\FieldCollection;
+use SilverStripe\GraphQL\Schema\Components\StaticFunction;
+use SilverStripe\GraphQL\Schema\Components\TypeReference;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataList;
@@ -542,12 +540,11 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     /**
      * @param Manager $manager
      *
-     * @return ObjectTypeAbstraction
-     * @throws Error
+     * @return FieldCollection
      */
     public function scaffold(Manager $manager)
     {
-        return new ObjectTypeAbstraction(
+        return new FieldCollection(
             $this->getTypeName(),
             null,
             $this->createFields($manager)
@@ -697,10 +694,10 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
             if ($result instanceof DBField) {
                 /** @var DBField|TypeCreatorExtension $result */
-                $fieldDef = FieldAbstraction::create(
+                $fieldDef = Field::create(
                     $fieldName,
                     TypeReference::create($result->getGraphQLType()),
-                    new StaticResolverAbstraction([
+                    new StaticFunction([
                         FieldAccessorResolver::class,
                         'resolve',
                     ])
@@ -712,12 +709,12 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         foreach ($extraDataObjects as $fieldName => $className) {
             $description = $this->getFieldDescription($fieldName);
-            $fieldMap[$fieldName] = FieldAbstraction::create(
+            $fieldMap[$fieldName] = Field::create(
                 $fieldName,
                 TypeReference::create(
                     StaticSchema::inst()->fetchFromManager($className, $manager)
                 ),
-                new StaticResolverAbstraction([
+                new StaticFunction([
                     FieldAccessorResolver::class,
                     'resolve'
                 ])

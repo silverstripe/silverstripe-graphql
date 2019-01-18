@@ -2,42 +2,34 @@
 
 namespace SilverStripe\GraphQL;
 
-use GraphQL\Type\Definition\FieldDefinition;
-use GraphQL\Type\SchemaConfig;
 use InvalidArgumentException;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\Language\SourceLocation;
-use GraphQL\Type\Schema;
-use GraphQL\GraphQL;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
-use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\Dev\Deprecation;
 use SilverStripe\GraphQL\Schema\QueryResultInterface;
 use SilverStripe\GraphQL\Schema\SchemaHandlerInterface;
-use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
-use SilverStripe\GraphQL\Storage\SchemaStorageInterface;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryInterface;
+use SilverStripe\GraphQL\Schema\SchemaStorageInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
-use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\SchemaAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\Schema;
+use SilverStripe\GraphQL\Schema\Components\AbstractType;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
-use Closure;
 use Psr\Container\NotFoundExceptionInterface;
-use Psr\SimpleCache\InvalidArgumentException as CacheException;
 use SilverStripe\Security\Security;
 use BadMethodCallException;
-use Exception;
 
 /**
  * Manager is the master container for a graphql endpoint, and contains
@@ -270,14 +262,14 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     /**
      * Call middleware to evaluate a graphql query
      *
-     * @param SchemaAbstraction $schema
+     * @param Schema $schema
      * @param string $query Query to invoke
      * @param array $context
      * @param array $params Variables passed to this query
      * @param callable $last The callback to call after all middlewares
      * @return ExecutionResult|array
      */
-    protected function callMiddleware(SchemaAbstraction $schema, $query, $context, $params, callable $last)
+    protected function callMiddleware(Schema $schema, $query, $context, $params, callable $last)
     {
         // Reverse middlewares
         $next = $last;
@@ -348,11 +340,11 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     /**
      * Register a new type
      *
-     * @param TypeAbstraction $type
+     * @param \SilverStripe\GraphQL\Schema\Components\AbstractType $type
      * @param string $name An optional identifier for this type (defaults to 'name'
      * attribute in type definition). Needs to be unique in schema.
      */
-    public function addType(TypeAbstraction $type, $name = '')
+    public function addType(AbstractType $type, $name = '')
     {
         if (!$name) {
             $name = $type->getName();
@@ -364,7 +356,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * Return a type definition by name
      *
      * @param string $name
-     * @return TypeAbstraction
+     * @return AbstractType
      */
     public function getType($name)
     {
@@ -389,10 +381,10 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * Register a new Query. Query can be defined as a closure to ensure
      * dependent types are lazy loaded.
      *
-     * @param FieldAbstraction $query
+     * @param Field $query
      * @param string $name Identifier for this query (unique in schema)
      */
-    public function addQuery(FieldAbstraction $query, $name)
+    public function addQuery(Field $query, $name)
     {
         $this->queries[$name] = $query;
     }
@@ -401,7 +393,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * Get a query by name
      *
      * @param string $name
-     * @return FieldAbstraction
+     * @return \SilverStripe\GraphQL\Schema\Components\Field
      */
     public function getQuery($name)
     {
@@ -412,10 +404,10 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * Register a new mutation. Mutations can be callbacks to ensure
      * dependent types are lazy-loaded.
      *
-     * @param FieldAbstraction
+     * @param \SilverStripe\GraphQL\Schema\Components\Field
      * @param string $name Identifier for this mutation (unique in schema)
      */
-    public function addMutation(FieldAbstraction $mutation, $name)
+    public function addMutation(Field $mutation, $name)
     {
         $this->mutations[$name] = $mutation;
     }
@@ -424,7 +416,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * Get a mutation by name
      *
      * @param string $name
-     * @return FieldAbstraction
+     * @return \SilverStripe\GraphQL\Schema\Components\Field
      */
     public function getMutation($name)
     {
@@ -451,7 +443,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     }
 
     /**
-     * @param SchemaStorageInterface $store
+     * @param \SilverStripe\GraphQL\Schema\Storage\SchemaStorageInterface $store
      * @return $this
      */
     public function setSchemaStore(SchemaStorageInterface $store)
@@ -462,7 +454,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     }
 
     /**
-     * @return SchemaStorageInterface
+     * @return \SilverStripe\GraphQL\Schema\Storage\SchemaStorageInterface
      */
     public function getSchemaStore()
     {

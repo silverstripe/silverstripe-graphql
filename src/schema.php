@@ -2,7 +2,7 @@
 
 use GraphQL\Type\Definition\Type;
 
-final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface
+final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements \SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryInterface
 {
     private $types = array();
 
@@ -171,8 +171,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
             'name' => 'readAbrasiveCoatRangesConnection',
             'fields' => function () {
                 return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readAbrasiveCoatRangesEdge'))
+                    array(
+                        'name' => 'pageInfo',
+                        'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('PageInfo'))
+                    ),
+                    array(
+                        'name' => 'edges',
+                        'type' => GraphQL\Type\Definition\Type::listOf($this->getType('readAbrasiveCoatRangesEdge'))
+                    )
                 );
             }
         ));
@@ -197,7 +203,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function ReadAbrasiveCoatRangesSortInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'ReadAbrasiveCoatRangesSortInputType',
             'description' => 'Define the sorting',
             'fields' => function () {
@@ -237,9 +243,18 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
             'description' => 'Information about pagination in a connection.',
             'fields' => function () {
                 return array(
-                    array('name' => 'totalCount', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'hasNextPage', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'hasPreviousPage', 'type' => GraphQL\Type\Definition\Type::boolean())
+                    array(
+                        'name' => 'totalCount',
+                        'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::int())
+                    ),
+                    array(
+                        'name' => 'hasNextPage',
+                        'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::boolean())
+                    ),
+                    array(
+                        'name' => 'hasPreviousPage',
+                        'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::boolean())
+                    )
                 );
             }
         ));
@@ -247,11 +262,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function AbrasiveCoatRangeUpdateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'AbrasiveCoatRangeUpdateInputType',
             'fields' => function () {
                 return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
+                    array(
+                        'name' => 'ID',
+                        'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
+                    ),
                     array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
@@ -281,7 +299,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function AbrasiveCoatRangeCreateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'AbrasiveCoatRangeCreateInputType',
             'fields' => function () {
                 return array(
@@ -434,8 +452,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
             'name' => 'readAbrasiveExchangeShadesConnection',
             'fields' => function () {
                 return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readAbrasiveExchangeShadesEdge'))
+                    array(
+                        'name' => 'pageInfo',
+                        'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('PageInfo'))
+                    ),
+                    array(
+                        'name' => 'edges',
+                        'type' => GraphQL\Type\Definition\Type::listOf($this->getType('readAbrasiveExchangeShadesEdge'))
+                    )
                 );
             }
         ));
@@ -460,7 +484,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function ReadAbrasiveExchangeShadesSortInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'ReadAbrasiveExchangeShadesSortInputType',
             'description' => 'Define the sorting',
             'fields' => function () {
@@ -486,11 +510,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function AbrasiveExchangeShadeUpdateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'AbrasiveExchangeShadeUpdateInputType',
             'fields' => function () {
                 return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
+                    array(
+                        'name' => 'ID',
+                        'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
+                    ),
                     array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
@@ -519,7 +546,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function AbrasiveExchangeShadeCreateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'AbrasiveExchangeShadeCreateInputType',
             'fields' => function () {
                 return array(
@@ -686,8 +713,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
             'name' => 'readAbsentLadybugsConnection',
             'fields' => function () {
                 return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readAbsentLadybugsEdge'))
+                    array(
+                        'name' => 'pageInfo',
+                        'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('PageInfo'))
+                    ),
+                    array(
+                        'name' => 'edges',
+                        'type' => GraphQL\Type\Definition\Type::listOf($this->getType('readAbsentLadybugsEdge'))
+                    )
                 );
             }
         ));
@@ -712,7 +745,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function ReadAbsentLadybugsSortInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'ReadAbsentLadybugsSortInputType',
             'description' => 'Define the sorting',
             'fields' => function () {
@@ -735,11 +768,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function AbsentLadybugUpdateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'AbsentLadybugUpdateInputType',
             'fields' => function () {
                 return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
+                    array(
+                        'name' => 'ID',
+                        'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
+                    ),
                     array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
@@ -772,7 +808,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function AbsentLadybugCreateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'AbsentLadybugCreateInputType',
             'fields' => function () {
                 return array(
@@ -858,8 +894,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
             'name' => 'readAbundantTigersConnection',
             'fields' => function () {
                 return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readAbundantTigersEdge'))
+                    array(
+                        'name' => 'pageInfo',
+                        'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('PageInfo'))
+                    ),
+                    array(
+                        'name' => 'edges',
+                        'type' => GraphQL\Type\Definition\Type::listOf($this->getType('readAbundantTigersEdge'))
+                    )
                 );
             }
         ));
@@ -884,7 +926,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function ReadAbundantTigersSortInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'ReadAbundantTigersSortInputType',
             'description' => 'Define the sorting',
             'fields' => function () {
@@ -907,11 +949,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function AbundantTigerUpdateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'AbundantTigerUpdateInputType',
             'fields' => function () {
                 return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
+                    array(
+                        'name' => 'ID',
+                        'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
+                    ),
                     array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
@@ -926,7 +971,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function AbundantTigerCreateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'AbundantTigerCreateInputType',
             'fields' => function () {
                 return array(
@@ -1079,8 +1124,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
             'name' => 'readActuallyMittenActivitiesConnection',
             'fields' => function () {
                 return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readActuallyMittenActivitiesEdge'))
+                    array(
+                        'name' => 'pageInfo',
+                        'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('PageInfo'))
+                    ),
+                    array(
+                        'name' => 'edges',
+                        'type' => GraphQL\Type\Definition\Type::listOf($this->getType('readActuallyMittenActivitiesEdge'))
+                    )
                 );
             }
         ));
@@ -1105,7 +1156,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function ReadActuallyMittenActivitiesSortInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'ReadActuallyMittenActivitiesSortInputType',
             'description' => 'Define the sorting',
             'fields' => function () {
@@ -1131,11 +1182,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function ActuallyMittenActivityUpdateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'ActuallyMittenActivityUpdateInputType',
             'fields' => function () {
                 return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
+                    array(
+                        'name' => 'ID',
+                        'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
+                    ),
                     array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
@@ -1171,7 +1225,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function ActuallyMittenActivityCreateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'ActuallyMittenActivityCreateInputType',
             'fields' => function () {
                 return array(
@@ -1203,846 +1257,6 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
                     array('name' => 'MeatySuitID', 'type' => GraphQL\Type\Definition\Type::id()),
                     array('name' => 'ReconditeYardID', 'type' => GraphQL\Type\Definition\Type::id()),
                     array('name' => 'CuriousSparkThreadID', 'type' => GraphQL\Type\Definition\Type::id())
-                );
-            }
-        ));
-    }
-
-    private function Advertisement()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'Advertisement',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'ID',
-                        'type' => GraphQL\Type\Definition\Type::id(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'ClassName',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'LastEdited',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Created',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'CanViewType',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'CanEditType',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Version',
-                        'type' => GraphQL\Type\Definition\Type::int(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'URLSegment',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Title',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'MenuTitle',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Content',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'MetaDescription',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'ExtraMeta',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'ShowInMenus',
-                        'type' => GraphQL\Type\Definition\Type::boolean(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'ShowInSearch',
-                        'type' => GraphQL\Type\Definition\Type::boolean(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Sort',
-                        'type' => GraphQL\Type\Definition\Type::int(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'HasBrokenFile',
-                        'type' => GraphQL\Type\Definition\Type::boolean(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'HasBrokenLink',
-                        'type' => GraphQL\Type\Definition\Type::boolean(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'ReportClass',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Porter',
-                        'type' => GraphQL\Type\Definition\Type::int(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Division',
-                        'type' => GraphQL\Type\Definition\Type::int(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    )
-                );
-            }
-        ));
-    }
-
-    private function readAdvertisementsConnection()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'readAdvertisementsConnection',
-            'fields' => function () {
-                return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readAdvertisementsEdge'))
-                );
-            }
-        ));
-    }
-
-    private function readAdvertisementsEdge()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'readAdvertisementsEdge',
-            'description' => 'The collections edge',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'node',
-                        'type' => $this->getType('Advertisement'),
-                        'resolve' => array('SilverStripe\\GraphQL\\Pagination\\Connection', 'nodeResolver')
-                    )
-                );
-            }
-        ));
-    }
-
-    private function ReadAdvertisementsSortInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'ReadAdvertisementsSortInputType',
-            'description' => 'Define the sorting',
-            'fields' => function () {
-                return array(
-                    array('name' => 'field', 'type' => $this->getType('ReadAdvertisementsSortFieldType')),
-                    array('name' => 'direction', 'type' => $this->getType('SortDirection'))
-                );
-            }
-        ));
-    }
-
-    private function ReadAdvertisementsSortFieldType()
-    {
-        return new \GraphQL\Type\Definition\EnumType(array(
-            'name' => 'ReadAdvertisementsSortFieldType',
-            'description' => 'Field name to sort by.',
-            'values' => array()
-        ));
-    }
-
-    private function AdvertisementUpdateInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AdvertisementUpdateInputType',
-            'fields' => function () {
-                return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'CanViewType', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'CanEditType', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Version', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'URLSegment', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Title', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'MenuTitle', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Content', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'MetaDescription', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'ExtraMeta', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'ShowInMenus', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'ShowInSearch', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'Sort', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'HasBrokenFile', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'HasBrokenLink', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'ReportClass', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'ParentID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'Porter', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Division', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'MightyTrainDoorID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'CutShadeID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'ProfuseFairiesID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'FierceWoolID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'BrightSofaID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'TradeID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'GlisteningDropRoomID', 'type' => GraphQL\Type\Definition\Type::id())
-                );
-            }
-        ));
-    }
-
-    private function AdvertisementCreateInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AdvertisementCreateInputType',
-            'fields' => function () {
-                return array(
-                    array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'CanViewType', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'CanEditType', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Version', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'URLSegment', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Title', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'MenuTitle', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Content', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'MetaDescription', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'ExtraMeta', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'ShowInMenus', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'ShowInSearch', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'Sort', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'HasBrokenFile', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'HasBrokenLink', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'ReportClass', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'ParentID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'Porter', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Division', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'MightyTrainDoorID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'CutShadeID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'ProfuseFairiesID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'FierceWoolID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'BrightSofaID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'TradeID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'GlisteningDropRoomID', 'type' => GraphQL\Type\Definition\Type::id())
-                );
-            }
-        ));
-    }
-
-    private function AggressiveStretchPigs()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AggressiveStretchPigs',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'ID',
-                        'type' => GraphQL\Type\Definition\Type::id(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'ClassName',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'LastEdited',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Created',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Regret',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Station',
-                        'type' => GraphQL\Type\Definition\Type::int(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Chickens',
-                        'type' => GraphQL\Type\Definition\Type::int(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Pigs',
-                        'type' => GraphQL\Type\Definition\Type::boolean(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Cap',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Umbrella',
-                        'type' => GraphQL\Type\Definition\Type::boolean(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    )
-                );
-            }
-        ));
-    }
-
-    private function readAggressiveStretchPigssConnection()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'readAggressiveStretchPigssConnection',
-            'fields' => function () {
-                return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readAggressiveStretchPigssEdge'))
-                );
-            }
-        ));
-    }
-
-    private function readAggressiveStretchPigssEdge()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'readAggressiveStretchPigssEdge',
-            'description' => 'The collections edge',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'node',
-                        'type' => $this->getType('AggressiveStretchPigs'),
-                        'resolve' => array('SilverStripe\\GraphQL\\Pagination\\Connection', 'nodeResolver')
-                    )
-                );
-            }
-        ));
-    }
-
-    private function ReadAggressiveStretchPigssSortInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'ReadAggressiveStretchPigssSortInputType',
-            'description' => 'Define the sorting',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'field',
-                        'type' => $this->getType('ReadAggressiveStretchPigssSortFieldType')
-                    ),
-                    array('name' => 'direction', 'type' => $this->getType('SortDirection'))
-                );
-            }
-        ));
-    }
-
-    private function ReadAggressiveStretchPigssSortFieldType()
-    {
-        return new \GraphQL\Type\Definition\EnumType(array(
-            'name' => 'ReadAggressiveStretchPigssSortFieldType',
-            'description' => 'Field name to sort by.',
-            'values' => array()
-        ));
-    }
-
-    private function AggressiveStretchPigsUpdateInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AggressiveStretchPigsUpdateInputType',
-            'fields' => function () {
-                return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Regret', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Station', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Chickens', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Pigs', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'Cap', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Umbrella', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'StrawID', 'type' => GraphQL\Type\Definition\Type::id())
-                );
-            }
-        ));
-    }
-
-    private function AggressiveStretchPigsCreateInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AggressiveStretchPigsCreateInputType',
-            'fields' => function () {
-                return array(
-                    array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Regret', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Station', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Chickens', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Pigs', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'Cap', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Umbrella', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'StrawID', 'type' => GraphQL\Type\Definition\Type::id())
-                );
-            }
-        ));
-    }
-
-    private function Agreement()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'Agreement',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'ID',
-                        'type' => GraphQL\Type\Definition\Type::id(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'ClassName',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'LastEdited',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Created',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Station',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Soap',
-                        'type' => GraphQL\Type\Definition\Type::int(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    )
-                );
-            }
-        ));
-    }
-
-    private function readAgreementsConnection()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'readAgreementsConnection',
-            'fields' => function () {
-                return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readAgreementsEdge'))
-                );
-            }
-        ));
-    }
-
-    private function readAgreementsEdge()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'readAgreementsEdge',
-            'description' => 'The collections edge',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'node',
-                        'type' => $this->getType('Agreement'),
-                        'resolve' => array('SilverStripe\\GraphQL\\Pagination\\Connection', 'nodeResolver')
-                    )
-                );
-            }
-        ));
-    }
-
-    private function ReadAgreementsSortInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'ReadAgreementsSortInputType',
-            'description' => 'Define the sorting',
-            'fields' => function () {
-                return array(
-                    array('name' => 'field', 'type' => $this->getType('ReadAgreementsSortFieldType')),
-                    array('name' => 'direction', 'type' => $this->getType('SortDirection'))
-                );
-            }
-        ));
-    }
-
-    private function ReadAgreementsSortFieldType()
-    {
-        return new \GraphQL\Type\Definition\EnumType(array(
-            'name' => 'ReadAgreementsSortFieldType',
-            'description' => 'Field name to sort by.',
-            'values' => array()
-        ));
-    }
-
-    private function AgreementUpdateInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AgreementUpdateInputType',
-            'fields' => function () {
-                return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Station', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Soap', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'WoodenBulbID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'BriefSparkHospitalID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'SuddenIceTradeID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'SpotID', 'type' => GraphQL\Type\Definition\Type::id())
-                );
-            }
-        ));
-    }
-
-    private function AgreementCreateInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AgreementCreateInputType',
-            'fields' => function () {
-                return array(
-                    array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Station', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Soap', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'WoodenBulbID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'BriefSparkHospitalID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'SuddenIceTradeID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'SpotID', 'type' => GraphQL\Type\Definition\Type::id())
-                );
-            }
-        ));
-    }
-
-    private function AheadFairiesBridge()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AheadFairiesBridge',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'ID',
-                        'type' => GraphQL\Type\Definition\Type::id(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'ClassName',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'LastEdited',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Created',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Version',
-                        'type' => GraphQL\Type\Definition\Type::int(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Beef',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Bridge',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    )
-                );
-            }
-        ));
-    }
-
-    private function readAheadFairiesBridgesConnection()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'readAheadFairiesBridgesConnection',
-            'fields' => function () {
-                return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readAheadFairiesBridgesEdge'))
-                );
-            }
-        ));
-    }
-
-    private function readAheadFairiesBridgesEdge()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'readAheadFairiesBridgesEdge',
-            'description' => 'The collections edge',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'node',
-                        'type' => $this->getType('AheadFairiesBridge'),
-                        'resolve' => array('SilverStripe\\GraphQL\\Pagination\\Connection', 'nodeResolver')
-                    )
-                );
-            }
-        ));
-    }
-
-    private function ReadAheadFairiesBridgesSortInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'ReadAheadFairiesBridgesSortInputType',
-            'description' => 'Define the sorting',
-            'fields' => function () {
-                return array(
-                    array('name' => 'field', 'type' => $this->getType('ReadAheadFairiesBridgesSortFieldType')),
-                    array('name' => 'direction', 'type' => $this->getType('SortDirection'))
-                );
-            }
-        ));
-    }
-
-    private function ReadAheadFairiesBridgesSortFieldType()
-    {
-        return new \GraphQL\Type\Definition\EnumType(array(
-            'name' => 'ReadAheadFairiesBridgesSortFieldType',
-            'description' => 'Field name to sort by.',
-            'values' => array()
-        ));
-    }
-
-    private function AheadFairiesBridgeUpdateInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AheadFairiesBridgeUpdateInputType',
-            'fields' => function () {
-                return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Version', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Beef', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Bridge', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LamentableFactWheelID', 'type' => GraphQL\Type\Definition\Type::id())
-                );
-            }
-        ));
-    }
-
-    private function AheadFairiesBridgeCreateInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AheadFairiesBridgeCreateInputType',
-            'fields' => function () {
-                return array(
-                    array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Version', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Beef', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Bridge', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LamentableFactWheelID', 'type' => GraphQL\Type\Definition\Type::id())
-                );
-            }
-        ));
-    }
-
-    private function AheadFriend()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AheadFriend',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'ID',
-                        'type' => GraphQL\Type\Definition\Type::id(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'ClassName',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'LastEdited',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Created',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Version',
-                        'type' => GraphQL\Type\Definition\Type::int(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Quiet',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Rabbits',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Current',
-                        'type' => GraphQL\Type\Definition\Type::int(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Cars',
-                        'type' => GraphQL\Type\Definition\Type::boolean(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Hobbies',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    )
-                );
-            }
-        ));
-    }
-
-    private function readAheadFriendsConnection()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'readAheadFriendsConnection',
-            'fields' => function () {
-                return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readAheadFriendsEdge'))
-                );
-            }
-        ));
-    }
-
-    private function readAheadFriendsEdge()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'readAheadFriendsEdge',
-            'description' => 'The collections edge',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'node',
-                        'type' => $this->getType('AheadFriend'),
-                        'resolve' => array('SilverStripe\\GraphQL\\Pagination\\Connection', 'nodeResolver')
-                    )
-                );
-            }
-        ));
-    }
-
-    private function ReadAheadFriendsSortInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'ReadAheadFriendsSortInputType',
-            'description' => 'Define the sorting',
-            'fields' => function () {
-                return array(
-                    array('name' => 'field', 'type' => $this->getType('ReadAheadFriendsSortFieldType')),
-                    array('name' => 'direction', 'type' => $this->getType('SortDirection'))
-                );
-            }
-        ));
-    }
-
-    private function ReadAheadFriendsSortFieldType()
-    {
-        return new \GraphQL\Type\Definition\EnumType(array(
-            'name' => 'ReadAheadFriendsSortFieldType',
-            'description' => 'Field name to sort by.',
-            'values' => array()
-        ));
-    }
-
-    private function AheadFriendUpdateInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AheadFriendUpdateInputType',
-            'fields' => function () {
-                return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Version', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Quiet', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Rabbits', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Current', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Cars', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'Hobbies', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'ShortIceID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'LamentableWriterMoveID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'RightSignID', 'type' => GraphQL\Type\Definition\Type::id())
-                );
-            }
-        ));
-    }
-
-    private function AheadFriendCreateInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'AheadFriendCreateInputType',
-            'fields' => function () {
-                return array(
-                    array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Version', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Quiet', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Rabbits', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Current', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Cars', 'type' => GraphQL\Type\Definition\Type::boolean()),
-                    array('name' => 'Hobbies', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'ShortIceID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'LamentableWriterMoveID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'RightSignID', 'type' => GraphQL\Type\Definition\Type::id())
                 );
             }
         ));
@@ -2160,8 +1374,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
             'name' => 'readPagesConnection',
             'fields' => function () {
                 return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readPagesEdge'))
+                    array(
+                        'name' => 'pageInfo',
+                        'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('PageInfo'))
+                    ),
+                    array(
+                        'name' => 'edges',
+                        'type' => GraphQL\Type\Definition\Type::listOf($this->getType('readPagesEdge'))
+                    )
                 );
             }
         ));
@@ -2186,7 +1406,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function ReadPagesSortInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'ReadPagesSortInputType',
             'description' => 'Define the sorting',
             'fields' => function () {
@@ -2209,11 +1429,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function PageUpdateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'PageUpdateInputType',
             'fields' => function () {
                 return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
+                    array(
+                        'name' => 'ID',
+                        'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
+                    ),
                     array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
@@ -2240,7 +1463,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function PageCreateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'PageCreateInputType',
             'fields' => function () {
                 return array(
@@ -2272,7 +1495,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
     {
         return new \GraphQL\Type\Definition\UnionType(array(
             'name' => 'PageWithDescendants',
-            'types' => (new SilverStripe\GraphQL\Storage\Encode\UnionTypeFactory(array(
+            'types' => (new \SilverStripe\GraphQL\Schema\Encoding\Factories\UnionTypeFactory(array(
                 'types' => array(
                     'Page',
                     'AbrasiveCoatRange',
@@ -2512,8 +1735,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
             'name' => 'readSilverStripeSiteTreesConnection',
             'fields' => function () {
                 return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readSilverStripeSiteTreesEdge'))
+                    array(
+                        'name' => 'pageInfo',
+                        'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('PageInfo'))
+                    ),
+                    array(
+                        'name' => 'edges',
+                        'type' => GraphQL\Type\Definition\Type::listOf($this->getType('readSilverStripeSiteTreesEdge'))
+                    )
                 );
             }
         ));
@@ -2538,7 +1767,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function ReadSilverStripeSiteTreesSortInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'ReadSilverStripeSiteTreesSortInputType',
             'description' => 'Define the sorting',
             'fields' => function () {
@@ -2564,11 +1793,14 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function SilverStripeSiteTreeUpdateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'SilverStripeSiteTreeUpdateInputType',
             'fields' => function () {
                 return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
+                    array(
+                        'name' => 'ID',
+                        'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
+                    ),
                     array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
                     array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
@@ -2595,7 +1827,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
 
     private function SilverStripeSiteTreeCreateInputType()
     {
-        return new \GraphQL\Type\Definition\ObjectType(array(
+        return new \GraphQL\Type\Definition\InputObjectType(array(
             'name' => 'SilverStripeSiteTreeCreateInputType',
             'fields' => function () {
                 return array(
@@ -2627,7 +1859,7 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
     {
         return new \GraphQL\Type\Definition\UnionType(array(
             'name' => 'SilverStripeSiteTreeWithDescendants',
-            'types' => (new SilverStripe\GraphQL\Storage\Encode\UnionTypeFactory(array(
+            'types' => (new \SilverStripe\GraphQL\Schema\Encoding\Factories\UnionTypeFactory(array(
                 'types' => array(
                     'SilverStripeSiteTree',
                     'Page',
@@ -2750,161 +1982,6 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
                     'BriefSparkHospital',
                     'UppityVest',
                     'Haircut'
-                )
-            )))->createClosure($this),
-            'resolveType' => (new SilverStripe\GraphQL\Resolvers\UnionResolverFactory())->createClosure($this)
-        ));
-    }
-
-    private function CuriousSparkThread()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'CuriousSparkThread',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'ID',
-                        'type' => GraphQL\Type\Definition\Type::id(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'ClassName',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'LastEdited',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Created',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Regret',
-                        'type' => GraphQL\Type\Definition\Type::string(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Station',
-                        'type' => GraphQL\Type\Definition\Type::int(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Chickens',
-                        'type' => GraphQL\Type\Definition\Type::int(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    ),
-                    array(
-                        'name' => 'Pigs',
-                        'type' => GraphQL\Type\Definition\Type::boolean(),
-                        'resolve' => array('SilverStripe\\GraphQL\\Resolvers\\FieldAccessorResolver', 'resolve')
-                    )
-                );
-            }
-        ));
-    }
-
-    private function readCuriousSparkThreadsConnection()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'readCuriousSparkThreadsConnection',
-            'fields' => function () {
-                return array(
-                    array('name' => 'pageInfo', 'type' => $this->getType('PageInfo')),
-                    array('name' => 'edges', 'type' => $this->getType('readCuriousSparkThreadsEdge'))
-                );
-            }
-        ));
-    }
-
-    private function readCuriousSparkThreadsEdge()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'readCuriousSparkThreadsEdge',
-            'description' => 'The collections edge',
-            'fields' => function () {
-                return array(
-                    array(
-                        'name' => 'node',
-                        'type' => $this->getType('CuriousSparkThread'),
-                        'resolve' => array('SilverStripe\\GraphQL\\Pagination\\Connection', 'nodeResolver')
-                    )
-                );
-            }
-        ));
-    }
-
-    private function ReadCuriousSparkThreadsSortInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'ReadCuriousSparkThreadsSortInputType',
-            'description' => 'Define the sorting',
-            'fields' => function () {
-                return array(
-                    array('name' => 'field', 'type' => $this->getType('ReadCuriousSparkThreadsSortFieldType')),
-                    array('name' => 'direction', 'type' => $this->getType('SortDirection'))
-                );
-            }
-        ));
-    }
-
-    private function ReadCuriousSparkThreadsSortFieldType()
-    {
-        return new \GraphQL\Type\Definition\EnumType(array(
-            'name' => 'ReadCuriousSparkThreadsSortFieldType',
-            'description' => 'Field name to sort by.',
-            'values' => array()
-        ));
-    }
-
-    private function CuriousSparkThreadUpdateInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'CuriousSparkThreadUpdateInputType',
-            'fields' => function () {
-                return array(
-                    array('name' => 'ID', 'type' => GraphQL\Type\Definition\Type::id()),
-                    array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Regret', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Station', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Chickens', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Pigs', 'type' => GraphQL\Type\Definition\Type::boolean())
-                );
-            }
-        ));
-    }
-
-    private function CuriousSparkThreadCreateInputType()
-    {
-        return new \GraphQL\Type\Definition\ObjectType(array(
-            'name' => 'CuriousSparkThreadCreateInputType',
-            'fields' => function () {
-                return array(
-                    array('name' => 'ClassName', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'LastEdited', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Created', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Regret', 'type' => GraphQL\Type\Definition\Type::string()),
-                    array('name' => 'Station', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Chickens', 'type' => GraphQL\Type\Definition\Type::int()),
-                    array('name' => 'Pigs', 'type' => GraphQL\Type\Definition\Type::boolean())
-                );
-            }
-        ));
-    }
-
-    private function CuriousSparkThreadWithDescendants()
-    {
-        return new \GraphQL\Type\Definition\UnionType(array(
-            'name' => 'CuriousSparkThreadWithDescendants',
-            'types' => (new SilverStripe\GraphQL\Storage\Encode\UnionTypeFactory(array(
-                'types' => array(
-                    'CuriousSparkThread',
-                    'AggressiveStretchPigs'
                 )
             )))->createClosure($this),
             'resolveType' => (new SilverStripe\GraphQL\Resolvers\UnionResolverFactory())->createClosure($this)
@@ -3043,131 +2120,6 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
                         )
                     ),
                     array(
-                        'name' => 'readAdvertisements',
-                        'type' => $this->getType('readAdvertisementsConnection'),
-                        'resolve' => (new SilverStripe\GraphQL\Resolvers\PaginationResolverFactory(array(
-                            'parentResolver' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadResolverFactory(array('dataObjectClass' => 'Advertisement')))->createClosure(),
-                            'defaultLimit' => 100,
-                            'maximumLimit' => 100,
-                            'sortableFields' => array()
-                        )))->createClosure(),
-                        'args' => array(
-                            array('name' => 'limit', 'type' => GraphQL\Type\Definition\Type::int()),
-                            array('name' => 'offset', 'type' => GraphQL\Type\Definition\Type::int())
-                        )
-                    ),
-                    array(
-                        'name' => 'readOneAdvertisement',
-                        'type' => $this->getType('Advertisement'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadOneResolverFactory(array('dataObjectClass' => 'Advertisement')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'ID',
-                                'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'readAggressiveStretchPigss',
-                        'type' => $this->getType('readAggressiveStretchPigssConnection'),
-                        'resolve' => (new SilverStripe\GraphQL\Resolvers\PaginationResolverFactory(array(
-                            'parentResolver' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadResolverFactory(array('dataObjectClass' => 'AggressiveStretchPigs')))->createClosure(),
-                            'defaultLimit' => 100,
-                            'maximumLimit' => 100,
-                            'sortableFields' => array()
-                        )))->createClosure(),
-                        'args' => array(
-                            array('name' => 'limit', 'type' => GraphQL\Type\Definition\Type::int()),
-                            array('name' => 'offset', 'type' => GraphQL\Type\Definition\Type::int())
-                        )
-                    ),
-                    array(
-                        'name' => 'readOneAggressiveStretchPigs',
-                        'type' => $this->getType('AggressiveStretchPigs'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadOneResolverFactory(array('dataObjectClass' => 'AggressiveStretchPigs')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'ID',
-                                'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'readAgreements',
-                        'type' => $this->getType('readAgreementsConnection'),
-                        'resolve' => (new SilverStripe\GraphQL\Resolvers\PaginationResolverFactory(array(
-                            'parentResolver' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadResolverFactory(array('dataObjectClass' => 'Agreement')))->createClosure(),
-                            'defaultLimit' => 100,
-                            'maximumLimit' => 100,
-                            'sortableFields' => array()
-                        )))->createClosure(),
-                        'args' => array(
-                            array('name' => 'limit', 'type' => GraphQL\Type\Definition\Type::int()),
-                            array('name' => 'offset', 'type' => GraphQL\Type\Definition\Type::int())
-                        )
-                    ),
-                    array(
-                        'name' => 'readOneAgreement',
-                        'type' => $this->getType('Agreement'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadOneResolverFactory(array('dataObjectClass' => 'Agreement')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'ID',
-                                'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'readAheadFairiesBridges',
-                        'type' => $this->getType('readAheadFairiesBridgesConnection'),
-                        'resolve' => (new SilverStripe\GraphQL\Resolvers\PaginationResolverFactory(array(
-                            'parentResolver' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadResolverFactory(array('dataObjectClass' => 'AheadFairiesBridge')))->createClosure(),
-                            'defaultLimit' => 100,
-                            'maximumLimit' => 100,
-                            'sortableFields' => array()
-                        )))->createClosure(),
-                        'args' => array(
-                            array('name' => 'limit', 'type' => GraphQL\Type\Definition\Type::int()),
-                            array('name' => 'offset', 'type' => GraphQL\Type\Definition\Type::int())
-                        )
-                    ),
-                    array(
-                        'name' => 'readOneAheadFairiesBridge',
-                        'type' => $this->getType('AheadFairiesBridge'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadOneResolverFactory(array('dataObjectClass' => 'AheadFairiesBridge')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'ID',
-                                'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'readAheadFriends',
-                        'type' => $this->getType('readAheadFriendsConnection'),
-                        'resolve' => (new SilverStripe\GraphQL\Resolvers\PaginationResolverFactory(array(
-                            'parentResolver' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadResolverFactory(array('dataObjectClass' => 'AheadFriend')))->createClosure(),
-                            'defaultLimit' => 100,
-                            'maximumLimit' => 100,
-                            'sortableFields' => array()
-                        )))->createClosure(),
-                        'args' => array(
-                            array('name' => 'limit', 'type' => GraphQL\Type\Definition\Type::int()),
-                            array('name' => 'offset', 'type' => GraphQL\Type\Definition\Type::int())
-                        )
-                    ),
-                    array(
-                        'name' => 'readOneAheadFriend',
-                        'type' => $this->getType('AheadFriend'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadOneResolverFactory(array('dataObjectClass' => 'AheadFriend')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'ID',
-                                'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
-                            )
-                        )
-                    ),
-                    array(
                         'name' => 'readPages',
                         'type' => $this->getType('readPagesConnection'),
                         'resolve' => (new SilverStripe\GraphQL\Resolvers\PaginationResolverFactory(array(
@@ -3210,31 +2162,6 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
                         'name' => 'readOneSilverStripeSiteTree',
                         'type' => $this->getType('SilverStripeSiteTree'),
                         'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadOneResolverFactory(array('dataObjectClass' => 'SilverStripe\\CMS\\Model\\SiteTree')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'ID',
-                                'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::id())
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'readCuriousSparkThreads',
-                        'type' => $this->getType('readCuriousSparkThreadsConnection'),
-                        'resolve' => (new SilverStripe\GraphQL\Resolvers\PaginationResolverFactory(array(
-                            'parentResolver' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadResolverFactory(array('dataObjectClass' => 'CuriousSparkThread')))->createClosure(),
-                            'defaultLimit' => 100,
-                            'maximumLimit' => 100,
-                            'sortableFields' => array()
-                        )))->createClosure(),
-                        'args' => array(
-                            array('name' => 'limit', 'type' => GraphQL\Type\Definition\Type::int()),
-                            array('name' => 'offset', 'type' => GraphQL\Type\Definition\Type::int())
-                        )
-                    ),
-                    array(
-                        'name' => 'readOneCuriousSparkThread',
-                        'type' => $this->getType('CuriousSparkThread'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadOneResolverFactory(array('dataObjectClass' => 'CuriousSparkThread')))->createClosure(),
                         'args' => array(
                             array(
                                 'name' => 'ID',
@@ -3419,171 +2346,6 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
                         )
                     ),
                     array(
-                        'name' => 'updateAdvertisement',
-                        'type' => $this->getType('Advertisement'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\UpdateResolverFactory(array('dataObjectClass' => 'Advertisement')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'Input',
-                                'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('AdvertisementUpdateInputType'))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'createAdvertisement',
-                        'type' => $this->getType('Advertisement'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\CreateResolverFactory(array('dataObjectClass' => 'Advertisement')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'Input',
-                                'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('AdvertisementCreateInputType'))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'deleteAdvertisement',
-                        'type' => $this->getType('Advertisement'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\DeleteResolverFactory(array('dataObjectClass' => 'Advertisement')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'IDs',
-                                'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::listOf(GraphQL\Type\Definition\Type::id()))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'updateAggressiveStretchPigs',
-                        'type' => $this->getType('AggressiveStretchPigs'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\UpdateResolverFactory(array('dataObjectClass' => 'AggressiveStretchPigs')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'Input',
-                                'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('AggressiveStretchPigsUpdateInputType'))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'createAggressiveStretchPigs',
-                        'type' => $this->getType('AggressiveStretchPigs'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\CreateResolverFactory(array('dataObjectClass' => 'AggressiveStretchPigs')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'Input',
-                                'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('AggressiveStretchPigsCreateInputType'))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'deleteAggressiveStretchPigs',
-                        'type' => $this->getType('AggressiveStretchPigs'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\DeleteResolverFactory(array('dataObjectClass' => 'AggressiveStretchPigs')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'IDs',
-                                'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::listOf(GraphQL\Type\Definition\Type::id()))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'updateAgreement',
-                        'type' => $this->getType('Agreement'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\UpdateResolverFactory(array('dataObjectClass' => 'Agreement')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'Input',
-                                'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('AgreementUpdateInputType'))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'createAgreement',
-                        'type' => $this->getType('Agreement'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\CreateResolverFactory(array('dataObjectClass' => 'Agreement')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'Input',
-                                'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('AgreementCreateInputType'))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'deleteAgreement',
-                        'type' => $this->getType('Agreement'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\DeleteResolverFactory(array('dataObjectClass' => 'Agreement')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'IDs',
-                                'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::listOf(GraphQL\Type\Definition\Type::id()))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'updateAheadFairiesBridge',
-                        'type' => $this->getType('AheadFairiesBridge'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\UpdateResolverFactory(array('dataObjectClass' => 'AheadFairiesBridge')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'Input',
-                                'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('AheadFairiesBridgeUpdateInputType'))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'createAheadFairiesBridge',
-                        'type' => $this->getType('AheadFairiesBridge'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\CreateResolverFactory(array('dataObjectClass' => 'AheadFairiesBridge')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'Input',
-                                'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('AheadFairiesBridgeCreateInputType'))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'deleteAheadFairiesBridge',
-                        'type' => $this->getType('AheadFairiesBridge'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\DeleteResolverFactory(array('dataObjectClass' => 'AheadFairiesBridge')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'IDs',
-                                'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::listOf(GraphQL\Type\Definition\Type::id()))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'updateAheadFriend',
-                        'type' => $this->getType('AheadFriend'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\UpdateResolverFactory(array('dataObjectClass' => 'AheadFriend')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'Input',
-                                'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('AheadFriendUpdateInputType'))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'createAheadFriend',
-                        'type' => $this->getType('AheadFriend'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\CreateResolverFactory(array('dataObjectClass' => 'AheadFriend')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'Input',
-                                'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('AheadFriendCreateInputType'))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'deleteAheadFriend',
-                        'type' => $this->getType('AheadFriend'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\DeleteResolverFactory(array('dataObjectClass' => 'AheadFriend')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'IDs',
-                                'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::listOf(GraphQL\Type\Definition\Type::id()))
-                            )
-                        )
-                    ),
-                    array(
                         'name' => 'updatePage',
                         'type' => $this->getType('Page'),
                         'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\UpdateResolverFactory(array('dataObjectClass' => 'Page')))->createClosure(),
@@ -3642,39 +2404,6 @@ final class TypeRegistry_7505d64a54e061b7acd54ccd58b49dc43500b635 implements Sil
                         'name' => 'deleteSilverStripeSiteTree',
                         'type' => $this->getType('SilverStripeSiteTree'),
                         'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\DeleteResolverFactory(array('dataObjectClass' => 'SilverStripe\\CMS\\Model\\SiteTree')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'IDs',
-                                'type' => GraphQL\Type\Definition\Type::nonNull(GraphQL\Type\Definition\Type::listOf(GraphQL\Type\Definition\Type::id()))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'updateCuriousSparkThread',
-                        'type' => $this->getType('CuriousSparkThread'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\UpdateResolverFactory(array('dataObjectClass' => 'CuriousSparkThread')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'Input',
-                                'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('CuriousSparkThreadUpdateInputType'))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'createCuriousSparkThread',
-                        'type' => $this->getType('CuriousSparkThread'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\CreateResolverFactory(array('dataObjectClass' => 'CuriousSparkThread')))->createClosure(),
-                        'args' => array(
-                            array(
-                                'name' => 'Input',
-                                'type' => GraphQL\Type\Definition\Type::nonNull($this->getType('CuriousSparkThreadCreateInputType'))
-                            )
-                        )
-                    ),
-                    array(
-                        'name' => 'deleteCuriousSparkThread',
-                        'type' => $this->getType('CuriousSparkThread'),
-                        'resolve' => (new SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\DeleteResolverFactory(array('dataObjectClass' => 'CuriousSparkThread')))->createClosure(),
                         'args' => array(
                             array(
                                 'name' => 'IDs',

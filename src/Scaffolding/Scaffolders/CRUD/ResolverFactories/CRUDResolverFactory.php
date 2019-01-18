@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
-use SilverStripe\GraphQL\Storage\Encode\ClosureFactory;
+use SilverStripe\GraphQL\Schema\Encoding\Factories\ClosureFactory;
 use InvalidArgumentException;
 
 abstract class CRUDResolverFactory extends ClosureFactory

@@ -2,13 +2,12 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
-use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\ReadOneResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder;
-use SilverStripe\GraphQL\Schema\Components\ArgumentAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\InternalType;
+use SilverStripe\GraphQL\Schema\Components\Argument;
+use SilverStripe\GraphQL\Schema\Components\InternalType;
 
 /**
  * Scaffolds a generic read operation for DataObjects.
@@ -43,7 +42,7 @@ class ReadOne extends ItemQueryScaffolder implements CRUDInterface
     protected function createDefaultArgs(Manager $manager)
     {
         return [
-            new ArgumentAbstraction(
+            new Argument(
                 'ID',
                 InternalType::id()->setRequired(true)
             )

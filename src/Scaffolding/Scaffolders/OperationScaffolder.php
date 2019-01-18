@@ -6,15 +6,14 @@ use Exception;
 use InvalidArgumentException;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Extensible;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
-use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
+use SilverStripe\GraphQL\Schema\Components\AbstractFunction;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
-use SilverStripe\GraphQL\Schema\Components\DynamicResolverAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
+use SilverStripe\GraphQL\Schema\Components\DynamicResolver;
+use SilverStripe\GraphQL\Schema\Components\StaticFunction;
 use SilverStripe\ORM\ArrayList;
 use Closure;
 
@@ -105,7 +104,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
      *
      * @param string $operationName
      * @param string $typeName
-     * @param OperationResolver|callable|ClosureFactoryInterface|null $resolver
+     * @param OperationResolver|callable|\SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface|null $resolver
      */
     public function __construct($operationName = null, $typeName = null, $resolver = null)
     {
@@ -382,7 +381,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @return ClosureFactoryInterface
+     * @return \SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface
      */
     public function getResolverFactory()
     {
@@ -442,15 +441,15 @@ abstract class OperationScaffolder implements ConfigurationApplier
     /**
      * Based on the type of resolver, create a function that invokes it.
      *
-     * @return ResolverAbstraction
+     * @return AbstractFunction
      */
     protected function createResolverAbstraction()
     {
         if ($this->resolverFactory) {
-            return new DynamicResolverAbstraction($this->resolverFactory);
+            return new DynamicResolver($this->resolverFactory);
         }
 
-        return new StaticResolverAbstraction($this->resolver);
+        return new StaticFunction($this->resolver);
     }
 
     /**

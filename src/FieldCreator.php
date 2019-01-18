@@ -6,10 +6,10 @@ use GraphQL\Error\Error;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Dev\Deprecation;
-use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\AbstractFunction;
+use SilverStripe\GraphQL\Schema\Components\StaticFunction;
+use SilverStripe\GraphQL\Schema\Components\TypeReference;
 
 /**
  * Base type for query types within graphql. I.e. mutations or queries
@@ -120,11 +120,11 @@ class FieldCreator
     }
 
     /**
-     * @return FieldAbstraction
+     * @return \SilverStripe\GraphQL\Schema\Components\Field
      */
     public function toField()
     {   
-        return FieldAbstraction::create(
+        return Field::create(
             $this->name,
             $this->type(),
             $this->getResolver(),
@@ -168,7 +168,7 @@ class FieldCreator
      *
      * @link https://github.com/webonyx/graphql-php#query-resolution
      * @see OperationResolver::resolve() for method signature.
-     * @return StaticResolverAbstraction
+     * @return \SilverStripe\GraphQL\Schema\Components\StaticFunction
      */
     protected function getResolver()
     {
@@ -177,6 +177,6 @@ class FieldCreator
             return null;
         }
 
-        return new StaticResolverAbstraction($callable);
+        return new StaticFunction($callable);
     }
 }

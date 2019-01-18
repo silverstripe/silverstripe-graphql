@@ -2,11 +2,9 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
-use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryCreator;
 use GraphQL\Type\Definition\ResolveInfo;
-use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * A helper class for making a paginated query. A paginated query uses the
@@ -57,6 +55,14 @@ abstract class PaginatedQueryCreator extends QueryCreator implements OperationRe
         return $this->getConnection()->toType();
     }
 
+    /**
+     * @param mixed $value
+     * @param array $args
+     * @param mixed $context
+     * @param ResolveInfo $info
+     * @return array|mixed
+     * @throws \Exception
+     */
     public function resolve($value, array $args, $context, ResolveInfo $info)
     {
         return $this->getConnection()->resolve(

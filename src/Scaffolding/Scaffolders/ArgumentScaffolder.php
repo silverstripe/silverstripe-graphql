@@ -2,15 +2,13 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
 use SilverStripe\Core\Injector\Injector;
-use InvalidArgumentException;
-use SilverStripe\GraphQL\Schema\Components\ArgumentAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
+use SilverStripe\GraphQL\Schema\Components\Argument;
+use SilverStripe\GraphQL\Schema\Components\TypeReference;
 
 class ArgumentScaffolder implements ConfigurationApplier, ScaffolderInterface
 {
@@ -142,7 +140,7 @@ class ArgumentScaffolder implements ConfigurationApplier, ScaffolderInterface
 
     public function scaffold(Manager $manager)
     {
-        $arg = new ArgumentAbstraction(
+        $arg = new Argument(
             $this->argName,
             TypeReference::create($this->type)
                 ->setRequired($this->required)

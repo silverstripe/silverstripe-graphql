@@ -4,47 +4,47 @@ Name: graphql-encode
 SilverStripe\Core\Injector\Injector:
 
   ## type
-  SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.referential:
-    class: SilverStripe\GraphQL\Storage\Encode\ReferentialTypeEncoder
+  SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface.referential:
+    class: SilverStripe\GraphQL\GraphQLPHP\Encoders\ReferentialTypeEncoder
     constructor:
       builderFactory: '%$PhpParser\BuilderFactory'
-      typeFetcher: '%$SilverStripe\GraphQL\Storage\Encode\NamedTypeFetcherInterface'
-  SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.objectType:
-    class: SilverStripe\GraphQL\Storage\Encode\ObjectTypeEncoder
+      typeFetcher: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\NamedTypeFetcherInterface'
+  SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface.objectType:
+    class: SilverStripe\GraphQL\GraphQLPHP\Encoders\ObjectTypeEncoder
     constructor:
-      referentialTypeEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.referential'
-      resolverEncoderRegistry: '%$SilverStripe\GraphQL\Storage\Encode\ResolverEncoderRegistryInterface'
-  SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.unionType:
-    class: SilverStripe\GraphQL\Storage\Encode\UnionTypeEncoder
+      referentialTypeEncoder: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface.referential'
+      resolverEncoderRegistry: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderRegistryInterface'
+  SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface.unionType:
+    class: SilverStripe\GraphQL\GraphQLPHP\Encoders\UnionTypeEncoder
     constructor:
-      resolverEncoderRegistry: '%$SilverStripe\GraphQL\Storage\Encode\ResolverEncoderRegistryInterface'
-  SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.enumType:
-    class: SilverStripe\GraphQL\Storage\Encode\EnumTypeEncoder
+      resolverEncoderRegistry: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderRegistryInterface'
+  SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface.enumType:
+    class: SilverStripe\GraphQL\GraphQLPHP\Encoders\EnumTypeEncoder
 
-  SilverStripe\GraphQL\Storage\Encode\NamedTypeFetcherInterface:
-    class: SilverStripe\GraphQL\Storage\Encode\RegistryFetcher
+  SilverStripe\GraphQL\Schema\Encoding\Interfaces\NamedTypeFetcherInterface:
+    class: SilverStripe\GraphQL\Schema\Encoding\Encoders\RegistryFetcher
     constructor:
       builderFactory: '%$PhpParser\BuilderFactory'
 
-  SilverStripe\GraphQL\Storage\Encode\TypeEncoderRegistryInterface:
-    class: SilverStripe\GraphQL\Storage\Encode\TypeEncoderRegistry
+  SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderRegistryInterface:
+    class: SilverStripe\GraphQL\Schema\Encoding\Registries\TypeEncoderRegistry
     constructor:
-      objectTypeEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.objectType'
-      unionTypeEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.unionType'
-      enumTypeEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeEncoderInterface.enumType'
+      objectTypeEncoder: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface.objectType'
+      unionTypeEncoder: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface.unionType'
+      enumTypeEncoder: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface.enumType'
 
   ## resolver
-  SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface.static:
-    class: SilverStripe\GraphQL\Storage\Encode\StaticResolverEncoder
-  SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface.dynamic:
-    class: SilverStripe\GraphQL\Schema\Storage\Encoding\Encoders\DynamicResolverEncoder
-  SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface.registry:
-    class: SilverStripe\GraphQL\Storage\Encode\RegistryResolverEncoder
+  SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderInterface.static:
+    class: SilverStripe\GraphQL\Schema\Encoding\Encoders\StaticFunctionEncoder
+  SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderInterface.dynamic:
+    class: SilverStripe\GraphQL\Schema\Encoding\Encoders\DynamicFunctionEncoder
+  SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderInterface.registry:
+    class: SilverStripe\GraphQL\Schema\Encoding\Encoders\RegistryFunctionEncoder
 
-  SilverStripe\GraphQL\Storage\Encode\ResolverEncoderRegistryInterface:
-    class: SilverStripe\GraphQL\Storage\Encode\ResolverEncoderRegistry
+  SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderRegistryInterface:
+    class: SilverStripe\GraphQL\Schema\Encoding\Registries\ResolverEncoderRegistry
     constructor:
-      staticResolverEncoder: '%$SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface.static'
-      dynamicResolverEncoder: '%$SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface.dynamic'
-      registryResolverEncoder: '%$SilverStripe\GraphQL\Storage\Encode\ResolverEncoderInterface.registry'
+      staticEncoder: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderInterface.static'
+      dynamicEncoder: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderInterface.dynamic'
+      registryEncoder: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderInterface.registry'
 

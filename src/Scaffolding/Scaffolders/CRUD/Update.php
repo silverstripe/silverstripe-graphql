@@ -2,19 +2,17 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
-use GraphQL\Type\Definition\InputObjectType;
-use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ResolverFactories\UpdateResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
-use SilverStripe\GraphQL\Schema\Components\ArgumentAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\InputTypeAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\InternalType;
-use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
+use SilverStripe\GraphQL\Schema\Components\Argument;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\Input;
+use SilverStripe\GraphQL\Schema\Components\InternalType;
+use SilverStripe\GraphQL\Schema\Components\TypeReference;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
 
@@ -65,7 +63,7 @@ class Update extends MutationScaffolder implements CRUDInterface
     protected function createDefaultArgs(Manager $manager)
     {
         return [
-            new ArgumentAbstraction(
+            new Argument(
                 'Input',
                 TypeReference::create($this->inputTypeName())
                     ->setRequired(true)
@@ -76,12 +74,12 @@ class Update extends MutationScaffolder implements CRUDInterface
     /**
      * Based on the args provided, create an Input type to add to the Manager.
      * @param Manager $manager
-     * @return InputTypeAbstraction
+     * @return Input
      */
     protected function generateInputType(Manager $manager)
     {
         $fields = [
-            new FieldAbstraction(
+            new Field(
                 'ID',
                 InternalType::id()->setRequired(true)
             ),
@@ -101,13 +99,13 @@ class Update extends MutationScaffolder implements CRUDInterface
             if (!$result->isInternalGraphQLType()) {
                 continue;
             }
-            $fields[] = new FieldAbstraction(
+            $fields[] = new Field(
                 $dbFieldName,
                 $result->getGraphQLType($manager)
             );
         }
 
-        return new InputTypeAbstraction(
+        return new Input(
             $this->inputTypeName(),
             null,
             $fields

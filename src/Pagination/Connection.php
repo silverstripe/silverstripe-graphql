@@ -4,21 +4,18 @@ namespace SilverStripe\GraphQL\Pagination;
 
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
-use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
-use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
-use SilverStripe\GraphQL\Schema\Components\ArgumentAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\InternalType;
-use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
-use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
+use SilverStripe\GraphQL\Schema\Components\Argument;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\InternalType;
+use SilverStripe\GraphQL\Schema\Components\FieldCollection;
+use SilverStripe\GraphQL\Schema\Components\TypeReference;
+use SilverStripe\GraphQL\Schema\Components\AbstractFunction;
+use SilverStripe\GraphQL\Schema\Components\StaticFunction;
+use SilverStripe\GraphQL\Schema\Components\AbstractType;
 use SilverStripe\ORM\Limitable;
 use SilverStripe\ORM\Sortable;
 use SilverStripe\ORM\SS_List;
@@ -55,7 +52,7 @@ class Connection implements OperationResolver
     /**
      * Return a thunk function, which in turn returns the lazy-evaluated
      *
-     * @var TypeReference
+     * @var \SilverStripe\GraphQL\Schema\Components\TypeReference
      */
     protected $connectedType;
 
@@ -65,7 +62,7 @@ class Connection implements OperationResolver
     protected $description;
 
     /**
-     * @var ResolverAbstraction
+     * @var AbstractFunction
      */
     protected $connectionResolver;
 
@@ -117,11 +114,11 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @param ResolverAbstraction $resolver
+     * @param AbstractFunction $resolver
      *
      * @return $this
      */
-    public function setConnectionResolver(ResolverAbstraction $resolver)
+    public function setConnectionResolver(AbstractFunction $resolver)
     {
         $this->connectionResolver = $resolver;
 
@@ -129,7 +126,7 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @return ResolverAbstraction
+     * @return AbstractFunction
      */
     public function getConnectionResolver()
     {
@@ -279,7 +276,7 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @return ObjectTypeAbstraction
+     * @return FieldCollection
      * @throws NotFoundExceptionInterface
      */
     public function getPageInfoType()
@@ -302,12 +299,12 @@ class Connection implements OperationResolver
         }
 
         $args = array_merge($existing, [
-            new ArgumentAbstraction('limit', InternalType::int()),
-            new ArgumentAbstraction('offset', InternalType::int())
+            new Argument('limit', InternalType::int()),
+            new Argument('offset', InternalType::int())
         ]);
 
         if ($this->getSortableFields()) {
-            $args[] = new ArgumentAbstraction(
+            $args[] = new Argument(
                 'type',
                 TypeReference::create($this->getSortTypeCreator()->getName())
                     ->setList(true)
@@ -324,12 +321,12 @@ class Connection implements OperationResolver
     public function fields()
     {
         return [
-            FieldAbstraction::create(
+            Field::create(
                 'pageInfo',
                 TypeReference::create($this->getPageInfoType()->getName())
                     ->setRequired(true)
             )->setDescription('Pagination information'),
-            FieldAbstraction::create(
+            Field::create(
                 'edges',
                 TypeReference::create($this->getEdgeTypeName())
                     ->setList(true)
@@ -338,7 +335,7 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @return ObjectTypeAbstraction
+     * @return FieldCollection
      */
     public function getEdgeType()
     {
@@ -347,14 +344,14 @@ class Connection implements OperationResolver
         }
 
         if (!$this->edgeType) {
-            $this->edgeType = new ObjectTypeAbstraction(
+            $this->edgeType = new FieldCollection(
                 $this->getEdgeTypeName(),
                 'The collections edge',
                 [
-                    FieldAbstraction::create(
+                    Field::create(
                         'node',
-                        TypeReference::create($this->getConnectionTypeName()),
-                        new StaticResolverAbstraction([static::class, 'nodeResolver'])
+                        TypeReference::create($this->getConnectionType()->getName()),
+                        new StaticFunction([static::class, 'nodeResolver'])
                     )->setDescription('The node at the end of the collections edge')
                 ]
             );
@@ -365,11 +362,11 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @return ObjectTypeAbstraction
+     * @return FieldCollection
      */
     public function toType()
     {
-        return new ObjectTypeAbstraction(
+        return new FieldCollection(
             $this->getConnectionTypeName(),
             $this->description,
             $this->fields()
@@ -388,7 +385,7 @@ class Connection implements OperationResolver
      */
     public function resolve($value, array $args, $context, ResolveInfo $info)
     {
-        $func = $this->connectionResolver->create();
+        $func = $this->connectionResolver->export();
         $result = call_user_func_array($func, func_get_args());
 
         if (!$result instanceof SS_List) {
@@ -486,7 +483,7 @@ class Connection implements OperationResolver
     }
 
     /**
-     * @return TypeAbstraction[]
+     * @return AbstractType[]
      */
     public function extraTypes()
     {

@@ -2,14 +2,11 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
-use GraphQL\Type\Definition\Type;
-use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\Core\Injector\Injector;
-use GraphQL\Type\Definition\EnumType;
-use SilverStripe\GraphQL\TypeAbstractions\EnumAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\InputTypeAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
+use SilverStripe\GraphQL\Schema\Components\Enum;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\Input;
+use SilverStripe\GraphQL\Schema\Components\TypeReference;
 use SilverStripe\GraphQL\TypeCreator;
 use Psr\Container\NotFoundExceptionInterface;
 /**
@@ -20,7 +17,7 @@ use Psr\Container\NotFoundExceptionInterface;
 class SortInputTypeCreator extends TypeCreator
 {
     /**
-     * @var InputTypeAbstraction
+     * @var Input
      */
     protected $type;
 
@@ -38,7 +35,7 @@ class SortInputTypeCreator extends TypeCreator
     protected $inputObject = true;
 
     /**
-     * @var EnumType
+     * @var Enum
      */
     protected $fieldType;
 
@@ -103,7 +100,7 @@ class SortInputTypeCreator extends TypeCreator
             ];
         }
 
-        $this->fieldType = new EnumAbstraction(
+        $this->fieldType = new Enum(
             $this->getFieldTypeName(),
             'Field name to sort by.',
             $values
@@ -113,7 +110,7 @@ class SortInputTypeCreator extends TypeCreator
     }
 
     /**
-     * @return EnumAbstraction
+     * @return Enum
      * @throws NotFoundExceptionInterface
      */
     public function getSortDirectionType()
@@ -128,11 +125,11 @@ class SortInputTypeCreator extends TypeCreator
     public function fields()
     {
         return [
-            FieldAbstraction::create(
+            Field::create(
                 'field',
                 TypeReference::create($this->getFieldTypeName())
             )->setDescription('Sort field name.'),
-            FieldAbstraction::create(
+            Field::create(
                 'direction',
                 TypeReference::create($this->getSortDirectionType()->getName())
             )->setDescription('Sort direction (ASC / DESC)')

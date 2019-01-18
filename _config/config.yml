@@ -23,8 +23,6 @@ SilverStripe\Core\Injector\Injector:
     class: SilverStripe\GraphQL\Controller
     constructor:
       manager: '%$SilverStripe\GraphQL\Manager.default'
-  SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
-    class: SilverStripe\GraphQL\PersistedQuery\JSONStringProvider
 
 # Assign each DBField subclass with an associated internal type
 SilverStripe\ORM\FieldType\DBField:

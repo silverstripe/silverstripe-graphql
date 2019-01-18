@@ -6,19 +6,19 @@ SilverStripe\Core\Injector\Injector:
     class: SilverStripe\GraphQL\Manager
     constructor:
       schemaKey: default
-      schemaStore: '%$SilverStripe\GraphQL\Storage\SchemaStorageInterface.default'
+      schemaStore: '%$SilverStripe\GraphQL\Schema\SchemaStorageInterface.default'
     properties:
       Middlewares:
         CSRFMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.csrf'
         HTTPMethodMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.httpMethod'
-  SilverStripe\GraphQL\Storage\SchemaStorageInterface.default:
-    class: SilverStripe\GraphQL\Schema\Storage\Encoding\CodeGenerationSchemaStore
+  SilverStripe\GraphQL\Schema\SchemaStorageInterface.default:
+    class: SilverStripe\GraphQL\Schema\Encoding\CodeGenerationSchemaStore
     constructor:
-      registryEncoder: '%$SilverStripe\GraphQL\Storage\Encode\TypeRegistryEncoderInterface.default'
-  SilverStripe\GraphQL\Storage\Encode\TypeRegistryEncoderInterface.default:
-    class: SilverStripe\GraphQL\GraphQLPHP\GraphQLPHPTypeRegistryEncoder
+      registryEncoder: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryEncoderInterface.default'
+  SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryEncoderInterface.default:
+    class: SilverStripe\GraphQL\GraphQLPHP\SchemaEncoder
     constructor:
       identifier: default
-      encoderRegistry: '%$SilverStripe\GraphQL\Storage\Encode\TypeEncoderRegistryInterface'
+      encoderRegistry: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderRegistryInterface'
   SilverStripe\GraphQL\Schema\SchemaHandlerInterface:
-    class: SilverStripe\GraphQL\GraphQLPHP\GraphQLPHPSchemaHandler
+    class: SilverStripe\GraphQL\GraphQLPHP\SchemaHandler

@@ -2,14 +2,14 @@
 
 namespace SilverStripe\GraphQL\Middleware;
 
-use SilverStripe\GraphQL\TypeAbstractions\SchemaAbstraction;
+use SilverStripe\GraphQL\Schema\Components\Schema;
 use SilverStripe\Security\SecurityToken;
 use Exception;
 
 class CSRFMiddleware implements QueryMiddleware
 {
     /**
-     * @param SchemaAbstraction $schema
+     * @param Schema $schema
      * @param string $query
      * @param array $context
      * @param array $params
@@ -17,7 +17,7 @@ class CSRFMiddleware implements QueryMiddleware
      * @return array|\GraphQL\Executor\ExecutionResult
      * @throws Exception
      */
-    public function process(SchemaAbstraction $schema, $query, $context, $params, callable $next)
+    public function process(Schema $schema, $query, $context, $params, callable $next)
     {
         if (preg_match('/^\s*mutation/', $query)) {
             if (empty($context['token'])) {

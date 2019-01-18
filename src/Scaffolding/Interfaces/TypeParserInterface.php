@@ -2,7 +2,7 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Interfaces;
 
-use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
+use SilverStripe\GraphQL\Schema\Components\AbstractType;
 
 /**
  * Defines the interface used for services that create GraphQL types
@@ -16,7 +16,7 @@ interface TypeParserInterface
     public function getName();
 
     /**
-     * @return TypeAbstraction
+     * @return \SilverStripe\GraphQL\Schema\Components\AbstractType
      */
     public function getType();
 }

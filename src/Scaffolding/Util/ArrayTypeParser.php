@@ -4,8 +4,8 @@ namespace SilverStripe\GraphQL\Scaffolding\Util;
 
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
-use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\FieldCollection;
 use SilverStripe\ORM\ArrayLib;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
@@ -64,7 +64,7 @@ class ArrayTypeParser implements TypeParserInterface
     {
         $fields = [];
         foreach ($this->fields as $field => $type) {
-            $fields[] = new FieldAbstraction(
+            $fields[] = new Field(
                 $field,
                 Injector::inst()->createWithArgs(
                     TypeParserInterface::class . '.string',
@@ -73,7 +73,7 @@ class ArrayTypeParser implements TypeParserInterface
             );
         }
 
-        return new ObjectTypeAbstraction(
+        return new FieldCollection(
             $this->name,
             null,
             $fields

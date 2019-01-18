@@ -5,7 +5,6 @@ namespace SilverStripe\GraphQL\Scaffolding\Extensions;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser;
-use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;

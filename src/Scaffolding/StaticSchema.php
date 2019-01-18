@@ -9,7 +9,7 @@ use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
-use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
+use SilverStripe\GraphQL\Schema\Components\AbstractType;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\ViewableData;
@@ -223,7 +223,7 @@ class StaticSchema
      * @param string $class
      * @param Manager $manager
      * @param int $mode
-     * @return TypeAbstraction
+     * @return \SilverStripe\GraphQL\Schema\Components\AbstractType
      */
     public function fetchFromManager($class, Manager $manager, $mode = self::PREFER_UNION)
     {

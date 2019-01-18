@@ -13,7 +13,7 @@ use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
-use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\View\ViewableData;
 use Psr\Container\NotFoundExceptionInterface;

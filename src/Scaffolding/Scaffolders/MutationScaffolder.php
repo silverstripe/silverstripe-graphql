@@ -2,7 +2,6 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
@@ -10,10 +9,10 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
-use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
-use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\TypeReference;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\AbstractType;
+use SilverStripe\GraphQL\Schema\Components\TypeReference;
 
 /**
  * Scaffolds a GraphQL mutation field.
@@ -50,11 +49,11 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
 
     /**
      * @param Manager $manager
-     * @return FieldAbstraction
+     * @return Field
      */
     public function scaffold(Manager $manager)
     {
-        return FieldAbstraction::create(
+        return Field::create(
             $this->getName(),
             TypeReference::create($this->getType($manager)->getName()),
             $this->createResolverAbstraction(),
@@ -71,7 +70,7 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
      * Get the type from Manager
      *
      * @param Manager $manager
-     * @return TypeAbstraction
+     * @return AbstractType
      */
     protected function getType(Manager $manager)
     {

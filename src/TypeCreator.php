@@ -7,12 +7,12 @@ use GraphQL\Type\Definition\Type;
 use LogicException;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\ObjectType;
-use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\InputTypeAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\StaticResolverAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\Input;
+use SilverStripe\GraphQL\Schema\Components\FieldCollection;
+use SilverStripe\GraphQL\Schema\Components\AbstractFunction;
+use SilverStripe\GraphQL\Schema\Components\StaticFunction;
+use SilverStripe\GraphQL\Schema\Components\AbstractType;
 
 /**
  * Represents a GraphQL type in a way that allows customization through
@@ -91,7 +91,7 @@ class TypeCreator
 
         foreach ($fields as $key => $field) {
             $name = null;
-            if ($field instanceof FieldAbstraction) {
+            if ($field instanceof Field) {
                 $name = $field->getName();
             } else if (is_numeric($key)) {
                 if (is_array($field) && isset($field['name'])) {
@@ -99,7 +99,7 @@ class TypeCreator
                 } else {
                     throw new LogicException(sprintf(
                         'Enumerated lists of fields must be instances of %s or an array that contains a "name" key',
-                        FieldAbstraction::class
+                        Field::class
                     ));
                 }
             } else {
@@ -142,19 +142,19 @@ class TypeCreator
     /**
      * Build the constructed type backing this object.
      *
-     * @return TypeAbstraction
+     * @return \SilverStripe\GraphQL\Schema\Components\AbstractType
      */
     public function toType()
     {
         if ($this->isInputObject()) {
-            return new InputTypeAbstraction(
+            return new Input(
                 $this->getName(),
                 $this->getDescription(),
                 $this->getFields()
             );
         }
 
-        return new ObjectTypeAbstraction(
+        return new FieldCollection(
             $this->getName(),
             $this->getDescription(),
             $this->getFields(),
@@ -206,10 +206,10 @@ class TypeCreator
      * or resolveField().
      *
      * @param string $name Name of the field
-     * @param FieldAbstraction $field Field array specification
-     * @return ResolverAbstraction
+     * @param Field $field Field array specification
+     * @return \SilverStripe\GraphQL\Schema\Components\AbstractFunction
      */
-    protected function getFieldResolver($name, FieldAbstraction $field)
+    protected function getFieldResolver($name, Field $field)
     {
         // Preconfigured method
         if ($field->getResolver()) {
@@ -222,7 +222,7 @@ class TypeCreator
         foreach ($candidateMethods as $resolveMethod) {
             $callable = [static::class, $resolveMethod];
             if (is_callable($callable)) {
-                return new StaticResolverAbstraction($callable);
+                return new StaticFunction($callable);
             }
         }
 

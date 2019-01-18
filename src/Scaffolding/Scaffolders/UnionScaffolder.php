@@ -2,15 +2,14 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
-use GraphQL\Type\Definition\UnionType;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Resolvers\UnionResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
-use SilverStripe\GraphQL\Storage\Encode\UnionTypeFactory;
+use SilverStripe\GraphQL\Schema\Encoding\Factories\UnionTypeFactory;
 use Psr\Container\NotFoundExceptionInterface;
-use SilverStripe\GraphQL\TypeAbstractions\RegistryResolverAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\UnionTypeAbstraction;
+use SilverStripe\GraphQL\Schema\Components\RegistryFunction;
+use SilverStripe\GraphQL\Schema\Components\Union;
 
 class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
 {
@@ -75,17 +74,17 @@ class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
 
     /**
      * @param Manager $manager
-     * @return UnionTypeAbstraction
+     * @return Union
      * @throws NotFoundExceptionInterface
      */
     public function scaffold(Manager $manager)
     {
-        return new UnionTypeAbstraction(
+        return new Union(
             $this->name,
-            new RegistryResolverAbstraction(
+            new RegistryFunction(
                 new UnionTypeFactory(['types' => $this->types])
             ),
-            new RegistryResolverAbstraction(
+            new RegistryFunction(
                 new UnionResolverFactory()
             )
         );

@@ -2,11 +2,9 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
-use GraphQL\Type\Definition\Type;
-use GraphQL\Type\Definition\ObjectType;
-use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\InternalType;
-use SilverStripe\GraphQL\TypeAbstractions\ObjectTypeAbstraction;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\InternalType;
+use SilverStripe\GraphQL\Schema\Components\FieldCollection;
 use SilverStripe\GraphQL\TypeCreator;
 
 /**
@@ -17,7 +15,7 @@ class PageInfoTypeCreator extends TypeCreator
     /**
      * Cached type
      *
-     * @var ObjectTypeAbstraction
+     * @var FieldCollection
      */
     protected $type;
 
@@ -29,6 +27,9 @@ class PageInfoTypeCreator extends TypeCreator
         return $this->type;
     }
 
+    /**
+     * @return array
+     */
     public function attributes()
     {
         return [
@@ -38,18 +39,21 @@ class PageInfoTypeCreator extends TypeCreator
         ];
     }
 
+    /**
+     * @return array
+     */
     public function fields()
     {
         return [
-            FieldAbstraction::create(
+            Field::create(
                 'totalCount',
                 InternalType::int()->setRequired(true)
             ),
-            FieldAbstraction::create(
+            Field::create(
                 'hasNextPage',
                 InternalType::boolean()->setRequired(true)
             ),
-            FieldAbstraction::create(
+            Field::create(
                 'hasPreviousPage',
                 InternalType::boolean()->setRequired(true)
             ),

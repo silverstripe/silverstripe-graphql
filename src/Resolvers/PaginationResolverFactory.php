@@ -3,16 +3,10 @@
 namespace SilverStripe\GraphQL\Resolvers;
 
 use GraphQL\Type\Definition\ResolveInfo;
-use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Pagination\Connection;
-use SilverStripe\GraphQL\Storage\Encode\ClosureFactory;
+use SilverStripe\GraphQL\Schema\Encoding\Factories\ClosureFactory;
 use Closure;
 use InvalidArgumentException;
-use SilverStripe\GraphQL\Serialisation\CodeGen\CodeGenerator;
-use SilverStripe\GraphQL\Storage\Encode\ClosureFactoryInterface;
-use SilverStripe\GraphQL\Storage\Encode\Helpers;
-use SilverStripe\GraphQL\Storage\Encode\TypeRegistryInterface;
-use SilverStripe\GraphQL\TypeAbstractions\ResolverAbstraction;
 use SilverStripe\ORM\SS_List;
 use Exception;
 
@@ -51,9 +45,8 @@ class PaginationResolverFactory extends ClosureFactory
     {
         return function ($obj, array $args, $context, ResolveInfo $info) {
             $func = null;
-            /* @var ResolverAbstraction $resolver */
-            $resolver = $this->config['parentResolver'];
-            $func = $resolver->export()->createClosure();
+            /* @var \SilverStripe\GraphQL\Schema\Components\AbstractFunction $resolver */
+            $func = $this->context['parentResolver'];
             $list = call_user_func_array($func, func_get_args());
             if (!$list instanceof SS_List) {
                 throw new Exception('Connection::resolve() must resolve to a SS_List instance.');
@@ -61,23 +54,12 @@ class PaginationResolverFactory extends ClosureFactory
             $args = [
                 $list,
                 $args,
-                $this->config['defaultLimit'],
-                $this->config['maximumLimit'],
-                $this->config['sortableFields'],
+                $this->context['defaultLimit'],
+                $this->context['maximumLimit'],
+                $this->context['sortableFields'],
             ];
             return Connection::resolveList(...$args);
         };
-    }
-
-    protected function getContextExpression()
-    {
-        $context = $this->context;
-        if (isset($context['parentResolverFactory'])) {
-            $context['parentResolver'] = $context['parentResolverFactory']->getExpression();
-            unset($context['parentResolverFactory']);
-        }
-
-        return Helpers::normaliseValue($context);
     }
 
 }

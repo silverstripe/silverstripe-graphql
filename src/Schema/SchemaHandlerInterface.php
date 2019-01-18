@@ -4,20 +4,20 @@
 namespace SilverStripe\GraphQL\Schema;
 
 
-use SilverStripe\GraphQL\TypeAbstractions\FieldAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\SchemaAbstraction;
-use SilverStripe\GraphQL\TypeAbstractions\TypeAbstraction;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\Schema;
+use SilverStripe\GraphQL\Schema\Components\AbstractType;
 
 interface SchemaHandlerInterface
 {
     /**
-     * @param SchemaAbstraction $schema
+     * @param Schema $schema
      * @param $query
      * @param null $rootValue
      * @param null $context
      * @param null $params
      * @return QueryResultInterface
      */
-    public function query(SchemaAbstraction $schema, $query, $rootValue = null, $context = null, $params = null);
+    public function query(Schema $schema, $query, $rootValue = null, $context = null, $params = null);
 
 }

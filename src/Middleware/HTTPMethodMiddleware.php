@@ -2,14 +2,13 @@
 
 namespace SilverStripe\GraphQL\Middleware;
 
-use GraphQL\Type\Schema;
 use Exception;
-use SilverStripe\GraphQL\TypeAbstractions\SchemaAbstraction;
+use SilverStripe\GraphQL\Schema\Components\Schema;
 
 class HTTPMethodMiddleware implements QueryMiddleware
 {
     /**
-     * @param SchemaAbstraction $schema
+     * @param Schema $schema
      * @param string $query
      * @param array $context
      * @param array $params
@@ -17,7 +16,7 @@ class HTTPMethodMiddleware implements QueryMiddleware
      * @return array|\GraphQL\Executor\ExecutionResult
      * @throws Exception
      */
-    public function process(SchemaAbstraction $schema, $query, $context, $params, callable $next)
+    public function process(Schema $schema, $query, $context, $params, callable $next)
     {
         $isGET = false;
         $isPOST = false;
