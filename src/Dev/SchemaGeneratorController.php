@@ -80,5 +80,4 @@ class SchemaGeneratorController extends Controller
 
         echo sprintf('Schema "%s" rebuilt in %s seconds to %s', $schemaKey, number_format($diff, 2), $path);
     }
-
 }

@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Components;
 
-
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface;
 use Closure;
 
@@ -41,5 +40,4 @@ class DynamicResolver extends AbstractFunction
     {
         return $this->factory;
     }
-
 }

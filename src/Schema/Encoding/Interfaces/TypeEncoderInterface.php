@@ -12,6 +12,4 @@ interface TypeEncoderInterface extends TypeExpressionProvider
      * @return bool
      */
     public function appliesTo(AbstractType $type);
-
-
 }

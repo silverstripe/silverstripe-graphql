@@ -229,7 +229,5 @@ class SchemaEncoder implements TypeRegistryEncoderInterface
 
             yield $name => $expr;
         }
-
     }
-
 }

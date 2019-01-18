@@ -48,5 +48,4 @@ class ReadOne extends ItemQueryScaffolder implements CRUDInterface
             )
         ];
     }
-
 }

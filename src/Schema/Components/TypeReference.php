@@ -93,5 +93,4 @@ class TypeReference extends AbstractType
             'name' => $this->getName(),
         ];
     }
-
 }

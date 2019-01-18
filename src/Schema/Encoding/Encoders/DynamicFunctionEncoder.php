@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Encoding\Encoders;
 
-
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Name;
@@ -50,6 +49,5 @@ class DynamicFunctionEncoder implements ResolverEncoderInterface
             ),
             new Name('createClosure')
         );
-
     }
 }

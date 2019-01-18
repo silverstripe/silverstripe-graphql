@@ -16,5 +16,4 @@ interface QueryResultInterface
      * @return Exception[]
      */
     public function getErrors();
-
 }

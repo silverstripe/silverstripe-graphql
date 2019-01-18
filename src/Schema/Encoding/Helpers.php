@@ -26,13 +26,13 @@ class Helpers
     {
         if ($value instanceof Expr) {
             return $value;
-        } else if ($value instanceof ExpressionProvider) {
+        } elseif ($value instanceof ExpressionProvider) {
             return $value->getExpression();
-        } else if (is_null($value)) {
+        } elseif (is_null($value)) {
             return new Expr\ConstFetch(
                 new Name('null')
             );
-        } else if (is_bool($value)) {
+        } elseif (is_bool($value)) {
             return new Expr\ConstFetch(
                 new Name($value ? 'true' : 'false')
             );
@@ -61,7 +61,7 @@ class Helpers
             }
 
             return new Expr\Array_($items);
-        }else {
+        } else {
             throw new \LogicException('Invalid value');
         }
     }
@@ -110,5 +110,4 @@ class Helpers
     {
         return new Array_(static::buildArrayItems($data, $omittedKeys, $removeNull));
     }
-
 }

@@ -114,7 +114,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
 
         if ($resolver instanceof ClosureFactoryInterface) {
             $this->setResolverFactory($resolver);
-        } else if ($resolver) {
+        } elseif ($resolver) {
             $this->setResolver($resolver);
         }
     }

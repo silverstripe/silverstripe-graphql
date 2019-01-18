@@ -29,5 +29,4 @@ abstract class CRUDResolverFactory extends ClosureFactory
         $this->setDataObjectClass($context['dataObjectClass']);
         parent::__construct($context);
     }
-
 }

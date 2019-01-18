@@ -115,7 +115,6 @@ class ObjectTypeEncoder implements TypeEncoderInterface
             }
 
             return new ArrayItem(new Array_($fieldItems));
-
         }, $fields);
 
         return new ClosureExpression([
@@ -124,5 +123,4 @@ class ObjectTypeEncoder implements TypeEncoderInterface
             ]
         ]);
     }
-    
 }

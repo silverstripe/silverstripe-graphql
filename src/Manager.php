@@ -225,7 +225,6 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
                 foreach ($mutationCreator->extraTypes() as $type) {
                     $this->addType($type);
                 }
-
             }
         }
 

@@ -77,5 +77,4 @@ class InternalType
     {
         return in_array($type, self::getAll());
     }
-
 }

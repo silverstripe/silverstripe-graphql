@@ -123,7 +123,7 @@ class FieldCreator
      * @return \SilverStripe\GraphQL\Schema\Components\Field
      */
     public function toField()
-    {   
+    {
         return Field::create(
             $this->name,
             $this->type(),

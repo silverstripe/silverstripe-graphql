@@ -68,7 +68,6 @@ class Controller extends BaseController implements Flushable
     {
         parent::__construct();
         $this->manager = $manager;
-
     }
 
     /**

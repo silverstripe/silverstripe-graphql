@@ -119,5 +119,4 @@ class Update extends MutationScaffolder implements CRUDInterface
     {
         return $this->getTypeName() . 'UpdateInputType';
     }
-
 }

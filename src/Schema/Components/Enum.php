@@ -11,7 +11,7 @@ class Enum extends AbstractType
     protected $description = null;
 
     /**
-     * @var array 
+     * @var array
      */
     protected $values = [];
 

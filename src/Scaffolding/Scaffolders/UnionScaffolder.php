@@ -98,5 +98,4 @@ class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
     {
         $manager->addType($this->scaffold($manager));
     }
-
 }

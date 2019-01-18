@@ -18,6 +18,4 @@ interface ResolverEncoderInterface
      * @return Expr
      */
     public function getExpression(AbstractFunction $resolver);
-
-
 }

@@ -9,6 +9,7 @@ use SilverStripe\GraphQL\Schema\Components\Input;
 use SilverStripe\GraphQL\Schema\Components\TypeReference;
 use SilverStripe\GraphQL\TypeCreator;
 use Psr\Container\NotFoundExceptionInterface;
+
 /**
  * Type creator for an enum value for a list of possible sortable fields
  *

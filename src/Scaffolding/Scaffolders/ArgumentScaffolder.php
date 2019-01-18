@@ -150,5 +150,4 @@ class ArgumentScaffolder implements ConfigurationApplier, ScaffolderInterface
 
         return $arg;
     }
-    
 }

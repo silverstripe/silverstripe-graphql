@@ -111,5 +111,4 @@ class Create extends MutationScaffolder implements CRUDInterface
     {
         return $this->getTypeName() . 'CreateInputType';
     }
-
 }

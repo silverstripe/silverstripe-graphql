@@ -24,7 +24,6 @@ class EnumTypeEncoder implements TypeEncoderInterface
         );
 
         return new New_(new FullyQualified(EnumType::class), [new Array_($items)]);
-
     }
 
     /**
@@ -35,5 +34,4 @@ class EnumTypeEncoder implements TypeEncoderInterface
     {
         return $type instanceof Enum;
     }
-
 }

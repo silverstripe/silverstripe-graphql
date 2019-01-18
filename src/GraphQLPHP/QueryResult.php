@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\GraphQLPHP;
 
-
 use GraphQL\Executor\ExecutionResult;
 use SilverStripe\GraphQL\Schema\QueryResultInterface;
 use Exception;

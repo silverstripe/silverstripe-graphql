@@ -20,6 +20,5 @@ class FieldAccessorResolver implements StaticResolverInterface
             return $field->getValue();
         }
         return $field;
-
     }
 }

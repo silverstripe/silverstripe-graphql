@@ -17,5 +17,4 @@ interface StaticResolverInterface
      * @return mixed
      */
     public static function resolve($object, array $args, $context, ResolveInfo $info);
-
 }

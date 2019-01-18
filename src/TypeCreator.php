@@ -93,7 +93,7 @@ class TypeCreator
             $name = null;
             if ($field instanceof Field) {
                 $name = $field->getName();
-            } else if (is_numeric($key)) {
+            } elseif (is_numeric($key)) {
                 if (is_array($field) && isset($field['name'])) {
                     $name = $field['name'];
                 } else {

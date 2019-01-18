@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Components;
 
-
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
@@ -78,12 +77,13 @@ class Field implements ConfigurationApplier
      * @param AbstractFunction $resolver
      * @param array $args
      */
-    public function __construct($name, $type, AbstractFunction $resolver = null, $args = []) {
+    public function __construct($name, $type, AbstractFunction $resolver = null, $args = [])
+    {
         if ($type instanceof TypeReference) {
             $ref = $type;
-        } else if ($type instanceof AbstractType) {
+        } elseif ($type instanceof AbstractType) {
             $ref = TypeReference::create($type->getName());
-        } else if ($type instanceof Type) {
+        } elseif ($type instanceof Type) {
             // Deprecated. @todo convert graphql type
             $ref = TypeReference::create((string)$type);
         } else {

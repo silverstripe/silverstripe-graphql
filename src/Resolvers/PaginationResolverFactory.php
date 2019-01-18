@@ -61,5 +61,4 @@ class PaginationResolverFactory extends ClosureFactory
             return Connection::resolveList(...$args);
         };
     }
-
 }

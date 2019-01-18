@@ -39,5 +39,4 @@ class SortDirectionTypeCreator extends TypeCreator
         }
         return $this->type;
     }
-    
 }

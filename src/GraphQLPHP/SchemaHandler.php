@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\GraphQLPHP;
 
-
 use GraphQL\GraphQL;
 use GraphQL\Type\SchemaConfig;
 use GraphQL\Type\Schema as GraphQLPHPSchema;
@@ -37,5 +36,4 @@ class SchemaHandler implements SchemaHandlerInterface
 
         return new QueryResult($result);
     }
-    
 }

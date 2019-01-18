@@ -355,7 +355,6 @@ class Connection implements OperationResolver
                     )->setDescription('The node at the end of the collections edge')
                 ]
             );
-
         }
 
         return $this->edgeType;
@@ -495,5 +494,4 @@ class Connection implements OperationResolver
             $this->getPageInfoType(),
         ];
     }
-
 }

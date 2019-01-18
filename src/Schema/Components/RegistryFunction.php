@@ -39,5 +39,4 @@ class RegistryFunction extends AbstractFunction
     {
         return $this->factory;
     }
-
 }

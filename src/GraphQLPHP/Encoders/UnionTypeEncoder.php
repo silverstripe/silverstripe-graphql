@@ -34,7 +34,7 @@ class UnionTypeEncoder implements TypeEncoderInterface
      * @return \PhpParser\Node\Expr|New_
      */
     public function getExpression(AbstractType $type)
-    {   
+    {
         /* @var Union $type */
         $items = Helpers::buildArrayItems(
             $type->toArray(),
@@ -73,5 +73,4 @@ class UnionTypeEncoder implements TypeEncoderInterface
     {
         return $type instanceof Union;
     }
-
 }

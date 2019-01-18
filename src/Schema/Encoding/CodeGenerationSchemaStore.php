@@ -62,7 +62,6 @@ class CodeGenerationSchemaStore implements SchemaStorageInterface
         return new Schema(
             $this->getEncoder()->getRegistry()
         );
-        
     }
 
     /**
@@ -96,5 +95,4 @@ class CodeGenerationSchemaStore implements SchemaStorageInterface
 
         return $type;
     }
-
 }

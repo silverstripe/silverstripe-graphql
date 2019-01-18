@@ -21,7 +21,7 @@ class Argument
     protected $type;
 
     /**
-     * @var null 
+     * @var null
      */
     protected $defaultValue = null;
 
@@ -124,5 +124,4 @@ class Argument
             'defaultValue' => $this->getDefaultValue(),
         ];
     }
-    
 }

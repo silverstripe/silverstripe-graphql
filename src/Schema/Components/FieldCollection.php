@@ -20,7 +20,7 @@ class FieldCollection extends AbstractType
     protected $fields = [];
 
     /**
-     * @var array 
+     * @var array
      */
     protected $interfaces = [];
 
@@ -140,5 +140,4 @@ class FieldCollection extends AbstractType
             'interfaces' => $this->getInterfaces(),
         ];
     }
-
 }

@@ -13,5 +13,4 @@ interface TypeExpressionProvider
      * @return Expr
      */
     public function getExpression(AbstractType $type);
-
 }

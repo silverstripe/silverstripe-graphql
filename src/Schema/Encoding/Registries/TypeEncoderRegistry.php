@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Encoding\Registries;
 
-
 use SilverStripe\GraphQL\Schema\Components\AbstractType;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface;

@@ -47,5 +47,4 @@ class StaticFunction extends AbstractFunction
 
         return $this;
     }
-
 }

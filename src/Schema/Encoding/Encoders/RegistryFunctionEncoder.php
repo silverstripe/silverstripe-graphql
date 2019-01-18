@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Encoding\Encoders;
 
-
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\Variable;
@@ -55,6 +54,5 @@ class RegistryFunctionEncoder implements ResolverEncoderInterface
                 new Variable('this')
             ]
         );
-
     }
 }

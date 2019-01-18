@@ -36,5 +36,4 @@ trait FactoryContext
     {
         return Helpers::normaliseValue($this->context);
     }
-
 }
