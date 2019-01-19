@@ -6,13 +6,14 @@ namespace SilverStripe\GraphQL\Schema\Encoding\Encoders;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Name;
+use SilverStripe\GraphQL\Schema\Components\StaticFunction;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface;
 use SilverStripe\GraphQL\Schema\Encoding\Helpers;
-use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderInterface;
-use SilverStripe\GraphQL\Schema\Components\DynamicResolver;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\FunctionEncoderInterface;
+use SilverStripe\GraphQL\Schema\Components\DynamicFunction;
 use SilverStripe\GraphQL\Schema\Components\AbstractFunction;
 
-class DynamicFunctionEncoder implements ResolverEncoderInterface
+class DynamicFunctionEncoder implements FunctionEncoderInterface
 {
     /**
      * @param AbstractFunction $resolver
@@ -20,7 +21,7 @@ class DynamicFunctionEncoder implements ResolverEncoderInterface
      */
     public function appliesTo(AbstractFunction $resolver)
     {
-        return $resolver instanceof DynamicResolver;
+        return $resolver instanceof DynamicFunction;
     }
 
     /**
@@ -29,13 +30,15 @@ class DynamicFunctionEncoder implements ResolverEncoderInterface
      */
     public function getExpression(AbstractFunction $resolver)
     {
-        /* @var \SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface $factory */
+        /* @var ClosureFactoryInterface $factory */
         $factory = $resolver->export();
         $context = $factory->getContext();
         $exprArray = [];
         foreach ($context as $key => $val) {
-            if ($val instanceof AbstractFunction) {
+            if ($val instanceof DynamicFunction) {
                 $exprArray[$key] = $this->getExpression($val);
+            } elseif ($val instanceof StaticFunction) {
+                $exprArray[$key] = $val->export();
             } else {
                 $exprArray[$key] = $val;
             }

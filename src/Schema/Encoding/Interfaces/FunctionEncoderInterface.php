@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Schema\Encoding\Interfaces;
 use PhpParser\Node\Expr;
 use SilverStripe\GraphQL\Schema\Components\AbstractFunction;
 
-interface ResolverEncoderInterface
+interface FunctionEncoderInterface
 {
     /**
      * @param AbstractFunction $resolver

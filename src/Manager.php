@@ -64,17 +64,17 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     /**
      * Map of named {@link Type}
      *
-     * @var Type[]
+     * @var AbstractType[]
      */
     protected $types = [];
 
     /**
-     * @var array Map of named arrays
+     * @var Field[]
      */
     protected $queries = [];
 
     /**
-     * @var array Map of named arrays
+     * @var Field[]
      */
     protected $mutations = [];
 
@@ -165,7 +165,6 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     /**
      * @param array $config An array with optional 'types' and 'queries' keys
      * @return Manager
-     * @throws NotFoundExceptionInterface
      */
     public function applyConfig(array $config)
     {
@@ -403,7 +402,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * Register a new mutation. Mutations can be callbacks to ensure
      * dependent types are lazy-loaded.
      *
-     * @param \SilverStripe\GraphQL\Schema\Components\Field
+     * @param Field $mutation
      * @param string $name Identifier for this mutation (unique in schema)
      */
     public function addMutation(Field $mutation, $name)
@@ -415,7 +414,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * Get a mutation by name
      *
      * @param string $name
-     * @return \SilverStripe\GraphQL\Schema\Components\Field
+     * @return Field
      */
     public function getMutation($name)
     {
@@ -442,7 +441,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     }
 
     /**
-     * @param \SilverStripe\GraphQL\Schema\Storage\SchemaStorageInterface $store
+     * @param SchemaStorageInterface $store
      * @return $this
      */
     public function setSchemaStore(SchemaStorageInterface $store)
@@ -453,7 +452,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     }
 
     /**
-     * @return \SilverStripe\GraphQL\Schema\Storage\SchemaStorageInterface
+     * @return SchemaStorageInterface
      */
     public function getSchemaStore()
     {
@@ -609,7 +608,7 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
      * @param QueryResultInterface $executionResult
      * @return array
      */
-    public function serialiseResult($executionResult)
+    public function serialiseResult(QueryResultInterface $executionResult)
     {
         // Format object
         if (!empty($executionResult->getErrors())) {

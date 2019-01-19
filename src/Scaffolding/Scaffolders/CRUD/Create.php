@@ -28,7 +28,9 @@ class Create extends MutationScaffolder implements CRUDInterface
     public function __construct($dataObjectClass)
     {
         parent::__construct(null, null, null, $dataObjectClass);
-        $this->setResolverFactory(CreateResolverFactory::create(['dataObjectClass' => $this->getDataObjectClass()]));
+        $this->setResolverFactory(CreateResolverFactory::create([
+            'dataObjectClass' => $this->getDataObjectClass()
+        ]));
     }
 
     /**

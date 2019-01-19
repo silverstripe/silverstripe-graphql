@@ -5,19 +5,19 @@ namespace SilverStripe\GraphQL\Schema\Encoding\Registries;
 
 use SilverStripe\GraphQL\Schema\Components\AbstractFunction;
 use InvalidArgumentException;
-use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderInterface;
-use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderRegistryInterface;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\FunctionEncoderInterface;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\FunctionEncoderRegistryInterface;
 
-class ResolverEncoderRegistry implements ResolverEncoderRegistryInterface
+class ResolverEncoderRegistry implements FunctionEncoderRegistryInterface
 {
     /**
-     * @var ResolverEncoderInterface[]
+     * @var FunctionEncoderInterface[]
      */
     protected $encoders = [];
 
     /**
      * ResolverEncoderRegistry constructor.
-     * @param ResolverEncoderInterface[] ...$encoders
+     * @param FunctionEncoderInterface[] ...$encoders
      */
     public function __construct(...$encoders)
     {
@@ -26,7 +26,7 @@ class ResolverEncoderRegistry implements ResolverEncoderRegistryInterface
 
     /**
      * @param AbstractFunction $resolver
-     * @return ResolverEncoderInterface
+     * @return FunctionEncoderInterface
      */
     public function getEncoderForResolver(AbstractFunction $resolver)
     {
@@ -43,16 +43,16 @@ class ResolverEncoderRegistry implements ResolverEncoderRegistryInterface
     }
 
     /**
-     * @param ResolverEncoderInterface[] $encoders
+     * @param FunctionEncoderInterface[] $encoders
      */
     public function setEncoders(array $encoders)
     {
         foreach ($encoders as $encoder) {
-            if (!$encoder instanceof ResolverEncoderInterface) {
+            if (!$encoder instanceof FunctionEncoderInterface) {
                 throw new InvalidArgumentException(sprintf(
                     '%s must be composed with only %s instances',
                     __CLASS__,
-                    ResolverEncoderInterface::class
+                    FunctionEncoderInterface::class
                 ));
             }
         }

@@ -7,9 +7,9 @@ use PhpParser\Node\Expr;
 use SilverStripe\GraphQL\Schema\Components\AbstractFunction;
 use SilverStripe\GraphQL\Schema\Components\StaticFunction;
 use SilverStripe\GraphQL\Schema\Encoding\Helpers;
-use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderInterface;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\FunctionEncoderInterface;
 
-class StaticFunctionEncoder implements ResolverEncoderInterface
+class StaticFunctionEncoder implements FunctionEncoderInterface
 {
     /**
      * @param AbstractFunction $resolver

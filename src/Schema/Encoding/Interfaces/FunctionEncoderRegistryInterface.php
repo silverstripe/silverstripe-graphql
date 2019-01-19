@@ -4,13 +4,13 @@
 namespace SilverStripe\GraphQL\Schema\Encoding\Interfaces;
 
 use SilverStripe\GraphQL\Schema\Components\AbstractFunction;
-use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderInterface;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\FunctionEncoderInterface;
 
-interface ResolverEncoderRegistryInterface
+interface FunctionEncoderRegistryInterface
 {
     /**
      * @param AbstractFunction $resolver
-     * @return ResolverEncoderInterface
+     * @return FunctionEncoderInterface
      */
     public function getEncoderForResolver(AbstractFunction $resolver);
 }

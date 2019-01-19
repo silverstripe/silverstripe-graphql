@@ -152,7 +152,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
      *
      * @param  string                     $name
      * @param  string                     $class
-     * @param  callable|OperationResolver|ClosureFactoryInterface $resolver
+     * @param  ClosureFactoryInterface $resolver
      * @return QueryScaffolder|ListQueryScaffolder
      */
     public function query($name, $class, $resolver = null)
@@ -178,7 +178,7 @@ class SchemaScaffolder implements ManagerMutatorInterface
      *
      * @param  string                     $name
      * @param  string                     $class
-     * @param  callable|OperationResolver|ClosureFactoryInterface $resolver
+     * @param  ClosureFactoryInterface $resolver
      * @return bool|MutationScaffolder
      */
     public function mutation($name, $class, $resolver = null)

@@ -29,7 +29,9 @@ class Update extends MutationScaffolder implements CRUDInterface
     public function __construct($dataObjectClass)
     {
         parent::__construct(null, null, null, $dataObjectClass);
-        $this->setResolverFactory(UpdateResolverFactory::create(['dataObjectClass' => $this->getDataObjectClass()]));
+        $this->setResolverFactory(UpdateResolverFactory::create([
+            'dataObjectClass' => $this->getDataObjectClass()
+        ]));
     }
 
     /**

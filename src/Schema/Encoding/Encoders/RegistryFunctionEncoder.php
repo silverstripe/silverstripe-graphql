@@ -10,10 +10,10 @@ use PhpParser\Node\Name;
 use SilverStripe\GraphQL\Schema\Components\RegistryFunction;
 use SilverStripe\GraphQL\Schema\Components\AbstractFunction;
 use SilverStripe\GraphQL\Schema\Encoding\Helpers;
-use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderInterface;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\FunctionEncoderInterface;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface;
 
-class RegistryFunctionEncoder implements ResolverEncoderInterface
+class RegistryFunctionEncoder implements FunctionEncoderInterface
 {
     /**
      * @param AbstractFunction $resolver

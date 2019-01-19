@@ -10,7 +10,7 @@ use SilverStripe\GraphQL\Resolvers\PaginationResolverFactory;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffolderInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use SilverStripe\GraphQL\Schema\Components\DynamicResolver;
+use SilverStripe\GraphQL\Schema\Components\DynamicFunction;
 use SilverStripe\GraphQL\Schema\Components\Field;
 use SilverStripe\GraphQL\Schema\Components\TypeReference;
 
@@ -80,7 +80,7 @@ class PaginationScaffolder extends PaginatedQueryCreator implements ManagerMutat
         return Field::create(
             $this->operationName,
             TypeReference::create($connectionName),
-            new DynamicResolver($factory),
+            new DynamicFunction($factory),
             $conn->args()
         );
     }

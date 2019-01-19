@@ -6,7 +6,7 @@ namespace SilverStripe\GraphQL\Schema\Components;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface;
 use Closure;
 
-class DynamicResolver extends AbstractFunction
+class DynamicFunction extends AbstractFunction
 {
     /**
      * @var ClosureFactoryInterface
@@ -14,7 +14,7 @@ class DynamicResolver extends AbstractFunction
     protected $factory;
 
     /**
-     * DynamicResolver constructor.
+     * DynamicFunction constructor.
      * @param \SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface $factory
      */
     public function __construct(ClosureFactoryInterface $factory)

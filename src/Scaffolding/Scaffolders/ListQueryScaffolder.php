@@ -8,6 +8,7 @@ use SilverStripe\GraphQL\Pagination\Connection;
 use Psr\Container\NotFoundExceptionInterface;
 use Exception;
 use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\LazyTypeReference;
 use SilverStripe\GraphQL\Schema\Components\TypeReference;
 
 /**
@@ -184,7 +185,9 @@ class ListQueryScaffolder extends QueryScaffolder
 
         return Field::create(
             $this->getName(),
-            TypeReference::create($this->getType($manager)->getName())
+            LazyTypeReference::create(function () use ($manager) {
+                return $this->getType($manager);
+            })
                 ->setList(true),
             $this->createResolverAbstraction(),
             $this->createArgs($manager)
@@ -200,7 +203,9 @@ class ListQueryScaffolder extends QueryScaffolder
     protected function createConnection(Manager $manager)
     {
         $conn = Connection::create($this->getName())
-            ->setConnectionType(TypeReference::create($this->getType($manager)->getName()))
+            ->setConnectionType(LazyTypeReference::create(function () use ($manager) {
+                return $this->getType($manager);
+            }))
             ->setConnectionResolver($this->createResolverAbstraction())
             ->setArgs($this->createArgs($manager))
             ->setSortableFields($this->getSortableFields())

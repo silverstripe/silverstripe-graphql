@@ -13,7 +13,7 @@ class RegistryFunction extends AbstractFunction
     protected $factory;
 
     /**
-     * DynamicResolver constructor.
+     * DynamicFunction constructor.
      * @param \SilverStripe\GraphQL\Schema\Encoding\Factories\RegistryAwareClosureFactory $factory
      */
     public function __construct(RegistryAwareClosureFactory $factory)

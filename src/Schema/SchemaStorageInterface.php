@@ -11,7 +11,7 @@ interface SchemaStorageInterface
     /**
      * @param AbstractType[] $types
      * @param Field[] $queries
-     * @param \SilverStripe\GraphQL\Schema\Components\Field[] $mutations
+     * @param Field[] $mutations
      * @return $this
      */
     public function persist(array $types, $queries = [], $mutations = []);

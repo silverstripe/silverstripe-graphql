@@ -17,8 +17,14 @@ class SortDirectionTypeCreator extends TypeCreator
      */
     protected $type;
 
+    /**
+     * @var bool
+     */
     protected $inputObject = true;
 
+    /**
+     * @return Enum
+     */
     public function toType()
     {
         if (!$this->type) {

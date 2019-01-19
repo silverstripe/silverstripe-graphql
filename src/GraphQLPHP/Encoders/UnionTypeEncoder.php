@@ -10,21 +10,21 @@ use PhpParser\Node\Name\FullyQualified;
 use SilverStripe\GraphQL\Schema\Components\AbstractType;
 use SilverStripe\GraphQL\Schema\Components\Union;
 use SilverStripe\GraphQL\Schema\Encoding\Helpers;
-use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderRegistryInterface;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\FunctionEncoderRegistryInterface;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface;
 
 class UnionTypeEncoder implements TypeEncoderInterface
 {
     /**
-     * @var ResolverEncoderRegistryInterface
+     * @var FunctionEncoderRegistryInterface
      */
     protected $encoderRegistry;
 
     /**
      * UnionTypeEncoder constructor.
-     * @param ResolverEncoderRegistryInterface $encoderRegistry
+     * @param FunctionEncoderRegistryInterface $encoderRegistry
      */
-    public function __construct(ResolverEncoderRegistryInterface $encoderRegistry)
+    public function __construct(FunctionEncoderRegistryInterface $encoderRegistry)
     {
         $this->encoderRegistry = $encoderRegistry;
     }

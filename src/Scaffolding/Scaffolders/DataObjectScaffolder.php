@@ -20,6 +20,7 @@ use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\GraphQL\Scaffolding\Util\OperationList;
 use SilverStripe\GraphQL\Schema\Components\Field;
 use SilverStripe\GraphQL\Schema\Components\FieldCollection;
+use SilverStripe\GraphQL\Schema\Components\LazyTypeReference;
 use SilverStripe\GraphQL\Schema\Components\StaticFunction;
 use SilverStripe\GraphQL\Schema\Components\TypeReference;
 use SilverStripe\ORM\ArrayLib;
@@ -711,9 +712,9 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             $description = $this->getFieldDescription($fieldName);
             $fieldMap[$fieldName] = Field::create(
                 $fieldName,
-                TypeReference::create(
-                    StaticSchema::inst()->fetchFromManager($className, $manager)
-                ),
+                LazyTypeReference::create(function () use ($className, $manager) {
+                    return StaticSchema::inst()->fetchFromManager($className, $manager);
+                }),
                 new StaticFunction([
                     FieldAccessorResolver::class,
                     'resolve'

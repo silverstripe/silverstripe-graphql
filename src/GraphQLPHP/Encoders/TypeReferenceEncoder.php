@@ -11,7 +11,7 @@ use SilverStripe\GraphQL\Schema\Components\TypeReference;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\NamedTypeFetcherInterface;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeExpressionProvider;
 
-class ReferentialTypeEncoder implements TypeExpressionProvider
+class TypeReferenceEncoder implements TypeExpressionProvider
 {
 
     /**
@@ -20,13 +20,13 @@ class ReferentialTypeEncoder implements TypeExpressionProvider
     protected $factory;
 
     /**
-     * @var \SilverStripe\GraphQL\Schema\Encoding\Interfaces\NamedTypeFetcherInterface
+     * @var NamedTypeFetcherInterface
      */
     protected $customTypeFetcher;
 
     /**
      * @param BuilderFactory $factory
-     * @param \SilverStripe\GraphQL\Schema\Encoding\Interfaces\NamedTypeFetcherInterface $customTypeFetcher
+     * @param NamedTypeFetcherInterface $customTypeFetcher
      */
     public function __construct(BuilderFactory $factory, NamedTypeFetcherInterface $customTypeFetcher)
     {

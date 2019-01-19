@@ -17,30 +17,31 @@ use SilverStripe\GraphQL\Schema\Components\Input;
 use SilverStripe\GraphQL\Schema\Components\FieldCollection;
 use SilverStripe\GraphQL\Schema\Components\AbstractType;
 use SilverStripe\GraphQL\Schema\Encoding\Helpers;
-use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderRegistryInterface;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\FunctionEncoderInterface;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\FunctionEncoderRegistryInterface;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeExpressionProvider;
 
 class ObjectTypeEncoder implements TypeEncoderInterface
 {
     /**
-     * @var \SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeExpressionProvider
+     * @var TypeExpressionProvider
      */
     protected $referentialTypeEncoder;
 
     /**
-     * @var ResolverEncoderRegistryInterface
+     * @var FunctionEncoderRegistryInterface
      */
     protected $encoderRegistry;
 
     /**
      * ObjectTypeEncoder constructor.
-     * @param \SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeExpressionProvider $referentialTypeEncoder
-     * @param \SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderRegistryInterface $encoderRegistry
+     * @param TypeExpressionProvider $referentialTypeEncoder
+     * @param FunctionEncoderRegistryInterface $encoderRegistry
      */
     public function __construct(
         TypeExpressionProvider $referentialTypeEncoder,
-        ResolverEncoderRegistryInterface $encoderRegistry
+        FunctionEncoderRegistryInterface $encoderRegistry
     ) {
         $this->referentialTypeEncoder = $referentialTypeEncoder;
         $this->encoderRegistry = $encoderRegistry;
@@ -89,7 +90,7 @@ class ObjectTypeEncoder implements TypeEncoderInterface
             );
             $resolverAbstract = $field->getResolver();
             if ($resolverAbstract) {
-                /* @var \SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderInterface $encoder */
+                /* @var FunctionEncoderInterface $encoder */
                 $encoder = $this->encoderRegistry->getEncoderForResolver($resolverAbstract);
                 $fieldItems[] = new ArrayItem(
                     $encoder->getExpression($resolverAbstract),
