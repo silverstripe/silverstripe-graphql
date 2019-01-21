@@ -22,7 +22,7 @@ class ReadOne extends ItemQueryScaffolder implements CRUDInterface
     public function __construct($dataObjectClass)
     {
         parent::__construct(null, null, null, $dataObjectClass);
-        $this->setResolverFactory(ReadOneResolverFactory::create([
+        $this->setResolver(ReadOneResolverFactory::create([
             'dataObjectClass' => $this->getDataObjectClass()
         ]));
     }

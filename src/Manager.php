@@ -10,8 +10,7 @@ use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Error\Error;
-use GraphQL\Type\Definition\Type;
-use SilverStripe\Dev\Deprecation;
+use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ExtensibleTypeRegistryInterface;
 use SilverStripe\GraphQL\Schema\QueryResultInterface;
 use SilverStripe\GraphQL\Schema\SchemaHandlerInterface;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryInterface;
@@ -37,7 +36,7 @@ use BadMethodCallException;
  *
  * Instantiate with {@see Manager::createFromConfig()} with a config array.
  */
-class Manager implements ConfigurationApplier, TypeRegistryInterface
+class Manager implements ConfigurationApplier, ExtensibleTypeRegistryInterface
 {
     use Injectable;
     use Extensible;
@@ -79,6 +78,11 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     protected $mutations = [];
 
     /**
+     * @var TypeRegistryInterface[]
+     */
+    protected $registryExtensions = [];
+
+    /**
      * @var callable
      */
     protected $errorFormatter = [self::class, 'formatError'];
@@ -116,22 +120,6 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     {
         $this->setSchemaKey($schemaKey);
         $this->setSchemaStore($schemaStore);
-    }
-
-    /**
-     * @param $config
-     * @param string $schemaKey
-     * @return Manager
-     * @throws NotFoundExceptionInterface
-     * @deprecated 4.0
-     */
-    public static function createFromConfig($config, $schemaKey = null)
-    {
-        Deprecation::notice('4.0', 'Use applyConfig() on a new instance instead');
-
-        $manager = new static($schemaKey);
-
-        return $manager->applyConfig($config);
     }
 
     /**
@@ -320,6 +308,13 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     public function queryAndReturnResult($query, $params = [])
     {
         $schemaAbstract = $this->getSchemaStore()->load();
+        $registry = $schemaAbstract->getTypeRegistry();
+        if ($registry instanceof ExtensibleTypeRegistryInterface) {
+            foreach ($this->registryExtensions as $extension) {
+                /* @var ExtensibleTypeRegistryInterface $registry */
+                $registry->addExtension($extension);
+            }
+        }
         $context = $this->getContext();
 
         $last = function ($schemaAbstract, $query, $context, $params) {
@@ -419,6 +414,30 @@ class Manager implements ConfigurationApplier, TypeRegistryInterface
     public function getMutation($name)
     {
         return $this->mutations[$name];
+    }
+
+    /**
+     * @param TypeRegistryInterface $registry
+     * @return $this
+     */
+    public function addExtension(TypeRegistryInterface $registry)
+    {
+        $this->extensions[get_class($registry)] = $registry;
+
+        return $this;
+    }
+
+    /**
+     * @param TypeRegistryInterface[] ...$extensions
+     * @return $this
+     */
+    public function setRegistryExtensions(...$extensions)
+    {
+        foreach ($extensions as $extension) {
+            $this->addExtension($extension);
+        }
+
+        return $this;
     }
 
     /**

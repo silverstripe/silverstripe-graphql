@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\GraphQLPHP;
+namespace SilverStripe\GraphQL\GraphQLPHP\Encoders;
 
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\Type;
@@ -17,6 +17,7 @@ use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Stmt\Return_;
 use PhpParser\PrettyPrinter\Standard;
+use SilverStripe\GraphQL\GraphQLPHP\BaseTypeRegistry;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderRegistryInterface;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryEncoderInterface;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryInterface;
@@ -97,78 +98,12 @@ class SchemaEncoder implements TypeRegistryEncoderInterface
         $use = $factory->use(Type::class);
         $class = $factory
             ->class($this->getRegistryClassName())
-            ->implement(TypeRegistryInterface::class)
-            ->makeFinal()
-            ->addStmt($factory->property('types')->makePrivate()->setDefault([]))
-            ->addStmt(
-                $factory->method('hasType')
-                    ->makePublic()
-                    ->addParam($factory->param('name'))
-                    ->setDocComment('/**
-                     * @param string $name
-                     * @return bool
-                     */')
-                    ->addStmt(
-                        new Return_(
-                            new FuncCall(
-                                new Name('method_exists'),
-                                [
-                                    new Variable('this'),
-                                    new Variable('name')
-                                ]
-                            )
-                        )
-                    )
-            )
-            ->addStmt(
-                $factory->method('getType')
-                    ->makePublic()
-                    ->addParam($factory->param('name'))
-                    ->setDocComment('/**
-                     * @param string $name
-                     * @return Type|null
-                     */')
-                    ->addStmt(
-                        new If_(
-                            new BooleanNot(
-                                new Isset_([
-                                    new ArrayDimFetch(
-                                        $factory->propertyFetch($factory->var('this'), 'types'),
-                                        $factory->var('name')
-                                    )
-                                ])
-                            ),
-                            [
-                                'stmts' => [
-                                    new Expression(
-                                        new Assign(
-                                            new ArrayDimFetch(
-                                                $factory->propertyFetch($factory->var('this'), 'types'),
-                                                $factory->var('name')
-                                            ),
-                                            new MethodCall(
-                                                $factory->var('this'),
-                                                $factory->var('name')
-                                            )
-                                        )
-                                    )
-                                ]
-                            ]
-                        )
-                    )
-                    ->addStmt(
-                        new Return_(
-                            new ArrayDimFetch(
-                                $factory->propertyFetch($factory->var('this'), 'types'),
-                                $factory->var('name')
-                            )
-                        )
-                    )
-            );
+            ->extend(BaseTypeRegistry::class)
+            ->makeFinal();
         foreach ($this->generateTypeFunctions() as $name => $expr) {
             $class->addStmt(
                 $factory->method($name)
-                    ->makePrivate()
+                    ->makeProtected()
                     ->addStmt(new Return_($expr))
             );
         }

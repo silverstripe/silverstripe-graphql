@@ -22,7 +22,7 @@ class Delete extends MutationScaffolder implements CRUDInterface
     public function __construct($dataObjectClass)
     {
         parent::__construct(null, null, null, $dataObjectClass);
-        $this->setResolverFactory(DeleteResolverFactory::create([
+        $this->setResolver(DeleteResolverFactory::create([
             'dataObjectClass' => $this->getDataObjectClass()
         ]));
     }

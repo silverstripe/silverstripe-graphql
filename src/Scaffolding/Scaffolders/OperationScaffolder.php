@@ -41,7 +41,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     protected $operationName;
 
     /**
-     * @var ClosureFactoryInterface
+     * @var ClosureFactoryInterface|callable
      */
     protected $resolver;
 
@@ -99,7 +99,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
      *
      * @param string $operationName
      * @param string $typeName
-     * @param ClosureFactoryInterface|null $resolver
+     * @param ClosureFactoryInterface|callable|null $resolver
      */
     public function __construct($operationName = null, $typeName = null, $resolver = null)
     {
@@ -346,13 +346,15 @@ abstract class OperationScaffolder implements ConfigurationApplier
     }
 
     /**
-     * @param callable $resolver
+     * @param ClosureFactoryInterface|callable $resolver
      * @return $this
      * @throws InvalidArgumentException
      */
     public function setResolver($resolver)
     {
-        if (!is_callable($resolver) || $resolver instanceof Closure) {
+        if (!$resolver instanceof ClosureFactoryInterface &&
+            (!is_callable($resolver) || $resolver instanceof Closure)
+        ) {
             throw new InvalidArgumentException(sprintf(
                 '%s::%s must be passed a callable that is not a closure',
                 __CLASS__,
@@ -362,25 +364,6 @@ abstract class OperationScaffolder implements ConfigurationApplier
         $this->resolver = $resolver;
 
         return $this;
-    }
-
-    /**
-     * @param ClosureFactoryInterface $factory
-     * @return $this
-     */
-    public function setResolverFactory(ClosureFactoryInterface $factory)
-    {
-        $this->resolverFactory = $factory;
-
-        return $this;
-    }
-
-    /**
-     * @return ClosureFactoryInterface
-     */
-    public function getResolverFactory()
-    {
-        return $this->resolverFactory;
     }
 
     /**
@@ -423,9 +406,6 @@ abstract class OperationScaffolder implements ConfigurationApplier
         if (isset($config['resolver'])) {
             $this->setResolver($config['resolver']);
         }
-        if (isset($config['resolverFactory'])) {
-            $this->setResolverFactory($config['resolverFactory']);
-        }
         if (isset($config['name'])) {
             $this->setName($config['name']);
         }
@@ -440,8 +420,8 @@ abstract class OperationScaffolder implements ConfigurationApplier
      */
     protected function createResolverAbstraction()
     {
-        if ($this->resolverFactory) {
-            return new DynamicFunction($this->resolverFactory);
+        if ($this->resolver instanceof ClosureFactoryInterface) {
+            return new DynamicFunction($this->resolver);
         }
 
         return new StaticFunction($this->resolver);

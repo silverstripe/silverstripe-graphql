@@ -29,7 +29,7 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
      *
      * @param string $operationName
      * @param string $typeName
-     * @param ClosureFactoryInterface|null $resolver
+     * @param ClosureFactoryInterface|callable|null $resolver
      * @param string $class
      */
     public function __construct($operationName = null, $typeName = null, $resolver = null, $class = null)

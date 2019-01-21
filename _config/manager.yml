@@ -16,7 +16,7 @@ SilverStripe\Core\Injector\Injector:
     constructor:
       registryEncoder: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryEncoderInterface.default'
   SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryEncoderInterface.default:
-    class: SilverStripe\GraphQL\GraphQLPHP\SchemaEncoder
+    class: SilverStripe\GraphQL\GraphQLPHP\Encoders\SchemaEncoder
     constructor:
       identifier: default
       encoderRegistry: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderRegistryInterface'
