@@ -168,7 +168,7 @@ class FieldCreator
      *
      * @link https://github.com/webonyx/graphql-php#query-resolution
      * @see OperationResolver::resolve() for method signature.
-     * @return \SilverStripe\GraphQL\Schema\Components\StaticFunction
+     * @return StaticFunction
      */
     protected function getResolver()
     {

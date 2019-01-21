@@ -422,7 +422,7 @@ class Manager implements ConfigurationApplier, ExtensibleTypeRegistryInterface
      */
     public function addExtension(TypeRegistryInterface $registry)
     {
-        $this->extensions[get_class($registry)] = $registry;
+        $this->registryExtensions[get_class($registry)] = $registry;
 
         return $this;
     }
