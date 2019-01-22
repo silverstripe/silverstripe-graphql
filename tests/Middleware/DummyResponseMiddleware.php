@@ -2,7 +2,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Middleware;
 
-use GraphQL\Schema;
+use SilverStripe\GraphQL\Schema\Components\Schema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 
 class DummyResponseMiddleware implements QueryMiddleware

@@ -3,9 +3,8 @@ namespace SilverStripe\GraphQL\Tests\Middleware;
 
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
-use GraphQL\Schema;
-use GraphQL\Type\Definition\Type;
-use GraphQL\Type\Definition\ObjectType;
+use SilverStripe\GraphQL\Schema\Components\Schema;
+use SilverStripe\GraphQL\Tests\Fake\TypeRegistryFake;
 
 abstract class MiddlewareProcessTest extends SapphireTest
 {
@@ -36,11 +35,6 @@ abstract class MiddlewareProcessTest extends SapphireTest
 
     protected function createFakeSchema()
     {
-        return new Schema([
-            'query' => new ObjectType([
-                'name' => 'test',
-                'fields' => [ ['type' => Type::string(), 'name' => 'test'] ]
-            ])
-        ]);
+        return new Schema(new TypeRegistryFake());
     }
 }

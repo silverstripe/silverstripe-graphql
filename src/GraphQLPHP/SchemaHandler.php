@@ -22,6 +22,20 @@ class SchemaHandler implements SchemaHandlerInterface
      */
     public function query(Schema $schemaAbstract, $query, $rootValue = null, $context = null, $params = null)
     {
+    	$schemaConfig = $this->getSchemaConfig($schemaAbstract);
+        $schema = new GraphQLPHPSchema($schemaConfig);
+
+        $result = GraphQL::executeQuery($schema, $query, $rootValue, $context, $params);
+
+        return new QueryResult($result);
+    }
+
+    /**
+     * @param  Schema $schemaAbstract
+     * @return SchemaConfig
+     */
+    public function getSchemaConfig(Schema $schemaAbstract)
+    {
         $schemaConfig = new SchemaConfig();
         $registry = $schemaAbstract->getTypeRegistry();
         $schemaConfig->setTypeLoader(function ($type) use ($registry) {
@@ -30,10 +44,6 @@ class SchemaHandler implements SchemaHandlerInterface
         $schemaConfig->setQuery($registry->getType('Query'));
         $schemaConfig->setMutation($registry->getType('Mutation'));
 
-        $schema = new GraphQLPHPSchema($schemaConfig);
-
-        $result = GraphQL::executeQuery($schema, $query, $rootValue, $context, $params);
-
-        return new QueryResult($result);
+        return $schemaConfig;
     }
 }

@@ -53,7 +53,7 @@ abstract class BaseTypeRegistry implements ExtensibleTypeRegistryInterface
         } else {
             foreach ($this->extensions as $registry) {
                 if ($registry->hasType($name)) {
-                    return $this->types[$name];
+                    return $registry->getType($name);
                 }
             }
         }

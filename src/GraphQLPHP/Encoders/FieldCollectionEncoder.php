@@ -22,7 +22,7 @@ use SilverStripe\GraphQL\Schema\Encoding\Interfaces\FunctionEncoderRegistryInter
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeExpressionProvider;
 
-class ObjectTypeEncoder implements TypeEncoderInterface
+class FieldCollectionEncoder implements TypeEncoderInterface
 {
     /**
      * @var TypeExpressionProvider
@@ -35,7 +35,7 @@ class ObjectTypeEncoder implements TypeEncoderInterface
     protected $encoderRegistry;
 
     /**
-     * ObjectTypeEncoder constructor.
+     * FieldCollectionEncoder constructor.
      * @param TypeExpressionProvider $referentialTypeEncoder
      * @param FunctionEncoderRegistryInterface $encoderRegistry
      */
