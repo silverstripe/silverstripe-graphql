@@ -10,7 +10,7 @@ SilverStripe\Core\Injector\Injector:
       builderFactory: '%$PhpParser\BuilderFactory'
       typeFetcher: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\NamedTypeFetcherInterface'
   SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface.objectType:
-    class: SilverStripe\GraphQL\GraphQLPHP\Encoders\ObjectTypeEncoder
+    class: SilverStripe\GraphQL\GraphQLPHP\Encoders\FieldCollectionEncoder
     constructor:
       referentialTypeEncoder: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeEncoderInterface.referential'
       resolverEncoderRegistry: '%$SilverStripe\GraphQL\Schema\Encoding\Interfaces\ResolverEncoderRegistryInterface'
