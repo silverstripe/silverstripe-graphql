@@ -12,6 +12,7 @@ use SilverStripe\GraphQL\Schema\Components\Argument;
 use SilverStripe\GraphQL\Schema\Components\Field;
 use SilverStripe\GraphQL\Schema\Components\InternalType;
 use SilverStripe\GraphQL\Schema\Components\FieldCollection;
+use SilverStripe\GraphQL\Schema\Components\LazyTypeReference;
 use SilverStripe\GraphQL\Schema\Components\TypeReference;
 use SilverStripe\GraphQL\Schema\Components\AbstractFunction;
 use SilverStripe\GraphQL\Schema\Components\StaticFunction;
@@ -350,7 +351,9 @@ class Connection implements OperationResolver
                 [
                     Field::create(
                         'node',
-                        TypeReference::create($this->getConnectionType()->getName()),
+                        LazyTypeReference::create(function() {
+                            return $this->getConnectionType();
+                        }),
                         new StaticFunction([static::class, 'nodeResolver'])
                     )->setDescription('The node at the end of the collections edge')
                 ]
