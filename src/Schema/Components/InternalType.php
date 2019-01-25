@@ -3,6 +3,9 @@
 
 namespace SilverStripe\GraphQL\Schema\Components;
 
+/**
+ * Maps to GraphQL's native types
+ */
 class InternalType
 {
     const TYPE_ID = 'ID';

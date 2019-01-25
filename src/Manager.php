@@ -34,7 +34,7 @@ use BadMethodCallException;
  * Manager is the master container for a graphql endpoint, and contains
  * all queries, mutations, and types.
  *
- * Instantiate with {@see Manager::createFromConfig()} with a config array.
+ * It supports loading it's state from a config array via {@link applyFromConfig()}
  */
 class Manager implements ConfigurationApplier, ExtensibleTypeRegistryInterface
 {

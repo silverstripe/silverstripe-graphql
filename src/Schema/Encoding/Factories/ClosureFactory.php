@@ -11,6 +11,12 @@ use Closure;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ClosureFactoryInterface;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\ExpressionProvider;
 
+/**
+ * Provides a factory for creating a closure.
+ * This factory can be persistent (via {@link getExpression()}
+ * without relying on closure serialisation,
+ * because the closure itself isn't created until {@link createClosure()} is invoked.
+ */
 abstract class ClosureFactory implements ClosureFactoryInterface, ExpressionProvider
 {
     use Injectable;

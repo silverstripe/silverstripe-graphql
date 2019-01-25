@@ -9,6 +9,11 @@ use SilverStripe\GraphQL\Schema\Components\Field;
 use SilverStripe\GraphQL\Schema\Components\FieldCollection;
 use SilverStripe\GraphQL\Schema\Components\Schema;
 
+/**
+ * Stores a schema as generated PHP code.
+ * Can load this code back into a {@link Schema} object.
+ * Relies on "encoders" to convert types and fields into code.
+ */
 class CodeGenerationSchemaStore implements SchemaStorageInterface
 {
     /**

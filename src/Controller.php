@@ -447,6 +447,9 @@ class Controller extends BaseController implements Flushable
     }
 
     /**
+     * Instanciates every controller based on registered routes,
+     * and determines which ones are GraphQL controllers.
+     *
      * @return \Generator
      * @throws InjectorNotFoundException
      */
@@ -462,6 +465,7 @@ class Controller extends BaseController implements Flushable
                     yield $pattern => $routeController;
                 }
             } catch (InjectorNotFoundException $ex) {
+                // Not all routes resolve to controllers, e.g. "->" redirect aliases
             }
         }
     }

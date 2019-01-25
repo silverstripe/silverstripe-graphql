@@ -4,6 +4,13 @@ namespace SilverStripe\GraphQL\Schema\Components;
 
 use BadMethodCallException;
 
+/**
+ * Allows type definition via an anonymous function
+ * that's only evaluated as required,
+ * which allows logic to reference types which aren't
+ * known yet as part of other types,
+ * e.g. when progressively evaluating scaffolding configuration.
+ */
 class LazyTypeReference extends TypeReference
 {
     /**

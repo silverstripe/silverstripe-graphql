@@ -6,6 +6,10 @@ use Exception;
 use SilverStripe\GraphQL\Schema\Components\AbstractType;
 use SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryInterface;
 
+/**
+ * Takes a list of type abstractions and converts them to executable PHP code
+ * (for graphql-php or anything else). Supplies an instance of the cached type registry on demand.
+ */
 interface TypeRegistryEncoderInterface
 {
     /**

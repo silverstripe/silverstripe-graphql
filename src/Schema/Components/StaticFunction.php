@@ -6,6 +6,13 @@ namespace SilverStripe\GraphQL\Schema\Components;
 use Closure;
 use InvalidArgumentException;
 
+/**
+ * Provides execution abstraction for a static function
+ * which doesn't require any context (e.g. a type registry).
+ * See {@link DynamicFunction} for a factory to create a
+ * closure instead, or {@link RegistryFunction}
+ * for an example on how to pass context into this closure.
+ */
 class StaticFunction extends AbstractFunction
 {
     /**

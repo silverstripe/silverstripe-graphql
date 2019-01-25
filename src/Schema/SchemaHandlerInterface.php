@@ -7,6 +7,10 @@ use SilverStripe\GraphQL\Schema\Components\Field;
 use SilverStripe\GraphQL\Schema\Components\Schema;
 use SilverStripe\GraphQL\Schema\Components\AbstractType;
 
+/**
+ * Given a schema definition (with resolver logic)
+ * and a query with optional params, computes the result for this query.
+ */
 interface SchemaHandlerInterface
 {
     /**
