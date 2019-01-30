@@ -45,7 +45,7 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
             return $name;
         }
 
-        $typePlural = $this->pluralise($this->getTypeName());
+        $typePlural = $this->pluralise($this->getResolvedTypeName());
         return 'read' . ucfirst($typePlural);
     }
 

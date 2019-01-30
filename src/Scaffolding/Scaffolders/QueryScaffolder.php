@@ -71,9 +71,15 @@ abstract class QueryScaffolder extends OperationScaffolder implements ManagerMut
         return $this;
     }
 
-    public function getTypeName()
+    /**
+     * If a type name has not been assigned, fallback to the typename that gets generated
+     * off the dataobject
+     *
+     * @return string
+     */
+    protected function getResolvedTypeName()
     {
-        return parent::getTypeName() ?: $this->typeName();
+        return $this->getTypeName() ?: $this->getDataObjectTypeName();
     }
 
     /**
