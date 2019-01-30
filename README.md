@@ -1501,11 +1501,11 @@ SilverStripe\GraphQL\Manager:
             ##...
           SilverStripe\CMS\Model\RedirectorPage:
             fields: [ID, ExternalURL, Content]
+          Page:
+            fields: [MyCustomField]
             operations:
               read: true
               create: true
-          Page:
-            fields: [MyCustomField]
 ```
 
 **... Or with code**:
@@ -1513,15 +1513,15 @@ SilverStripe\GraphQL\Manager:
 $scaffolder
     ->type('SilverStripe\CMS\Model\RedirectorPage')
         ->addFields(['ID', 'ExternalURL', 'Content'])
+        ->end()
+    ->type('Page')
+        ->addFields(['MyCustomField'])
         ->operation(SchemaScaffolder::READ)
             ->setName('readRedirectors')
             ->end()
         ->operation(SchemaScaffolder::CREATE)
             ->setName('createRedirector')
             ->end()
-        ->end()
-    ->type('Page')
-        ->addFields(['MyCustomField'])
         ->end();
 ```
 
@@ -1554,6 +1554,68 @@ type SiteTreeWithDescendants {
   SiteTree | Page | RedirectorPage
 }
 
+input PageCreateInputType {
+  MyCustomField: String
+  Content: String
+  # all other fields from Page and SiteTree
+}
+
+query readPages {
+  PageWithDescendants
+}
+
+mutation createPage {
+  PageCreateInputType
+}
+```
+
+By default, types are created for the full inheritance tree.
+In certain situations, you may also want to create operations for all these ancestors and descendants.
+For example, `createPage` only allows you to create an object of type `Page`.
+In order to define a `createRedirectorPage` equivalent to create an object of type `RedirectorPage`,
+you need to opt in via the `cloneable` configuration setting: 
+
+
+**Via YAML**:
+```yaml
+SilverStripe\GraphQL\Manager:
+  schemas:
+    default:
+      scaffolding:
+        types:
+          MyProject\Post:
+            ##...
+          SilverStripe\CMS\Model\RedirectorPage:
+            fields: [ID, ExternalURL, Content]
+          Page:
+            fields: [MyCustomField]
+            operations:
+              read: true
+              create:
+                cloneable: true
+```
+
+**... Or with code**:
+```php
+$scaffolder
+    ->type('SilverStripe\CMS\Model\RedirectorPage')
+        ->addFields(['ID', 'ExternalURL', 'Content'])
+        ->end()
+    ->type('Page')
+        ->addFields(['MyCustomField'])
+        ->operation(SchemaScaffolder::READ)
+            ->setName('readRedirectors')
+            ->setCloneable(true)
+            ->end()
+        ->operation(SchemaScaffolder::CREATE)
+            ->setName('createRedirector')
+            ->end()
+        ->end();
+```
+
+This will add the following fields to your schema:
+
+```graphql
 input RedirectorPageCreateInputType {
   ExternalURL: String
   RedirectionType: String
@@ -1562,34 +1624,12 @@ input RedirectorPageCreateInputType {
   # all other fields from RedirectorPage, Page and SiteTree
 }
 
-input PageCreateInputType {
-  MyCustomField: String
-  Content: String
-  # all other fields from Page and SiteTree
-}
-
 input SiteTreeCreateInputType {
   # all fields from SiteTree
 }
 
-query readRedirectors {
-  RedirectorPage
-}
-
-query readPages {
-  PageWithDescendants
-}
-
-query readSiteTrees {
-  SiteTreeWithDescendants
-}
-
 mutation createRedirector {
   RedirectorPageCreateInputType
-}
-
-mutation createPage {
-  PageCreateInputType
 }
 
 mutation createSiteTree {
@@ -1604,8 +1644,8 @@ when `RedirectorPage` is also exposed), a union is returned, and you will need t
 with the `...on {type}` GraphQL syntax.
 
 ```graphql
-query readSiteTrees {
-  readSiteTrees {
+query readPages {
+  readPages {
     edges {
       node {
         __typename
@@ -1613,6 +1653,7 @@ query readSiteTrees {
           ID
         }
         ...on RedirectorPage {
+          ID
           RedirectionType
         }
       }
