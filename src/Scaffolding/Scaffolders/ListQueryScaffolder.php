@@ -130,7 +130,7 @@ class ListQueryScaffolder extends QueryScaffolder
             } else {
                 throw new InvalidArgumentException(sprintf(
                     'sortableFields must be an array (see %s)',
-                    $this->getTypeName()
+                    $this->getResolvedTypeName()
                 ));
             }
         }

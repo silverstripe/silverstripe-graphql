@@ -34,7 +34,7 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
             return $name;
         }
 
-        return 'readOne' . ucfirst($this->getTypeName());
+        return 'readOne' . ucfirst($this->getResolvedTypeName());
     }
 
     /**
