@@ -2,9 +2,9 @@
 
 namespace SilverStripe\GraphQL\Tests\Middleware;
 
-use GraphQL\Schema;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Schema;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 

@@ -4,8 +4,8 @@ namespace SilverStripe\GraphQL\Tests;
 
 use GraphQL\Error\Error;
 use GraphQL\Language\SourceLocation;
-use GraphQL\Schema;
 use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Schema;
 use InvalidArgumentException;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
@@ -188,8 +188,7 @@ class ManagerTest extends SapphireTest
         $responseData->data = null;
         $responseData->errors = [
             Error::createLocatedError(
-                'Something went wrong',
-                [new SourceLocation(1, 10)]
+                'Something went wrong'
             ),
         ];
         $mock->method('queryAndReturnResult')
