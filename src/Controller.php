@@ -452,7 +452,7 @@ class Controller extends BaseController implements Flushable
                     // Get the last line
                     $last = array_pop($messageByLine);
 
-                    if (!strpos($last, 'No database selected') !== false
+                    if (strpos($last, 'No database selected') === false
                         && !preg_match('/\s*(table|relation) .* does(n\'t| not) exist/i', $last)
                     ) {
                         throw $e;
