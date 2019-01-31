@@ -65,7 +65,8 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
             ->filter('ID', $args['ID']);
         $this->extend('updateList', $list, $args, $context, $info);
 
-        $item = $list->first();
+        // Fall back to getting an empty singleton to use for permission checking
+        $item = $list->first() ?: $this->getDataObjectInstance();
 
         // Check permissions on the individual item as some permission checks may investigate saved state
         if (!$item->canView($context['currentUser'])) {
