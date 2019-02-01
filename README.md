@@ -2269,7 +2269,8 @@ SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Manager.myApp:
     class: SilverStripe\GraphQL\Manager
     constructor:
-      schemaKey: mySchema
+      schemaKey: myApp
+      schemaStore: '%$SilverStripe\GraphQL\Schema\SchemaStorageInterface.default'
 ```
 
 The `schemaKey` setting is a bit of meta-configuration used to tell the Manager where to 
