@@ -15,6 +15,30 @@ class UnionResolverFactory extends RegistryAwareClosureFactory
 {
 
     /**
+     * @var array Maps class names to type names.
+     */
+    protected $classMap = [];
+
+    /**
+     * @return array
+     */
+    public function getClassMap()
+    {
+        return $this->classMap;
+    }
+
+    /**
+     * @param $classMap
+     * @return $this
+     */
+    public function setClassMap($classMap)
+    {
+        $this->classMap = $classMap;
+
+        return $this;
+    }
+
+    /**
      * @param \SilverStripe\GraphQL\Schema\Encoding\Interfaces\TypeRegistryInterface $registry
      * @return callable|Closure
      * @throws NotFoundExceptionInterface
@@ -22,6 +46,18 @@ class UnionResolverFactory extends RegistryAwareClosureFactory
     public function createClosure(TypeRegistryInterface $registry)
     {
         return function ($obj) use ($registry) {
+            $schema = StaticSchema::inst();
+
+            // Try explicit mapping of class names to types
+            $objClass = get_class($obj);
+            if (array_key_exists($objClass, $this->classMap)) {
+                $typeName = $this->classMap[$objClass];
+                if ($registry->hasType($typeName)) {
+                    return $registry->hasType($typeName);
+                }
+            }
+
+            // Fall back to auto-detection for type names on DataObjects
             if (!$obj instanceof DataObject) {
                 throw new Exception(sprintf(
                     'Type with class %s is not a DataObject',
@@ -30,7 +66,7 @@ class UnionResolverFactory extends RegistryAwareClosureFactory
             }
             $class = get_class($obj);
             while ($class !== DataObject::class) {
-                $typeName = StaticSchema::inst()->typeNameForDataObject($class);
+                $typeName = $schema->typeNameForDataObject($class);
                 if ($registry->hasType($typeName)) {
                     return $registry->hasType($typeName);
                 }
