@@ -111,7 +111,6 @@ class SchemaEncoder implements TypeRegistryEncoderInterface
         $prettyPrinter = new Standard();
 
         $code = $prettyPrinter->prettyPrintFile($stmts);
-        echo $code;
         file_put_contents($this->getCacheFile(), $code);
     }
 
