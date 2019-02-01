@@ -2,7 +2,9 @@
 
 namespace SilverStripe\GraphQL;
 
-use GraphQL\Type\Definition\Type;
+use SilverStripe\GraphQL\Schema\Components\Field;
+use SilverStripe\GraphQL\Schema\Components\InternalType;
+use SilverStripe\GraphQL\Schema\Components\TypeReference;
 
 /**
  * Base interface for any {@link DataObject} passed back as a node.
@@ -22,15 +24,18 @@ class DataObjectInterfaceTypeCreator extends InterfaceTypeCreator
     public function fields()
     {
         return [
-            'id' => [
-                'type' => Type::nonNull(Type::int()),
-            ],
-            'created' => [
-                'type' => Type::string(),
-            ],
-            'lastEdited' => [
-                'type' => Type::string(),
-            ],
+            Field::create(
+                'id',
+                TypeReference::create(InternalType::id())->setRequired(true)
+            ),
+            Field::create(
+                'created',
+                TypeReference::create(InternalType::string())
+            ),
+            Field::create(
+                'lastEdited',
+                TypeReference::create(InternalType::string())
+            ),
         ];
     }
 
