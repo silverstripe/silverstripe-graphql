@@ -19,6 +19,7 @@ class MutationScaffolderTest extends SapphireTest
             ->will($this->returnValue(new ObjectType(['name' => 'test'])));
 
         $scaffolder = new MutationScaffolder('testMutation', 'test');
+        $scaffolder->setDescription('My description');
         $scaffolder->addArgs(['Test' => 'String']);
         $manager = new Manager();
         $manager->addType($o = new ObjectType([
@@ -30,6 +31,7 @@ class MutationScaffolderTest extends SapphireTest
         $scaffold = $scaffolder->scaffold($manager);
 
         $this->assertEquals('testMutation', $scaffold['name']);
+        $this->assertEquals('My description', $scaffold['description']);
         $this->assertArrayHasKey('Test', $scaffold['args']);
         $this->assertTrue(is_callable($scaffold['resolve']));
         $this->assertTrue($scaffold['type']->Test);

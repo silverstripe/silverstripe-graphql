@@ -16,6 +16,7 @@ class ItemQueryScaffolderTest extends SapphireTest
             ->setMethods(['addQuery'])
             ->getMock();
         $scaffolder = new ItemQueryScaffolder('testQuery', 'test');
+        $scaffolder->setDescription('My description');
         $scaffolder->addArgs(['Test' => 'String']);
         $manager = new Manager();
         $manager->addType($o = new ObjectType([
@@ -27,6 +28,7 @@ class ItemQueryScaffolderTest extends SapphireTest
         $scaffold = $scaffolder->scaffold($manager);
 
         $this->assertEquals('testQuery', $scaffold['name']);
+        $this->assertEquals('My description', $scaffold['description']);
         $this->assertArrayHasKey('Test', $scaffold['args']);
         $this->assertTrue(is_callable($scaffold['resolve']));
         $this->assertTrue($scaffold['type']->Test);

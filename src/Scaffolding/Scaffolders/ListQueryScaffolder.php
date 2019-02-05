@@ -181,6 +181,7 @@ class ListQueryScaffolder extends QueryScaffolder
 
         return [
             'name' => $this->getName(),
+            'description' => $this->getDescription(),
             'args' => $this->createArgs($manager),
             'type' => Type::listOf($this->getType($manager)),
             'resolve' => $this->createResolverFunction(),
