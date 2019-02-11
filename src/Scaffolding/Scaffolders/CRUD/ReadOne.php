@@ -60,16 +60,21 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        if (!$this->getDataObjectInstance()->canView($context['currentUser'])) {
+        // get as a list so extensions can influence it pre-query
+        $list = DataList::create($this->getDataObjectClass())
+            ->filter('ID', $args['ID']);
+        $this->extend('updateList', $list, $args, $context, $info);
+
+        // Fall back to getting an empty singleton to use for permission checking
+        $item = $list->first() ?: $this->getDataObjectInstance();
+
+        // Check permissions on the individual item as some permission checks may investigate saved state
+        if (!$item->canView($context['currentUser'])) {
             throw new Exception(sprintf(
                 'Cannot view %s',
                 $this->getDataObjectClass()
             ));
         }
-        // get as a list so extensions can influence it pre-query
-        $list = DataList::create($this->getDataObjectClass())
-            ->filter('ID', $args['ID']);
-        $this->extend('updateList', $list, $args, $context, $info);
 
         return $list->first();
     }

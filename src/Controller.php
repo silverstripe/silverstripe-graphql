@@ -13,6 +13,7 @@ use SilverStripe\Core\Flushable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
+use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\SecurityToken;
@@ -451,10 +452,24 @@ class Controller extends BaseController implements Flushable
         foreach ($routes as $pattern => $controllerInfo) {
             $routeClass = (is_string($controllerInfo)) ? $controllerInfo : $controllerInfo['Controller'];
             if (stristr($routeClass, Controller::class) !== false) {
-                $inst = Injector::inst()->convertServiceProperty($routeClass);
-                if ($inst instanceof Controller) {
-                    /* @var Controller $inst */
-                    $inst->processTypeCaching();
+                try {
+                    $inst = Injector::inst()->convertServiceProperty($routeClass);
+                    if ($inst instanceof Controller) {
+                        /* @var Controller $inst */
+                        $inst->processTypeCaching();
+                    }
+                } catch (DatabaseException $e) {
+                    // Allow failures on table doesn't exist or no database selected as we're flushing in first DB build
+                    $messageByLine = explode(PHP_EOL, $e->getMessage());
+
+                    // Get the last line
+                    $last = array_pop($messageByLine);
+
+                    if (strpos($last, 'No database selected') === false
+                        && !preg_match('/\s*(table|relation) .* does(n\'t| not) exist/i', $last)
+                    ) {
+                        throw $e;
+                    }
                 }
             }
         }
