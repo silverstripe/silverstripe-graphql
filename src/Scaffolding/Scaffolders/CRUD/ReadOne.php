@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\GraphQL\Filters\FilterAware;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
@@ -17,6 +18,8 @@ use SilverStripe\ORM\DataObjectInterface;
  */
 class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInterface
 {
+    use FilterAware;
+
     /**
      * Read one constructor.
      *

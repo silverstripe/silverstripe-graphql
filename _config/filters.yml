@@ -1,0 +1,12 @@
+---
+Name: graphql-filters
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Filters\FilterRegistryInterface:
+    class: SilverStripe\GraphQL\Filters\Registry
+    constructor: []
+  SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read:
+    filterRegistry: '%$SilverStripe\GraphQL\Filters\FilterRegistryInterface'
+  SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ReadOne:
+    filterRegistry: '%$SilverStripe\GraphQL\Filters\FilterRegistryInterface'
+
