@@ -132,12 +132,45 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
     }
 
     /**
+     * @param Manager $manager
+     */
+    public function addToManager(Manager $manager)
+    {
+        if (!empty($this->filteredFields)) {
+            $manager->addType($this->generateInputType($manager, 'Filter'));
+            $manager->addType($this->generateInputType($manager, 'Exclude'));
+        }
+
+        parent::addToManager($manager);
+    }
+    /**
+     * Use a generated Input type, and require an ID.
+     *
+     * @param Manager $manager
+     * @return array
+     */
+    protected function createDefaultArgs(Manager $manager)
+    {
+        if (empty($this->filteredFields)) {
+            return [];
+        }
+        return [
+            'Filter' => [
+                'type' => $manager->getType($this->inputTypeName('Filter')),
+            ],
+            'Exclude' => [
+                'type' => $manager->getType($this->inputTypeName('Exclude')),
+            ],
+        ];
+    }
+
+    /**
      * @param string $key
      * @return string
      */
     protected function inputTypeName($key = '')
     {
-        return $this->getTypeName() . $key . 'InputType';
+        return $this->getDataObjectTypeName() . $key . 'ReadInputType';
     }
 
     /**
@@ -147,11 +180,12 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
      */
     protected function generateInputType(Manager $manager, $key = '')
     {
+        $filteredFields = $this->filteredFields;
         return new InputObjectType([
             'name' => $this->inputTypeName($key),
-            'fields' => function () use ($manager) {
+            'fields' => function () use ($manager, $filteredFields) {
                 $fields = [];
-                foreach ($this->filteredFields as $fieldName => $filterIDs) {
+                foreach ($filteredFields as $fieldName => $filterIDs) {
                     /* @var DBField|TypeCreatorExtension $db */
                     $db = $this->getDataObjectInstance()->dbObject($fieldName);
 

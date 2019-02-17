@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Filters;
 
 use SilverStripe\ORM\DataList;
 
-class LessThanOrEqualFilter
+class LessThanOrEqualFilter implements FilterInterface
 {
     public function applyInclusion(DataList $list, $fieldName, $value)
     {

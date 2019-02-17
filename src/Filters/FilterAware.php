@@ -64,7 +64,7 @@ trait FilterAware
             // falsy is okay here because a leading __ is invalid.
             if(!$pos) {
                 throw new InvalidArgumentException(sprintf(
-                    'Invalid filter %s. Must be a string separated by __',
+                    'Invalid filter %s. Must be a composite string of field name, filter identifier, separated by __',
                     $key
                 ));
             }
