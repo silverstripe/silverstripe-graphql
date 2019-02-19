@@ -11,6 +11,7 @@ SilverStripe\Core\Injector\Injector:
       lt: '%$SilverStripe\GraphQL\Filters\LessThanFilter'
       gte: '%$SilverStripe\GraphQL\Filters\GreaterThanOrEqualFilter'
       lte: '%$SilverStripe\GraphQL\Filters\LessThanOrEqualFilter'
+      in: '%$SilverStripe\GraphQL\Filters\InFilter'
       endswith: '%$SilverStripe\GraphQL\Filters\LessThanFilter'
       startswith: '%$SilverStripe\GraphQL\Filters\LessThanFilter'
   SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read:
@@ -22,3 +23,14 @@ SilverStripe\Core\Injector\Injector:
     properties:
       filterRegistry: '%$SilverStripe\GraphQL\Filters\FilterRegistryInterface'
 
+SilverStripe\ORM\FieldType\DBField:
+  graphql_type: String
+  default_filters: [ eq, in ]
+SilverStripe\ORM\FieldType\DBInt:
+  graphql_type: Int
+  default_filters: [ gt, lt, gte, lte ]
+SilverStripe\ORM\FieldType\DBFloat:
+  graphql_type: Float
+  default_filters: [ gt, lt, gte, lte ]
+SilverStripe\ORM\FieldType\DBString:
+  default_filters: [ contains ]

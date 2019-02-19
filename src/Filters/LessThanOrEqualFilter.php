@@ -9,17 +9,17 @@ class LessThanOrEqualFilter implements FilterInterface
 {
     public function applyInclusion(DataList $list, $fieldName, $value)
     {
-        return $list->filter($fieldName . ':GreaterThanEqual', $value);
+        return $list->filter($fieldName . ':LessThanOrEqual', $value);
     }
 
     public function applyExclusion(DataList $list, $fieldName, $value)
     {
-        return $list->exclude($fieldName . ':GreaterThanEqual', $value);
+        return $list->exclude($fieldName . ':LessThanOrEqual', $value);
     }
 
     public function getIdentifier()
     {
-        return 'gte';
+        return 'lte';
     }
 
 }

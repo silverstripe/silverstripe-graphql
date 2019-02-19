@@ -5,8 +5,10 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 use Exception;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\Filters\FilterInterface;
 use SilverStripe\GraphQL\Filters\FilterAware;
+use SilverStripe\GraphQL\Filters\ListFilterInterface;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
@@ -15,6 +17,7 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\Security\Member;
@@ -57,14 +60,11 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
             }
         }
         if (!empty($args['Exclude'])) {
-            $map = $this->getFieldFilters($args['Exclude']);
-            foreach ($map as $fieldName => $filters) {
+            foreach ($this->getFieldFilters($args['Filter']) as $tuple) {
                 /* @var FilterInterface $filter */
-                foreach ($filters as $filter) {
-                    $list = $filter->applyExclusion($list, $fieldName);
-                }
+                list ($filter, $field, $value) = $tuple;
+                $list = $filter->applyExclusion($list, $field, $value);
             }
-
         }
 
         return $list;
@@ -188,10 +188,20 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
                 foreach ($filteredFields as $fieldName => $filterIDs) {
                     /* @var DBField|TypeCreatorExtension $db */
                     $db = $this->getDataObjectInstance()->dbObject($fieldName);
-
                     foreach ($filterIDs as $filterID) {
+                        $filter = $this->getFilterRegistry()->getFilterByIdentifier($filterID);
+                        if (!$filter) {
+                            throw new Exception(sprintf(
+                                'Filter %s not found',
+                                $filterID
+                            ));
+                        }
+                        $filterType = $db->getGraphQLType($manager);
+                        if ($filter instanceof ListFilterInterface) {
+                            $filterType = Type::listOf($filterType);
+                        }
                         $fields[$fieldName . '__' . $filterID] = [
-                            'type' => $db->getGraphQLType($manager),
+                            'type' => $filterType,
                         ];
                     }
                 }
@@ -200,37 +210,65 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
         ]);
     }
 
+    /**
+     * @param string $field
+     * @return $this
+     */
+    public function addDefaultFilters($field)
+    {
+        $dbField = $this->getDataObjectInstance()->dbObject($field);
+        foreach ($dbField->config()->default_filters as $filterID) {
+            $this->addFieldFilter($field, $filterID);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Adds all the default filters for every field on the dataobject
+     * @return $this
+     */
+    public function addAllFilters()
+    {
+        $fields = array_keys(DataObject::getSchema()->databaseFields($this->getDataObjectClass()));
+        foreach ($fields as $fieldName) {
+            $this->addDefaultFilters($fieldName);
+        }
+
+        return $this;
+    }
+
     public function applyConfig(array $config)
     {
         parent::applyConfig($config);
-        if (isset($config['filters'])) {
-            if (!is_array($config['filters'])) {
-                throw new InvalidArgumentException(
-                    'Config setting "filters" must be an array mapping field names to a list of filter idenfifiers'
-                );
-            }
-
+        if (!isset($config['filters'])) {
+            return;
+        }
+        if ($config['filters'] === SchemaScaffolder::ALL) {
+            $this->addAllFilters();
+        } else if (is_array($config['filters'])) {
             foreach ($config['filters'] as $fieldName => $filterConfig) {
-                if ($filterConfig === SchemaScaffolder::ALL) {
-                    $filters = array_keys($this->getFilterRegistry()->getAll());
+                if ($filterConfig === true) {
+                    $this->addDefaultFilters($fieldName);
                 } else if (ArrayLib::is_associative($filterConfig)) {
-                    $filters = [];
                     foreach ($filterConfig as $filterID => $include) {
                         if (!$include) {
                             continue;
                         }
-                        $filters[] = $filterID;
+                        $this->addFieldFilter($fieldName, $filterID);
                     }
                 } else {
                     throw new InvalidArgumentException(sprintf(
-                        'Filters on field "%s" must be a map of filter ID to a boolean value'
+                        'Filters on field "%s" must be a map of filter ID to a boolean value',
+                        $fieldName
                     ));
                 }
-
-                foreach ($filters as $filterID) {
-                    $this->addFieldFilter($fieldName, $filterID);
-                }
             }
+        } else {
+            throw new InvalidArgumentException(sprintf(
+                'Config setting "filters" must be an array mapping field names to a list of filter identifiers, or %s for all',
+                SchemaScaffolder::ALL
+            ));
         }
     }
 

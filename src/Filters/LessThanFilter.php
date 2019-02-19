@@ -19,7 +19,7 @@ class LessThanFilter implements FilterInterface
 
     public function getIdentifier()
     {
-        return 'lte';
+        return 'lt';
     }
 
 }

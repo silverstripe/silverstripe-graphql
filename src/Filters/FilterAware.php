@@ -4,6 +4,8 @@
 namespace SilverStripe\GraphQL\Filters;
 
 use InvalidArgumentException;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBField;
 
 trait FilterAware
 {

@@ -6,6 +6,9 @@ namespace SilverStripe\GraphQL\Filters;
 
 use SilverStripe\ORM\DataList;
 
+/**
+ * Defines the interface used by all read filters for scaffolded operations
+ */
 interface FilterInterface
 {
     /**
