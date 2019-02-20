@@ -6,6 +6,7 @@ use Exception;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Filters\FilterInterface;
 use SilverStripe\GraphQL\Filters\FilterAware;
 use SilverStripe\GraphQL\Filters\ListFilterInterface;
@@ -52,15 +53,15 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
             return $list;
         }
 
-        if (!empty($args['Filter'])) {
+        if (isset($args['Filter']) && !empty($args['Filter'])) {
             foreach ($this->getFieldFilters($args['Filter']) as $tuple) {
                 /* @var FilterInterface $filter */
                 list ($filter, $field, $value) = $tuple;
                 $list = $filter->applyInclusion($list, $field, $value);
             }
         }
-        if (!empty($args['Exclude'])) {
-            foreach ($this->getFieldFilters($args['Filter']) as $tuple) {
+        if (isset($args['Exclude']) && !empty($args['Exclude'])) {
+            foreach ($this->getFieldFilters($args['Exclude']) as $tuple) {
                 /* @var FilterInterface $filter */
                 list ($filter, $field, $value) = $tuple;
                 $list = $filter->applyExclusion($list, $field, $value);
@@ -174,6 +175,30 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
     }
 
     /**
+     * Get a DBField, __ notation allowed.
+     * @param string $field
+     * @return DBField
+     */
+    protected function getDBField($field)
+    {
+        $dbField = null;
+        if (stristr($field, FilterInterface::SEPARATOR) !== false) {
+            list ($relationName, $relationField) = explode(FilterInterFace::SEPARATOR, $field);
+            $class = $this->getDataObjectInstance()->getRelationClass($relationName);
+            if (!$class) {
+                throw new InvalidArgumentException(sprintf(
+                    'Could not find relation %s on %s',
+                    $relationName,
+                    $this->getDataObjectClass()
+                ));
+            }
+            return Injector::inst()->get($class)->dbObject($relationField);
+        }
+
+        return $this->getDataObjectInstance()->dbObject($field);
+    }
+
+    /**
      * @param Manager $manager
      * @param string $key
      * @return InputObjectType
@@ -187,7 +212,7 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
                 $fields = [];
                 foreach ($filteredFields as $fieldName => $filterIDs) {
                     /* @var DBField|TypeCreatorExtension $db */
-                    $db = $this->getDataObjectInstance()->dbObject($fieldName);
+                    $db = $this->getDBField($fieldName);
                     foreach ($filterIDs as $filterID) {
                         $filter = $this->getFilterRegistry()->getFilterByIdentifier($filterID);
                         if (!$filter) {
@@ -200,7 +225,7 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
                         if ($filter instanceof ListFilterInterface) {
                             $filterType = Type::listOf($filterType);
                         }
-                        $fields[$fieldName . '__' . $filterID] = [
+                        $fields[$fieldName . FilterInterface::SEPARATOR . $filterID] = [
                             'type' => $filterType,
                         ];
                     }
@@ -216,7 +241,14 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
      */
     public function addDefaultFilters($field)
     {
-        $dbField = $this->getDataObjectInstance()->dbObject($field);
+        $dbField = $this->getDBField($field);
+        if (!$dbField) {
+            throw new InvalidArgumentException(sprintf(
+                'Could not resolve field %s on %s',
+                $field,
+                $this->getDataObjectClass()
+            ));
+        }
         foreach ($dbField->config()->default_filters as $filterID) {
             $this->addFieldFilter($field, $filterID);
         }

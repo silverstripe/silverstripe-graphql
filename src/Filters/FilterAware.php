@@ -4,8 +4,6 @@
 namespace SilverStripe\GraphQL\Filters;
 
 use InvalidArgumentException;
-use SilverStripe\ORM\DataObject;
-use SilverStripe\ORM\FieldType\DBField;
 
 trait FilterAware
 {
@@ -62,17 +60,19 @@ trait FilterAware
     protected function getFieldFilters(array $filters)
     {
         foreach ($filters as $key => $val) {
-            $pos = strrpos($key, '__');
+            $pos = strrpos($key, FilterInterface::SEPARATOR);
             // falsy is okay here because a leading __ is invalid.
             if(!$pos) {
                 throw new InvalidArgumentException(sprintf(
-                    'Invalid filter %s. Must be a composite string of field name, filter identifier, separated by __',
-                    $key
+                    'Invalid filter %s. Must be a composite string of field name, filter identifier, separated by %s',
+                    $key,
+                    FilterInterface::SEPARATOR
                 ));
             }
-            $parts = explode('__', $key);
+            $parts = explode(FilterInterface::SEPARATOR, $key);
             $filterIdentifier = array_pop($parts);
-            $field = implode('__', $parts);
+            // If the field segment contained __, that implies relationship (dot notation)
+            $field = implode('.', $parts);
             if (!isset($result[$field])) {
                 $result[$field] = [];
             }

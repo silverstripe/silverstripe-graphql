@@ -11,6 +11,8 @@ use SilverStripe\ORM\DataList;
  */
 interface FilterInterface
 {
+    const SEPARATOR = '__';
+
     /**
      * @param DataList $list
      * @param string $fieldName
