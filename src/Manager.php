@@ -301,6 +301,10 @@ class Manager implements ConfigurationApplier
                     }, $this->queries);
                 },
             ]);
+        } else {
+            $schema[self::QUERY_ROOT] = new ObjectType([
+                'name' => 'Query',
+            ]);
         }
 
         if (!empty($this->mutations)) {
@@ -311,6 +315,10 @@ class Manager implements ConfigurationApplier
                         return is_callable($mutation) ? $mutation() : $mutation;
                     }, $this->mutations);
                 },
+            ]);
+        } else {
+            $schema[self::MUTATION_ROOT] = new ObjectType([
+                'name' => 'Mutation',
             ]);
         }
 
