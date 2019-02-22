@@ -90,20 +90,6 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
     }
 
     /**
-     * @param Member $member
-     * @return boolean
-     */
-    protected function checkPermission(Member $member = null)
-    {
-        $checker = $this->getPermissionChecker();
-        if ($checker) {
-            return $checker->checkItem($this->getDataObjectInstance(), $member);
-        }
-
-        return true;
-    }
-
-    /**
      * @param DataObjectInterface $object
      * @param array $args
      * @param array $context
@@ -113,13 +99,6 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        if (!$this->checkPermission($context['currentUser'])) {
-            throw new Exception(sprintf(
-                'Cannot view %s',
-                $this->getDataObjectClass()
-            ));
-        }
-
         $list = $this->getResults($args);
         $this->extend('updateList', $list, $args, $context, $info);
         return $list;

@@ -3,10 +3,14 @@
 namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
 use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\ResolveInfo;
 use InvalidArgumentException;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
+use SilverStripe\GraphQL\Tests\Fake\FakePermissionChecker;
+use SilverStripe\ORM\ArrayList;
+use SilverStripe\View\ArrayData;
 
 class ListQueryScaffolderTest extends SapphireTest
 {
@@ -164,5 +168,51 @@ class ListQueryScaffolderTest extends SapphireTest
         $scaffolder->applyConfig([
             'sortableFields' => 'fail',
         ]);
+    }
+
+    /**
+     * @dataProvider permissionProvider
+     * @param bool|null $allow
+     */
+    public function testPermissionCheck($allow)
+    {
+        $resolver = function () {
+            return new ArrayList([
+                new ArrayData(['Foo' => 'Bar'])
+            ]);
+        };
+        $manager = new Manager();
+        $manager->addType(new ObjectType([
+            'name' => 'testType',
+            'fields' => [],
+        ]));
+
+        $scaffolder = new ListQueryScaffolder('testQuery', 'testType', $resolver);
+        $scaffolder->setUsePagination(false);
+        if ($allow !== null) {
+            $scaffolder->setPermissionChecker(new FakePermissionChecker($allow));
+        }
+
+        $scaffolder->addToManager($manager);
+        $arr = $scaffolder->scaffold($manager);
+        $result = $arr['resolve'](null, [], ['currentUser' => null], new ResolveInfo([]));
+        $this->assertNotNull($result);
+        $expected = $allow === false ? 0 : 1;
+        $this->assertCount($expected, $result);
+        if ($allow !== false) {
+            $this->assertEquals('Bar', $result->first()->Foo);
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function permissionProvider()
+    {
+        return [
+            [null],
+            [true],
+            [false]
+        ];
     }
 }
