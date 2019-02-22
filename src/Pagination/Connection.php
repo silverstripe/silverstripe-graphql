@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\OperationResolver;
+use SilverStripe\GraphQL\Permission\PermissionCheckerAware;
 use SilverStripe\ORM\Limitable;
 use SilverStripe\ORM\Sortable;
 use SilverStripe\ORM\SS_List;
@@ -35,6 +36,7 @@ use SilverStripe\ORM\SS_List;
 class Connection implements OperationResolver
 {
     use Injectable;
+    use PermissionCheckerAware;
 
     /**
      * @var string
@@ -400,6 +402,10 @@ class Connection implements OperationResolver
             if ($offset > 0) {
                 $previousPage = true;
             }
+        }
+        if ($checker = $this->getPermissionChecker()) {
+            $currentUser = $context['currentUser'];
+            $list = $checker->applyToList($list, $currentUser);
         }
 
         return [

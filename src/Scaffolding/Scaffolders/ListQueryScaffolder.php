@@ -2,17 +2,22 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
 use Exception;
+use SilverStripe\GraphQL\Permission\PermissionCheckerAware;
+use SilverStripe\ORM\SS_List;
 
 /**
  * Scaffolds a GraphQL query field.
  */
 class ListQueryScaffolder extends QueryScaffolder
 {
+    use PermissionCheckerAware;
+
     /**
      * @var bool
      */
@@ -206,6 +211,35 @@ class ListQueryScaffolder extends QueryScaffolder
             ->setDefaultLimit($this->getPaginationLimit())
             ->setMaximumLimit($this->getMaximumPaginationLimit());
     }
+
+    /**
+     * @return callable|\Closure
+     */
+    protected function createResolverFunction()
+    {
+        $resolverFn = parent::createResolverFunction();
+
+        // Wrap resolver in permission checks unless we're paginating.
+        // In this case, the connection is in charge of these checks
+        // in order to avoid looping through unfiltered lists
+        $checker = $this->getPermissionChecker();
+        if ($checker && !$this->usePagination) {
+            return function ($obj, array $args, $context, ResolveInfo $info) use ($resolverFn, $checker) {
+                $list = call_user_func_array($resolverFn, func_get_args());
+                $currentUser = $context['currentUser'];
+
+                // Perform permission check if result is a filterable list.
+                if ($list instanceof SS_List) {
+                    $list = $checker->applyToList($list, $currentUser);
+                }
+
+                return $list;
+            };
+        }
+
+        return $resolverFn;
+    }
+
 
     /**
      * @param Manager $manager

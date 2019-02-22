@@ -16,6 +16,17 @@ SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
     constructor:
       httpClient: %$SilverStripe\GraphQL\PersistedQuery\GuzzleHTTPClient
+  SilverStripe\GraphQL\Permission\PermissionCheckerInterface.default:
+    class: SilverStripe\GraphQL\Permission\CanViewPermissionChecker
+  SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder:
+    properties:
+      permissionChecker: '%$SilverStripe\GraphQL\Permission\PermissionCheckerInterface.default'
+  SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder:
+    properties:
+      permissionChecker: '%$SilverStripe\GraphQL\Permission\PermissionCheckerInterface.default'
+  SilverStripe\GraphQL\Pagination\Connection:
+    properties:
+      permissionChecker: '%$SilverStripe\GraphQL\Permission\PermissionCheckerInterface.default'
 
   # Set up a default endpoint that can be activated with a Director rule
   SilverStripe\GraphQL\Manager.default:
