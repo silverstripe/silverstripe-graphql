@@ -9,7 +9,7 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\SS_List;
 use SilverStripe\Security\Member;
 
-class CanViewPermissionChecker implements PermissionCheckerInterface
+class CanViewPermissionChecker implements QueryPermissionChecker
 {
     /**
      * @param SS_List $list

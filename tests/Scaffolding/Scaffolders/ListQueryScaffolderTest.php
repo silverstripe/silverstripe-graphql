@@ -8,7 +8,7 @@ use InvalidArgumentException;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
-use SilverStripe\GraphQL\Tests\Fake\FakePermissionChecker;
+use SilverStripe\GraphQL\Tests\Fake\FakeQueryPermissionChecker;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
 
@@ -190,7 +190,7 @@ class ListQueryScaffolderTest extends SapphireTest
         $scaffolder = new ListQueryScaffolder('testQuery', 'testType', $resolver);
         $scaffolder->setUsePagination(false);
         if ($allow !== null) {
-            $scaffolder->setPermissionChecker(new FakePermissionChecker($allow));
+            $scaffolder->setPermissionChecker(new FakeQueryPermissionChecker($allow));
         }
 
         $scaffolder->addToManager($manager);

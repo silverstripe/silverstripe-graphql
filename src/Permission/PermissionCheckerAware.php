@@ -6,15 +6,15 @@ namespace SilverStripe\GraphQL\Permission;
 trait PermissionCheckerAware
 {
     /**
-     * @var PermissionCheckerInterface
+     * @var QueryPermissionChecker
      */
     protected $permissionChecker;
 
     /**
-     * @param PermissionCheckerInterface $checker
+     * @param QueryPermissionChecker $checker
      * @return $this
      */
-    public function setPermissionChecker(PermissionCheckerInterface $checker)
+    public function setPermissionChecker(QueryPermissionChecker $checker)
     {
         $this->permissionChecker = $checker;
 
@@ -22,7 +22,7 @@ trait PermissionCheckerAware
     }
 
     /**
-     * @return PermissionCheckerInterface
+     * @return QueryPermissionChecker
      */
     public function getPermissionChecker()
     {

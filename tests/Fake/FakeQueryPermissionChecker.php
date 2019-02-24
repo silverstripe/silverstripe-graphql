@@ -3,12 +3,12 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
-use SilverStripe\GraphQL\Permission\PermissionCheckerInterface;
+use SilverStripe\GraphQL\Permission\QueryPermissionChecker;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\SS_List;
 use SilverStripe\Security\Member;
 
-class FakePermissionChecker implements PermissionCheckerInterface
+class FakeQueryPermissionChecker implements QueryPermissionChecker
 {
     protected $shouldAllow = true;
 

@@ -8,7 +8,7 @@ use SilverStripe\Security\Member;
 /**
  * Defines a service that can filter a list with a permission check against a member
  */
-interface PermissionCheckerInterface
+interface QueryPermissionChecker
 {
     /**
      * @param SS_List $list
