@@ -24,10 +24,11 @@ class Registry implements FilterRegistryInterface
 
     /**
      * @param FilterInterface $filter
+     * @param string|null $identifier
      * @return $this
      * @throws InvalidArgumentException
      */
-    public function addFilter(FilterInterface $filter)
+    public function addFilter(FilterInterface $filter, $identifier = null)
     {
         if (!$filter instanceof FilterInterface) {
             throw new InvalidArgumentException(sprintf(
@@ -37,15 +38,15 @@ class Registry implements FilterRegistryInterface
                 get_class($filter)
             ));
         }
-        $identifier = $filter->getIdentifier();
-        if (!preg_match('/[A-Za-z0-9_]+/', $identifier)) {
+        $id = $identifier ?: $filter->getIdentifier();
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $id)) {
             throw new InvalidArgumentException(sprintf(
                 'Filter %s has an invalid identifier. Only alphanumeric characters and underscores allowed.',
                 get_class($filter)
             ));
         }
 
-        $this->filters[$identifier] = $filter;
+        $this->filters[$id] = $filter;
 
         return $this;
     }

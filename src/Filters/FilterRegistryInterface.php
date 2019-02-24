@@ -18,8 +18,9 @@ interface FilterRegistryInterface
 
     /**
      * @param FilterInterface $filter
+     * @param string|null $identifier
      * @return $this
      */
-    public function addFilter(FilterInterface $filter);
+    public function addFilter(FilterInterface $filter, $identifier = null);
 
 }

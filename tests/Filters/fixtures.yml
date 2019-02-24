@@ -1,0 +1,53 @@
+SilverStripe\Security\Member:
+  bernie:
+    FirstName: Bernie
+    Surname: Sanders
+  patrick:
+    FirstName: Patrick
+    Surname: Leahy
+SilverStripe\Assets\File:
+  file1:
+    Title: 'maple'
+  file2:
+    Title: 'phish'
+  file3:
+    Title: 'cider'
+
+SilverStripe\GraphQL\Tests\Fake\DataObjectFake:
+  burlington:
+    MyField: Burlington
+    MyInt: 2
+    Author: =>SilverStripe\Security\Member.bernie
+    Files:
+      - =>SilverStripe\Assets\File.file1
+      - =>SilverStripe\Assets\File.file2
+  brattleboro:
+    MyField: Brattleboro
+    MyInt: 5
+    Author: =>SilverStripe\Security\Member.patrick
+    Files:
+      - =>SilverStripe\Assets\File.file1
+      - =>SilverStripe\Assets\File.file2
+      - =>SilverStripe\Assets\File.file3
+  shelburne:
+    MyField: Shelburne
+    MyInt: 7
+    Author: =>SilverStripe\Security\Member.bernie
+    Files:
+      - =>SilverStripe\Assets\File.file1
+
+  montpelier:
+    MyField: Montpelier
+    MyInt: 9
+    Author: =>SilverStripe\Security\Member.patrick
+    Files:
+      - =>SilverStripe\Assets\File.file2
+      - =>SilverStripe\Assets\File.file3
+
+  johnson:
+    MyField: Johnson
+    MyInt: 4
+    Author: =>SilverStripe\Security\Member.bernie
+    Files:
+      - =>SilverStripe\Assets\File.file1
+      - =>SilverStripe\Assets\File.file3

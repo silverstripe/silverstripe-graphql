@@ -9,12 +9,12 @@ class InFilter implements ListFilterInterface
 {
     public function applyInclusion(DataList $list, $fieldName, $value)
     {
-        return $list->filter($fieldName, (array) $value);
+        return $list->filter($fieldName . ':ExactMatch', (array) $value);
     }
 
     public function applyExclusion(DataList $list, $fieldName, $value)
     {
-        return $list->exclude($fieldName, (array) $value);
+        return $list->exclude($fieldName . ':ExactMatch', (array) $value);
     }
 
     public function getIdentifier()

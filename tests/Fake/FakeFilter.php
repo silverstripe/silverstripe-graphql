@@ -1,25 +1,24 @@
 <?php
 
+namespace SilverStripe\GraphQL\Tests\Fake;
 
-namespace SilverStripe\GraphQL\Filters;
-
+use SilverStripe\GraphQL\Filters\FilterInterface;
 use SilverStripe\ORM\DataList;
 
-class EndsWithFilter implements FilterInterface
+class FakeFilter implements FilterInterface
 {
     public function applyInclusion(DataList $list, $fieldName, $value)
     {
-        return $list->filter($fieldName . ':EndsWith', $value);
+        return $list;
     }
 
     public function applyExclusion(DataList $list, $fieldName, $value)
     {
-        return $list->exclude($fieldName . ':EndsWith', $value);
+        return $list;
     }
 
     public function getIdentifier()
     {
-        return 'endswith';
+        return 'fake';
     }
-
 }
