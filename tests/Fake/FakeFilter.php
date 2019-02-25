@@ -2,10 +2,10 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
-use SilverStripe\GraphQL\Filters\FilterInterface;
+use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
 use SilverStripe\ORM\DataList;
 
-class FakeFilter implements FilterInterface
+class FakeFilter implements FieldFilterInterface
 {
     public function applyInclusion(DataList $list, $fieldName, $value)
     {

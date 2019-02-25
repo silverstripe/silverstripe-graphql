@@ -1,11 +1,12 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\Filters;
+namespace SilverStripe\GraphQL\QueryFilter\Filters;
 
+use SilverStripe\GraphQL\QueryFilter\ListFieldFilterInterface;
 use SilverStripe\ORM\DataList;
 
-class InFilter implements ListFilterInterface
+class InFilter implements ListFieldFilterInterface
 {
     public function applyInclusion(DataList $list, $fieldName, $value)
     {
@@ -21,5 +22,4 @@ class InFilter implements ListFilterInterface
     {
         return 'in';
     }
-
 }

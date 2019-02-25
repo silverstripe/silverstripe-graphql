@@ -1,11 +1,12 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\Filters;
+namespace SilverStripe\GraphQL\QueryFilter\Filters;
 
+use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
 use SilverStripe\ORM\DataList;
 
-class EqualToFilter implements FilterInterface
+class EqualToFilter implements FieldFilterInterface
 {
     public function applyInclusion(DataList $list, $fieldName, $value)
     {

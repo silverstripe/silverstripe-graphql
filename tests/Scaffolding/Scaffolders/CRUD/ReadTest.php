@@ -2,29 +2,18 @@
 
 namespace SilverStripe\GraphQL\Tests\Scaffolding\Scaffolders\CRUD;
 
-use GraphQL\Type\Definition\IDType;
 use GraphQL\Type\Definition\InputObjectType;
-use GraphQL\Type\Definition\IntType;
-use GraphQL\Type\Definition\ListOfType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\StringType;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
-use SilverStripe\GraphQL\Filters\EqualToFilter;
-use SilverStripe\GraphQL\Filters\FilterRegistryInterface;
-use SilverStripe\GraphQL\Filters\GreaterThanFilter;
-use SilverStripe\GraphQL\Filters\InFilter;
-use SilverStripe\GraphQL\Filters\Registry;
 use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\QueryFilter\DataObjectQueryFilter;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
-use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
-use SilverStripe\GraphQL\Tests\Fake\FilterDataList;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 use SilverStripe\ORM\DataList;
-use SilverStripe\ORM\FieldType\DBVarchar;
 use SilverStripe\Security\Member;
 
 class ReadTest extends SapphireTest
@@ -96,7 +85,8 @@ class ReadTest extends SapphireTest
 
     public function testApplyConfig()
     {
-        $mock = $this->getMockBuilder(Read::class)
+        $read = new Read(DataObjectFake::class);
+        $mock = $this->getMockBuilder(DataObjectQueryFilter::class)
             ->setConstructorArgs([DataObjectFake::class])
             ->setMethods(['addAllFilters', 'addFieldFilter', 'addDefaultFilters'])
             ->getMock();
@@ -109,11 +99,12 @@ class ReadTest extends SapphireTest
             ->method('addFieldFilter')
             ->with('MyCustomField', 'myfilter');
 
-        $mock->applyConfig([
+        $read->setQueryFilter($mock);
+        $read->applyConfig([
             'filters' => SchemaScaffolder::ALL
         ]);
 
-        $mock->applyConfig([
+        $read->applyConfig([
             'filters' => [
                 'MyDefaultField' => true,
                 'MyCustomField' => [
@@ -145,199 +136,101 @@ class ReadTest extends SapphireTest
         $read->applyConfig([
             'filters' => 'fail'
         ]);
-
     }
 
-    public function testAddAllFilters()
+    public function testQueryFilterAddsToManager()
     {
-        $mock = $this->getMockBuilder(Read::class)
+        $read = new Read(DataObjectFake::class);
+        $mock = $this->getMockBuilder(DataObjectQueryFilter::class)
             ->setConstructorArgs([DataObjectFake::class])
-            ->setMethods(['addDefaultFilters'])
+            ->setMethods(['getInputType'])
             ->getMock();
-        $mock->expects($this->exactly(7))
-            ->method('addDefaultFilters')
-            ->withConsecutive(
-                ['ID'],
-                ['ClassName'],
-                ['LastEdited'],
-                ['Created'],
-                ['MyField'],
-                ['MyInt'],
-                ['AuthorID']
-            );
-        $mock->addAllFilters();
+        $mock->expects($this->never())
+            ->method('getInputType');
+        $read->setQueryFilter($mock);
 
-    }
-
-    public function testAddDefaultFilters()
-    {
-        $defaults = DBVarchar::config()->get('default_filters');
-        $with = array_map(function ($default) {
-            return ['MyField', $default];
-        }, $defaults);
-        $mock = $this->getMockBuilder(Read::class)
-            ->setConstructorArgs([DataObjectFake::class])
-            ->setMethods(['addFieldFilter'])
-            ->getMock();
-        $mock->expects($this->exactly(sizeof($defaults)))
-            ->method('addFieldFilter')
-            ->withConsecutive(...$with);
-
-        $mock->addDefaultFilters('MyField');
-
-        $this->expectException('InvalidArgumentException');
-        $mock->addDefaultFilters('Fail');
-    }
-
-    public function testFilterCreation()
-    {
         $manager = new Manager();
-        $dataobject = new DataObjectScaffolder(DataObjectFake::class);
-        $dataobject->addToManager($manager);
-        $registry = new Registry();
-        $registry->addFilter(new EqualToFilter(), 'myFilter');
-        $registry->addFilter(new InFilter(), 'myListFilter');
+        $manager->addType(new ObjectType(['name' => 'SilverStripeDataObjectFake']), 'SilverStripeDataObjectFake');
+        $read->addToManager($manager);
+
+        $mock = $this->getMockBuilder(DataObjectQueryFilter::class)
+            ->setConstructorArgs([DataObjectFake::class])
+            ->setMethods(['getInputType'])
+            ->getMock();
+        $mock->expects($this->exactly(2))
+            ->method('getInputType')
+            ->willReturn(new InputObjectType(['name' => 'test']));
+        $read->setQueryFilter($mock);
+        $read->queryFilter()->addAllFilters();
+
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'SilverStripeDataObjectFake']), 'SilverStripeDataObjectFake');
+        $read->addToManager($manager);
+    }
+
+    public function testQueryFilterScaffold()
+    {
         $read = new Read(DataObjectFake::class);
         $read->setUsePagination(false);
-        $read->setFilterRegistry($registry);
-        $read->addFieldFilter('MyField', 'myFilter');
-        $read->addFieldFilter('Author__FirstName', 'myFilter');
-        $read->addFieldFilter('MyInt', 'myListFilter');
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'SilverStripeDataObjectFake']), 'SilverStripeDataObjectFake');
+        $data = $read->scaffold($manager);
+        $this->assertArrayHasKey('args', $data);
+        $this->assertArrayNotHasKey(Read::FILTER, $data['args']);
+        $this->assertArrayNotHasKey(Read::EXCLUDE, $data['args']);
+
+        $read->queryFilter()->addAllFilters();
+        $manager = new Manager();
+        $manager->addType(new ObjectType(['name' => 'SilverStripeDataObjectFake']), 'SilverStripeDataObjectFake');
         $read->addToManager($manager);
-
-        $this->assertTrue($manager->hasType($read->getDataObjectTypeName() . 'FilterReadInputType'));
-        $this->assertTrue($manager->hasType($read->getDataObjectTypeName() . 'ExcludeReadInputType'));
-        /* @var InputObjectType $filterType */
-        $filterType = $manager->getType($read->getDataObjectTypeName() . 'FilterReadInputType');
-        /* @var InputObjectType $excludeType */
-        $excludeType = $manager->getType($read->getDataObjectTypeName() . 'ExcludeReadInputType');
-
-        // Filter input type
-        $fields = $filterType->getFields();
-        $this->assertArrayHasKey('MyField__myFilter', $fields);
-        $this->assertInstanceOf(StringType::class, $fields['MyField__myFilter']->getType());
-        $this->assertArrayHasKey('Author__FirstName__myFilter', $fields);
-        $this->assertInstanceOf(StringType::class, $fields['Author__FirstName__myFilter']->getType());
-        $this->assertArrayHasKey('MyInt__myListFilter', $fields);
-        $this->assertInstanceOf(ListOfType::class, $fields['MyInt__myListFilter']->getType());
-        $this->assertInstanceOf(IntType::class, $fields['MyInt__myListFilter']->getType()->getWrappedType());
-
-        // Exclude input type
-        $fields = $excludeType->getFields();
-        $this->assertArrayHasKey('MyField__myFilter', $fields);
-        $this->assertInstanceOf(StringType::class, $fields['MyField__myFilter']->getType());
-        $this->assertArrayHasKey('Author__FirstName__myFilter', $fields);
-        $this->assertInstanceOf(StringType::class, $fields['Author__FirstName__myFilter']->getType());
-        $this->assertArrayHasKey('MyInt__myListFilter', $fields);
-        $this->assertInstanceOf(ListOfType::class, $fields['MyInt__myListFilter']->getType());
-        $this->assertInstanceOf(IntType::class, $fields['MyInt__myListFilter']->getType()->getWrappedType());
-
-        // Check the integrity of the query object itself
-        $read = $read->scaffold($manager);
-        $this->assertArrayHasKey('args', $read);
-        $this->assertArrayHasKey('Filter', $read['args']);
-        $this->assertArrayHasKey('Exclude', $read['args']);
-        $this->assertInstanceOf(InputObjectType::class, $read['args']['Filter']['type']);
-        $this->assertInstanceOf(InputObjectType::class, $read['args']['Exclude']['type']);
-
-        // Exceptions
-        $this->expectException('Exception');
-        $read = new Read(DataObjectFake::class);
-        $read->setFilterRegistry($registry);
-        $read->addFieldFilter('MyField', 'failFilter');
-        $read->addToManager($manager);
-        /* @var InputObjectType $filterType */
-        $filterType = $manager->getType($read->getDataObjectTypeName() . 'FilterReadInputType');
-        $filterType->getFields();
-
-        $this->expectException('Exception');
-        $read = new Read(DataObjectFake::class);
-        $read->setFilterRegistry($registry);
-        $read->addFieldFilter('Author__Surname', 'failFilter');
-        $read->addToManager($manager);
-        /* @var InputObjectType $filterType */
-        $filterType = $manager->getType($read->getDataObjectTypeName() . 'FilterReadInputType');
-        $filterType->getFields();
+        $data = $read->scaffold($manager);
+        $this->assertArrayHasKey('args', $data);
+        $this->assertArrayHasKey(Read::FILTER, $data['args']);
+        $this->assertArrayHasKey(Read::EXCLUDE, $data['args']);
+        $this->assertInstanceOf(InputObjectType::class, $data['args'][Read::FILTER]['type']);
+        $this->assertInstanceOf(InputObjectType::class, $data['args'][Read::EXCLUDE]['type']);
     }
 
-    public function testResolverFilters()
+    public function testQueryFilterResolve()
     {
-        Injector::inst()->load([
-            DataList::class => [
-                'class' => FilterDataList::class,
-            ]
-        ]);
         $read = new Read(DataObjectFake::class);
-        $read->addFieldFilter('MyField', 'eq');
-        $read->addFieldFilter('MyInt', 'gt');
-        $doResolve = function ($args) use ($read) {
-            return $read->resolve(null, $args, ['currentUser' => null], new ResolveInfo([]));
-        };
-        $params = [
-            'Filter' => [
-                'MyField__eq' => 'match',
+        $mock = $this->getMockBuilder(DataObjectQueryFilter::class)
+            ->setConstructorArgs([DataObjectFake::class])
+            ->setMethods(['applyArgsToList'])
+            ->getMock();
+        $mock->expects($this->never())
+            ->method('applyArgsToList');
+        $read->setQueryFilter($mock);
+
+        $read->resolve(
+            null,
+            [],
+            ['currentUser' => null],
+            new ResolveInfo([])
+        );
+
+        $read = new Read(DataObjectFake::class);
+        $mock = $this->getMockBuilder(DataObjectQueryFilter::class)
+            ->setConstructorArgs([DataObjectFake::class])
+            ->setMethods(['applyArgsToList'])
+            ->getMock();
+        $mock->expects($this->once())
+            ->method('applyArgsToList');
+        $read->setQueryFilter($mock);
+        $read->queryFilter()->addAllFilters();
+
+        $read->resolve(
+            null,
+            [
+                'Filter' => [
+                    'MyField__eq' => 'test'
+                ],
+                'Exclude' => [
+                    'MyInt__gt' => 4
+                ]
             ],
-            'Exclude' => [
-                'MyInt__gt' => 10
-            ],
-        ];
-
-        $list = $doResolve($params);
-        $this->assertInstanceOf(FilterDataList::class, $list);
-
-        $this->assertNull($list->filterField);
-        $this->assertNull($list->filterValue);
-        $this->assertNull($list->excludeField);
-        $this->assertNull($list->excludeValue);
-
-        $registry = new Registry();
-        $registry->addFilter(new EqualToFilter(), 'eq');
-        $registry->addFilter(new GreaterThanFilter(), 'gt');
-        $read->setFilterRegistry($registry);
-
-        $list = $doResolve($params);
-        $this->assertEquals('MyField:ExactMatch', $list->filterField);
-        $this->assertEquals('match', $list->filterValue);
-        $this->assertEquals('MyInt:GreaterThan', $list->excludeField);
-        $this->assertEquals(10, $list->excludeValue);
-
-        $params = [
-            'Filter' => [
-                'MyInt__gt' => 4,
-            ],
-            'Exclude' => [
-                'MyField__eq' => 'not match'
-            ],
-        ];
-
-        $list = $doResolve($params);
-        $this->assertInstanceOf(FilterDataList::class, $list);
-        $this->assertEquals('MyInt:GreaterThan', $list->filterField);
-        $this->assertEquals(4, $list->filterValue);
-        $this->assertEquals('MyField:ExactMatch', $list->excludeField);
-        $this->assertEquals('not match', $list->excludeValue);
-
-        $this->expectException('InvalidArgumentException');
-        $doResolve([
-            'Filter' => [
-                'MyInt' => 'test'
-            ]
-        ]);
-
-        $this->expectException('InvalidArgumentException');
-        $doResolve([
-            'Filter' => [
-                '__MyInt' => 'test'
-            ]
-        ]);
-
-        $this->expectException('InvalidArgumentException');
-        $doResolve([
-            'Filter' => [
-                'MyInt__fail' => 'test'
-            ]
-        ]);
-
+            ['currentUser' => null],
+            new ResolveInfo([])
+        );
     }
-
 }

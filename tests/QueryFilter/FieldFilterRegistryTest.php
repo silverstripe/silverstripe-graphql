@@ -2,18 +2,15 @@
 
 namespace SilverStripe\GraphQL\Tests\Filters;
 
-use http\Exception\InvalidArgumentException;
 use SilverStripe\Dev\SapphireTest;
-use SilverStripe\GraphQL\Filters\FilterInterface;
-use SilverStripe\GraphQL\Filters\Registry;
-use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\QueryFilter\FieldFilterRegistry;
 use SilverStripe\GraphQL\Tests\Fake\FakeFilter;
 
-class RegistryTest extends SapphireTest
+class FieldFilterRegistryTest extends SapphireTest
 {
     public function testAddFilter()
     {
-        $registry = new Registry();
+        $registry = new FieldFilterRegistry();
         $filter = new FakeFilter();
         $registry->addFilter($filter);
         $this->assertEquals($filter, $registry->getFilterByIdentifier('fake'));
@@ -31,7 +28,7 @@ class RegistryTest extends SapphireTest
             ->method('getIdentifier')
             ->willReturn('not! a valid ide^ntifer');
         $this->expectException('InvalidArgumentException');
-        $registry = new Registry();
+        $registry = new FieldFilterRegistry();
         $registry->addFilter($fake);
     }
 }

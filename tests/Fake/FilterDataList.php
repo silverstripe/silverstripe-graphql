@@ -42,5 +42,4 @@ class FilterDataList extends DataList implements TestOnly
 
         return $clone;
     }
-
 }

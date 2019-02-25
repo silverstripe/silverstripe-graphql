@@ -3,16 +3,16 @@
 namespace SilverStripe\GraphQL\Tests\Filters;
 
 use SilverStripe\Dev\SapphireTest;
-use SilverStripe\GraphQL\Filters\ContainsFilter;
-use SilverStripe\GraphQL\Filters\EndsWithFilter;
-use SilverStripe\GraphQL\Filters\EqualToFilter;
-use SilverStripe\GraphQL\Filters\FilterInterface;
-use SilverStripe\GraphQL\Filters\GreaterThanFilter;
-use SilverStripe\GraphQL\Filters\GreaterThanOrEqualFilter;
-use SilverStripe\GraphQL\Filters\InFilter;
-use SilverStripe\GraphQL\Filters\LessThanFilter;
-use SilverStripe\GraphQL\Filters\LessThanOrEqualFilter;
-use SilverStripe\GraphQL\Filters\StartsWithFilter;
+use SilverStripe\GraphQL\QueryFilter\Filters\ContainsFilter;
+use SilverStripe\GraphQL\QueryFilter\Filters\EndsWithFilter;
+use SilverStripe\GraphQL\QueryFilter\Filters\EqualToFilter;
+use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
+use SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanFilter;
+use SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanOrEqualFilter;
+use SilverStripe\GraphQL\QueryFilter\Filters\InFilter;
+use SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter;
+use SilverStripe\GraphQL\QueryFilter\Filters\LessThanOrEqualFilter;
+use SilverStripe\GraphQL\QueryFilter\Filters\StartsWithFilter;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FilterDataList;
 
@@ -24,11 +24,11 @@ class FilterTest extends SapphireTest
 
     /**
      * @dataProvider provider
-     * @param FilterInterface $filter
+     * @param FieldFilterInterface $filter
      * @param $modifier
      * @param string $value
      */
-    public function testFilterInclusion(FilterInterface $filter, $modifier, $value = 'test')
+    public function testFilterInclusion(FieldFilterInterface $filter, $modifier, $value = 'test')
     {
         $list = new FilterDataList(DataObjectFake::class);
         $filtered = $filter->applyInclusion($list, 'MyField', 'test');
@@ -38,10 +38,10 @@ class FilterTest extends SapphireTest
 
     /**
      * @dataProvider provider
-     * @param FilterInterface $filter
+     * @param FieldFilterInterface $filter
      * @param string $modifier
      */
-    public function testFilterExclusion(FilterInterface $filter, $modifier, $value = 'test')
+    public function testFilterExclusion(FieldFilterInterface $filter, $modifier, $value = 'test')
     {
         $list = new FilterDataList(DataObjectFake::class);
         $filtered = $filter->applyExclusion($list, 'MyField', 'test');

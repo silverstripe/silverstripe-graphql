@@ -1,18 +1,15 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\Filters;
-
+namespace SilverStripe\GraphQL\QueryFilter;
 
 use SilverStripe\ORM\DataList;
 
 /**
  * Defines the interface used by all read filters for scaffolded operations
  */
-interface FilterInterface
+interface FieldFilterInterface
 {
-    const SEPARATOR = '__';
-
     /**
      * @param DataList $list
      * @param string $fieldName

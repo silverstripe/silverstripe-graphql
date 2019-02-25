@@ -1,10 +1,10 @@
 <?php
 
-namespace SilverStripe\GraphQL\Filters;
+namespace SilverStripe\GraphQL\QueryFilter;
 
 use InvalidArgumentException;
 
-class Registry implements FilterRegistryInterface
+class FieldFilterRegistry implements FilterRegistryInterface
 {
     /**
      * @var array FilterInterface[]
@@ -23,14 +23,14 @@ class Registry implements FilterRegistryInterface
     }
 
     /**
-     * @param FilterInterface $filter
+     * @param FieldFilterInterface $filter
      * @param string|null $identifier
      * @return $this
      * @throws InvalidArgumentException
      */
-    public function addFilter(FilterInterface $filter, $identifier = null)
+    public function addFilter(FieldFilterInterface $filter, $identifier = null)
     {
-        if (!$filter instanceof FilterInterface) {
+        if (!$filter instanceof FieldFilterInterface) {
             throw new InvalidArgumentException(sprintf(
                 '%s filters must be implement the %s interface. See: %s',
                 __CLASS__,

@@ -2,27 +2,21 @@
 Name: graphql-filters
 ---
 SilverStripe\Core\Injector\Injector:
-  SilverStripe\GraphQL\Filters\FilterRegistryInterface:
-    class: SilverStripe\GraphQL\Filters\Registry
+  SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface:
+    class: SilverStripe\GraphQL\QueryFilter\FieldFilterRegistry
     constructor:
-      contains: '%$SilverStripe\GraphQL\Filters\ContainsFilter'
-      eq: '%$SilverStripe\GraphQL\Filters\EqualToFilter'
-      gt: '%$SilverStripe\GraphQL\Filters\GreaterThanFilter'
-      lt: '%$SilverStripe\GraphQL\Filters\LessThanFilter'
-      gte: '%$SilverStripe\GraphQL\Filters\GreaterThanOrEqualFilter'
-      lte: '%$SilverStripe\GraphQL\Filters\LessThanOrEqualFilter'
-      in: '%$SilverStripe\GraphQL\Filters\InFilter'
-      endswith: '%$SilverStripe\GraphQL\Filters\LessThanFilter'
-      startswith: '%$SilverStripe\GraphQL\Filters\LessThanFilter'
-  SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read:
-    class: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read
+      contains: '%$SilverStripe\GraphQL\QueryFilter\Filters\ContainsFilter'
+      eq: '%$SilverStripe\GraphQL\QueryFilter\Filters\EqualToFilter'
+      gt: '%$SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanFilter'
+      lt: '%$SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter'
+      gte: '%$SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanOrEqualFilter'
+      lte: '%$SilverStripe\GraphQL\QueryFilter\Filters\LessThanOrEqualFilter'
+      in: '%$SilverStripe\GraphQL\QueryFilter\Filters\InFilter'
+      endswith: '%$SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter'
+      startswith: '%$SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter'
+  SilverStripe\GraphQL\QueryFilter\DataObjectQueryFilter:
     properties:
-      filterRegistry: '%$SilverStripe\GraphQL\Filters\FilterRegistryInterface'
-  SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ReadOne:
-    class: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read
-    properties:
-      filterRegistry: '%$SilverStripe\GraphQL\Filters\FilterRegistryInterface'
-
+      filterRegistry: '%$SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface'
 SilverStripe\ORM\FieldType\DBField:
   graphql_type: String
   default_filters: [ eq, in ]

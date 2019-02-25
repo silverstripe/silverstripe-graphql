@@ -1,7 +1,7 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\Filters;
+namespace SilverStripe\GraphQL\QueryFilter;
 
 interface FilterRegistryInterface
 {
@@ -12,15 +12,14 @@ interface FilterRegistryInterface
     public function getFilterByIdentifier($identifier);
 
     /**
-     * @return FilterInterface[]
+     * @return FieldFilterInterface[]
      */
     public function getAll();
 
     /**
-     * @param FilterInterface $filter
+     * @param FieldFilterInterface $filter
      * @param string|null $identifier
      * @return $this
      */
-    public function addFilter(FilterInterface $filter, $identifier = null);
-
+    public function addFilter(FieldFilterInterface $filter, $identifier = null);
 }

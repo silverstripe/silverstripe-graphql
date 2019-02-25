@@ -1,11 +1,12 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\Filters;
+namespace SilverStripe\GraphQL\QueryFilter\Filters;
 
+use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
 use SilverStripe\ORM\DataList;
 
-class GreaterThanFilter implements FilterInterface
+class GreaterThanFilter implements FieldFilterInterface
 {
     public function applyInclusion(DataList $list, $fieldName, $value)
     {
@@ -21,5 +22,4 @@ class GreaterThanFilter implements FilterInterface
     {
         return 'gt';
     }
-
 }
