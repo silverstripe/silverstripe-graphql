@@ -224,6 +224,8 @@ class Controller extends BaseController implements Flushable
         $response->addHeader('Access-Control-Allow-Methods', $corsConfig['Allow-Methods']);
         $response->addHeader('Access-Control-Max-Age', $corsConfig['Max-Age']);
 
+        $this->extend('updateCorsHeaders', $response);
+
         return $response;
     }
 
