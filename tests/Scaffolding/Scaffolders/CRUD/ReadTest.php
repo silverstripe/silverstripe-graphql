@@ -13,6 +13,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Filters\EqualToFilter;
 use SilverStripe\GraphQL\Filters\FilterRegistryInterface;
+use SilverStripe\GraphQL\Filters\GreaterThanFilter;
 use SilverStripe\GraphQL\Filters\InFilter;
 use SilverStripe\GraphQL\Filters\Registry;
 use SilverStripe\GraphQL\Manager;
@@ -20,6 +21,7 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FilterDataList;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\FieldType\DBVarchar;
@@ -260,8 +262,82 @@ class ReadTest extends SapphireTest
 
     public function testResolverFilters()
     {
-        // test createFieldFilters throws exceptions
-        // test getResults calls apply() methods.
+        Injector::inst()->load([
+            DataList::class => [
+                'class' => FilterDataList::class,
+            ]
+        ]);
+        $read = new Read(DataObjectFake::class);
+        $read->addFieldFilter('MyField', 'eq');
+        $read->addFieldFilter('MyInt', 'gt');
+        $doResolve = function ($args) use ($read) {
+            return $read->resolve(null, $args, ['currentUser' => null], new ResolveInfo([]));
+        };
+        $params = [
+            'Filter' => [
+                'MyField__eq' => 'match',
+            ],
+            'Exclude' => [
+                'MyInt__gt' => 10
+            ],
+        ];
+
+        $list = $doResolve($params);
+        $this->assertInstanceOf(FilterDataList::class, $list);
+
+        $this->assertNull($list->filterField);
+        $this->assertNull($list->filterValue);
+        $this->assertNull($list->excludeField);
+        $this->assertNull($list->excludeValue);
+
+        $registry = new Registry();
+        $registry->addFilter(new EqualToFilter(), 'eq');
+        $registry->addFilter(new GreaterThanFilter(), 'gt');
+        $read->setFilterRegistry($registry);
+
+        $list = $doResolve($params);
+        $this->assertEquals('MyField:ExactMatch', $list->filterField);
+        $this->assertEquals('match', $list->filterValue);
+        $this->assertEquals('MyInt:GreaterThan', $list->excludeField);
+        $this->assertEquals(10, $list->excludeValue);
+
+        $params = [
+            'Filter' => [
+                'MyInt__gt' => 4,
+            ],
+            'Exclude' => [
+                'MyField__eq' => 'not match'
+            ],
+        ];
+
+        $list = $doResolve($params);
+        $this->assertInstanceOf(FilterDataList::class, $list);
+        $this->assertEquals('MyInt:GreaterThan', $list->filterField);
+        $this->assertEquals(4, $list->filterValue);
+        $this->assertEquals('MyField:ExactMatch', $list->excludeField);
+        $this->assertEquals('not match', $list->excludeValue);
+
+        $this->expectException('InvalidArgumentException');
+        $doResolve([
+            'Filter' => [
+                'MyInt' => 'test'
+            ]
+        ]);
+
+        $this->expectException('InvalidArgumentException');
+        $doResolve([
+            'Filter' => [
+                '__MyInt' => 'test'
+            ]
+        ]);
+
+        $this->expectException('InvalidArgumentException');
+        $doResolve([
+            'Filter' => [
+                'MyInt__fail' => 'test'
+            ]
+        ]);
+
     }
 
 }
