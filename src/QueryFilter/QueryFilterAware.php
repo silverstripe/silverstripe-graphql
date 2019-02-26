@@ -26,7 +26,6 @@ trait QueryFilterAware
     }
 
     /**
-     * A "find or make" API useful for the fluent declarations in scaffolding code.
      * @return DataObjectQueryFilter
      */
     public function queryFilter()

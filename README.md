@@ -960,6 +960,17 @@ read:
       gte: true # Greater than or equal
 ```
 
+**Or with procedural code**...
+```php
+$scaffolder->type(MyDataObject::class)
+  ->operation(SchemaScaffolder::READ)
+    ->queryFilter()
+      ->addDefaultFields('MyField')
+      ->addFieldFilter('MyInt', 'gt')
+      ->addFieldFilter('MyInt', 'gte')
+    ->end()
+  ->end();
+```
 These filter options are also available on`readOne` operations, but be aware that they are mutually
 exclusive with its `ID` parameter.
 
