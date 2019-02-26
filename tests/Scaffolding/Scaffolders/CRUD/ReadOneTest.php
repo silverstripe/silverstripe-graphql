@@ -73,8 +73,7 @@ class ReadOneTest extends SapphireTest
 
         /** @var NonNull $idType */
         $idType = $args['ID']['type'];
-        $this->assertInstanceOf(NonNull::class, $idType);
-        $this->assertInstanceOf(IDType::class, $idType->getWrappedType());
+        $this->assertInstanceOf(IDType::class, $idType);
 
         // Check custom arg
         $this->assertArrayHasKey('MyField', $args);

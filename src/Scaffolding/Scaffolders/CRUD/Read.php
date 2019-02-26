@@ -8,10 +8,10 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryFilter\DataObjectQueryFilter;
+use SilverStripe\GraphQL\QueryFilter\QueryFilterAware;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
-use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\Security\Member;
@@ -22,6 +22,8 @@ use InvalidArgumentException;
  */
 class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterface
 {
+    use QueryFilterAware;
+
     const FILTER = 'Filter';
 
     const EXCLUDE = 'Exclude';
@@ -140,26 +142,6 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
     }
 
     /**
-     * @param Manager $manager
-     */
-    public function addToManager(Manager $manager)
-    {
-        if ($this->queryFilter()->exists()) {
-            $manager->addType(
-                $this->queryFilter->getInputType(
-                    $this->inputTypeName(self::FILTER)
-                )
-            );
-            $manager->addType(
-                $this->queryFilter->getInputType(
-                    $this->inputTypeName(self::EXCLUDE)
-                )
-            );
-        }
-
-        parent::addToManager($manager);
-    }
-    /**
      * Use a generated Input type, and require an ID.
      *
      * @param Manager $manager
@@ -193,34 +175,20 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
     public function applyConfig(array $config)
     {
         parent::applyConfig($config);
-        if (!isset($config['filters'])) {
-            return;
-        }
-        if ($config['filters'] === SchemaScaffolder::ALL) {
-            $this->queryFilter->addAllFilters();
-        } elseif (is_array($config['filters'])) {
-            foreach ($config['filters'] as $fieldName => $filterConfig) {
-                if ($filterConfig === true) {
-                    $this->queryFilter->addDefaultFilters($fieldName);
-                } elseif (ArrayLib::is_associative($filterConfig)) {
-                    foreach ($filterConfig as $filterID => $include) {
-                        if (!$include) {
-                            continue;
-                        }
-                        $this->queryFilter->addFieldFilter($fieldName, $filterID);
-                    }
+
+        if (isset($config['filters'])) {
+            if ($config['filters'] === SchemaScaffolder::ALL) {
+                $this->queryFilter->addAllFilters();
+            } else {
+                if (is_array($config['filters'])) {
+                    $this->queryFilter->applyConfig($config['filters']);
                 } else {
                     throw new InvalidArgumentException(sprintf(
-                        'Filters on field "%s" must be a map of filter ID to a boolean value',
-                        $fieldName
+                        'Config setting "filters" must be an array mapping field names to a list of filter identifiers, or %s for all',
+                        SchemaScaffolder::ALL
                     ));
                 }
             }
-        } else {
-            throw new InvalidArgumentException(sprintf(
-                'Config setting "filters" must be an array mapping field names to a list of filter identifiers, or %s for all',
-                SchemaScaffolder::ALL
-            ));
         }
     }
 }

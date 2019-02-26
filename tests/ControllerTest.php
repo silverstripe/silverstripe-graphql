@@ -400,11 +400,14 @@ class ControllerTest extends SapphireTest
             'typeNames' => [DataObjectFake::class => 'testtwo'],
         ]
         ];
+        Config::nest();
         Config::modify()->set(Manager::class, 'schemas', $config);
         $controller1 = new Controller(new Manager('schema1'));
         $this->assertEquals('testone', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
         $controller2 = new Controller(new Manager('schema2'));
         $this->assertEquals('testtwo', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
+        Config::unnest();
+        StaticSchema::reset();
     }
 
     public function testCSRFProtectionBlocksMutations()

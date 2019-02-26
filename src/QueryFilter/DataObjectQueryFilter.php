@@ -6,19 +6,23 @@ namespace SilverStripe\GraphQL\QueryFilter;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
+use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
+use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
 use Exception;
 
-class DataObjectQueryFilter
+class DataObjectQueryFilter implements ConfigurationApplier
 {
     use Chainable;
     use DataObjectTypeTrait;
+    use Injectable;
 
     const SEPARATOR = '__';
 
@@ -41,6 +45,11 @@ class DataObjectQueryFilter
      * @var string
      */
     protected $excludeKey = 'Exclude';
+
+    /**
+     * @var InputObjectType[]
+     */
+    protected $inputTypeCache;
 
     /**
      * DataObjectQueryFilter constructor.
@@ -167,12 +176,17 @@ class DataObjectQueryFilter
 
     /**
      * @param string $name
+     * @param bool $cached
      * @return InputObjectType
      */
-    public function getInputType($name)
+    public function getInputType($name, $cached = true)
     {
+        if ($cached && isset($this->inputTypeCache[$name])) {
+            return $this->inputTypeCache[$name];
+        }
+
         $filteredFields = $this->filteredFields;
-        return new InputObjectType([
+        $input = new InputObjectType([
             'name' => $name,
             'fields' => function () use ($filteredFields) {
                 $fields = [];
@@ -199,6 +213,10 @@ class DataObjectQueryFilter
                 return $fields;
             }
         ]);
+
+        $this->inputTypeCache[$name] = $input;
+
+        return $this->inputTypeCache[$name];
     }
 
     /**
@@ -224,6 +242,90 @@ class DataObjectQueryFilter
         }
 
         return $list;
+    }
+
+    /**
+     * @param string $fieldName
+     * @return array
+     * @throws InvalidArgumentException
+     */
+    public function getFiltersForField($fieldName)
+    {
+        if (isset($this->filteredFields[$fieldName])) {
+            return array_keys($this->filteredFields[$fieldName]);
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            'Field %s not found',
+            $fieldName
+        ));
+    }
+
+    /**
+     * @param string $fieldName
+     * @return bool
+     */
+    public function isFieldFiltered($fieldName)
+    {
+        try {
+            $filters = $this->getFiltersForField($fieldName);
+
+            return !empty($filters);
+        } catch (InvalidArgumentException $e) {
+            return false;
+        }
+    }
+
+    /**
+     * @param string $fieldName
+     * @param string $id
+     * @return bool
+     */
+    public function fieldHasFilter($fieldName, $id)
+    {
+        if ($this->isFieldFiltered($fieldName)) {
+            return in_array($id, $this->getFiltersForField($fieldName));
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string $fieldName
+     * @param string $id
+     * @return $this
+     */
+    public function removeFilterFromField($fieldName, $id)
+    {
+        if ($this->isFieldFiltered($fieldName)) {
+            unset($this->filteredFields[$fieldName][$id]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param array $config
+     */
+    public function applyConfig(array $config)
+    {
+        foreach ($config as $fieldName => $filterConfig) {
+            if ($filterConfig === true) {
+                $this->addDefaultFilters($fieldName);
+            } elseif (ArrayLib::is_associative($filterConfig)) {
+                foreach ($filterConfig as $filterID => $include) {
+                    if (!$include) {
+                        continue;
+                    }
+                    $this->addFieldFilter($fieldName, $filterID);
+                }
+            } else {
+                throw new InvalidArgumentException(sprintf(
+                    'Filters on field "%s" must be a map of filter ID to a boolean value',
+                    $fieldName
+                ));
+            }
+        }
     }
 
     /**

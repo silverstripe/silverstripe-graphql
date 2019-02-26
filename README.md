@@ -30,6 +30,7 @@ composer require silverstripe/graphql
    - [Pagination](#pagination)
      - [Setting pagination and sorting options](#setting-pagination-and-sorting-options)
    - [Nested connections](#nested-connections)
+   - [Adding search params](#adding-search-params)
    - [Define Mutations](#define-mutations)
  - [Scaffolding DataObjects into the schema](#scaffolding-dataobjects-into-the-schema)
    - [Our example](#our-example)
@@ -37,6 +38,7 @@ composer require silverstripe/graphql
    - [Scaffolding through procedural code](#scaffolding-through-procedural-code)
    - [Exposing a DataObject to GraphQL](#exposing-a-dataobject-to-graphql)
      - [Available operations](#available-operations)
+     - [Scaffolding search params](#adding-search-params-read-operations-only)
      - [Setting field descriptions](#setting-field-descriptions)
      - [Wildcarding and whitelisting fields](#wildcarding-and-whitelisting-fields)
      - [Adding arguments](#adding-arguments)
@@ -517,6 +519,132 @@ query Members {
 }
 ```
 
+### Adding search params
+
+You can add search parameters your query to filter results using the `DataObjectQueryFilter` class.
+Much like pagination, this is done using a reusable service that wraps your existing queries.
+
+The end result will allow you to do something like this:
+
+```graphql
+query readBlogs(
+  Filter: {
+    Title__contains: "food",
+    CommentCount__gt: 5,
+    Categories__Title__in: ["Recipes", "Cooking tips"]
+  },
+  Exclude: {
+    Hidden__eq: true
+  }
+) {
+  ID
+  Title
+}
+```
+
+So how do we do it? If you're using `QueryCreator` classes, a good approach is to add an instance of the query filter
+in your constructor.
+
+```php
+$this->queryFilter = DataObjectQueryFilter::create(MyDataObject::class);
+``` 
+
+You can then add filters to fields of the dataobject.
+
+```php
+$this->queryFilter
+    ->addFilteredField('Title', 'contains')
+    ->addFilteredField('CommentCount', 'gt')
+    ->addFilteredField('Categories__Title', 'in')
+    ->addFilteredField('Hidden', 'eq');
+``` 
+
+Don't worry about the filter keys (`contains`, `gt`, `eq`, etc) for now. That will be explained [further down](#the-filter-registry).
+
+Now that we have composed a `DataObjectQueryFilter`, we can now use it to create input types.
+
+```php
+public function args()
+{
+    return [
+        'Filter' => $this->queryFilter->getInputType('MyDataObjectFilterInputType'),
+        'Exclude' => $this->queryFilter->getInputType('MyDataObjectExcludeInputType'),
+    ];
+}
+```
+
+> Make sure your argument names match the names configured in `DataObjectQueryFilter`. By default,
+they are `Filter` and `Exclude`. If you want to use different names, use `setFilterKey()` and
+`setExcludeKey()`.
+
+Lastly, let's update the resolver to apply the filters.
+
+```php
+public function resolve($obj, $args = [], $context = [], ResolveInfo $info)
+{
+    $list = MyDataObject::get();
+    $list = $this->queryFilter->applyArgsToList($list, $args);
+    
+    return $list;
+}
+```
+ 
+#### Shortcuts (for the 80% case)
+
+All `SilverStripe\ORM\DBField` instances are configured to have a set of "default" filters (see `filters.yml`).
+For instance, most string and text fields just use `eq`, `contains`, and `in`, and omit integer-specific
+filters like `gt` and `lt`.
+
+To make things easier, you can simply add the default filters for each field.
+
+```php
+$this->queryFilter->addDefaultFilters('MyTextField');
+$this->queryFilter->addDefaultFilters('MyInt');
+```
+
+Even better, if you want all fields on your object filterable, just use `addAllFilters` to add
+all the default filters for each field (including inherited) on your model.
+
+```php
+$this->queryFilter->addAllFilters();
+```
+
+#### The filter registry
+
+The reason why we're able to use `contains`, `gt`, etc. as filters is because they have been added
+to the filter registry, a singleton that is composed through the config yaml. (See `filters.yml`).
+
+```yaml
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface:
+    class: SilverStripe\GraphQL\QueryFilter\FieldFilterRegistry
+    constructor:
+      contains: '%$SilverStripe\GraphQL\QueryFilter\Filters\ContainsFilter'
+      eq: '%$SilverStripe\GraphQL\QueryFilter\Filters\EqualToFilter'
+      # etc...
+```
+
+You can add your own filters. You just need to implement the `SilverStripe\GraphQL\QueryFilter\FieldFilterInterface`
+interface, which requires methods for `applyInclusion()` and `applyExclusion()`. It also must declare
+a unique identifier (e.g. `contains`). Once you've defined a class, just add it to the registry via config.
+
+> If you want your filter to accept an array of values, implement ``SilverStripe\GraphQL\QueryFilter\ListFieldFilterInterface``
+instead.
+
+#### Default filters
+
+| Identifier | ORM Mapping        | Classname                                                         |
+|------------|--------------------|-------------------------------------------------------------------|
+| eq         | ExactMatch         | SilverStripe\GraphQL\QueryFilter\Filters\EqualToFilter            |
+| contains   | PartialMatch       | SilverStripe\GraphQL\QueryFilter\Filters\ContainsFilter           |
+| gt         | GreaterThan        | SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanFilter        |
+| lt         | LessThan           | SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter           |
+| gte        | GreaterThanOrEqual | SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanOrEqualFilter |
+| lte        | LessThanOrEqual    | SilverStripe\GraphQL\QueryFilter\Filters\LessThanOrEqualFilter    |
+| startswith | StartsWith         | SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter           |
+| endswith   | EndsWith           | SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter           |
+| in         | ExactMatch (array) | SilverStripe\GraphQL\QueryFilter\Filters\InFilter                 |
+
 ### Define mutations
 
 A "mutation" is a specialised GraphQL query which has side effects on your data,
@@ -811,6 +939,29 @@ $scaffolder->type(MyDataObject::class)
     ->setUsePagination(false)
   ->end();
 ```
+#### Adding search params (read operations only)
+
+You can add all default filters for every field on your dataobject with `filters: '*'`.
+
+```yaml
+read:
+  filters: '*'
+``` 
+> Note: "every field" means every field on the dataobject itself -- not just those exposed on its GraphQL type.
+
+To be more granular, break it up into a list of specific fields.
+
+```yaml
+read:
+  filters:
+    MyField: true # All default filters for this field type
+    MyInt:
+      gt: true # Greater than
+      gte: true # Greater than or equal
+```
+
+These filter options are also available on`readOne` operations, but be aware that they are mutually
+exclusive with its `ID` parameter.
 
 #### Setting field and operation descriptions
 

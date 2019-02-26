@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests\Filters;
+namespace SilverStripe\GraphQL\Tests\QueryFilter;
 
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\IntType;
@@ -18,44 +18,45 @@ use SilverStripe\ORM\FieldType\DBVarchar;
 
 class DataObjectQueryFilterTest extends SapphireTest
 {
+    public function testAddFilter()
+    {
+        $filter = $this->createFilter();
+        $filter->addFieldFilter('MyField', 'myfilter');
+        $filter->addFieldFilter('MyOtherField', 'myotherfilter');
+        $this->assertTrue($filter->isFieldFiltered('MyField'));
+        $this->assertTrue($filter->isFieldFiltered('MyOtherField'));
+        $this->assertFalse($filter->isFieldFiltered('ID'));
+
+        $this->assertTrue($filter->fieldHasFilter('MyField', 'myfilter'));
+        $this->assertFalse($filter->fieldHasFilter('MyField', 'myotherfilter'));
+        $this->assertFalse($filter->fieldHasFilter('Fail', 'myfilter'));
+
+        $filter->addFieldFilter('MyField', 'secondfilter');
+        $this->assertEquals(['myfilter', 'secondfilter'], $filter->getFiltersForField('MyField'));
+        $filter->removeFilterFromField('MyField', 'myfilter');
+        $this->assertEquals(['secondfilter'], $filter->getFiltersForField('MyField'));
+    }
+
     public function testAddAllFilters()
     {
-        $mock = $this->getMockBuilder(DataObjectQueryFilter::class)
-            ->setConstructorArgs([DataObjectFake::class])
-            ->setMethods(['addDefaultFilters'])
-            ->getMock();
-        $mock->expects($this->exactly(7))
-            ->method('addDefaultFilters')
-            ->withConsecutive(
-                ['ID'],
-                ['ClassName'],
-                ['LastEdited'],
-                ['Created'],
-                ['MyField'],
-                ['MyInt'],
-                ['AuthorID']
-            );
-        $mock->addAllFilters();
+        $filter = $this->createFilter();
+        $filter->addAllFilters();
+        $db = DataObjectFake::getSchema()->databaseFields(DataObjectFake::class);
+        foreach ($db as $fieldName => $spec) {
+            $this->assertTrue($filter->isFieldFiltered($fieldName));
+        }
     }
 
     public function testAddDefaultFilters()
     {
+        $filter = $this->createFilter();
         $defaults = DBVarchar::config()->get('default_filters');
-        $with = array_map(function ($default) {
-            return ['MyField', $default];
-        }, $defaults);
-        $mock = $this->getMockBuilder(DataObjectQueryFilter::class)
-            ->setConstructorArgs([DataObjectFake::class])
-            ->setMethods(['addFieldFilter'])
-            ->getMock();
-        $mock->expects($this->exactly(sizeof($defaults)))
-            ->method('addFieldFilter')
-            ->withConsecutive(...$with);
-
-        $mock->addDefaultFilters('MyField');
+        $filter->addDefaultFilters('MyField');
+        $filters = $filter->getFiltersForField('MyField');
+        $this->assertEquals(sort($defaults), sort($filters));
 
         $this->expectException('InvalidArgumentException');
-        $mock->addDefaultFilters('Fail');
+        $filter->addDefaultFilters('Fail');
     }
 
     public function testExists()
@@ -188,5 +189,62 @@ class DataObjectQueryFilterTest extends SapphireTest
                 ]
             ]
         );
+    }
+
+    public function testApplyConfig()
+    {
+        $filter = new DataObjectQueryFilter(DataObjectFake::class);
+        $filter->applyConfig([
+            'MyField' => true,
+        ]);
+
+        $defaults = DataObjectFake::singleton()->dbObject('MyField')->config()->get('default_filters');
+        $filters = $filter->getFiltersForField('MyField');
+        $this->assertEquals(sort($defaults), sort($filters));
+
+        $filter = new DataObjectQueryFilter(DataObjectFake::class);
+        $filter->applyConfig([
+            'MyField' => [
+                'myfilter' => true,
+            ],
+        ]);
+        $this->assertEquals(['myfilter'], $filter->getFiltersForField('MyField'));
+
+        $this->expectException('InvalidArgumentException');
+        $filter = new DataObjectQueryFilter(DataObjectFake::class);
+        $filter->applyConfig([
+            'MyField' => 'fail',
+        ]);
+    }
+
+    public function testApplyConfigExceptions()
+    {
+        $filter = new DataObjectQueryFilter(DataObjectFake::class);
+        $this->expectException('InvalidArgumentException');
+        $filter->applyConfig([
+            'filters' => [
+                'MyFilter' => 'fail',
+            ]
+        ]);
+
+        $this->expectException('InvalidArgumentException');
+        $filter->applyConfig([
+            'filters' => [
+                'MyFilter' => ['fail'],
+            ]
+        ]);
+
+        $this->expectException('InvalidArgumentException');
+        $filter->applyConfig([
+            'filters' => 'fail'
+        ]);
+    }
+
+    /**
+     * @return DataObjectQueryFilter
+     */
+    protected function createFilter()
+    {
+        return new DataObjectQueryFilter(DataObjectFake::class);
     }
 }

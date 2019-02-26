@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Tests\Filters;
+namespace SilverStripe\GraphQL\Tests\QueryFilter;
 
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\QueryFilter\Filters\ContainsFilter;
