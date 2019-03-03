@@ -316,10 +316,6 @@ class Manager implements ConfigurationApplier
                     }, $this->mutations);
                 },
             ]);
-        } else {
-            $schema[self::MUTATION_ROOT] = new ObjectType([
-                'name' => 'Mutation',
-            ]);
         }
 
         return new Schema($schema);
