@@ -39,7 +39,7 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
             return $name;
         }
 
-        return 'delete' . ucfirst($this->getResolvedTypeName());
+        return 'delete' . ucfirst($this->getTypeName());
     }
 
     /**

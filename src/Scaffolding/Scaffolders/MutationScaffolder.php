@@ -61,15 +61,9 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
         ];
     }
 
-    /**
-     * If a type name has not been assigned, fallback to the typename that gets generated
-     * off the dataobject
-     *
-     * @return string
-     */
-    protected function getResolvedTypeName()
+    public function getTypeName()
     {
-        return $this->getTypeName() ?: $this->getDataObjectTypeName();
+        return parent::getTypeName() ?: $this->typeName();
     }
 
     /**
