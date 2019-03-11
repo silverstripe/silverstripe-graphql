@@ -811,7 +811,8 @@ $scaffolder->type(MyDataObject::class)
     ->setUsePagination(false)
   ->end();
 ```
-#### Setting field descriptions
+
+#### Setting field and operation descriptions
 
 Adding field descriptions is a great way to maintain a well-documented API. To do this,
 use a map of `FieldName: 'Your description'` instead of an enumerated list of field names.
@@ -829,7 +830,8 @@ SilverStripe\GraphQL\Manager:
               Title: The title of the post
               Content: The main body of the post (HTML)
             operations:
-              read: true
+              read:
+                description: Reads all posts
               create: true
 ```
 
@@ -855,6 +857,7 @@ class Post extends DataObject implements ScaffoldingProvider
                     'Content' => 'The main body of the post (HTML)'
                 ])
                 ->operation(SchemaScaffolder::READ)
+                    ->setDescription('Reads all posts')
                     ->end()
                 ->operation(SchemaScaffolder::UPDATE)
                     ->end()

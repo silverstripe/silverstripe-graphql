@@ -49,6 +49,30 @@ abstract class OperationScaffolder implements ConfigurationApplier
     protected $args = [];
 
     /**
+     * @var string
+     */
+    protected $description;
+
+    /**
+     * @return string
+     */
+    public function getDescription()
+    {
+        return $this->description;
+    }
+
+    /**
+     * @param string $description
+     * @return OperationScaffolder
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
+        return $this;
+    }
+
+
+    /**
      * @param string $name
      * @return  string|null
      */
@@ -404,6 +428,10 @@ abstract class OperationScaffolder implements ConfigurationApplier
         }
         if (isset($config['name'])) {
             $this->setName($config['name']);
+        }
+
+        if (isset($config['description'])) {
+            $this->setDescription($config['description']);
         }
 
         return $this;

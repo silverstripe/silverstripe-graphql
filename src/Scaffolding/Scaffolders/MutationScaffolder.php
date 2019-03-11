@@ -55,6 +55,7 @@ class MutationScaffolder extends OperationScaffolder implements ManagerMutatorIn
     {
         return [
             'name' => $this->getName(),
+            'description' => $this->getDescription(),
             'args' => $this->createArgs($manager),
             'type' => $this->getType($manager),
             'resolve' => $this->createResolverFunction(),
