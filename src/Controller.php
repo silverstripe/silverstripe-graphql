@@ -40,7 +40,7 @@ class Controller extends BaseController implements Flushable
         'Allow-Origin' => [], // List of all allowed origins; Deny by default
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' => 'GET, POST, OPTIONS',
-        'Allow-Credentials' => 'true',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400, // 86,400 seconds = 1 day.
     ];
 
