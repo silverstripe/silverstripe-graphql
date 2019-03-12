@@ -223,8 +223,11 @@ class Controller extends BaseController implements Flushable
         $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Headers', $corsConfig['Allow-Headers']);
         $response->addHeader('Access-Control-Allow-Methods', $corsConfig['Allow-Methods']);
-        $response->addHeader('Access-Control-Allow-Credentials', $corsConfig['Allow-Credentials']);
         $response->addHeader('Access-Control-Max-Age', $corsConfig['Max-Age']);
+
+        if (isset($corsConfig['Allow-Credentials'])) {
+            $response->addHeader('Access-Control-Allow-Credentials', $corsConfig['Allow-Credentials']);
+        }
 
         return $response;
     }
