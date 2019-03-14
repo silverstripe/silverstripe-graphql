@@ -33,10 +33,11 @@ trait DataObjectTypeTrait
 
     /**
      * Type name inferred from the dataobject.
+     * This should not be called directly, but only by getTypeName()
      *
      * @return string
      */
-    public function getDataObjectTypeName()
+    protected function typeName()
     {
         $dataObjectClass = $this->getDataObjectClass();
         if (!$dataObjectClass) {
