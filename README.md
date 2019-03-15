@@ -2131,6 +2131,26 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  Max-Age: 600
  ```
  
+5. **Access-Control-Allow-Credentials.**
+ 
+ When a request's credentials mode (Request.credentials) is "include", browsers
+ will only expose the response to frontend JavaScript code if the 
+ Access-Control-Allow-Credentials value is true.
+ 
+ The Access-Control-Allow-Credentials header works in conjunction with the
+ XMLHttpRequest.withCredentials property or with the credentials option in the
+ Request() constructor of the Fetch API. For a CORS request with credentials, 
+ in order for browsers to expose the response to frontend JavaScript code, both
+ the server (using the Access-Control-Allow-Credentials header) and the client 
+ (by setting the credentials mode for the XHR, Fetch, or Ajax request) must 
+ indicate that they’re opting in to including credentials.
+ 
+ This is set to empty by default but can be changed in YAML as in this example:
+
+ ```yaml
+ Allow-Credentials: 'true'
+ ```
+ 
 ### Sample Custom CORS Config
 
 ```yaml
@@ -2141,6 +2161,7 @@ SilverStripe\GraphQL\Controller:
     Allow-Origin: 'silverstripe.org'
     Allow-Headers: 'Authorization, Content-Type'
     Allow-Methods:  'GET, POST, OPTIONS'
+    Allow-Credentials: 'true'
     Max-Age:  600  # 600 seconds = 10 minutes.
 ``` 
 ## Persisting queries

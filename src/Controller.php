@@ -40,6 +40,7 @@ class Controller extends BaseController implements Flushable
         'Allow-Origin' => [], // List of all allowed origins; Deny by default
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' => 'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400, // 86,400 seconds = 1 day.
     ];
 
@@ -223,6 +224,10 @@ class Controller extends BaseController implements Flushable
         $response->addHeader('Access-Control-Allow-Headers', $corsConfig['Allow-Headers']);
         $response->addHeader('Access-Control-Allow-Methods', $corsConfig['Allow-Methods']);
         $response->addHeader('Access-Control-Max-Age', $corsConfig['Max-Age']);
+
+        if (isset($corsConfig['Allow-Credentials'])) {
+            $response->addHeader('Access-Control-Allow-Credentials', $corsConfig['Allow-Credentials']);
+        }
 
         return $response;
     }

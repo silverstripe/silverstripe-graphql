@@ -180,6 +180,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => null,
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400
         ]);
 
@@ -200,6 +201,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => 'http://localhost',
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400
         ]);
 
@@ -226,6 +228,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => 'http://localhost',
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400
         ]);
 
@@ -252,6 +255,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => 'http://localhost:8181',
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400
         ]);
 
@@ -283,6 +287,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => 'http://localhost:9090',
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400
         ]);
 
@@ -300,6 +305,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => '*',
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, PUT, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 600
         ]);
 
@@ -323,6 +329,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => 'localhost',
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400
         ]);
 
