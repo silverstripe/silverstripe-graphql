@@ -14,7 +14,6 @@ use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataList;
-use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
 use Exception;
 
@@ -128,13 +127,28 @@ class DataObjectQueryFilter implements ConfigurationApplier
      * @param $filterIdentifier
      * @return $this
      */
-    public function addFieldFilter($fieldName, $filterIdentifier)
+    public function addFieldFilterByIdentifier($fieldName, $filterIdentifier)
     {
         if (!isset($this->filteredFields[$fieldName])) {
             $this->filteredFields[$fieldName] = [];
         }
 
         $this->filteredFields[$fieldName][$filterIdentifier] = $filterIdentifier;
+
+        return $this;
+    }
+
+    /**
+     * @param $fieldName
+     * @param FieldFilterInterface $filter
+     */
+    public function addFieldFilter($fieldName, FieldFilterInterface $filter)
+    {
+        if (!isset($this->filteredFields[$fieldName])) {
+            $this->filteredFields[$fieldName] = [];
+        }
+
+        $this->filteredFields[$fieldName][$filter->getIdentifier()] = $filter;
 
         return $this;
     }
@@ -153,8 +167,8 @@ class DataObjectQueryFilter implements ConfigurationApplier
                 $this->getDataObjectClass()
             ));
         }
-        foreach ($dbField->config()->default_filters as $filterID) {
-            $this->addFieldFilter($field, $filterID);
+        foreach ($dbField->config()->graphql_default_filters as $filterID) {
+            $this->addFieldFilterByIdentifier($field, $filterID);
         }
 
         return $this;
@@ -166,7 +180,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
      */
     public function addAllFilters()
     {
-        $fields = array_keys(DataObject::getSchema()->databaseFields($this->getDataObjectClass()));
+        $fields = array_keys($this->getDataObjectInstance()->searchableFields());
         foreach ($fields as $fieldName) {
             $this->addDefaultFilters($fieldName);
         }
@@ -193,21 +207,28 @@ class DataObjectQueryFilter implements ConfigurationApplier
                 foreach ($filteredFields as $fieldName => $filterIDs) {
                     /* @var DBField|TypeCreatorExtension $db */
                     $db = $this->getDBField($fieldName);
-                    foreach ($filterIDs as $filterID) {
-                        $filter = $this->getFilterRegistry()->getFilterByIdentifier($filterID);
+                    foreach ($filterIDs as $filterIdOrInstance) {
+                        $filter = $filterIdOrInstance instanceof FieldFilterInterface
+                            ? $filterIdOrInstance
+                            : $this->getFilterRegistry()->getFilterByIdentifier($filterIdOrInstance);
+
                         if (!$filter) {
                             throw new Exception(sprintf(
                                 'Filter %s not found',
-                                $filterID
+                                $filterIdOrInstance
                             ));
                         }
                         $filterType = $db->getGraphQLType();
                         if ($filter instanceof ListFieldFilterInterface) {
                             $filterType = Type::listOf($filterType);
                         }
-                        $fields[$fieldName . self::SEPARATOR . $filterID] = [
+                        $id = $filterIdOrInstance instanceof FieldFilterInterface
+                            ? $filterIdOrInstance->getIdentifier()
+                            : $filterIdOrInstance;
+
+                         $fields[$fieldName . self::SEPARATOR . $id] = [
                             'type' => $filterType,
-                        ];
+                         ];
                     }
                 }
                 return $fields;
@@ -252,7 +273,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
     public function getFiltersForField($fieldName)
     {
         if (isset($this->filteredFields[$fieldName])) {
-            return array_keys($this->filteredFields[$fieldName]);
+            return $this->filteredFields[$fieldName];
         }
 
         throw new InvalidArgumentException(sprintf(
@@ -260,6 +281,17 @@ class DataObjectQueryFilter implements ConfigurationApplier
             $fieldName
         ));
     }
+
+    /**
+     * @param string $fieldName
+     * @return array
+     * @throws InvalidArgumentException
+     */
+    public function getFilterIdentifiersForField($fieldName)
+    {
+        return array_keys($this->getFiltersForField($fieldName));
+    }
+
 
     /**
      * @param string $fieldName
@@ -284,7 +316,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
     public function fieldHasFilter($fieldName, $id)
     {
         if ($this->isFieldFiltered($fieldName)) {
-            return in_array($id, $this->getFiltersForField($fieldName));
+            return in_array($id, $this->getFilterIdentifiersForField($fieldName));
         }
 
         return false;
@@ -295,13 +327,25 @@ class DataObjectQueryFilter implements ConfigurationApplier
      * @param string $id
      * @return $this
      */
-    public function removeFilterFromField($fieldName, $id)
+    public function removeFieldFilterByIdentifier($fieldName, $id)
     {
         if ($this->isFieldFiltered($fieldName)) {
             unset($this->filteredFields[$fieldName][$id]);
         }
 
         return $this;
+    }
+
+    /**
+     * @param $fieldName
+     * @param $id
+     * @return FieldFilterInterface|null
+     */
+    public function getFieldFilterByIdentifier($fieldName, $id)
+    {
+        $filters = $this->getFiltersForField($fieldName);
+
+        return isset($filters[$id]) ? $filters[$id] : null;
     }
 
     /**
@@ -317,7 +361,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
                     if (!$include) {
                         continue;
                     }
-                    $this->addFieldFilter($fieldName, $filterID);
+                    $this->addFieldFilterByIdentifier($fieldName, $filterID);
                 }
             } else {
                 throw new InvalidArgumentException(sprintf(
@@ -351,7 +395,10 @@ class DataObjectQueryFilter implements ConfigurationApplier
             if (!isset($result[$field])) {
                 $result[$field] = [];
             }
-            $filter = $this->getFilterRegistry()->getFilterByIdentifier($filterIdentifier);
+            $filter = $this->getFieldFilterByIdentifier($field, $filterIdentifier);
+            if (!$filter instanceof FieldFilterInterface) {
+                $filter = $this->getFilterRegistry()->getFilterByIdentifier($filterIdentifier);
+            }
             if (!$filter) {
                 throw new InvalidArgumentException(sprintf(
                     'Invalid filter "%s".',

@@ -12,17 +12,18 @@ use SilverStripe\GraphQL\QueryFilter\FieldFilterRegistry;
 use SilverStripe\GraphQL\QueryFilter\Filters\EqualToFilter;
 use SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanFilter;
 use SilverStripe\GraphQL\QueryFilter\Filters\InFilter;
+use SilverStripe\GraphQL\Tests\Fake\CustomEqFilter;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FilterDataList;
 use SilverStripe\ORM\FieldType\DBVarchar;
 
 class DataObjectQueryFilterTest extends SapphireTest
 {
-    public function testAddFilter()
+    public function testAddFilterByIdentifier()
     {
         $filter = $this->createFilter();
-        $filter->addFieldFilter('MyField', 'myfilter');
-        $filter->addFieldFilter('MyOtherField', 'myotherfilter');
+        $filter->addFieldFilterByIdentifier('MyField', 'myfilter');
+        $filter->addFieldFilterByIdentifier('MyOtherField', 'myotherfilter');
         $this->assertTrue($filter->isFieldFiltered('MyField'));
         $this->assertTrue($filter->isFieldFiltered('MyOtherField'));
         $this->assertFalse($filter->isFieldFiltered('ID'));
@@ -31,17 +32,17 @@ class DataObjectQueryFilterTest extends SapphireTest
         $this->assertFalse($filter->fieldHasFilter('MyField', 'myotherfilter'));
         $this->assertFalse($filter->fieldHasFilter('Fail', 'myfilter'));
 
-        $filter->addFieldFilter('MyField', 'secondfilter');
-        $this->assertEquals(['myfilter', 'secondfilter'], $filter->getFiltersForField('MyField'));
-        $filter->removeFilterFromField('MyField', 'myfilter');
-        $this->assertEquals(['secondfilter'], $filter->getFiltersForField('MyField'));
+        $filter->addFieldFilterByIdentifier('MyField', 'secondfilter');
+        $this->assertEquals(['myfilter', 'secondfilter'], $filter->getFilterIdentifiersForField('MyField'));
+        $filter->removeFieldFilterByIdentifier('MyField', 'myfilter');
+        $this->assertEquals(['secondfilter'], $filter->getFilterIdentifiersForField('MyField'));
     }
 
     public function testAddAllFilters()
     {
         $filter = $this->createFilter();
         $filter->addAllFilters();
-        $db = DataObjectFake::getSchema()->databaseFields(DataObjectFake::class);
+        $db = DataObjectFake::singleton()->searchableFields();
         foreach ($db as $fieldName => $spec) {
             $this->assertTrue($filter->isFieldFiltered($fieldName));
         }
@@ -50,13 +51,37 @@ class DataObjectQueryFilterTest extends SapphireTest
     public function testAddDefaultFilters()
     {
         $filter = $this->createFilter();
-        $defaults = DBVarchar::config()->get('default_filters');
+        $defaults = DBVarchar::config()->get('graphql_default_filters');
         $filter->addDefaultFilters('MyField');
-        $filters = $filter->getFiltersForField('MyField');
+        $filters = $filter->getFilterIdentifiersForField('MyField');
         $this->assertEquals(sort($defaults), sort($filters));
 
         $this->expectException('InvalidArgumentException');
         $filter->addDefaultFilters('Fail');
+    }
+
+    public function testCustomFilter()
+    {
+        $filter = new DataObjectQueryFilter(DataObjectFake::class);
+        $filter->addFieldFilter('MyField', new CustomEqFilter());
+        $type = $filter->getInputType('myfilter');
+        $fields = $type->getFields();
+        $this->assertArrayHasKey('MyField__eq', $fields);
+
+        $list = $filter->applyArgsToList(new FilterDataList(DataObjectFake::class), [
+            'Filter' => [
+                'MyField__eq' => 'feijoa',
+            ],
+            'Exclude' => [
+                'MyField__eq' => 'kaka',
+            ]
+        ]);
+        $this->assertInstanceOf(FilterDataList::class, $list);
+        /* @var FilterDataList $list */
+        $this->assertEquals('MyField', $list->filterField);
+        $this->assertEquals('MyField', $list->excludeField);
+        $this->assertEquals('bob', $list->filterValue);
+        $this->assertEquals('bob', $list->excludeValue);
     }
 
     public function testExists()
@@ -77,9 +102,9 @@ class DataObjectQueryFilterTest extends SapphireTest
         $filter = new DataObjectQueryFilter(DataObjectFake::class);
         $filter->setFilterRegistry($registry);
 
-        $filter->addFieldFilter('MyField', 'myFilter');
-        $filter->addFieldFilter('Author__FirstName', 'myFilter');
-        $filter->addFieldFilter('MyInt', 'myListFilter');
+        $filter->addFieldFilterByIdentifier('MyField', 'myFilter');
+        $filter->addFieldFilterByIdentifier('Author__FirstName', 'myFilter');
+        $filter->addFieldFilterByIdentifier('MyInt', 'myListFilter');
         /* @var InputObjectType $filterType */
         $filterType = $filter->getInputType('MyFilter');
 
@@ -97,7 +122,7 @@ class DataObjectQueryFilterTest extends SapphireTest
         $this->expectException('Exception');
         $filter = new DataObjectQueryFilter(DataObjectFake::class);
         $filter->setFilterRegistry($registry);
-        $filter->addFieldFilter('MyField', 'failFilter');
+        $filter->addFieldFilterByIdentifier('MyField', 'failFilter');
         /* @var InputObjectType $filterType */
         $filterType = $filter->getInputType('MyFilter');
         $filterType->getFields();
@@ -119,8 +144,8 @@ class DataObjectQueryFilterTest extends SapphireTest
         $registry->addFilter(new GreaterThanFilter(), 'gt');
         $filter->setFilterRegistry($registry);
 
-        $filter->addFieldFilter('MyField', 'eq');
-        $filter->addFieldFilter('MyInt', 'gt');
+        $filter->addFieldFilterByIdentifier('MyField', 'eq');
+        $filter->addFieldFilterByIdentifier('MyInt', 'gt');
         $params = [
             'Filter' => [
                 'MyField__eq' => 'match',
@@ -198,8 +223,8 @@ class DataObjectQueryFilterTest extends SapphireTest
             'MyField' => true,
         ]);
 
-        $defaults = DataObjectFake::singleton()->dbObject('MyField')->config()->get('default_filters');
-        $filters = $filter->getFiltersForField('MyField');
+        $defaults = DataObjectFake::singleton()->dbObject('MyField')->config()->get('graphql_default_filters');
+        $filters = $filter->getFilterIdentifiersForField('MyField');
         $this->assertEquals(sort($defaults), sort($filters));
 
         $filter = new DataObjectQueryFilter(DataObjectFake::class);
@@ -208,7 +233,7 @@ class DataObjectQueryFilterTest extends SapphireTest
                 'myfilter' => true,
             ],
         ]);
-        $this->assertEquals(['myfilter'], $filter->getFiltersForField('MyField'));
+        $this->assertEquals(['myfilter'], $filter->getFilterIdentifiersForField('MyField'));
 
         $this->expectException('InvalidArgumentException');
         $filter = new DataObjectQueryFilter(DataObjectFake::class);

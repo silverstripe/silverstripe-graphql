@@ -39,6 +39,7 @@ composer require silverstripe/graphql
    - [Exposing a DataObject to GraphQL](#exposing-a-dataobject-to-graphql)
      - [Available operations](#available-operations)
      - [Scaffolding search params](#adding-search-params-read-operations-only)
+     - [Setting field and operation descriptions](#setting-field-and-operation-descriptions)
      - [Setting field descriptions](#setting-field-descriptions)
      - [Wildcarding and whitelisting fields](#wildcarding-and-whitelisting-fields)
      - [Adding arguments](#adding-arguments)
@@ -645,6 +646,47 @@ instead.
 | endswith   | EndsWith           | SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter           |
 | in         | ExactMatch (array) | SilverStripe\GraphQL\QueryFilter\Filters\InFilter                 |
 
+#### Custom filters
+
+For some queries, you may want to use a default filter identifier (e.g. `eq`) but with a custom
+implementation of its filtering mechanism. For this, you can use `addFieldFilter` method.
+
+One example might be searching by date, where the provided date does not have to be an exact
+match on the full timestamp to satisfy the filter.
+
+```php
+$this->queryFilter->addFieldFilter('PublishedDate', new FuzzyDateFilter());
+```
+
+Where `FuzzyDateFilter` is an implementation of `FieldFilterInterface.
+
+```php
+class MyCustomFieldFilter implements FieldFilterInterface
+{
+    public function getIdentifier()
+    {
+        return 'eq';
+    }
+    
+    public function applyInclusion(DataList $list, $fieldName, $value)
+    {
+        return $list->addWhere([
+            'DATE(PublishedDate) = ?' => $value
+        ]);
+    }
+}
+```
+
+You can now query all posts for a given day with:
+
+```
+query readMyPosts(Filter: {
+  PublishedDate__eq: "2018-01-29"
+}) {
+  Title
+}
+```
+
 ### Define mutations
 
 A "mutation" is a specialised GraphQL query which has side effects on your data,
@@ -947,7 +989,7 @@ You can add all default filters for every field on your dataobject with `filters
 read:
   filters: '*'
 ``` 
-> Note: "every field" means every field on the dataobject itself -- not just those exposed on its GraphQL type.
+> Note: "every field" means every field exposed by `searchable_fields` on the dataobject -- not just those exposed on its GraphQL type.
 
 To be more granular, break it up into a list of specific fields.
 

@@ -78,7 +78,7 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
      */
     protected function inputTypeName($key = '')
     {
-        return $this->getDataObjectTypeName() . $key . 'ReadOneInputType';
+        return $this->getTypeName() . $key . 'ReadOneInputType';
     }
 
     /**

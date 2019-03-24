@@ -168,7 +168,7 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
      */
     protected function inputTypeName($key = '')
     {
-        return $this->getDataObjectTypeName() . $key . 'ReadInputType';
+        return $this->getTypeName() . $key . 'ReadInputType';
     }
 
 
