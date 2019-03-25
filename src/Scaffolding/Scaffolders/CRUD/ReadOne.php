@@ -5,18 +5,25 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
+use SilverStripe\GraphQL\QueryFilter\DataObjectQueryFilter;
+use SilverStripe\GraphQL\QueryFilter\QueryFilterAware;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder;
+use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
+use InvalidArgumentException;
 
 /**
  * Scaffolds a generic read operation for DataObjects.
  */
 class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInterface
 {
+    use QueryFilterAware;
+
     /**
      * Read one constructor.
      *
@@ -25,6 +32,10 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
     public function __construct($dataObjectClass)
     {
         parent::__construct(null, null, $this, $dataObjectClass);
+        $filter = Injector::inst()->create(DataObjectQueryFilter::class, $dataObjectClass)
+            ->setFilterKey(Read::FILTER)
+            ->setExcludeKey(Read::EXCLUDE);
+        $this->setQueryFilter($filter);
     }
 
     public function getName()
@@ -43,11 +54,31 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
      */
     protected function createDefaultArgs(Manager $manager)
     {
-        return [
+        $args = [
             'ID' => [
-                'type' => Type::nonNull(Type::id())
-            ]
+                'type' => Type::id()
+            ],
         ];
+
+        if ($this->queryFilter->exists()) {
+            $args[Read::FILTER] = [
+                'type' => $this->queryFilter->getInputType($this->inputTypeName(Read::FILTER)),
+            ];
+            $args[Read::EXCLUDE] = [
+                'type' => $this->queryFilter->getInputType($this->inputTypeName(Read::EXCLUDE)),
+            ];
+        }
+
+        return $args;
+    }
+
+    /**
+     * @param string $key
+     * @return string
+     */
+    protected function inputTypeName($key = '')
+    {
+        return $this->getTypeName() . $key . 'ReadOneInputType';
     }
 
     /**
@@ -61,8 +92,13 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
         // get as a list so extensions can influence it pre-query
-        $list = DataList::create($this->getDataObjectClass())
-            ->filter('ID', $args['ID']);
+        $list = DataList::create($this->getDataObjectClass());
+        if (isset($args['ID'])) {
+            $list = $list->filter('ID', $args['ID']);
+        }
+        if ($this->queryFilter->exists()) {
+            $list = $this->queryFilter->applyArgsToList($list, $args);
+        }
         $this->extend('updateList', $list, $args, $context, $info);
 
         // Fall back to getting an empty singleton to use for permission checking
@@ -77,5 +113,25 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
         }
 
         return $list->first();
+    }
+
+    public function applyConfig(array $config)
+    {
+        parent::applyConfig($config);
+
+        if (isset($config['filters'])) {
+            if ($config['filters'] === SchemaScaffolder::ALL) {
+                $this->queryFilter->addAllFilters();
+            } else {
+                if (is_array($config['filters'])) {
+                    $this->queryFilter->applyConfig($config['filters']);
+                } else {
+                    throw new InvalidArgumentException(sprintf(
+                        'Config setting "filters" must be an array mapping field names to a list of filter identifiers, or %s for all',
+                        SchemaScaffolder::ALL
+                    ));
+                }
+            }
+        }
     }
 }

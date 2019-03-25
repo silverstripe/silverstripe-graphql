@@ -54,7 +54,7 @@ class TypeCreatorExtension extends DataExtension implements ManagerMutatorInterf
     {
         $type = $this->createTypeParser()->getType();
         $name = $type->name;
-        if (!$this->isInternal($name)) {
+        if ($manager && !$this->isInternal($name)) {
             return $manager->getType($name);
         }
 
