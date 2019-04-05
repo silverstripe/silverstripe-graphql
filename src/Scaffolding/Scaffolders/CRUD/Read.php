@@ -29,11 +29,6 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
     const EXCLUDE = 'Exclude';
 
     /**
-     * @var DataObjectQueryFilter
-     */
-    protected $queryFilter;
-
-    /**
      * Read constructor.
      *
      * @param string $dataObjectClass
