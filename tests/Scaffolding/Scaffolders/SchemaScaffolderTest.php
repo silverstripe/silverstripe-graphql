@@ -86,8 +86,10 @@ class SchemaScaffolderTest extends SapphireTest
             ->type(FakeRedirectorPage::class)
                 ->addFields(['Created', 'TestPageField', 'RedirectionType'])
                 ->operation(SchemaScaffolder::CREATE)
+                    ->setCloneable(true)
                     ->end()
                 ->operation(SchemaScaffolder::READ)
+                    ->setCloneable(true)
                     ->end()
                 ->end()
             ->type(DataObjectFake::class)
@@ -284,9 +286,11 @@ class SchemaScaffolderTest extends SapphireTest
             ->addFields(['Title', 'RedirectionType'])
             ->operation(SchemaScaffolder::READ)
                 ->setName('READ')
+                ->setCloneable(true)
             ->end()
             ->operation(SchemaScaffolder::DELETE)
                 ->setName('DELETE')
+                ->setCloneable(true)
             ->end()
             ->end();
         $scaffolder->addToManager($manager = new Manager());

@@ -412,6 +412,10 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             }
         }
         foreach ($this->getOperations() as $op) {
+            if (!$op->getCloneable()) {
+                continue;
+            }
+
             $identifier = OperationScaffolder::getIdentifier($op);
             $target->operation($identifier);
         }

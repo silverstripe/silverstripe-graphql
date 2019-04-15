@@ -480,7 +480,22 @@ class DataObjectScaffolderTest extends SapphireTest
 
         $this->assertContains('Title', $target->getFields()->column('Name'));
         $this->assertNotContains('RedirectionType', $target->getFields()->column('Name'));
-        $this->assertCount(2, $target->getOperations());
+        $this->assertCount(0, $target->getOperations(), 'Does not clone operations by default');
+    }
+
+    public function testCloneToWithCloneable()
+    {
+        $scaffolder = new DataObjectScaffolder(FakeSiteTree::class);
+        $scaffolder->addFields(['Title', 'ID']);
+        $scaffolder->operation(SchemaScaffolder::READ);
+        $scaffolder->operation(SchemaScaffolder::UPDATE)->setCloneable(true);
+
+        $target = new DataObjectScaffolder(FakeRedirectorPage::class);
+        $target = $scaffolder->cloneTo($target);
+        $this->assertEquals(
+            ['updateSilverStripeFakeRedirectorPage'],
+            $target->getOperations()->column('getName')
+        );
     }
 
     /**
