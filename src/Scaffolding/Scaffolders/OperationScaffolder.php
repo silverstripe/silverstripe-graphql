@@ -64,6 +64,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
 
     /**
      * @param bool $cloneable
+     * @return $this
      */
     public function setCloneable($cloneable)
     {
