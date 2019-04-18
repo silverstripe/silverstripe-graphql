@@ -302,6 +302,10 @@ class Manager implements ConfigurationApplier
                     }, $this->queries);
                 },
             ]);
+        } else {
+            $schema[self::QUERY_ROOT] = new ObjectType([
+                'name' => 'Query',
+            ]);
         }
 
         if (!empty($this->mutations)) {
