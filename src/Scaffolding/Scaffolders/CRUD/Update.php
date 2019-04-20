@@ -42,7 +42,7 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
             return $name;
         }
 
-        return 'update' . ucfirst($this->getResolvedTypeName());
+        return 'update' . ucfirst($this->getTypeName());
     }
 
     /**
@@ -114,7 +114,7 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
      */
     protected function inputTypeName()
     {
-        return $this->getResolvedTypeName() . 'UpdateInputType';
+        return $this->getTypeName() . 'UpdateInputType';
     }
 
     /**

@@ -33,10 +33,11 @@ trait DataObjectTypeTrait
 
     /**
      * Type name inferred from the dataobject.
+     * This should not be called directly, but only by getTypeName()
      *
      * @return string
      */
-    public function getDataObjectTypeName()
+    protected function typeName()
     {
         $dataObjectClass = $this->getDataObjectClass();
         if (!$dataObjectClass) {
@@ -50,11 +51,10 @@ trait DataObjectTypeTrait
      */
     public function getDataObjectInstance()
     {
-        if ($this->dataObjectInstance) {
-            return $this->dataObjectInstance;
+        if (!$this->dataObjectInstance) {
+            $this->dataObjectInstance = Injector::inst()->get($this->dataObjectClass);
         }
-
-        return $this->dataObjectInstance = Injector::inst()->get($this->dataObjectClass);
+        return $this->dataObjectInstance;
     }
 
     /**

@@ -49,6 +49,11 @@ abstract class OperationScaffolder implements ConfigurationApplier
     protected $args = [];
 
     /**
+     * @var string
+     */
+    protected $description;
+
+    /**
      * @var bool Indicates that this operation should be
      * included in clones to other types.
      */
@@ -70,6 +75,24 @@ abstract class OperationScaffolder implements ConfigurationApplier
     {
         $this->cloneable = $cloneable;
 
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDescription()
+    {
+        return $this->description;
+    }
+
+    /**
+     * @param string $description
+     * @return OperationScaffolder
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
         return $this;
     }
 
@@ -435,6 +458,10 @@ abstract class OperationScaffolder implements ConfigurationApplier
 
         if (isset($config['cloneable'])) {
             $this->setCloneable((bool)$config['cloneable']);
+        }
+
+        if (isset($config['description'])) {
+            $this->setDescription($config['description']);
         }
 
         return $this;

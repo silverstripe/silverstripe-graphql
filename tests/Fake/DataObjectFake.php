@@ -31,6 +31,11 @@ class DataObjectFake extends DataObject implements TestOnly
         'Files' => File::class
     ];
 
+    private static $searchable_fields = [
+        'MyField',
+        'MyInt',
+    ];
+
     private static $default_sort = '"GraphQL_DataObjectFake"."MyField" ASC';
 
     public $customSetterFieldResult;

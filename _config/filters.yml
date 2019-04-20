@@ -1,0 +1,31 @@
+---
+Name: graphql-filters
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface:
+    class: SilverStripe\GraphQL\QueryFilter\FieldFilterRegistry
+    constructor:
+      contains: '%$SilverStripe\GraphQL\QueryFilter\Filters\ContainsFilter'
+      eq: '%$SilverStripe\GraphQL\QueryFilter\Filters\EqualToFilter'
+      gt: '%$SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanFilter'
+      lt: '%$SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter'
+      gte: '%$SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanOrEqualFilter'
+      lte: '%$SilverStripe\GraphQL\QueryFilter\Filters\LessThanOrEqualFilter'
+      in: '%$SilverStripe\GraphQL\QueryFilter\Filters\InFilter'
+      endswith: '%$SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter'
+      startswith: '%$SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter'
+  SilverStripe\GraphQL\QueryFilter\DataObjectQueryFilter:
+    properties:
+      filterRegistry: '%$SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface'
+SilverStripe\ORM\FieldType\DBField:
+  graphql_default_filters: [ eq, in ]
+SilverStripe\ORM\FieldType\DBInt:
+  graphql_default_filters: [ gt, lt, gte, lte ]
+SilverStripe\ORM\FieldType\DBDate:
+  graphql_default_filters: [ gt, lt, gte, lte ]
+SilverStripe\ORM\FieldType\DBTime:
+  graphql_default_filters: [ gt, lt, gte, lte ]
+SilverStripe\ORM\FieldType\DBFloat:
+  graphql_default_filters: [ gt, lt, gte, lte ]
+SilverStripe\ORM\FieldType\DBString:
+  graphql_default_filters: [ contains ]

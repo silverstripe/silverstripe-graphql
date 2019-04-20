@@ -30,6 +30,7 @@ composer require silverstripe/graphql
    - [Pagination](#pagination)
      - [Setting pagination and sorting options](#setting-pagination-and-sorting-options)
    - [Nested connections](#nested-connections)
+   - [Adding search params](#adding-search-params)
    - [Define Mutations](#define-mutations)
  - [Scaffolding DataObjects into the schema](#scaffolding-dataobjects-into-the-schema)
    - [Our example](#our-example)
@@ -37,6 +38,8 @@ composer require silverstripe/graphql
    - [Scaffolding through procedural code](#scaffolding-through-procedural-code)
    - [Exposing a DataObject to GraphQL](#exposing-a-dataobject-to-graphql)
      - [Available operations](#available-operations)
+     - [Scaffolding search params](#adding-search-params-read-operations-only)
+     - [Setting field and operation descriptions](#setting-field-and-operation-descriptions)
      - [Setting field descriptions](#setting-field-descriptions)
      - [Wildcarding and whitelisting fields](#wildcarding-and-whitelisting-fields)
      - [Adding arguments](#adding-arguments)
@@ -517,6 +520,173 @@ query Members {
 }
 ```
 
+### Adding search params
+
+You can add search parameters your query to filter results using the `DataObjectQueryFilter` class.
+Much like pagination, this is done using a reusable service that wraps your existing queries.
+
+The end result will allow you to do something like this:
+
+```graphql
+query readBlogs(
+  Filter: {
+    Title__contains: "food",
+    CommentCount__gt: 5,
+    Categories__Title__in: ["Recipes", "Cooking tips"]
+  },
+  Exclude: {
+    Hidden__eq: true
+  }
+) {
+  ID
+  Title
+}
+```
+
+So how do we do it? If you're using `QueryCreator` classes, a good approach is to add an instance of the query filter
+in your constructor.
+
+```php
+$this->queryFilter = DataObjectQueryFilter::create(MyDataObject::class);
+``` 
+
+You can then add filters to fields of the dataobject.
+
+```php
+$this->queryFilter
+    ->addFilteredField('Title', 'contains')
+    ->addFilteredField('CommentCount', 'gt')
+    ->addFilteredField('Categories__Title', 'in')
+    ->addFilteredField('Hidden', 'eq');
+``` 
+
+Don't worry about the filter keys (`contains`, `gt`, `eq`, etc) for now. That will be explained [further down](#the-filter-registry).
+
+Now that we have composed a `DataObjectQueryFilter`, we can now use it to create input types.
+
+```php
+public function args()
+{
+    return [
+        'Filter' => $this->queryFilter->getInputType('MyDataObjectFilterInputType'),
+        'Exclude' => $this->queryFilter->getInputType('MyDataObjectExcludeInputType'),
+    ];
+}
+```
+
+> Make sure your argument names match the names configured in `DataObjectQueryFilter`. By default,
+they are `Filter` and `Exclude`. If you want to use different names, use `setFilterKey()` and
+`setExcludeKey()`.
+
+Lastly, let's update the resolver to apply the filters.
+
+```php
+public function resolve($obj, $args = [], $context = [], ResolveInfo $info)
+{
+    $list = MyDataObject::get();
+    $list = $this->queryFilter->applyArgsToList($list, $args);
+    
+    return $list;
+}
+```
+ 
+#### Shortcuts (for the 80% case)
+
+All `SilverStripe\ORM\DBField` instances are configured to have a set of "default" filters (see `filters.yml`).
+For instance, most string and text fields just use `eq`, `contains`, and `in`, and omit integer-specific
+filters like `gt` and `lt`.
+
+To make things easier, you can simply add the default filters for each field.
+
+```php
+$this->queryFilter->addDefaultFilters('MyTextField');
+$this->queryFilter->addDefaultFilters('MyInt');
+```
+
+Even better, if you want all fields on your object filterable, just use `addAllFilters` to add
+all the default filters for each field (including inherited) on your model.
+
+```php
+$this->queryFilter->addAllFilters();
+```
+
+#### The filter registry
+
+The reason why we're able to use `contains`, `gt`, etc. as filters is because they have been added
+to the filter registry, a singleton that is composed through the config yaml. (See `filters.yml`).
+
+```yaml
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface:
+    class: SilverStripe\GraphQL\QueryFilter\FieldFilterRegistry
+    constructor:
+      contains: '%$SilverStripe\GraphQL\QueryFilter\Filters\ContainsFilter'
+      eq: '%$SilverStripe\GraphQL\QueryFilter\Filters\EqualToFilter'
+      # etc...
+```
+
+You can add your own filters. You just need to implement the `SilverStripe\GraphQL\QueryFilter\FieldFilterInterface`
+interface, which requires methods for `applyInclusion()` and `applyExclusion()`. It also must declare
+a unique identifier (e.g. `contains`). Once you've defined a class, just add it to the registry via config.
+
+> If you want your filter to accept an array of values, implement ``SilverStripe\GraphQL\QueryFilter\ListFieldFilterInterface``
+instead.
+
+#### Default filters
+
+| Identifier | ORM Mapping        | Classname                                                         |
+|------------|--------------------|-------------------------------------------------------------------|
+| eq         | ExactMatch         | SilverStripe\GraphQL\QueryFilter\Filters\EqualToFilter            |
+| contains   | PartialMatch       | SilverStripe\GraphQL\QueryFilter\Filters\ContainsFilter           |
+| gt         | GreaterThan        | SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanFilter        |
+| lt         | LessThan           | SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter           |
+| gte        | GreaterThanOrEqual | SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanOrEqualFilter |
+| lte        | LessThanOrEqual    | SilverStripe\GraphQL\QueryFilter\Filters\LessThanOrEqualFilter    |
+| startswith | StartsWith         | SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter           |
+| endswith   | EndsWith           | SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter           |
+| in         | ExactMatch (array) | SilverStripe\GraphQL\QueryFilter\Filters\InFilter                 |
+
+#### Custom filters
+
+For some queries, you may want to use a default filter identifier (e.g. `eq`) but with a custom
+implementation of its filtering mechanism. For this, you can use `addFieldFilter` method.
+
+One example might be searching by date, where the provided date does not have to be an exact
+match on the full timestamp to satisfy the filter.
+
+```php
+$this->queryFilter->addFieldFilter('PublishedDate', new FuzzyDateFilter());
+```
+
+Where `FuzzyDateFilter` is an implementation of `FieldFilterInterface.
+
+```php
+class MyCustomFieldFilter implements FieldFilterInterface
+{
+    public function getIdentifier()
+    {
+        return 'eq';
+    }
+    
+    public function applyInclusion(DataList $list, $fieldName, $value)
+    {
+        return $list->addWhere([
+            'DATE(PublishedDate) = ?' => $value
+        ]);
+    }
+}
+```
+
+You can now query all posts for a given day with:
+
+```
+query readMyPosts(Filter: {
+  PublishedDate__eq: "2018-01-29"
+}) {
+  Title
+}
+```
+
 ### Define mutations
 
 A "mutation" is a specialised GraphQL query which has side effects on your data,
@@ -811,7 +981,42 @@ $scaffolder->type(MyDataObject::class)
     ->setUsePagination(false)
   ->end();
 ```
-#### Setting field descriptions
+#### Adding search params (read operations only)
+
+You can add all default filters for every field on your dataobject with `filters: '*'`.
+
+```yaml
+read:
+  filters: '*'
+``` 
+> Note: "every field" means every field exposed by `searchable_fields` on the dataobject -- not just those exposed on its GraphQL type.
+
+To be more granular, break it up into a list of specific fields.
+
+```yaml
+read:
+  filters:
+    MyField: true # All default filters for this field type
+    MyInt:
+      gt: true # Greater than
+      gte: true # Greater than or equal
+```
+
+**Or with procedural code**...
+```php
+$scaffolder->type(MyDataObject::class)
+  ->operation(SchemaScaffolder::READ)
+    ->queryFilter()
+      ->addDefaultFields('MyField')
+      ->addFieldFilter('MyInt', 'gt')
+      ->addFieldFilter('MyInt', 'gte')
+    ->end()
+  ->end();
+```
+These filter options are also available on`readOne` operations, but be aware that they are mutually
+exclusive with its `ID` parameter.
+
+#### Setting field and operation descriptions
 
 Adding field descriptions is a great way to maintain a well-documented API. To do this,
 use a map of `FieldName: 'Your description'` instead of an enumerated list of field names.
@@ -829,7 +1034,8 @@ SilverStripe\GraphQL\Manager:
               Title: The title of the post
               Content: The main body of the post (HTML)
             operations:
-              read: true
+              read:
+                description: Reads all posts
               create: true
 ```
 
@@ -855,6 +1061,7 @@ class Post extends DataObject implements ScaffoldingProvider
                     'Content' => 'The main body of the post (HTML)'
                 ])
                 ->operation(SchemaScaffolder::READ)
+                    ->setDescription('Reads all posts')
                     ->end()
                 ->operation(SchemaScaffolder::UPDATE)
                     ->end()
@@ -1944,7 +2151,7 @@ Example middleware to log all mutations (but not queries):
 
 ```php
 <?php
-use GraphQL\Schema;
+use GraphQL\Type\Schema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 
 class MyMutationLoggingMiddleware implements QueryMiddleware
@@ -2169,6 +2376,26 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  Max-Age: 600
  ```
  
+5. **Access-Control-Allow-Credentials.**
+ 
+ When a request's credentials mode (Request.credentials) is "include", browsers
+ will only expose the response to frontend JavaScript code if the 
+ Access-Control-Allow-Credentials value is true.
+ 
+ The Access-Control-Allow-Credentials header works in conjunction with the
+ XMLHttpRequest.withCredentials property or with the credentials option in the
+ Request() constructor of the Fetch API. For a CORS request with credentials, 
+ in order for browsers to expose the response to frontend JavaScript code, both
+ the server (using the Access-Control-Allow-Credentials header) and the client 
+ (by setting the credentials mode for the XHR, Fetch, or Ajax request) must 
+ indicate that they’re opting in to including credentials.
+ 
+ This is set to empty by default but can be changed in YAML as in this example:
+
+ ```yaml
+ Allow-Credentials: 'true'
+ ```
+ 
 ### Sample Custom CORS Config
 
 ```yaml
@@ -2179,6 +2406,7 @@ SilverStripe\GraphQL\Controller:
     Allow-Origin: 'silverstripe.org'
     Allow-Headers: 'Authorization, Content-Type'
     Allow-Methods:  'GET, POST, OPTIONS'
+    Allow-Credentials: 'true'
     Max-Age:  600  # 600 seconds = 10 minutes.
 ``` 
 ## Persisting queries

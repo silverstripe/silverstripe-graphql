@@ -51,6 +51,7 @@ class ListQueryScaffolderTest extends SapphireTest
             ->setMethods(['addQuery'])
             ->getMock();
         $scaffolder = new ListQueryScaffolder('testQuery', 'test');
+        $scaffolder->setDescription('My description');
         $scaffolder->setUsePagination(false);
         $scaffolder->addArgs(['Test' => 'String']);
         $manager = new Manager();
@@ -64,6 +65,7 @@ class ListQueryScaffolderTest extends SapphireTest
 
 
         $this->assertEquals('testQuery', $scaffold['name']);
+        $this->assertEquals('My description', $scaffold['description']);
         $this->assertArrayHasKey('Test', $scaffold['args']);
         $this->assertTrue(is_callable($scaffold['resolve']));
         $this->assertTrue($scaffold['type']->getWrappedType()->Test);

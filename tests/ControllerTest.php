@@ -180,6 +180,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => null,
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400
         ]);
 
@@ -200,6 +201,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => 'http://localhost',
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400
         ]);
 
@@ -226,6 +228,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => 'http://localhost',
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400
         ]);
 
@@ -252,6 +255,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => 'http://localhost:8181',
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400
         ]);
 
@@ -283,6 +287,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => 'http://localhost:9090',
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400
         ]);
 
@@ -300,6 +305,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => '*',
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, PUT, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 600
         ]);
 
@@ -323,6 +329,7 @@ class ControllerTest extends SapphireTest
         'Allow-Origin' => 'localhost',
         'Allow-Headers' => 'Authorization, Content-Type',
         'Allow-Methods' =>  'GET, POST, OPTIONS',
+        'Allow-Credentials' => '',
         'Max-Age' => 86400
         ]);
 
@@ -393,11 +400,14 @@ class ControllerTest extends SapphireTest
             'typeNames' => [DataObjectFake::class => 'testtwo'],
         ]
         ];
+        Config::nest();
         Config::modify()->set(Manager::class, 'schemas', $config);
         $controller1 = new Controller(new Manager('schema1'));
         $this->assertEquals('testone', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
         $controller2 = new Controller(new Manager('schema2'));
         $this->assertEquals('testtwo', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
+        Config::unnest();
+        StaticSchema::reset();
     }
 
     public function testCSRFProtectionBlocksMutations()
