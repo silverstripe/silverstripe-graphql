@@ -51,11 +51,10 @@ trait DataObjectTypeTrait
      */
     public function getDataObjectInstance()
     {
-        if ($this->dataObjectInstance) {
-            return $this->dataObjectInstance;
+        if (!$this->dataObjectInstance) {
+            $this->dataObjectInstance = Injector::inst()->get($this->dataObjectClass);
         }
-
-        return $this->dataObjectInstance = Injector::inst()->get($this->dataObjectClass);
+        return $this->dataObjectInstance;
     }
 
     /**
