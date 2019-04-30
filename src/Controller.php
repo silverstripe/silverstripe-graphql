@@ -12,6 +12,7 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Flushable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Auth\Handler;
+use SilverStripe\GraphQL\Dev\State\DisableTypeCacheState;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\Security\Member;
@@ -50,6 +51,15 @@ class Controller extends BaseController implements Flushable
      * @config
      */
     private static $cache_types_in_filesystem = false;
+
+    /**
+     * Toggles caching types to the file system on flush
+     * This is set to false in test state @see DisableTypeCacheState
+     *
+     * @var bool
+     * @config
+     */
+    private static $cache_on_flush = true;
 
     /**
      * @var Manager
@@ -451,6 +461,10 @@ class Controller extends BaseController implements Flushable
 
     public static function flush()
     {
+        if (!self::config()->get('cache_on_flush')) {
+            return;
+        }
+
         // This is a bit of a hack to find all registered GraphQL servers. Depends on them
         // being routed through Director.
         $routes = Director::config()->get('rules');
