@@ -2,6 +2,8 @@
 
 namespace SilverStripe\GraphQL\Extensions;
 
+use Exception;
+use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Extension;
@@ -22,10 +24,25 @@ class IntrospectionProvider extends Extension
      */
     public function types(HTTPRequest $request)
     {
-        $manager = $this->owner->getManager();
-        $fragments = StaticSchema::inst()->introspectTypes($manager);
+        try {
+            $manager = $this->owner->getManager();
+            $result = StaticSchema::inst()->introspectTypes($manager);
+        } catch (Exception $exception) {
+            $error = ['message' => $exception->getMessage()];
 
-        return (new HTTPResponse(json_encode($fragments), 200))
+            if (Director::isDev()) {
+                $error['code'] = $exception->getCode();
+                $error['file'] = $exception->getFile();
+                $error['line'] = $exception->getLine();
+                $error['trace'] = $exception->getTrace();
+            }
+
+            $result = [
+                'errors' => [$error]
+            ];
+        }
+
+        return (new HTTPResponse(json_encode($result), 200))
             ->addHeader('Content-Type', 'application/json');
     }
 }
