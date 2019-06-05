@@ -2167,6 +2167,9 @@ resources are accessed.
 The `MemberAuthenticator` class is configured as the default option for authentication,
 and will attempt to use the current CMS `Member` session for authentication context.
 
+**If you are using the default session-based authentication, please be sure that you have
+the [CSRF Middleware](#csrf-tokens-required-for-mutations) enabled. (It is by default).**
+
 ### HTTP basic authentication
 
 Silverstripe has built in support for [HTTP basic authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
@@ -2175,6 +2178,9 @@ will only activate when required. It is kept separate from the SilverStripe CMS
 authenticator because GraphQL needs to use the successfully authenticated member
 for CMS permission filtering, whereas the global `BasicAuth` does not log the
 member in or use it for model security.
+
+When using HTTP basic authentication, you can feel free to remove the [CSRF Middleware](#csrf-tokens-required-for-mutations),
+as it just adds unnecessary overhead to the request.
 
 #### In GraphiQL
 
@@ -2242,12 +2248,19 @@ the `SecurityToken` API, using `SecurityToken::inst()->getValue()`.
 
 Queries do not require CSRF tokens.
 
+### Disabling CSRF protection (for token-based authentication only)
+
+If you are using HTTP basic authentication or a token-based system like OAuth or [JWT](https://github.com/Firesphere/silverstripe-graphql-jwt),
+you will want to remove the CSRF protection, as it just adds unnecessary overhead. You can do this by setting
+the middleware to `false`.
+
 ```yaml
-  SilverStripe\GraphQL\Manager:
+  SilverStripe\GraphQL\Manager.default:
     properties:
       Middlewares:
         CSRFMiddleware: false
 ```
+
 ## Cross-Origin Resource Sharing (CORS)
 
 By default [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS) is disabled in the GraphQL Server. This can be easily enabled via YAML:
