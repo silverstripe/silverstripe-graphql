@@ -1075,7 +1075,7 @@ class Post extends DataObject implements ScaffoldingProvider
 #### Wildcarding and whitelisting fields
 
 If you have a type you want to be fairly well exposed, it can be tedious to add each
-field piecemeal. As a shortcut, you can use `addAllFields()` (code) or `fields: *` (YAML).
+field piecemeal. As a shortcut, you can use `addAllFields()` (code) or `fields: "*"` (YAML).
 If you have specific fields you want omitted from that list, you can use
 `addAllFieldsExcept()` (code) or `excludeFields` (YAML).
 
@@ -1087,7 +1087,7 @@ SilverStripe\GraphQL\Manager:
       scaffolding:
         types:
           MyProject\Post:
-            fields: *
+            fields: "*"
             excludeFields: [SecretThing]
 ```
 
@@ -1357,7 +1357,7 @@ The `Post` type we're using has a `$has_one` relation to `Author` (Member), and 
 to `File` and `Comment`. Let's expose both of those to the query.
 
 For the `$has_one`, the relationship can simply be declared as a field. For `$has_many`, `$many_many`,
-and any custom getter that returns a `DataList`, we can set up a nested query.
+and any custom getter that returns a `DataList`, we can set up a nested query using `nestedQueries`:
 
 
 **Via YAML**:
