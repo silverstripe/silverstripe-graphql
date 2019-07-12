@@ -429,9 +429,9 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     public function applyConfig(array $config)
     {
         $dataObjectClass = $this->getDataObjectClass();
-        if (empty($config['fields'])) {
+        if (empty($config['fields']) && empty($config['nestedQueries'])) {
             throw new Exception(
-                "No array of fields defined for $dataObjectClass"
+                "No fields or nestedQueries defined for $dataObjectClass"
             );
         }
         if (isset($config['fields'])) {
