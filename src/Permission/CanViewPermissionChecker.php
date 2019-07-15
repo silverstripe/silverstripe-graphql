@@ -3,8 +3,7 @@
 
 namespace SilverStripe\GraphQL\Permission;
 
-use DeepCopy\Filter\Filter;
-use SilverStripe\ORM\DataList;
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\ORM\Filterable;
 use SilverStripe\Security\Member;
 
@@ -19,7 +18,7 @@ class CanViewPermissionChecker implements QueryPermissionChecker
     {
         $excludes = [];
         foreach ($list as $record) {
-            if (!$record->canView($member)) {
+            if (ClassInfo::hasMethod($record, 'canView') && !$record->canView($member)) {
                 $excludes[] = $record->ID;
             }
         }
