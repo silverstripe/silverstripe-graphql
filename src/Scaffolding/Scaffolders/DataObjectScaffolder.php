@@ -346,7 +346,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             if (!$result instanceof DataList && !$result instanceof ArrayList) {
                 throw new InvalidArgumentException(
                     sprintf(
-                        '%s::addNestedQuery() tried to add %s, but must be passed a method name or relation that returns a DataList or ArrayList',
+                        '%s::nestedQueries tried to add %s, but must be passed a method name or relation that returns a DataList or ArrayList',
                         __CLASS__,
                         $fieldName
                     )
@@ -429,9 +429,9 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     public function applyConfig(array $config)
     {
         $dataObjectClass = $this->getDataObjectClass();
-        if (empty($config['fields'])) {
+        if (empty($config['fields']) && empty($config['nestedQueries'])) {
             throw new Exception(
-                "No array of fields defined for $dataObjectClass"
+                "No fields or nestedQueries defined for $dataObjectClass"
             );
         }
         if (isset($config['fields'])) {
@@ -693,7 +693,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             if ($result instanceof SS_List) {
                 throw new InvalidArgumentException(
                     sprintf(
-                        'Fieldname %s added to %s returns a list. This should be defined as a nested query using addNestedQuery(%s)',
+                        'Fieldname %s added to %s returns a list. This should be defined as a nested query using nestedQueries',
                         $fieldName,
                         $this->getDataObjectClass(),
                         $fieldName
