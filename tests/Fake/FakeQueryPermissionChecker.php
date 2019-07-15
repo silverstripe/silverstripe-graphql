@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Tests\Fake;
 
 use SilverStripe\GraphQL\Permission\QueryPermissionChecker;
 use SilverStripe\ORM\ArrayList;
-use SilverStripe\ORM\SS_List;
+use SilverStripe\ORM\Filterable;
 use SilverStripe\Security\Member;
 
 class FakeQueryPermissionChecker implements QueryPermissionChecker
@@ -17,7 +17,7 @@ class FakeQueryPermissionChecker implements QueryPermissionChecker
         $this->shouldAllow = $shouldAllow;
     }
 
-    public function applyToList(SS_List $list, Member $member = null)
+    public function applyToList(Filterable $list, Member $member = null)
     {
         return $this->shouldAllow ? $list : new ArrayList();
     }
