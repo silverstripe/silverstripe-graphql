@@ -404,7 +404,7 @@ class Connection implements OperationResolver
             }
         }
         if ($checker = $this->getPermissionChecker()) {
-            $currentUser = $context['currentUser'];
+            $currentUser = isset($context['currentUser']) ? $context['currentUser'] : null;
             $list = $checker->applyToList($list, $currentUser);
         }
 
