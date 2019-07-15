@@ -270,7 +270,7 @@ class DataObjectScaffolderTest extends SapphireTest
 
         // Must have "fields" defined
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/No array of fields/');
+        $this->expectExceptionMessageRegExp('/^No fields or nestedQueries/');
         $scaffolder->applyConfig([
             'operations' => ['create' => true],
         ]);
