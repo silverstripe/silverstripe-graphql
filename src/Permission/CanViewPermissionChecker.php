@@ -3,25 +3,32 @@
 
 namespace SilverStripe\GraphQL\Permission;
 
-use SilverStripe\ORM\ArrayList;
+use DeepCopy\Filter\Filter;
 use SilverStripe\ORM\DataList;
-use SilverStripe\ORM\DataObject;
-use SilverStripe\ORM\SS_List;
+use SilverStripe\ORM\Filterable;
 use SilverStripe\Security\Member;
 
 class CanViewPermissionChecker implements QueryPermissionChecker
 {
     /**
-     * @param SS_List $list
+     * @param Filterable $list
      * @param Member|null $member
-     * @return ArrayList|SS_List
+     * @return Filterable
      */
-    public function applyToList(SS_List $list, Member $member = null)
+    public function applyToList(Filterable $list, Member $member = null)
     {
-        /* @var DataList|ArrayList $list */
-        return $list->filterByCallback(function (DataObject $item) use ($member) {
-            return $item->canView($member);
-        });
+        $excludes = [];
+        foreach ($list as $record) {
+            if (!$record->canView($member)) {
+                $excludes[] = $record->ID;
+            }
+        }
+
+        if (!empty($excludes)) {
+            return $list->exclude(['ID' => $excludes]);
+        }
+
+        return $list;
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace SilverStripe\GraphQL\Permission;
 
-use SilverStripe\ORM\SS_List;
+use SilverStripe\ORM\Filterable;
 use SilverStripe\Security\Member;
 
 /**
@@ -11,11 +11,11 @@ use SilverStripe\Security\Member;
 interface QueryPermissionChecker
 {
     /**
-     * @param SS_List $list
+     * @param Filterable $list
      * @param Member|null $member
-     * @return SS_List
+     * @return Filterable
      */
-    public function applyToList(SS_List $list, Member $member = null);
+    public function applyToList(Filterable $list, Member $member = null);
 
     /**
      * @param object $item
