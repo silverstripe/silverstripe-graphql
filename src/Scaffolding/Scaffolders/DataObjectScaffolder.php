@@ -353,7 +353,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 );
             }
 
-            $queryScaffolder = new ListQueryScaffolder(
+            $queryScaffolder = Injector::inst()->create(
+                ListQueryScaffolder::class,
                 $fieldName,
                 null,
                 function ($obj) use ($fieldName) {
