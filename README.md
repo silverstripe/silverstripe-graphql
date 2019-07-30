@@ -74,7 +74,7 @@ composer require silverstripe/graphql
    - [Sample Custom CORS Config](#sample-custom-cors-config)
  - [Persisting Queries](#persisting-queries)   
  - [Schema introspection](#schema-introspection)
- - [Setting up a new GraphQL endpoint](#setting-up-a-new-graphql-endpoint)
+ - [Setting up a new GraphQL schema](#setting-up-a-new-graphql-schema)
  - [Strict HTTP Method Checking](#strict-http-method-checking)
  - [TODO](#todo)
 
