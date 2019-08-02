@@ -2,14 +2,13 @@
 
 namespace SilverStripe\GraphQL\Middleware;
 
-use GraphQL\Type\Schema;
+use Exception;
+use GraphQL\Language\AST\NodeKind;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Source;
-use GraphQL\Language\AST\NodeKind;
+use GraphQL\Type\Schema;
 use SilverStripe\GraphQL\Manager;
-use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 use SilverStripe\Security\SecurityToken;
-use Exception;
 
 class CSRFMiddleware implements QueryMiddleware
 {
