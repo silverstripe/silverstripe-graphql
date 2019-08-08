@@ -404,7 +404,7 @@ class Controller extends BaseController implements Flushable
      */
     public function writeSchemaToFilesystem()
     {
-        $manager = $this->getManager();
+        $manager = $this->getManager(new HTTPRequest('GET', ''));
         try {
             $types = StaticSchema::inst()->introspectTypes($manager);
         } catch (Exception $e) {
