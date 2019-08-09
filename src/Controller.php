@@ -18,6 +18,7 @@ use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\SecurityToken;
 use SilverStripe\Versioned\Versioned;
+use SilverStripe\Control\NullHTTPRequest;
 use LogicException;
 
 /**
