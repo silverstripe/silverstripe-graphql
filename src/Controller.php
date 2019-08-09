@@ -8,6 +8,7 @@ use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\NullHTTPRequest;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Flushable;
 use SilverStripe\Core\Injector\Injector;
@@ -18,7 +19,6 @@ use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\SecurityToken;
 use SilverStripe\Versioned\Versioned;
-use SilverStripe\Control\NullHTTPRequest;
 use LogicException;
 
 /**
