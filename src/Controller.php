@@ -404,7 +404,12 @@ class Controller extends BaseController implements Flushable
      */
     public function writeSchemaToFilesystem()
     {
-        $manager = $this->getManager(new HTTPRequest('GET', ''));
+        if (Injector::inst()->has(HTTPRequest::class)) {
+            $request = Injector::inst()->get(HTTPRequest::class);
+        } else {
+            $request = new NullHTTPRequest();
+        }
+        $manager = $this->getManager($request);
         try {
             $types = StaticSchema::inst()->introspectTypes($manager);
         } catch (Exception $e) {
