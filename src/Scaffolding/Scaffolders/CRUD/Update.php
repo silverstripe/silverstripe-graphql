@@ -140,8 +140,9 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
         unset($input['ID']);
         if (!$obj->canEdit($context['currentUser'])) {
             throw new Exception(sprintf(
-                'Cannot edit this %s',
-                $this->getDataObjectClass()
+                'Cannot edit %s with ID %s: permission denied',
+                $obj->i18n_singular_name() ?: $this->getDataObjectClass(),
+                $obj->ID
             ));
         }
 

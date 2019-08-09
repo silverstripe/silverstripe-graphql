@@ -107,8 +107,9 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
         // Check permissions on the individual item as some permission checks may investigate saved state
         if (!$item->canView($context['currentUser'])) {
             throw new Exception(sprintf(
-                'Cannot view %s',
-                $this->getDataObjectClass()
+                'Cannot view %s with ID %s: permission denied',
+                $item->i18n_singular_name() ?: $this->getDataObjectClass(),
+                $item->ID
             ));
         }
 

@@ -82,8 +82,8 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
             foreach ($resultsList as $obj) {
                 if (!$obj->canDelete($context['currentUser'])) {
                     throw new Exception(sprintf(
-                        'Cannot delete %s with ID %s',
-                        $this->getDataObjectClass(),
+                        'Cannot delete %s with ID %s: permission denied',
+                        $obj->i18n_singular_name() ?: $this->getDataObjectClass(),
                         $obj->ID
                     ));
                 }

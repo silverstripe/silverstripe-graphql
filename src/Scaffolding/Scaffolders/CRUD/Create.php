@@ -115,7 +115,7 @@ class Create extends MutationScaffolder implements OperationResolver, CRUDInterf
         // Todo: this is totally half baked
         $singleton = $this->getDataObjectInstance();
         if (!$singleton->canCreate($context['currentUser'], $context)) {
-            throw new Exception("Cannot create {$this->getDataObjectClass()}");
+            throw new Exception("Cannot create {$this->getDataObjectClass()}: permission denied");
         }
 
         /** @var DataObject $newObject */

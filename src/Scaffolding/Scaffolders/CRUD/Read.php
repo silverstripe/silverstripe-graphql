@@ -110,8 +110,8 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
     {
         if (!$this->checkPermission($context['currentUser'])) {
             throw new Exception(sprintf(
-                'Cannot view %s',
-                $this->getDataObjectClass()
+                'Cannot view %s: permission denied',
+                $this->getDataObjectInstance()->i18n_singular_name() ?: $this->getDataObjectClass()
             ));
         }
 
