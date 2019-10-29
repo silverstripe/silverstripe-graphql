@@ -2255,6 +2255,7 @@ you will want to remove the CSRF protection, as it just adds unnecessary overhea
 the middleware to `false`.
 
 ```yaml
+SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Manager.default:
     properties:
       Middlewares:
