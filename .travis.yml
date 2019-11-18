@@ -1,6 +1,10 @@
 language: php
 
-dist: trusty
+dist: xenial
+
+services:
+  - mysql
+  - postgresql
 
 env:
   global:
@@ -9,11 +13,11 @@ env:
 matrix:
   fast_finish: true
   include:
-    - php: 7.1.2
+    - php: 7.2
       env: DB=PGSQL PHPUNIT_TEST=1 PHPCS_TEST=1
-    - php: 7.1.2
+    - php: 7.3
       env: DB=MYSQL PHPUNIT_TEST=1
-    - php: 7.1.2
+    - php: 7.3
       env: DB=MYSQL PDO=1 PHPUNIT_COVERAGE_TEST=1
 
 before_script:
