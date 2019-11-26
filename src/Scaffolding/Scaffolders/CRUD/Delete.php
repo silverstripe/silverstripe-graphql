@@ -65,7 +65,7 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
 
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        DB::get_conn()->withTransaction(function () use ($args, $context) {
+        DB::get_conn()->withTransaction(function () use ($args, $context, $info) {
             // Build list to filter
             $results = DataList::create($this->getDataObjectClass())
                 ->byIDs($args['IDs']);
@@ -93,6 +93,8 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
             foreach ($resultsList as $obj) {
                 $obj->delete();
             }
+
+            $this->extend('afterMutation', $resultsList, $args, $context, $info);
         });
     }
 }
