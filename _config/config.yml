@@ -15,7 +15,7 @@ SilverStripe\Core\Injector\Injector:
     class: SilverStripe\GraphQL\PersistedQuery\JSONStringProvider
   SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
     constructor:
-      httpClient: %$SilverStripe\GraphQL\PersistedQuery\GuzzleHTTPClient
+      httpClient: '%$SilverStripe\GraphQL\PersistedQuery\GuzzleHTTPClient'
 
   # Set up a default endpoint that can be activated with a Director rule
   SilverStripe\GraphQL\Manager.default:
