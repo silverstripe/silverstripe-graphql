@@ -15,7 +15,7 @@ SilverStripe\Core\Injector\Injector:
     class: SilverStripe\GraphQL\PersistedQuery\JSONStringProvider
   SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
     constructor:
-      httpClient: %$SilverStripe\GraphQL\PersistedQuery\GuzzleHTTPClient
+      httpClient: '%$SilverStripe\GraphQL\PersistedQuery\GuzzleHTTPClient'
   SilverStripe\GraphQL\Permission\QueryPermissionChecker.default:
     class: SilverStripe\GraphQL\Permission\CanViewPermissionChecker
   SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder:

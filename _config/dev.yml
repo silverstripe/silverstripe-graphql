@@ -1,0 +1,10 @@
+---
+Name: graphqltest
+Before:
+  - '#sapphiretest'
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\Dev\State\SapphireTestState:
+    properties:
+      States:
+        disabletypecaching: '%$SilverStripe\GraphQL\Dev\State\DisableTypeCacheState'
