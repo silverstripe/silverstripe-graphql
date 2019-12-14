@@ -128,6 +128,8 @@ class Manager implements ConfigurationApplier
      */
     protected function callMiddleware(Schema $schema, $query, $context, $params, callable $last)
     {
+        $this->extend('onBeforeCallMiddleware', $schema, $query, $context, $params);
+
         // Reverse middlewares
         $next = $last;
         // Filter out any middlewares that are set to `false`, e.g. via config
@@ -138,7 +140,12 @@ class Manager implements ConfigurationApplier
                 return $middleware->process($schema, $query, $context, $params, $next);
             };
         }
-        return $next($schema, $query, $context, $params);
+
+        $result = $next($schema, $query, $context, $params);
+
+        $this->extend('onAfterCallMiddleware', $schema, $query, $context, $params);
+
+        return $result;
     }
 
     /**

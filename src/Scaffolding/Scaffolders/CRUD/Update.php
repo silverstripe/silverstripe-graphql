@@ -153,6 +153,9 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
 
         $obj->update($input);
         $obj->write();
+
+        $this->extend('afterMutation', $obj, $args, $context, $info);
+
         return $obj;
     }
 }

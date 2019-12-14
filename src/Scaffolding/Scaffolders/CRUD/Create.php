@@ -130,6 +130,10 @@ class Create extends MutationScaffolder implements OperationResolver, CRUDInterf
 
         // Save and return
         $newObject->write();
-        return DataObject::get_by_id($this->getDataObjectClass(), $newObject->ID);
+        $newObject = DataObject::get_by_id($this->getDataObjectClass(), $newObject->ID);
+
+        $this->extend('afterMutation', $newObject, $args, $context, $info);
+
+        return $newObject;
     }
 }
