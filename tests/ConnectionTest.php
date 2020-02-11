@@ -196,7 +196,7 @@ class ConnectionTest extends SapphireTest
     public function testCollectionResolves()
     {
         $resolve = $this->connection->resolve(null, [], [], new ResolveInfo([]));
-        $item = $resolve['edges']->first();
+        $item = $resolve['edges']->first()->toMap();
         $this->assertEquals('testMyValidResolverValue', $item['MyValue']);
     }
 
