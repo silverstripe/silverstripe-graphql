@@ -24,9 +24,12 @@ class CanViewPermissionCheckerTest extends SapphireTest
 
         $o3 = new RestrictedDataObjectFake();
         $o3->write();
-
         $o4 = new RestrictedDataObjectFake();
         $o4->write();
+        $o5 = new RestrictedDataObjectFake();
+        $o5->write();
+        $o6 = new RestrictedDataObjectFake();
+        $o6->write();
 
         $checker = new CanViewPermissionChecker();
         $result = $checker->applyToList(ArrayList::create([$o1, $o2]), null);
@@ -40,5 +43,19 @@ class CanViewPermissionCheckerTest extends SapphireTest
 
         $this->assertTrue($checker->checkItem($o1));
         $this->assertFalse($checker->checkItem($o4));
+
+        $this->assertEquals(6, DataObjectFake::get()->count());
+
+        $result = $checker->applyToList(DataObjectFake::get()->limit(2, 0), null);
+        $this->assertEquals([$o1ID, $o2ID], $result->column('ID'));
+
+        $result = $checker->applyToList(DataObjectFake::get()->limit(2, 1), null);
+        $this->assertEquals([$o2ID], $result->column('ID'));
+
+        $result = $checker->applyToList(DataObjectFake::get()->limit(2, 2), null);
+        $this->assertEquals(0, $result->count());
+
+        $result = $checker->applyToList(DataObjectFake::get()->limit(2, 4), null);
+        $this->assertEquals(0, $result->count());
     }
 }
