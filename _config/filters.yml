@@ -12,8 +12,8 @@ SilverStripe\Core\Injector\Injector:
       gte: '%$SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanOrEqualFilter'
       lte: '%$SilverStripe\GraphQL\QueryFilter\Filters\LessThanOrEqualFilter'
       in: '%$SilverStripe\GraphQL\QueryFilter\Filters\InFilter'
-      endswith: '%$SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter'
-      startswith: '%$SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter'
+      endswith: '%$SilverStripe\GraphQL\QueryFilter\Filters\EndsWithFilter'
+      startswith: '%$SilverStripe\GraphQL\QueryFilter\Filters\StartsWithFilter'
   SilverStripe\GraphQL\QueryFilter\DataObjectQueryFilter:
     properties:
       filterRegistry: '%$SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface'
