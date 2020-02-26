@@ -7,13 +7,12 @@ before_install:
 
 env:
   global:
-    - COMPOSER_ROOT_VERSION=3.1.x-dev
+    - COMPOSER_ROOT_VERSION=3.2.x-dev
     - DISPLAY=":99"
     - XVFBARGS=":99 -ac -screen 0 1024x768x16"
     - SS_BASE_URL="http://localhost:8080/"
     - SS_ENVIRONMENT_TYPE="dev"
-    - BEHAT_RECIPE_CMS_VERSION=4.4.x-dev
-    - ASSET_ADMIN_VERSION=1.4.x-dev
+    - RECIPE_CMS_VERSION=4.5.x-dev
 
 matrix:
   fast_finish: true
@@ -40,10 +39,10 @@ before_script:
 
 # Install composer dependencies
   - composer validate
-  - if [[ ! $BEHAT_TEST ]]; then composer require --prefer-dist --no-update silverstripe/recipe-core:4.x-dev silverstripe/versioned:1.x-dev silverstripe/assets:1.x-dev --prefer-dist ; fi
+  - if [[ (! $BEHAT_TEST) && (! $ASSETADMIN_TEST) ]]; then composer require --prefer-dist --no-update silverstripe/recipe-core:4.x-dev silverstripe/versioned:1.x-dev silverstripe/assets:1.x-dev --prefer-dist ; fi
   - if [[ $DB == PGSQL ]]; then composer require silverstripe/postgresql:2.x-dev --prefer-dist --no-update; fi
-  - if [[ $ASSETADMIN_TEST ]]; then composer require silverstripe/asset-admin $ASSET_ADMIN_VERSION --prefer-source --no-update ; fi
-  - if [[ $BEHAT_TEST ]]; then composer require silverstripe/recipe-testing:^1 silverstripe/recipe-cms $BEHAT_RECIPE_CMS_VERSION --prefer-source --no-update ; fi
+  - if [[ $ASSETADMIN_TEST ]]; then composer require silverstripe/recipe-cms $RECIPE_CMS_VERSION --prefer-source --no-update ; fi
+  - if [[ $BEHAT_TEST ]]; then composer require silverstripe/recipe-testing:^1 silverstripe/recipe-cms $RECIPE_CMS_VERSION --prefer-source --no-update ; fi
   - composer update
 
   - if [[ $BEHAT_TEST ]]; then mkdir artifacts; fi
