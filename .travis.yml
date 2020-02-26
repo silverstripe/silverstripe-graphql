@@ -1,6 +1,11 @@
 language: php
 
-dist: trusty
+dist: xenial
+
+services:
+  - mysql
+  - postgresql
+  - xvfb
 
 before_install:
   - if [[ $BEHAT_TEST ]]; then sudo apt-get update && sudo apt-get install chromium-chromedriver; fi
@@ -18,11 +23,13 @@ matrix:
   fast_finish: true
   include:
     - php: 7.1
-      env: DB=MYSQL PDO=1 PHPUNIT_COVERAGE_TEST=1
+      env: DB=PGSQL PHPUNIT_TEST=1 PHPCS_TEST=1
     - php: 7.2
       env: DB=MYSQL PHPUNIT_TEST=1
     - php: 7.3
-      env: DB=PGSQL PHPUNIT_TEST=1 PHPCS_TEST=1
+      env: DB=MYSQL PDO=1 PHPUNIT_COVERAGE_TEST=1
+    - php: 7.4
+      env: DB=MYSQL PHPUNIT_TEST=1
     - php: 7.3
       env: DB=MYSQL BEHAT_TEST=1
     - php: 7.3
