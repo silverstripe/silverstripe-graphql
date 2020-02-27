@@ -19,10 +19,10 @@ install:
 
 env:
   global:
-    - COMPOSER_ROOT_VERSION=3.2.x-dev
+    - COMPOSER_ROOT_VERSION=3.x-dev
     - SS_BASE_URL="http://localhost:8080/"
     - SS_ENVIRONMENT_TYPE="dev"
-    - RECIPE_CMS_VERSION=4.5.x-dev
+    - RECIPE_CMS_VERSION=4.x-dev
 
 matrix:
   fast_finish: true
