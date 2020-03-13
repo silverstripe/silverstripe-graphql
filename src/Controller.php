@@ -45,6 +45,7 @@ class Controller extends BaseController implements Flushable
         'Max-Age' => 86400, // 86,400 seconds = 1 day.
     ];
 
+
     /**
      * If true, store the fragment JSON in a flat file in assets/
      * @var bool
@@ -70,6 +71,12 @@ class Controller extends BaseController implements Flushable
      * @var GeneratedAssetHandler
      */
     protected $assetHandler;
+
+    /**
+     * Override the default cors config per instance
+     * @var array
+     */
+    protected $corsConfig = [];
 
     /**
      * @param Manager $manager
@@ -213,7 +220,7 @@ class Controller extends BaseController implements Flushable
      */
     public function addCorsHeaders(HTTPRequest $request, HTTPResponse $response)
     {
-        $corsConfig = Config::inst()->get(static::class, 'cors');
+        $corsConfig = $this->getMergedCorsConfig();
 
         // If CORS is disabled don't add the extra headers. Simply return the response untouched.
         if (empty($corsConfig['Enabled'])) {
@@ -241,6 +248,36 @@ class Controller extends BaseController implements Flushable
 
         return $response;
     }
+
+    /**
+     * @return array
+     */
+    public function getCorsConfig()
+    {
+        return $this->corsConfig;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMergedCorsConfig()
+    {
+        $defaults = Config::inst()->get(static::class, 'cors');
+        $override = $this->corsConfig;
+
+        return array_merge($defaults, $override);
+    }
+
+    /**
+     * @param array $config
+     * @return $this
+     */
+    public function setCorsConfig(array $config): self
+    {
+        $this->corsConfig = array_merge($this->corsConfig, $config);
+
+        return $this;
+    }    
 
     /**
      * Validate an origin matches a set of allowed origins
