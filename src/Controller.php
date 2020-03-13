@@ -45,7 +45,6 @@ class Controller extends BaseController implements Flushable
         'Max-Age' => 86400, // 86,400 seconds = 1 day.
     ];
 
-
     /**
      * If true, store the fragment JSON in a flat file in assets/
      * @var bool
