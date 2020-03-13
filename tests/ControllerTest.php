@@ -389,7 +389,7 @@ class ControllerTest extends SapphireTest
         $this->expectException(HTTPResponse_Exception::class);
         $controller->setCorsConfig(['Enabled' => true]);
         $controller->addCorsHeaders($request, $response);
-    }    
+    }
 
     public function testTypeCaching()
     {

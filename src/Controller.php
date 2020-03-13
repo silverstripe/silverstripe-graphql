@@ -277,7 +277,7 @@ class Controller extends BaseController implements Flushable
         $this->corsConfig = array_merge($this->corsConfig, $config);
 
         return $this;
-    }    
+    }
 
     /**
      * Validate an origin matches a set of allowed origins
