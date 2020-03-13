@@ -251,7 +251,7 @@ class Controller extends BaseController implements Flushable
     /**
      * @return array
      */
-    public function getCorsConfig()
+    public function getCorsConfig(): array
     {
         return $this->corsConfig;
     }
@@ -259,7 +259,7 @@ class Controller extends BaseController implements Flushable
     /**
      * @return array
      */
-    public function getMergedCorsConfig()
+    public function getMergedCorsConfig(): array
     {
         $defaults = Config::inst()->get(static::class, 'cors');
         $override = $this->corsConfig;
