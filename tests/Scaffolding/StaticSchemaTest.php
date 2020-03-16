@@ -15,6 +15,12 @@ use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 
 class StaticSchemaTest extends SapphireTest
 {
+    protected function setUp()
+    {
+        parent::setUp();
+        StaticSchema::reset();
+    }
+
     public function testTypeNameForDataObject()
     {
         $typeNames = [
@@ -89,6 +95,49 @@ class StaticSchemaTest extends SapphireTest
             DataObjectFake::class => 'otherTestType'
         ]);
         $this->assertEquals('otherTestType', StaticSchema::inst()->typeNameForDataObject(DataObjectFake::class));
+    }
+
+    public function testLoadSchemaName()
+    {
+        $config = [
+            'schema1' => [
+                'typeNames' =>  [
+                    DataObjectFake::class => 'testType1',
+                ],
+            ],
+            'schema2' => [],
+            'schema3' => [
+                'typeNames' => [
+                    DataObjectFake::class => 'testType3',
+                ]
+            ]
+        ];
+        $inst = StaticSchema::inst();
+        Config::modify()->set(Manager::class, 'schemas', $config);
+        $this->assertEquals(
+            'SilverStripeDataObjectFake',
+            $inst->typeNameForDataObject(DataObjectFake::class)
+        );
+        $inst->load('schema1');
+        $this->assertEquals(
+            'testType1',
+            $inst->typeNameForDataObject(DataObjectFake::class)
+        );
+        $inst->load('schema2');
+        $this->assertEquals(
+            'SilverStripeDataObjectFake',
+            $inst->typeNameForDataObject(DataObjectFake::class)
+        );
+        $inst->load('schema3');
+        $this->assertEquals(
+            'testType3',
+            $inst->typeNameForDataObject(DataObjectFake::class)
+        );
+        $inst->load('notASchema');
+        $this->assertEquals(
+            'SilverStripeDataObjectFake',
+            $inst->typeNameForDataObject(DataObjectFake::class)
+        );
     }
 
     public function testInheritanceTypeNames()
