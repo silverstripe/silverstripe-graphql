@@ -8,6 +8,7 @@ use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\NullHTTPRequest;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Flushable;
 use SilverStripe\Core\Injector\Injector;
@@ -414,7 +415,12 @@ class Controller extends BaseController implements Flushable
      */
     public function writeSchemaToFilesystem()
     {
-        $manager = $this->getManager();
+        if (Injector::inst()->has(HTTPRequest::class)) {
+            $request = Injector::inst()->get(HTTPRequest::class);
+        } else {
+            $request = new NullHTTPRequest();
+        }
+        $manager = $this->getManager($request);
         try {
             $types = StaticSchema::inst()->introspectTypes($manager);
         } catch (Exception $e) {
