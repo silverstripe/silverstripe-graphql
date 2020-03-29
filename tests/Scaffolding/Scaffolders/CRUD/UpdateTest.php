@@ -25,7 +25,7 @@ class UpdateTest extends SapphireTest
         RestrictedDataObjectFake::class,
     ];
 
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         // Make sure we're only testing the native features

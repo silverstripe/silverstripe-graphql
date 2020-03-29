@@ -33,7 +33,7 @@ class ConnectionTest extends SapphireTest
      */
     private $manager;
 
-    public function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
 

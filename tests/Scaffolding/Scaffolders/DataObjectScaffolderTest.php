@@ -23,10 +23,11 @@ use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 use SilverStripe\ORM\FieldType\DBInt;
+use SilverStripe\Assets\File;
 
 class DataObjectScaffolderTest extends SapphireTest
 {
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         foreach (Read::get_extensions() as $class) {
