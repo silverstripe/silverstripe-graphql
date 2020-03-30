@@ -2,9 +2,9 @@
 
 namespace SilverStripe\GraphQL\PersistedQuery;
 
-use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Request;
 use RuntimeException;
 
 class GuzzleHTTPClient implements HTTPClient

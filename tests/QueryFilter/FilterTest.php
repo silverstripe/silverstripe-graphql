@@ -3,10 +3,10 @@
 namespace SilverStripe\GraphQL\Tests\QueryFilter;
 
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
 use SilverStripe\GraphQL\QueryFilter\Filters\ContainsFilter;
 use SilverStripe\GraphQL\QueryFilter\Filters\EndsWithFilter;
 use SilverStripe\GraphQL\QueryFilter\Filters\EqualToFilter;
-use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
 use SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanFilter;
 use SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanOrEqualFilter;
 use SilverStripe\GraphQL\QueryFilter\Filters\InFilter;

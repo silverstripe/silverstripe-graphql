@@ -3,6 +3,7 @@
 
 namespace SilverStripe\GraphQL\QueryFilter;
 
+use Exception;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
@@ -15,7 +16,6 @@ use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\FieldType\DBField;
-use Exception;
 
 class DataObjectQueryFilter implements ConfigurationApplier
 {

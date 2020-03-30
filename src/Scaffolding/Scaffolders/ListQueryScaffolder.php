@@ -2,12 +2,12 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
+use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
-use Exception;
 use SilverStripe\GraphQL\Permission\PermissionCheckerAware;
 use SilverStripe\ORM\SS_List;
 

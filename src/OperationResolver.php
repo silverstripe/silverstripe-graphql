@@ -2,8 +2,8 @@
 
 namespace SilverStripe\GraphQL;
 
-use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Executor\Executor;
+use GraphQL\Type\Definition\ResolveInfo;
 
 /**
  * Standard resolve callback for Mutations or Queries

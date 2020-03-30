@@ -2,9 +2,9 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\QueryCreator;
-use GraphQL\Type\Definition\ResolveInfo;
 
 /**
  * A helper class for making a paginated query. A paginated query uses the

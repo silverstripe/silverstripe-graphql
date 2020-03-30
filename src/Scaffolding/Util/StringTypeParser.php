@@ -4,8 +4,8 @@ namespace SilverStripe\GraphQL\Scaffolding\Util;
 
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
 
 /**
  * Parses a type, e.g. Int!(20) into an array defining the arg type

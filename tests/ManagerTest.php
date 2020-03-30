@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL\Tests;
 
 use GraphQL\Error\Error;
-use GraphQL\Language\SourceLocation;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
 use InvalidArgumentException;

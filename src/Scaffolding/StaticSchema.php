@@ -2,12 +2,11 @@
 
 namespace SilverStripe\GraphQL\Scaffolding;
 
+use Exception;
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
-use Exception;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataObject;

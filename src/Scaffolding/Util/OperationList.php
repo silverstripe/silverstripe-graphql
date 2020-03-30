@@ -2,9 +2,9 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Util;
 
+use InvalidArgumentException;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
 use SilverStripe\ORM\ArrayList;
-use InvalidArgumentException;
 
 /**
  * An array list designed to work with OperationScaffolders

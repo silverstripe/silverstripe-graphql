@@ -2,12 +2,12 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Util;
 
+use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
-use SilverStripe\ORM\ArrayLib;
-use GraphQL\Type\Definition\ObjectType;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
+use SilverStripe\ORM\ArrayLib;
 
 /**
  * Parses a map of type, e.g. Int!(20) into an array defining the arg type

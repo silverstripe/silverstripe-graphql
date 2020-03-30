@@ -2,10 +2,10 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
+use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Permission\PermissionCheckerAware;
-use Exception;
 
 /**
  * Scaffolds a GraphQL query field.

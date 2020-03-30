@@ -2,10 +2,10 @@
 
 namespace SilverStripe\GraphQL\Util;
 
-use SilverStripe\ORM\DataObject;
-use SilverStripe\Core\ClassInfo;
-use SilverStripe\View\ViewableData;
 use InvalidArgumentException;
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\View\ViewableData;
 
 /**
  * Infer original field name casing from case insensitive field comparison.
