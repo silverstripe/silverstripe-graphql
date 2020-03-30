@@ -124,7 +124,7 @@ class DeleteTest extends SapphireTest
         $scaffold = $delete->scaffold($manager);
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/Cannot delete/');
+        $this->expectExceptionMessageMatches('/Cannot delete/');
 
         $scaffold['resolve'](
             $restrictedDataobject,

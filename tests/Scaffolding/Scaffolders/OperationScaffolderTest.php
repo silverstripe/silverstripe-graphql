@@ -170,7 +170,7 @@ class OperationScaffolderTest extends SapphireTest
         $this->assertTrue($success);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/closures, instances of/');
+        $this->expectExceptionMessageMatches('/closures, instances of/');
         $scaffolder->setResolver('fail');
     }
 

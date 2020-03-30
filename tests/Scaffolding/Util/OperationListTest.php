@@ -29,7 +29,7 @@ class OperationListTest extends SapphireTest
         $this->assertEquals(1, $list->count());
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/only accepts instances of/');
+        $this->expectExceptionMessageMatches('/only accepts instances of/');
         $list->push(new OperationList());
     }
 }

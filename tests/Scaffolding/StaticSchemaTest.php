@@ -141,12 +141,12 @@ class StaticSchemaTest extends SapphireTest
         $this->assertSame($result, $singleType);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/illegal mode/');
+        $this->expectExceptionMessageMatches('/illegal mode/');
         StaticSchema::inst()
             ->fetchFromManager(FakeSiteTree::class, $manager, 'fail');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/could not be resolved/');
+        $this->expectExceptionMessageMatches('/could not be resolved/');
         StaticSchema::inst()
             ->fetchFromManager('fail', $manager);
     }

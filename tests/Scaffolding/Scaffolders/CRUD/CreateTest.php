@@ -142,7 +142,7 @@ class CreateTest extends SapphireTest
         $scaffold = $create->scaffold($manager);
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/Cannot create/');
+        $this->expectExceptionMessageMatches('/Cannot create/');
 
         $scaffold['resolve'](
             null,

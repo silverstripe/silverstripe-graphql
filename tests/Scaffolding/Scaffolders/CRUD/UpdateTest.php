@@ -138,7 +138,7 @@ class UpdateTest extends SapphireTest
         $scaffold = $update->scaffold($manager);
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/Cannot edit/');
+        $this->expectExceptionMessageMatches('/Cannot edit/');
 
         $scaffold['resolve'](
             $restrictedDataobject,

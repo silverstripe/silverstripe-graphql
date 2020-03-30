@@ -19,7 +19,7 @@ class InheritanceScaffolderTest extends SapphireTest
     public function testThrowsOnNonExistentClass()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/not exist/');
+        $this->expectExceptionMessageMatches('/not exist/');
 
         $scaffolder = new InheritanceScaffolder('fail');
     }
@@ -27,7 +27,7 @@ class InheritanceScaffolderTest extends SapphireTest
     public function testThrowsOnNonDataObjectClass()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/subclass of/');
+        $this->expectExceptionMessageMatches('/subclass of/');
 
         $scaffolder = new InheritanceScaffolder(Controller::class);
     }
