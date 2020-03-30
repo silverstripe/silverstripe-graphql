@@ -179,7 +179,7 @@ class SchemaScaffolderTest extends SapphireTest
     public function testSchemaScaffolderCreateFromConfigThrowsIfBadTypes()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/"types" must be a map of class name to settings/');
+        $this->expectExceptionMessageMatches('/"types" must be a map of class name to settings/');
         SchemaScaffolder::createFromConfig([
             'types' => ['fail'],
         ]);
@@ -188,7 +188,7 @@ class SchemaScaffolderTest extends SapphireTest
     public function testSchemaScaffolderCreateFromConfigThrowsIfBadQueries()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/must be a map of operation name to settings/');
+        $this->expectExceptionMessageMatches('/must be a map of operation name to settings/');
         SchemaScaffolder::createFromConfig([
             'types' => [
                 DataObjectFake::class => [
@@ -259,7 +259,7 @@ class SchemaScaffolderTest extends SapphireTest
     {
         Config::modify()->merge(SchemaScaffolder::class, 'fixed_types', ['stdclass']);
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/Cannot auto register/');
+        $this->expectExceptionMessageMatches('/Cannot auto register/');
         (new SchemaScaffolder())->addToManager(new Manager());
     }
 
@@ -267,7 +267,7 @@ class SchemaScaffolderTest extends SapphireTest
     {
         Config::modify()->merge(SchemaScaffolder::class, 'fixed_types', [ArrayList::class]);
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/Cannot auto register/');
+        $this->expectExceptionMessageMatches('/Cannot auto register/');
         (new SchemaScaffolder())->addToManager(new Manager());
     }
 
@@ -275,7 +275,7 @@ class SchemaScaffolderTest extends SapphireTest
     {
         Config::modify()->merge(SchemaScaffolder::class, 'fixed_types', 'fail');
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/must be an array/');
+        $this->expectExceptionMessageMatches('/must be an array/');
         (new SchemaScaffolder())->addToManager(new Manager());
     }
 

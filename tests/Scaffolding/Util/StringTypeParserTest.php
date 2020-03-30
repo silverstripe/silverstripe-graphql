@@ -55,14 +55,14 @@ class StringTypeParserTest extends SapphireTest
     public function testTypeInvalid()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/Invalid argument/');
+        $this->expectExceptionMessageMatches('/Invalid argument/');
         new StringTypeParser('  ... Nothing');
     }
 
     public function testTypeNotAString()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/must be passed a string/');
+        $this->expectExceptionMessageMatches('/must be passed a string/');
         new StringTypeParser(['fail']);
     }
 

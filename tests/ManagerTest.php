@@ -135,17 +135,17 @@ class ManagerTest extends SapphireTest
         $this->assertEquals('test', $manager->getSchemaKey());
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/must be a string/');
+        $this->expectExceptionMessageMatches('/must be a string/');
         $manager->setSchemaKey(['test']);
         $this->assertEquals('test', $manager->getSchemaKey());
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/cannnot be empty/');
+        $this->expectExceptionMessageMatches('/cannnot be empty/');
         $manager->setSchemaKey('');
         $this->assertEquals('test', $manager->getSchemaKey());
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/alphanumeric/');
+        $this->expectExceptionMessageMatches('/alphanumeric/');
         $manager->setSchemaKey('completely % invalid #key');
         $this->assertEquals('test', $manager->getSchemaKey());
     }

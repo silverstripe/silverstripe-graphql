@@ -41,14 +41,14 @@ class ArrayTypeParserTest extends SapphireTest
     public function testInvalidConstructorNotArray()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/second parameter must be an associative array/');
+        $this->expectExceptionMessageMatches('/second parameter must be an associative array/');
         new ArrayTypeParser('test', 'String');
     }
 
     public function testInvalidConstructorNotAssociative()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/second parameter must be an associative array/');
+        $this->expectExceptionMessageMatches('/second parameter must be an associative array/');
         new ArrayTypeParser('test', ['oranges', 'apples']);
     }
 }
