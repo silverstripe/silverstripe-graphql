@@ -2,9 +2,8 @@
 
 namespace SilverStripe\GraphQL\Middleware;
 
-use GraphQL\Type\Schema;
-use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 use Exception;
+use GraphQL\Type\Schema;
 
 class HTTPMethodMiddleware implements QueryMiddleware
 {

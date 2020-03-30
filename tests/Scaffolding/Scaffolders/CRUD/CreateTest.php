@@ -25,7 +25,7 @@ class CreateTest extends SapphireTest
         RestrictedDataObjectFake::class,
     ];
 
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         StaticSchema::inst()->setTypeNames([]);
@@ -35,7 +35,7 @@ class CreateTest extends SapphireTest
         }
     }
 
-    protected function tearDown()
+    protected function tearDown() : void
     {
         StaticSchema::inst()->setTypeNames([]);
         parent::tearDown();

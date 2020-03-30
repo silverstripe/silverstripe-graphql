@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL\Tests\Fake;
 
 use SilverStripe\Dev\TestOnly;
-use SilverStripe\GraphQL\MutationCreator;
 use SilverStripe\ORM\DataList;
 
 class FilterDataList extends DataList implements TestOnly

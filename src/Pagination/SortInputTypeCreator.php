@@ -2,10 +2,10 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
-use GraphQL\Type\Definition\Type;
-use GraphQL\Type\Definition\InputObjectType;
-use SilverStripe\Core\Injector\Injector;
 use GraphQL\Type\Definition\EnumType;
+use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\Type;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\TypeCreator;
 
 /**

@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL;
 
 use Exception;
+use LogicException;
 use SilverStripe\Assets\Storage\GeneratedAssetHandler;
 use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\Director;
@@ -17,9 +18,7 @@ use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
-use SilverStripe\Security\SecurityToken;
 use SilverStripe\Versioned\Versioned;
-use LogicException;
 
 /**
  * Top level controller for handling graphql requests.

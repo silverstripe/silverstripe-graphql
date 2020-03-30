@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
+use InvalidArgumentException;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
@@ -15,7 +16,6 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
-use InvalidArgumentException;
 
 /**
  * Scaffolds a generic read operation for DataObjects.

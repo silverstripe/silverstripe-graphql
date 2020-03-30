@@ -2,10 +2,10 @@
 
 namespace SilverStripe\GraphQL;
 
+use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use SilverStripe\Core\Injector\Injectable;
-use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\InputObjectType;
 
 /**
  * Represents a GraphQL type in a way that allows customization through

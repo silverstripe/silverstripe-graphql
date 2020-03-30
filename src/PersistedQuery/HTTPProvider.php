@@ -2,10 +2,10 @@
 
 namespace SilverStripe\GraphQL\PersistedQuery;
 
+use Exception;
+use InvalidArgumentException;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use InvalidArgumentException;
-use Exception;
 use SilverStripe\Core\Injector\Injector;
 
 /**

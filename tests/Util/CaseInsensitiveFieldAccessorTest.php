@@ -40,24 +40,18 @@ class CaseInsensitiveFieldAccessorTest extends SapphireTest
         $this->assertEquals('customMethodValue', $mapper->getValue($fake, 'customMethod'));
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testGetValueWithUnknownFieldThrowsException()
     {
+        $this->expectException(\InvalidArgumentException::class);
         $fake = new DataObjectFake([]);
         $mapper = new CaseInsensitiveFieldAccessor();
         $mapper->getValue($fake, 'unknownField');
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testGetValueWithCustomOpts()
     {
-        $fake = new DataObjectFake([
-            'MyField' => 'myValue'
-        ]);
+        $this->expectException(\InvalidArgumentException::class);
+        $fake = new DataObjectFake(['MyField' => 'myValue']);
         $mapper = new CaseInsensitiveFieldAccessor();
         $opts = [
             // only check for methods
@@ -103,11 +97,9 @@ class CaseInsensitiveFieldAccessorTest extends SapphireTest
         $this->assertEquals('myNewValue', $fake->customSetterMethodResult);
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testSetValueWithUnknownFieldThrowsException()
     {
+        $this->expectException(\InvalidArgumentException::class);
         $fake = new DataObjectFake([]);
         $mapper = new CaseInsensitiveFieldAccessor();
         $mapper->setValue($fake, 'unknownField', true);

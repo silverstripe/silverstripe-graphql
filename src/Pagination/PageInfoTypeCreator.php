@@ -2,8 +2,8 @@
 
 namespace SilverStripe\GraphQL\Pagination;
 
-use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\Type;
 use SilverStripe\GraphQL\TypeCreator;
 
 /**

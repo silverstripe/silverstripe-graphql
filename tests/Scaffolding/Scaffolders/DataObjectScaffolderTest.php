@@ -26,7 +26,7 @@ use SilverStripe\ORM\FieldType\DBInt;
 
 class DataObjectScaffolderTest extends SapphireTest
 {
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         foreach (Read::get_extensions() as $class) {

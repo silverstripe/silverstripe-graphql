@@ -3,7 +3,6 @@
 namespace SilverStripe\GraphQL\Tests;
 
 use GraphQL\Error\Error;
-use GraphQL\Language\SourceLocation;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
 use InvalidArgumentException;
@@ -21,7 +20,7 @@ use SilverStripe\Security\Member;
 class ManagerTest extends SapphireTest
 {
 
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         /** @var IdentityStore $store */

@@ -8,7 +8,6 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder;
 use SilverStripe\GraphQL\Tests\Fake\FakeQueryPermissionChecker;
-use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
 
 class ItemQueryScaffolderTest extends SapphireTest

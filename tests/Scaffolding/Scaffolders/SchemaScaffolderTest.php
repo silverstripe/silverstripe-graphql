@@ -30,7 +30,7 @@ use SilverStripe\Security\Member;
 
 class SchemaScaffolderTest extends SapphireTest
 {
-    protected function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
         foreach (Read::get_extensions() as $class) {

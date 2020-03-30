@@ -2,15 +2,15 @@
 
 namespace SilverStripe\GraphQL\Scaffolding\Extensions;
 
+use Exception;
 use SilverStripe\Core\Config\Config;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
-use SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser;
-use SilverStripe\ORM\DataExtension;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ManagerMutatorInterface;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
-use SilverStripe\GraphQL\Manager;
-use Exception;
+use SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser;
+use SilverStripe\ORM\DataExtension;
 
 /**
  * Adds functionality to associate an object with a given GraphQL type, either

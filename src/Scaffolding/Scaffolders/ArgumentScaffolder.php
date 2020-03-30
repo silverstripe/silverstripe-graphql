@@ -3,11 +3,11 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders;
 
 use GraphQL\Type\Definition\Type;
+use InvalidArgumentException;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface;
-use SilverStripe\Core\Injector\Injector;
-use InvalidArgumentException;
 
 class ArgumentScaffolder implements ConfigurationApplier
 {

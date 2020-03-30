@@ -2,8 +2,8 @@
 
 namespace SilverStripe\GraphQL;
 
-use SilverStripe\Core\Injector\Injectable;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\Core\Injector\Injectable;
 
 /**
  * Base type for query types within graphql. I.e. mutations or queries

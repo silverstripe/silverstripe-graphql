@@ -3,9 +3,9 @@
 
 namespace SilverStripe\GraphQL\PersistedQuery;
 
+use InvalidArgumentException;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use InvalidArgumentException;
 
 /**
  * Class ConfigStringProvider

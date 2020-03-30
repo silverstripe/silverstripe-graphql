@@ -2,31 +2,31 @@
 
 namespace SilverStripe\GraphQL;
 
-use InvalidArgumentException;
+use BadMethodCallException;
+use Closure;
+use Exception;
+use GraphQL\Error\Error;
 use GraphQL\Executor\ExecutionResult;
-use GraphQL\Language\SourceLocation;
-use GraphQL\Type\Schema;
 use GraphQL\GraphQL;
+use GraphQL\Language\SourceLocation;
+use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Schema;
+use InvalidArgumentException;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Injector\Injectable;
-use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Error\Error;
-use GraphQL\Type\Definition\Type;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\Deprecation;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
-use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
-use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
-use SilverStripe\ORM\ValidationException;
-use SilverStripe\Security\Member;
+use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
-use Closure;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
+use SilverStripe\ORM\ValidationException;
+use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
-use BadMethodCallException;
-use Exception;
 
 /**
  * Manager is the master container for a graphql endpoint, and contains

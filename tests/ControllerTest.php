@@ -4,7 +4,7 @@ namespace SilverStripe\GraphQL\Tests;
 
 use Exception;
 use GraphQL\Type\Definition\Type;
-use PHPUnit_Framework_MockObject_MockBuilder;
+use PHPUnit\Framework\MockObject\MockObject;
 use SilverStripe\Assets\Dev\TestAssetStore;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
@@ -30,20 +30,17 @@ class ControllerTest extends SapphireTest
 {
     protected $usesDatabase = true;
 
-    public function setUp()
+    protected function setUp() : void
     {
         parent::setUp();
-
         Handler::config()->remove('authenticators');
         $this->logInWithPermission('CMS_ACCESS_CMSMain');
-
         // Disable CORS Config by default.
-        Controller::config()->set('cors', [ 'Enabled' => false ]);
-
+        Controller::config()->set('cors', ['Enabled' => false]);
         TestAssetStore::activate('GraphQLController');
     }
 
-    public function tearDown()
+    protected function tearDown() : void
     {
         TestAssetStore::reset();
         parent::tearDown();
@@ -148,7 +145,8 @@ class ControllerTest extends SapphireTest
         $manager->addQuery($this->getQuery($manager), 'myquery');
 
         $response = $controller->index(new HTTPRequest('GET', ''));
-        $assertion = ($shouldFail) ? 'assertContains' : 'assertNotContains';
+
+        $assertion = ($shouldFail) ? 'assertStringContainsString' : 'assertStringNotContainsString';
         // See Fake\BrutalAuthenticatorFake::authenticate for failure message
         $this->{$assertion}('Never!', $response->getBody());
     }
@@ -170,11 +168,9 @@ class ControllerTest extends SapphireTest
         ];
     }
 
-    /**
-     * @expectedException \SilverStripe\Control\HTTPResponse_Exception
-     */
     public function testAddCorsHeadersOriginDisallowed()
     {
+        $this->expectException(HTTPResponse_Exception::class);
         Config::modify()->set(Controller::class, 'cors', [
         'Enabled' => true,
         'Allow-Origin' => null,
@@ -622,7 +618,7 @@ class ControllerTest extends SapphireTest
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject
+     * @return MockObject
      */
     protected function getStaticSchemaMock()
     {
