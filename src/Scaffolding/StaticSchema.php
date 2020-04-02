@@ -74,6 +74,19 @@ class StaticSchema
     }
 
     /**
+     * Boots the type names from config. No graphql request necessary.
+     * @param string $schemaName
+     * @return $this
+     */
+    public function load(string $schemaName): self
+    {
+        $schemaConfig = Manager::config()->get('schemas');
+        $typeNames = $schemaConfig[$schemaName]['typeNames'] ?? [];
+
+        return $this->setTypeNames($typeNames);
+    }
+
+    /**
      * Given a DataObject subclass name, transform it into a sanitised (and implicitly unique) type
      * name suitable for the GraphQL schema
      *
