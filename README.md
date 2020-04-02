@@ -2369,7 +2369,7 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  Allow-Credentials: 'true'
  ```
  
-### Sample Custom CORS Config
+### Apply a CORS config to all GraphQL endpoints
 
 ```yaml
 ## CORS Config
@@ -2382,6 +2382,19 @@ SilverStripe\GraphQL\Controller:
     Allow-Credentials: 'true'
     Max-Age:  600  # 600 seconds = 10 minutes.
 ``` 
+
+### Apply a CORS config to a single GraphQL endpoint
+
+```yaml
+## CORS Config
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Controller.default
+    properties:
+      corsConfig:
+        Enabled: false
+``` 
+
+
 ## Persisting queries
 
 A common pattern in GraphQL APIs is to store queries on the server by an identifier. This helps save

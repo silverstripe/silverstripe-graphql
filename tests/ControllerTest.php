@@ -356,6 +356,41 @@ class ControllerTest extends SapphireTest
         $controller->index($request);
     }
 
+    public function testCorsOverride()
+    {
+        Controller::config()->set('cors', [
+            'Enabled' => true,
+            'Allow-Origin' => '*',
+            'Allow-Headers' => 'Authorization, Content-Type',
+            'Allow-Methods' =>  'GET, PUT, OPTIONS',
+            'Allow-Credentials' => '',
+            'Max-Age' => 600
+        ]);
+
+        $controller = new Controller();
+        $this->assertTrue($controller->getMergedCorsConfig()['Enabled']);
+        $this->assertEquals('*', $controller->getMergedCorsConfig()['Allow-Origin']);
+        $controller->setCorsConfig([
+            'Enabled' => false,
+            'Allow-Origin' => 'silverstripe.com',
+        ]);
+        $this->assertFalse($controller->getMergedCorsConfig()['Enabled']);
+        $this->assertEquals('silverstripe.com', $controller->getMergedCorsConfig()['Allow-Origin']);
+
+        $request = new HTTPRequest('GET', '');
+        $request->addHeader('Origin', 'localhost');
+        $response = new HTTPResponse();
+        $response = $controller->addCorsHeaders($request, $response);
+
+        $this->assertTrue($response instanceof HTTPResponse);
+        $this->assertEquals('200', $response->getStatusCode());
+        $this->assertNull($response->getHeader('Access-Control-Allow-Origin'));
+
+        $this->expectException(HTTPResponse_Exception::class);
+        $controller->setCorsConfig(['Enabled' => true]);
+        $controller->addCorsHeaders($request, $response);
+    }
+
     public function testTypeCaching()
     {
         $expectedSchemaPath = TestAssetStore::base_path() . '/testSchema.types.graphql';
