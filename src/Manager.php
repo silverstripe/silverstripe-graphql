@@ -143,7 +143,7 @@ class Manager implements ConfigurationApplier
 
         $result = $next($schema, $query, $context, $params);
 
-        $this->extend('onAfterCallMiddleware', $schema, $query, $context, $params);
+        $this->extend('onAfterCallMiddleware', $schema, $query, $context, $params, $result);
 
         return $result;
     }
