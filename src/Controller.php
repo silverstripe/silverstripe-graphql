@@ -103,10 +103,13 @@ class Controller extends BaseController implements Flushable
      */
     public function index(HTTPRequest $request)
     {
-        $stage = $request->param('Stage');
-        if ($stage && in_array($stage, [Versioned::DRAFT, Versioned::LIVE])) {
-            Versioned::set_stage($stage);
+        if (class_exists(Versioned::class)) {
+            $stage = $request->param('Stage');
+            if ($stage && in_array($stage, [Versioned::DRAFT, Versioned::LIVE])) {
+                Versioned::set_stage($stage);
+            }
         }
+        
         // Check for a possible CORS preflight request and handle if necessary
         // Refer issue 66:  https://github.com/silverstripe/silverstripe-graphql/issues/66
         if ($request->httpMethod() === 'OPTIONS') {
