@@ -9,6 +9,7 @@ use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\NullHTTPRequest;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Flushable;
 use SilverStripe\Core\Injector\Injector;
@@ -69,6 +70,12 @@ class Controller extends BaseController implements Flushable
      * @var GeneratedAssetHandler
      */
     protected $assetHandler;
+
+    /**
+     * Override the default cors config per instance
+     * @var array
+     */
+    protected $corsConfig = [];
 
     /**
      * @param Manager $manager
@@ -212,7 +219,7 @@ class Controller extends BaseController implements Flushable
      */
     public function addCorsHeaders(HTTPRequest $request, HTTPResponse $response)
     {
-        $corsConfig = Config::inst()->get(static::class, 'cors');
+        $corsConfig = $this->getMergedCorsConfig();
 
         // If CORS is disabled don't add the extra headers. Simply return the response untouched.
         if (empty($corsConfig['Enabled'])) {
@@ -239,6 +246,36 @@ class Controller extends BaseController implements Flushable
         }
 
         return $response;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCorsConfig(): array
+    {
+        return $this->corsConfig;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMergedCorsConfig(): array
+    {
+        $defaults = Config::inst()->get(static::class, 'cors');
+        $override = $this->corsConfig;
+
+        return array_merge($defaults, $override);
+    }
+
+    /**
+     * @param array $config
+     * @return $this
+     */
+    public function setCorsConfig(array $config): self
+    {
+        $this->corsConfig = array_merge($this->corsConfig, $config);
+
+        return $this;
     }
 
     /**
@@ -413,7 +450,12 @@ class Controller extends BaseController implements Flushable
      */
     public function writeSchemaToFilesystem()
     {
-        $manager = $this->getManager();
+        if (Injector::inst()->has(HTTPRequest::class)) {
+            $request = Injector::inst()->get(HTTPRequest::class);
+        } else {
+            $request = new NullHTTPRequest();
+        }
+        $manager = $this->getManager($request);
         try {
             $types = StaticSchema::inst()->introspectTypes($manager);
         } catch (Exception $e) {
