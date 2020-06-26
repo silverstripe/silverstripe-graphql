@@ -51,10 +51,10 @@ before_script:
 
 # Install composer dependencies
   - composer validate
-  - if [[ (! $BEHAT_TEST) && (! $ASSETADMIN_TEST) ]]; then composer require --prefer-dist --no-update silverstripe/recipe-core:4.x-dev silverstripe/versioned:1.x-dev silverstripe/assets:1.x-dev --prefer-dist ; fi
-  - if [[ $DB == PGSQL ]]; then composer require silverstripe/postgresql:2.x-dev --prefer-dist --no-update; fi
+  - if [[ (! $BEHAT_TEST) && (! $ASSETADMIN_TEST) ]]; then composer require --prefer-dist --no-update silverstripe/recipe-core:5.x-dev silverstripe/versioned:2.x-dev silverstripe/assets:2.x-dev --prefer-dist ; fi
+  - if [[ $DB == PGSQL ]]; then composer require silverstripe/postgresql:3.x-dev --prefer-dist --no-update; fi
   - if [[ $ASSETADMIN_TEST ]]; then composer require silverstripe/recipe-cms $RECIPE_CMS_VERSION --prefer-source --no-update ; fi
-  - if [[ $BEHAT_TEST ]]; then composer require silverstripe/recipe-testing:^1 silverstripe/recipe-cms $RECIPE_CMS_VERSION silverstripe/frameworktest:^0.1.0 --prefer-source --no-update ; fi
+  - if [[ $BEHAT_TEST ]]; then composer require silverstripe/recipe-testing:^2 silverstripe/recipe-cms $RECIPE_CMS_VERSION silverstripe/frameworktest:dev-master --prefer-source --no-update ; fi
   - composer update
 
   - if [[ $BEHAT_TEST ]]; then mkdir artifacts; fi
