@@ -10,11 +10,13 @@ use GraphQL\Type\Schema;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\Security\SecurityToken;
 
-class CSRFMiddleware implements QueryMiddleware
+class CSRFMiddleware implements Middleware
 {
-    public function process(Schema $schema, $query, $context, $params, callable $next)
+    public function process(array $params, callable $next)
     {
-        if ($this->isMutation($query)) {
+        $query = $params['query'] ?? null;
+        $context = $params['context'] ?? [];
+        if ($query && $this->isMutation($query)) {
             if (empty($context['token'])) {
                 throw new Exception('Mutations must provide a CSRF token in the X-CSRF-TOKEN header');
             }
@@ -25,7 +27,7 @@ class CSRFMiddleware implements QueryMiddleware
             }
         }
 
-        return $next($schema, $query, $context, $params);
+        return $next($params);
     }
 
     /**

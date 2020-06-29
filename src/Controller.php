@@ -15,7 +15,11 @@ use SilverStripe\Core\Flushable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Dev\State\DisableTypeCacheState;
+use SilverStripe\GraphQL\Permission\MemberContextProvider;
+use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
+use SilverStripe\GraphQL\Schema\ContextProvider;
+use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
@@ -62,9 +66,14 @@ class Controller extends BaseController implements Flushable
     private static $cache_on_flush = true;
 
     /**
-     * @var Manager
+     * @var SchemaBuilder
      */
-    protected $manager;
+    private $builder;
+
+    /**
+     * @var QueryHandlerInterface
+     */
+    private $queryHandler;
 
     /**
      * @var GeneratedAssetHandler
@@ -78,20 +87,14 @@ class Controller extends BaseController implements Flushable
     protected $corsConfig = [];
 
     /**
-     * @param Manager $manager
+     * @param SchemaBuilder $builder
+     * @param QueryHandlerInterface $queryHandler
      */
-    public function __construct(Manager $manager = null)
+    public function __construct(SchemaBuilder $builder, QueryHandlerInterface $queryHandler)
     {
         parent::__construct();
-        $this->manager = $manager;
-
-        if ($this->manager && $this->manager->getSchemaKey()) {
-            // Side effect. This isn't ideal, but having multiple instances of StaticSchema
-            // is a massive architectural change.
-            StaticSchema::reset();
-
-            $this->manager->configure();
-        }
+        $this->setBuilder($builder);
+        $this->setQueryHandler($queryHandler);
     }
 
     /**
@@ -114,12 +117,13 @@ class Controller extends BaseController implements Flushable
 
         // Main query handling
         try {
-            $manager = $this->getManager($request);
-            // Parse input
             list($query, $variables) = $this->getRequestQueryVariables($request);
-
-            // Run query
-            $result = $manager->query($query, $variables);
+            $schema = $this->getBuilder()->getSchema();
+            $handler = $this->getQueryHandler();
+            if ($handler instanceof ContextProvider) {
+                $this->applyContext($handler, $request);
+            }
+            $result = $handler->query($schema, $query, $variables);
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
 
@@ -137,40 +141,6 @@ class Controller extends BaseController implements Flushable
 
         $response = $this->addCorsHeaders($request, new HTTPResponse(json_encode($result)));
         return $response->addHeader('Content-Type', 'application/json');
-    }
-
-    /**
-     * @param HTTPRequest $request
-     * @return Manager
-     */
-    public function getManager($request = null)
-    {
-        $manager = null;
-        if (!$request) {
-            $request = $this->getRequest();
-        }
-        if ($this->manager) {
-            $manager = $this->manager;
-        } else {
-            // Get a service rather than an instance (to allow procedural configuration)
-            $config = Config::inst()->get(static::class, 'schema');
-            $manager = Manager::createFromConfig($config);
-        }
-        $this->applyManagerContext($manager, $request);
-        $this->setManager($manager);
-
-        return $manager;
-    }
-
-    /**
-     * @param Manager $manager
-     * @return $this
-     */
-    public function setManager($manager)
-    {
-        $this->manager = $manager;
-
-        return $this;
     }
 
     /**
@@ -302,26 +272,28 @@ class Controller extends BaseController implements Flushable
     }
 
     /**
-     * @param Manager $manager
+     * @param ContextProvider $provider
      * @param HTTPRequest $request
      * @throws Exception
      */
-    protected function applyManagerContext(Manager $manager, HTTPRequest $request)
+    protected function applyContext(ContextProvider $provider, HTTPRequest $request)
     {
-        // Add request context to Manager
-        $manager->addContext('token', $this->getToken());
+        $provider->addContext('token', $this->getToken());
         $method = null;
         if ($request->isGET()) {
             $method = 'GET';
         } elseif ($request->isPOST()) {
             $method = 'POST';
         }
-        $manager->addContext('httpMethod', $method);
+        $provider->addContext('httpMethod', $method);
 
-        // Check and validate user for this request
-        $member = $this->getRequestUser($request);
-        if ($member) {
-            $manager->setMember($member);
+        if ($provider instanceof MemberContextProvider) {
+            // Check and validate user for this request
+            /* @var MemberContextProvider $provider */
+            $member = $this->getRequestUser($request);
+            if ($member) {
+                $provider->setMemberContext($member);
+            }
         }
     }
 
@@ -499,6 +471,44 @@ class Controller extends BaseController implements Flushable
             $this->removeSchemaFromFilesystem();
         }
     }
+
+    /**
+     * @return SchemaBuilder
+     */
+    public function getBuilder(): SchemaBuilder
+    {
+        return $this->builder;
+    }
+
+    /**
+     * @param SchemaBuilder $builder
+     * @return Controller
+     */
+    public function setBuilder(SchemaBuilder $builder): Controller
+    {
+        $this->builder = $builder;
+        return $this;
+    }
+
+    /**
+     * @return QueryHandlerInterface
+     */
+    public function getQueryHandler(): QueryHandlerInterface
+    {
+        return $this->queryHandler;
+    }
+
+    /**
+     * @param QueryHandlerInterface $queryHandler
+     * @return Controller
+     */
+    public function setQueryHandler(QueryHandlerInterface $queryHandler): Controller
+    {
+        $this->queryHandler = $queryHandler;
+        return $this;
+    }
+
+
 
     public static function flush()
     {

@@ -8,17 +8,21 @@ use Exception;
 use GraphQL\Error\Error;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\GraphQL;
+use GraphQL\Language\Parser;
 use GraphQL\Language\SourceLocation;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
+use GraphQL\Utils\AST;
+use GraphQL\Utils\BuildSchema;
 use InvalidArgumentException;
+use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\Deprecation;
-use SilverStripe\GraphQL\Middleware\QueryMiddleware;
+use SilverStripe\GraphQL\Middleware\Middleware;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
@@ -68,85 +72,13 @@ class Manager implements ConfigurationApplier
      */
     protected $mutations = [];
 
-    /**
-     * @var callable
-     */
-    protected $errorFormatter = [self::class, 'formatError'];
 
     /**
      * @var Member
      */
     protected $member;
 
-    /**
-     * @var QueryMiddleware[]
-     */
-    protected $middlewares = [];
 
-    /**
-     * @var array
-     */
-    protected $extraContext = [];
-
-    /**
-     * @return QueryMiddleware[]
-     */
-    public function getMiddlewares()
-    {
-        return $this->middlewares;
-    }
-
-    /**
-     * @param QueryMiddleware[] $middlewares
-     * @return $this
-     */
-    public function setMiddlewares($middlewares)
-    {
-        $this->middlewares = $middlewares;
-        return $this;
-    }
-
-    /**
-     * @param QueryMiddleware $middleware
-     * @return $this
-     */
-    public function addMiddleware($middleware)
-    {
-        $this->middlewares[] = $middleware;
-        return $this;
-    }
-
-    /**
-     * Call middleware to evaluate a graphql query
-     *
-     * @param Schema $schema
-     * @param string $query Query to invoke
-     * @param array $context
-     * @param array $params Variables passed to this query
-     * @param callable $last The callback to call after all middlewares
-     * @return ExecutionResult|array
-     */
-    protected function callMiddleware(Schema $schema, $query, $context, $params, callable $last)
-    {
-        $this->extend('onBeforeCallMiddleware', $schema, $query, $context, $params);
-
-        // Reverse middlewares
-        $next = $last;
-        // Filter out any middlewares that are set to `false`, e.g. via config
-        $middlewares = array_reverse(array_filter($this->getMiddlewares()));
-        /** @var QueryMiddleware $middleware */
-        foreach ($middlewares as $middleware) {
-            $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
-                return $middleware->process($schema, $query, $context, $params, $next);
-            };
-        }
-
-        $result = $next($schema, $query, $context, $params);
-
-        $this->extend('onAfterCallMiddleware', $schema, $query, $context, $params, $result);
-
-        return $result;
-    }
 
     /**
      * @param string $schemaKey
@@ -341,13 +273,6 @@ class Manager implements ConfigurationApplier
      */
     public function query($query, $params = [])
     {
-        $executionResult = $this->queryAndReturnResult($query, $params);
-
-        // Already in array form
-        if (is_array($executionResult)) {
-            return $executionResult;
-        }
-        return $this->serialiseResult($executionResult);
     }
 
     /**
@@ -359,14 +284,28 @@ class Manager implements ConfigurationApplier
      */
     public function queryAndReturnResult($query, $params = [])
     {
-        $schema = $this->schema();
-        $context = $this->getContext();
+        $cacheFilename = BASE_PATH . '/cached_schema.php';
 
-        $last = function ($schema, $query, $context, $params) {
-            return GraphQL::executeQuery($schema, $query, null, $context, $params);
+        if (!file_exists($cacheFilename)) {
+            $document = Parser::parse(file_get_contents(BASE_PATH . '/schema.graphql'));
+            file_put_contents(
+                $cacheFilename,
+                "<?php\nreturn " . var_export(AST::toArray($document), true) . ";\n"
+            );
+        } else {
+            $document = AST::fromArray(require $cacheFilename); // fromArray() is a lazy operation as well
+        }
+        $func = function () {
+            return SiteTree::get()->first();
         };
+        $typeConfigDecorator = function ($typeConfig) use ($func) {
+            $typeConfig['resolve'] = $func;
 
-        return $this->callMiddleware($schema, $query, $context, $params, $last);
+            return $typeConfig;
+        };
+        $schema = BuildSchema::build($document, $typeConfigDecorator);
+
+        //$schema = $this->schema();
     }
 
     /**
@@ -494,128 +433,7 @@ class Manager implements ConfigurationApplier
         return $this;
     }
 
-    /**
-     * More verbose error display defaults.
-     *
-     * @param Error $exception
-     * @return array
-     */
-    public static function formatError(Error $exception)
-    {
-        $error = [
-            'message' => $exception->getMessage(),
-        ];
 
-        $locations = $exception->getLocations();
-        if (!empty($locations)) {
-            $error['locations'] = array_map(function (SourceLocation $loc) {
-                return $loc->toArray();
-            }, $locations);
-        }
 
-        $previous = $exception->getPrevious();
-        if ($previous && $previous instanceof ValidationException) {
-            $error['validation'] = $previous->getResult()->getMessages();
-        }
 
-        return $error;
-    }
-
-    /**
-     * Set the Member for the current context
-     *
-     * @param  Member $member
-     * @return $this
-     */
-    public function setMember(Member $member)
-    {
-        $this->member = $member;
-        return $this;
-    }
-
-    /**
-     * Get the Member for the current context either from a previously set value or the current user
-     *
-     * @return Member
-     */
-    public function getMember()
-    {
-        return $this->member ?: Security::getCurrentUser();
-    }
-
-    /**
-     * get query from persisted id, return null if not found
-     *
-     * @param $id
-     * @return string | null
-     */
-    public function getQueryFromPersistedID($id)
-    {
-        /** @var PersistedQueryMappingProvider $provider */
-        $provider = Injector::inst()->get(PersistedQueryMappingProvider::class);
-
-        return $provider->getByID($id);
-    }
-
-    /**
-     * Get global context to pass to $context for all queries
-     *
-     * @return array
-     */
-    protected function getContext()
-    {
-        return array_merge(
-            $this->getContextDefaults(),
-            $this->extraContext
-        );
-    }
-
-    /**
-     * @return array
-     */
-    protected function getContextDefaults()
-    {
-        return [
-            'currentUser' => $this->getMember(),
-        ];
-    }
-
-    /**
-     * @param string $key
-     * @param any $value
-     * @return $this
-     */
-    public function addContext($key, $value)
-    {
-        if (!is_string($key)) {
-            throw new InvalidArgumentException(sprintf(
-                'Context key must be a string. Got %s',
-                gettype($key)
-            ));
-        }
-        $this->extraContext[$key] = $value;
-
-        return $this;
-    }
-
-    /**
-     * Serialise a Graphql result object for output
-     *
-     * @param ExecutionResult $executionResult
-     * @return array
-     */
-    public function serialiseResult($executionResult)
-    {
-        // Format object
-        if (!empty($executionResult->errors)) {
-            return [
-                'data' => $executionResult->data,
-                'errors' => array_map($this->errorFormatter, $executionResult->errors),
-            ];
-        } else {
-            return [
-                'data' => $executionResult->data,
-            ];
-        }
-    }
 }

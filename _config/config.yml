@@ -3,6 +3,8 @@ Name: graphqlconfig
 ---
 # Define the type parsers
 SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface:
+    class: SilverStripe\GraphQL\QueryHandler\QueryHandler
   SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.string:
     class: SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser
   SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.array:
@@ -29,18 +31,15 @@ SilverStripe\Core\Injector\Injector:
       permissionChecker: '%$SilverStripe\GraphQL\Permission\QueryPermissionChecker.default'
 
   # Set up a default endpoint that can be activated with a Director rule
-  SilverStripe\GraphQL\Manager.default:
-    class: SilverStripe\GraphQL\Manager
+  SilverStripe\GraphQL\Schema\SchemaBuilder.default:
+    class: SilverStripe\GraphQL\Schema\SchemaBuilder
     constructor:
       schemaKey: default
-    properties:
-      Middlewares:
-        CSRFMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.csrf'
-        HTTPMethodMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.httpMethod'
   SilverStripe\GraphQL\Controller.default:
     class: SilverStripe\GraphQL\Controller
     constructor:
-      manager: '%$SilverStripe\GraphQL\Manager.default'
+      builder: '%$SilverStripe\GraphQL\Schema\SchemaBuilder.default'
+      queryHandler: '%$SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface'
 
 # Assign each DBField subclass with an associated internal type
 SilverStripe\ORM\FieldType\DBField:
@@ -70,7 +69,7 @@ SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder:
 SilverStripe\GraphQL\Controller:
   extensions:
     - SilverStripe\GraphQL\Extensions\IntrospectionProvider
-SilverStripe\GraphQL\Manager:
+SilverStripe\GraphQL\SchemaBuilder\SchemaBuilder:
   schemas: []
 ---
 Only:

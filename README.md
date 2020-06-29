@@ -72,7 +72,7 @@ composer require silverstripe/graphql
  - [CSRF tokens (required for mutations)](#csrf-tokens-required-for-mutations)
  - [Cross-Origin Resource Sharing (CORS)](#cross-origin-resource-sharing-cors)
    - [Sample Custom CORS Config](#sample-custom-cors-config)
- - [Persisting Queries](#persisting-queries)   
+ - [Persisting Queries](#persisting-queries)
  - [Schema introspection](#schema-introspection)
  - [Setting up a new GraphQL schema](#setting-up-a-new-graphql-schema)
  - [Strict HTTP Method Checking](#strict-http-method-checking)
@@ -166,7 +166,7 @@ through YAML configuration:
 SilverStripe\GraphQL\Manager:
   schemas:
     default:
-      types:  
+      types:
         member: 'MyProject\GraphQL\MemberTypeCreator'
 ```
 
@@ -548,7 +548,7 @@ in your constructor.
 
 ```php
 $this->queryFilter = DataObjectQueryFilter::create(MyDataObject::class);
-``` 
+```
 
 You can then add filters to fields of the dataobject.
 
@@ -558,7 +558,7 @@ $this->queryFilter
     ->addFilteredField('CommentCount', 'gt')
     ->addFilteredField('Categories__Title', 'in')
     ->addFilteredField('Hidden', 'eq');
-``` 
+```
 
 Don't worry about the filter keys (`contains`, `gt`, `eq`, etc) for now. That will be explained [further down](#the-filter-registry).
 
@@ -585,11 +585,11 @@ public function resolve($obj, $args = [], $context = [], ResolveInfo $info)
 {
     $list = MyDataObject::get();
     $list = $this->queryFilter->applyArgsToList($list, $args);
-    
+
     return $list;
 }
 ```
- 
+
 #### Shortcuts (for the 80% case)
 
 All `SilverStripe\ORM\DBField` instances are configured to have a set of "default" filters (see `filters.yml`).
@@ -667,7 +667,7 @@ class MyCustomFieldFilter implements FieldFilterInterface
     {
         return 'eq';
     }
-    
+
     public function applyInclusion(DataList $list, $fieldName, $value)
     {
         return $list->addWhere([
@@ -988,7 +988,7 @@ You can add all default filters for every field on your dataobject with `filters
 ```yaml
 read:
   filters: '*'
-``` 
+```
 > Note: "every field" means every field exposed by `searchable_fields` on the dataobject -- not just those exposed on its GraphQL type.
 
 To be more granular, break it up into a list of specific fields.
@@ -1780,7 +1780,7 @@ By default, types are created for the full inheritance tree.
 In certain situations, you may also want to create operations for all these ancestors and descendants.
 For example, `createPage` only allows you to create an object of type `Page`.
 In order to define a `createRedirectorPage` equivalent to create an object of type `RedirectorPage`,
-you need to opt in via the `cloneable` configuration setting: 
+you need to opt in via the `cloneable` configuration setting:
 
 
 **Via YAML**:
@@ -2152,9 +2152,9 @@ Example middleware to log all mutations (but not queries):
 ```php
 <?php
 use GraphQL\Type\Schema;
-use SilverStripe\GraphQL\Middleware\QueryMiddleware;
+use SilverStripe\GraphQL\Middleware\Middleware;
 
-class MyMutationLoggingMiddleware implements QueryMiddleware
+class MyMutationLoggingMiddleware implements Middleware
 {
     public function process(Schema $schema, $query, $context, $params, callable $next)
     {
@@ -2281,7 +2281,7 @@ session.
 In the absence of a token-based authentication system, like OAuth, the best countermeasure to this
 is the use of a CSRF token for any requests that destroy or mutate data.
 
-By default, this module comes with a `CSRFMiddleware` implementation that forces all mutations to check 
+By default, this module comes with a `CSRFMiddleware` implementation that forces all mutations to check
 for the presence of a CSRF token in the request. That token must be applied to a header named` X-CSRF-TOKEN`.
 
 In SilverStripe, CSRF tokens are most commonly stored in the session as `SecurityID`, or accessed through
@@ -2389,27 +2389,27 @@ Once you have enabled CORS you can then control four new headers in the HTTP Res
  ```yaml
  Max-Age: 600
  ```
- 
+
 5. **Access-Control-Allow-Credentials.**
- 
+
  When a request's credentials mode (Request.credentials) is "include", browsers
- will only expose the response to frontend JavaScript code if the 
+ will only expose the response to frontend JavaScript code if the
  Access-Control-Allow-Credentials value is true.
- 
+
  The Access-Control-Allow-Credentials header works in conjunction with the
  XMLHttpRequest.withCredentials property or with the credentials option in the
- Request() constructor of the Fetch API. For a CORS request with credentials, 
+ Request() constructor of the Fetch API. For a CORS request with credentials,
  in order for browsers to expose the response to frontend JavaScript code, both
- the server (using the Access-Control-Allow-Credentials header) and the client 
- (by setting the credentials mode for the XHR, Fetch, or Ajax request) must 
+ the server (using the Access-Control-Allow-Credentials header) and the client
+ (by setting the credentials mode for the XHR, Fetch, or Ajax request) must
  indicate that they’re opting in to including credentials.
- 
+
  This is set to empty by default but can be changed in YAML as in this example:
 
  ```yaml
  Allow-Credentials: 'true'
  ```
- 
+
 ### Apply a CORS config to all GraphQL endpoints
 
 ```yaml
@@ -2422,7 +2422,7 @@ SilverStripe\GraphQL\Controller:
     Allow-Methods:  'GET, POST, OPTIONS'
     Allow-Credentials: 'true'
     Max-Age:  600  # 600 seconds = 10 minutes.
-``` 
+```
 
 ### Apply a CORS config to a single GraphQL endpoint
 
@@ -2433,7 +2433,7 @@ SilverStripe\Core\Injector\Injector:
     properties:
       corsConfig:
         Enabled: false
-``` 
+```
 
 
 ## Persisting queries
@@ -2453,7 +2453,7 @@ which cover most use cases:
 
 ### Configuring query mapping providers
 
-All of these implementations can be configured through `Injector`. Note that each schema gets its 
+All of these implementations can be configured through `Injector`. Note that each schema gets its
 own set of persisted queries. In these examples, we're using the `default`schema.
 
 #### FileProvider
@@ -2512,18 +2512,18 @@ To access a persisted query, simply pass an `id` parameter in the request in lie
 Note that if you pass `query` along with `id`, an exception will be thrown.
 
 ## Schema introspection
-Some GraphQL clients such as [Apollo](http://apollographql.com) require some level of introspection 
-into the schema. While introspection is [part of the GraphQL spec](http://graphql.org/learn/introspection/), 
+Some GraphQL clients such as [Apollo](http://apollographql.com) require some level of introspection
+into the schema. While introspection is [part of the GraphQL spec](http://graphql.org/learn/introspection/),
 this module provides a limited API for fetching it via non-graphql endpoints. By default, the `graphql/`
 controller provides a `types` action that will return the type schema (serialised as JSON) dynamically.
 
 *GET http://example.com/graphql/types*
 ```js
-{  
-   "data":{  
-      "__schema":{  
-         "types":[  
-            {  
+{
+   "data":{
+      "__schema":{
+         "types":[
+            {
                "kind":"OBJECT",
                "name":"Query",
                "possibleTypes":null
@@ -2535,7 +2535,7 @@ controller provides a `types` action that will return the type schema (serialise
 
 ```
 
-As your schema grows, introspecting it dynamically may have a performance hit. Alternatively, 
+As your schema grows, introspecting it dynamically may have a performance hit. Alternatively,
 if you have the `silverstripe/assets` module installed (as it is in the default SilverStripe installation),
 GraphQL can cache your schema as a flat file in the `assets/` directory. To enable this, simply
 set the `cache_types_in_filesystem` setting to `true` on `SilverStripe\GraphQL\Controller`. Once enabled,
@@ -2568,7 +2568,7 @@ SilverStripe\Core\Injector\Injector:
       schemaKey: mySchema
 ```
 
-The `schemaKey` setting is a bit of meta-configuration used to tell the Manager where to 
+The `schemaKey` setting is a bit of meta-configuration used to tell the Manager where to
 look in the `SilverStripe\GraphQL\Manager.schemas` config for the schema information.
 
 Now let's setup a new controller to handle the requests. It will use our custom Manager instance.

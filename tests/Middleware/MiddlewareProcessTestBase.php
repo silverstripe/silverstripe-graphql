@@ -6,7 +6,7 @@ use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
 use SilverStripe\Dev\SapphireTest;
-use SilverStripe\GraphQL\Middleware\QueryMiddleware;
+use SilverStripe\GraphQL\Middleware\Middleware;
 
 abstract class MiddlewareProcessTestBase extends SapphireTest
 {
@@ -23,7 +23,7 @@ abstract class MiddlewareProcessTestBase extends SapphireTest
         };
     }
     protected function simulateMiddlewareProcess(
-        QueryMiddleware $middleware,
+        Middleware $middleware,
         $query,
         $context = [],
         $params = [],
