@@ -1,6 +1,7 @@
 namespace SilverStripe\\GraphQL\\Schema\\Generated\\Schema_{$Hash};
 
 use GraphQL\\Type\\Definition\\ObjectType;
+use GraphQL\\Type\\Definition\\EnumType;
 use GraphQL\\Type\\Definition\\Type;
 use GraphQL\\Type\\Definition\\NonNull;
 use GraphQL\\Type\\Definition\\ListOfType;
@@ -17,6 +18,10 @@ class $Name extends ObjectType {
                         [
                             'name' => '$Name',
                             'type' => $EncodedType,
+                            'resolve' => $EncodedResolver($Up.Name),
+                            <% if $Description %>
+                            'description' => '$Description',
+                            <% end_if %>
                         <% if $ArgList %>
                             'args' => [
                                 <% loop $ArgList %>
@@ -37,6 +42,25 @@ class $Name extends ObjectType {
 
 <% end_loop %>
 
+<% loop $Enums %>
+class $Name extends EnumType
+{
+    public function __construct()
+    {
+        parent::__construct([
+            'name' => '$Name',
+            'values' => [
+                <% loop $ValueList %>
+                <% if $Key %>'$Key' => <% end_if %>'$Value',
+                <% end_loop %>
+            ],
+            <% if $Description %>
+            'description' => '$Description'
+            <% end_if %>
+        ]);
+    }
+}
+<% end_loop %>
 class $TypesClassName
 {
     private static \$types = [];
@@ -81,4 +105,8 @@ class $TypesClassName
     <% loop $Types %>
     public static function {$Name}() { return static::get({$Name}::class); }
     <% end_loop %>
+    <% loop $Enums %>
+    public static function {$Name}() { return static::get({$Name}::class); }
+    <% end_loop %>
+
 }

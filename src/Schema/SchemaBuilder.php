@@ -117,7 +117,11 @@ class SchemaBuilder implements ConfigurationApplier
 
         static::assertValidConfig($enums);
         foreach ($enums as $enumName => $enumConfig) {
-            $abstract = EnumAbstraction::create($enumName, $enumConfig);
+            SchemaBuilder::assertValidConfig($enumConfig, ['values', 'description']);
+            $values = $enumConfig['values'] ?? null;
+            SchemaBuilder::invariant($values, 'No values passed to enum %s', $enumName);
+            $description = $enumConfig['description'] ?? null;
+            $abstract = EnumAbstraction::create($enumName, $enumConfig['values'], $description);
             $this->enums[$enumName] = $abstract;
         }
 
@@ -169,11 +173,13 @@ class SchemaBuilder implements ConfigurationApplier
         return new Schema($schemaConfig);
     }
 
+
     /**
      * @param array $config
+     * @param array $allowedKeys
      * @throws SchemaBuilderException
      */
-    public static function assertValidConfig(array $config): void
+    public static function assertValidConfig(array $config, $allowedKeys = []): void
     {
         static::invariant(
             empty($config) || ArrayLib::is_associative($config),
@@ -181,6 +187,15 @@ class SchemaBuilder implements ConfigurationApplier
             Did you include an indexed array in your config?',
             static::class
         );
+
+        if (!empty($allowedKeys)) {
+            $invalidKeys = array_diff(array_keys($config), $allowedKeys);
+            static::invariant(
+                empty($invalidKeys),
+                'Config contains invalid keys: %s',
+                implode(',', $invalidKeys)
+            );
+        }
     }
 
     /**

@@ -5,10 +5,11 @@ namespace SilverStripe\GraphQL\Schema;
 
 
 use GraphQL\Error\SyntaxError;
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\View\ViewableData;
 use InvalidArgumentException;
 
-class ArgumentAbstraction extends ViewableData
+class ArgumentAbstraction extends ViewableData implements ConfigurationApplier
 {
     /**
      * @var string
@@ -19,6 +20,16 @@ class ArgumentAbstraction extends ViewableData
      * @var EncodedType
      */
     private $encodedType;
+
+    /**
+     * @var string|int|bool|null
+     */
+    private $defaultValue;
+
+    /**
+     * @var string|null
+     */
+    private $description;
 
     /**
      * ArgumentAbstraction constructor.
@@ -38,7 +49,7 @@ class ArgumentAbstraction extends ViewableData
     /**
      * @param string|TypeReference|EncodedType $type
      * @return $this
-     * @throws \GraphQL\Error\SyntaxError
+     * @throws SchemaBuilderException
      */
     public function setType($type): self
     {
@@ -67,6 +78,20 @@ class ArgumentAbstraction extends ViewableData
         }
 
         return $this;
+    }
+
+    /**
+     * @param array $config
+     * @throws SchemaBuilderException
+     */
+    public function applyConfig(array $config)
+    {
+        SchemaBuilder::assertValidConfig($config, ['description', 'defaultValue']);
+        $description = $config['description'] ?? null;
+        $default = $config['defaultValue'] ?? null;
+
+        $this->setDescription($description);
+        $this->setDefaultValue($default);
     }
 
     /**
@@ -102,6 +127,42 @@ class ArgumentAbstraction extends ViewableData
     public function setEncodedType(EncodedType $encodedType): ArgumentAbstraction
     {
         $this->encodedType = $encodedType;
+        return $this;
+    }
+
+    /**
+     * @return bool|int|string|null
+     */
+    public function getDefaultValue()
+    {
+        return $this->defaultValue;
+    }
+
+    /**
+     * @param bool|int|string|null $defaultValue
+     * @return ArgumentAbstraction
+     */
+    public function setDefaultValue($defaultValue): ArgumentAbstraction
+    {
+        $this->defaultValue = $defaultValue;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    /**
+     * @param string|null $description
+     * @return ArgumentAbstraction
+     */
+    public function setDescription(?string $description): ArgumentAbstraction
+    {
+        $this->description = $description;
         return $this;
     }
 

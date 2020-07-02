@@ -39,6 +39,8 @@ class TypeAbstraction extends ViewableData
     {
         parent::__construct();
         $this->name = $name;
+        SchemaBuilder::assertValidConfig($config, ['fields', 'description', 'interfaces']);
+
         $fields = $config['fields'] ?? [];
         SchemaBuilder::invariant(count($fields), 'Fields cannot be empty for type %s', $name);
 

@@ -9,7 +9,7 @@ use GraphQL\Language\AST\Node;
 use GraphQL\Language\AST\NodeKind;
 use SilverStripe\View\ViewableData;
 
-class EncodedType extends ViewableData
+class EncodedType extends ViewableData implements Encoder
 {
     const TYPE_CLASS_NAME = 'Types';
 
