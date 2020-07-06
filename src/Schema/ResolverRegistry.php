@@ -41,7 +41,7 @@ class ResolverRegistry
     public function findResolver(?string $typeName = null, ?string $fieldName = null): array
     {
         foreach ($this->resolverProviders as $provider) {
-            $resolver = $provider->findResolver($typeName, $fieldName);
+            $resolver = $provider->getResolverMethod($typeName, $fieldName);
             if ($resolver) {
                 return [get_class($provider), $resolver];
             }

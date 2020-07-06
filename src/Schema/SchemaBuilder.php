@@ -22,6 +22,8 @@ class SchemaBuilder implements ConfigurationApplier
     const MODELS = 'models';
     const INTERFACES = 'interfaces';
     const ENUMS = 'enums';
+    const QUERY_TYPE = 'Query';
+    const MUTATION_TYPE = 'Mutation';
 
     /**
      * @var string
@@ -81,6 +83,9 @@ class SchemaBuilder implements ConfigurationApplier
         $models = $schema[self::MODELS] ?? [];
         $enums = $schema[self::ENUMS] ?? [];
 
+        $queryFields = [];
+        $mutationFields = [];
+
         static::assertValidConfig($types);
         foreach ($types as $typeName => $typeConfig) {
             static::assertValidName($typeName);
@@ -91,15 +96,13 @@ class SchemaBuilder implements ConfigurationApplier
         static::assertValidConfig($queries);
         foreach ($queries as $queryName => $queryConfig) {
             static::assertValidName($queryName);
-            $abstract = FieldAbstraction::create($queryName, $queryConfig);
-            $this->queries[$queryName] = $abstract;
+            $queryFields[$queryName] = $queryConfig;
         }
 
         static::assertValidConfig($mutations);
         foreach ($mutations as $mutationName => $mutationConfig) {
             static::assertValidName($mutationName);
-            $abstract = FieldAbstraction::create($mutationName, $mutationConfig);
-            $this->mutations[$mutationName] = $abstract;
+            $mutationFields[$mutationName] = $mutationConfig;
         }
 
         static::assertValidConfig($interfaces);
@@ -125,6 +128,18 @@ class SchemaBuilder implements ConfigurationApplier
             $this->enums[$enumName] = $abstract;
         }
 
+        $queryType = TypeAbstraction::create(self::QUERY_TYPE, [
+           'fields' => $queryFields,
+        ]);
+        $this->types[self::QUERY_TYPE] = $queryType;
+
+        if (!empty($mutationFields)) {
+            $mutationType = TypeAbstraction::create(self::MUTATION_TYPE, [
+                'fields' => $mutationFields,
+            ]);
+            $this->types[self::MUTATION_TYPE] = $mutationType;
+        }
+
         return $this;
     }
 
@@ -147,13 +162,15 @@ class SchemaBuilder implements ConfigurationApplier
         $schemaFileName = BASE_PATH . '/schema.php';
         $data = new ArrayData([
             'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
-            'Hash' => md5('UncleCheese'),
+            'Hash' => $this->getHash(),
             'Types' => ArrayList::create(array_values($this->types)),
             'Queries' => ArrayList::create(array_values($this->queries)),
             'Mutations' => ArrayList::create(array_values($this->queries)),
             'Models' => ArrayList::create(array_values($this->models)),
             'Interfaces' => ArrayList::create(array_values($this->interfaces)),
             'Enums' => ArrayList::create(array_values($this->enums)),
+            'QueryType' => self::QUERY_TYPE,
+            'MutationType' => self::MUTATION_TYPE,
         ]);
         $code = $data->renderWith(__NAMESPACE__ . '\\GraphQLTypeRegistry');
         $php = "<?php\n\n{$code}";
@@ -162,17 +179,26 @@ class SchemaBuilder implements ConfigurationApplier
 
     public function getSchema(): Schema
     {
-        $registry = require_once($schemaFileName);
+        $schemaFileName = BASE_PATH . '/schema.php';
+        require_once($schemaFileName);
+        $hash = $this->getHash();
+        $namespace = 'SilverStripe\\GraphQL\\Schema\\Generated\\Schema_' . $hash;
+        $registry = $namespace . '\\Types';
         $schemaConfig = new SchemaConfig();
-        $schemaConfig->setTypeLoader(function ($type) use ($registry) {
-            return $registry->getType($type);
-        });
-        $schemaConfig->setQuery($registry->getType('Query'));
-        $schemaConfig->setMutation($registry->getType('Mutation'));
+        $callback = call_user_func([$registry, self::QUERY_TYPE]);
+        $schemaConfig->setQuery($callback());
+        if (!empty($this->mutations)) {
+            $callback = call_user_func([$registry, self::MUTATION_TYPE]);
+            $schemaConfig->setMutation($callback());
+        }
 
         return new Schema($schemaConfig);
     }
 
+    private function getHash(): string
+    {
+        return md5('UncleCheese');
+    }
 
     /**
      * @param array $config

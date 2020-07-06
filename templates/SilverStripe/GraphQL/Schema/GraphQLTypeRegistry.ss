@@ -18,7 +18,7 @@ class $Name extends ObjectType {
                         [
                             'name' => '$Name',
                             'type' => $EncodedType,
-                            'resolve' => $EncodedResolver($Up.Name),
+                            'resolve' => $getEncodedResolver($Up.Name),
                             <% if $Description %>
                             'description' => '$Description',
                             <% end_if %>
@@ -61,6 +61,7 @@ class $Name extends EnumType
     }
 }
 <% end_loop %>
+
 class $TypesClassName
 {
     private static \$types = [];
@@ -108,5 +109,7 @@ class $TypesClassName
     <% loop $Enums %>
     public static function {$Name}() { return static::get({$Name}::class); }
     <% end_loop %>
+
+
 
 }
