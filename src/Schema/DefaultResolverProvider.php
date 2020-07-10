@@ -46,9 +46,10 @@ abstract class DefaultResolverProvider implements ResolverProvider
         ]);
 
         foreach ($candidates as $method) {
-            $isCallable = is_callable([static::class, $method], false, $callableName);
+            $callable = [static::class, $method];
+            $isCallable = is_callable($callable, false);
             if ($isCallable) {
-                return $callableName;
+                return $method;
             }
         }
 

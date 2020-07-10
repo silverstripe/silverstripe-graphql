@@ -1,0 +1,7 @@
+---
+Name: silverstripe-graphql-model
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Schema\SchemaModelCreatorRegistry:
+    constructor:
+      dataobject: '%$SilverStripe\GraphQL\Schema\DataObject\ModelCreator'

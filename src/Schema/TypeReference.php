@@ -7,8 +7,6 @@ namespace SilverStripe\GraphQL\Schema;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Language\AST\Node;
 use GraphQL\Language\Parser;
-use GraphQL\Language\Source;
-use GraphQL\Language\Token;
 use SilverStripe\Core\Injector\Injectable;
 
 class TypeReference
@@ -28,9 +26,6 @@ class TypeReference
      */
     public function toAST(): Node
     {
-        $parser = new Parser(new Source($this->typeStr, ['noLocation' => true]));
-        $parser->skip(Token::SOF);
-
-        return $parser->parseTypeReference();
+        return Parser::parseType($this->typeStr, ['noLocation' => true]);
     }
 }

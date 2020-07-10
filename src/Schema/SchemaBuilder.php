@@ -24,6 +24,7 @@ class SchemaBuilder implements ConfigurationApplier
     const ENUMS = 'enums';
     const QUERY_TYPE = 'Query';
     const MUTATION_TYPE = 'Mutation';
+    const ALL = '*';
 
     /**
      * @var string
@@ -95,14 +96,14 @@ class SchemaBuilder implements ConfigurationApplier
 
         static::assertValidConfig($queries);
         foreach ($queries as $queryName => $queryConfig) {
-            static::assertValidName($queryName);
-            $queryFields[$queryName] = $queryConfig;
+            $abstract = QueryAbstraction::create($queryName, $queryConfig);
+            $queryFields[$abstract->getName()] = $abstract;
         }
 
         static::assertValidConfig($mutations);
         foreach ($mutations as $mutationName => $mutationConfig) {
-            static::assertValidName($mutationName);
-            $mutationFields[$mutationName] = $mutationConfig;
+            $abstract = MutationAbstraction::create($mutationName, $mutationConfig);
+            $mutationFields[$abstract->getName()] = $abstract;
         }
 
         static::assertValidConfig($interfaces);
@@ -116,6 +117,22 @@ class SchemaBuilder implements ConfigurationApplier
         foreach ($models as $modelName => $modelConfig) {
             $abstract = ModelAbstraction::create($modelName, $modelConfig);
             $this->models[$modelName] = $abstract;
+            foreach ($abstract->getOperations() as $operationAbstraction) {
+                SchemaBuilder::invariant(
+                    $operationAbstraction instanceof QueryAbstraction ||
+                    $operationAbstraction instanceof MutationAbstraction,
+                    'Invalid operation defined on %s',
+                    $modelName
+                );
+                if ($operationAbstraction instanceof QueryAbstraction) {
+                    $queryFields[$operationAbstraction->getName()] = $operationAbstraction;
+                } else if ($operationAbstraction instanceof MutationAbstraction) {
+                    $mutationFields[$operationAbstraction->getName()] = $operationAbstraction;
+                }
+            }
+            foreach ($abstract->getExtraTypes() as $type) {
+                $this->types[$abstract->getName()] = $type;
+            }
         }
 
         static::assertValidConfig($enums);
@@ -129,7 +146,7 @@ class SchemaBuilder implements ConfigurationApplier
         }
 
         $queryType = TypeAbstraction::create(self::QUERY_TYPE, [
-           'fields' => $queryFields,
+            'fields' => $queryFields,
         ]);
         $this->types[self::QUERY_TYPE] = $queryType;
 
@@ -153,8 +170,11 @@ class SchemaBuilder implements ConfigurationApplier
         static::invariant($schemas, 'There are no schemas defined in the config');
         $schema = $schemas[$this->schemaKey] ?? null;
         static::invariant($schema, 'Schema "%s" is not configured', $this->schemaKey);
+        $globals = $schemas[self::ALL] ?? [];
+        $allConfig = array_merge_recursive($globals, $schema);
+        $this->applyConfig($allConfig);
 
-        return $this->applyConfig($schema);
+        return $this;
     }
 
     public function persistSchema(): void
@@ -173,6 +193,7 @@ class SchemaBuilder implements ConfigurationApplier
             'MutationType' => self::MUTATION_TYPE,
         ]);
         $code = $data->renderWith(__NAMESPACE__ . '\\GraphQLTypeRegistry');
+        $code = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $code);
         $php = "<?php\n\n{$code}";
         file_put_contents($schemaFileName, $php);
     }
@@ -191,7 +212,6 @@ class SchemaBuilder implements ConfigurationApplier
             $callback = call_user_func([$registry, self::MUTATION_TYPE]);
             $schemaConfig->setMutation($callback());
         }
-
         return new Schema($schemaConfig);
     }
 
@@ -203,9 +223,10 @@ class SchemaBuilder implements ConfigurationApplier
     /**
      * @param array $config
      * @param array $allowedKeys
+     * @param array $requiredKeys
      * @throws SchemaBuilderException
      */
-    public static function assertValidConfig(array $config, $allowedKeys = []): void
+    public static function assertValidConfig(array $config, $allowedKeys = [], $requiredKeys = []): void
     {
         static::invariant(
             empty($config) || ArrayLib::is_associative($config),
@@ -220,6 +241,15 @@ class SchemaBuilder implements ConfigurationApplier
                 empty($invalidKeys),
                 'Config contains invalid keys: %s',
                 implode(',', $invalidKeys)
+            );
+        }
+
+        if (!empty($requiredKeys)) {
+            $missingKeys = array_diff($requiredKeys, array_keys($config));
+            static::invariant(
+                empty($missingKeys),
+                'Config is missing required keys: %s',
+                implode(',', $missingKeys)
             );
         }
     }

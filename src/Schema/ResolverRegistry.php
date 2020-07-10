@@ -36,9 +36,10 @@ class ResolverRegistry
     /**
      * @param string|null $typeName
      * @param string|null $fieldName
+     * @param array|null $default
      * @return array
      */
-    public function findResolver(?string $typeName = null, ?string $fieldName = null): array
+    public function findResolver(?string $typeName = null, ?string $fieldName = null, ?array $default = null): array
     {
         foreach ($this->resolverProviders as $provider) {
             $resolver = $provider->getResolverMethod($typeName, $fieldName);
@@ -47,7 +48,7 @@ class ResolverRegistry
             }
         }
 
-        return $this->config()->get('default_resolver');
+        return $default ?: $this->config()->get('default_resolver');
     }
 
     /**

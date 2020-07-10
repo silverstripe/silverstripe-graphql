@@ -1,0 +1,7 @@
+---
+Name: silverstripe-graphql-dataobject
+---
+SilverStripe\GraphQL\Schema\DataObject\DataObjectModel:
+  operations:
+    read: 'SilverStripe\GraphQL\Schema\DataObject\ReadCreator'
+    readOne: 'SilverStripe\GraphQL\Schema\DataObject\ReadOneCreator'

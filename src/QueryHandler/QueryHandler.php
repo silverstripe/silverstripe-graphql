@@ -46,10 +46,10 @@ class QueryHandler implements
     /**
      * @param Schema $schema
      * @param string $query
-     * @param array $params
+     * @param array|null $params
      * @return array
      */
-    public function query(Schema $schema, string $query, array $params = []): array
+    public function query(Schema $schema, string $query, ?array $params = []): array
     {
         $executionResult = $this->queryAndReturnResult($schema, $query, $params);
 
@@ -63,14 +63,18 @@ class QueryHandler implements
     /**
      * @param Schema $schema
      * @param string $query
-     * @param array $params
+     * @param array|null $params
      * @return array|ExecutionResult
      */
-    public function queryAndReturnResult(Schema $schema, string $query, array $params = [])
+    public function queryAndReturnResult(Schema $schema, string $query, ?array $params = [])
     {
         $context = $this->getContext();
 
-        $last = function ($schema, $query, $context, $params) {
+        $last = function ($params) {
+            $schema = $params['schema'];
+            $query = $params['query'];
+            $context = $params['context'];
+            $params = $params['vars'];
             return GraphQL::executeQuery($schema, $query, null, $context, $params);
         };
 
@@ -161,7 +165,7 @@ class QueryHandler implements
     protected function getContextDefaults()
     {
         return [
-            'currentUser' => $this->getMember(),
+            'currentUser' => $this->getMemberContext(),
         ];
     }
 

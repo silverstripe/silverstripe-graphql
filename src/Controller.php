@@ -24,6 +24,7 @@ use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
+use InvalidArgumentException;
 
 /**
  * Top level controller for handling graphql requests.
@@ -102,11 +103,12 @@ class Controller extends BaseController implements Flushable
      *
      * @param HTTPRequest $request
      * @return HTTPResponse
+     * @throws InvalidArgumentException
      */
     public function index(HTTPRequest $request)
     {
         $stage = $request->param('Stage');
-        if ($stage && in_array($stage, [Versioned::DRAFT, Versioned::LIVE])) {
+        if ($stage) {
             Versioned::set_stage($stage);
         }
         // Check for a possible CORS preflight request and handle if necessary
@@ -118,11 +120,16 @@ class Controller extends BaseController implements Flushable
         // Main query handling
         try {
             list($query, $variables) = $this->getRequestQueryVariables($request);
+            if (!$query) {
+                $this->httpError(400, 'This endpoint requires a "query" parameter');
+            }
+
             $schema = $this->getBuilder()->getSchema();
             $handler = $this->getQueryHandler();
             if ($handler instanceof ContextProvider) {
                 $this->applyContext($handler, $request);
             }
+
             $result = $handler->query($schema, $query, $variables);
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];

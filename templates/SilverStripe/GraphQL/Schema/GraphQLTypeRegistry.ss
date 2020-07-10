@@ -1,13 +1,14 @@
 namespace SilverStripe\\GraphQL\\Schema\\Generated\\Schema_{$Hash};
 
 use GraphQL\\Type\\Definition\\ObjectType;
+use GraphQL\\Type\\Definition\\InputObjectType;
 use GraphQL\\Type\\Definition\\EnumType;
 use GraphQL\\Type\\Definition\\Type;
 use GraphQL\\Type\\Definition\\NonNull;
 use GraphQL\\Type\\Definition\\ListOfType;
 
 <% loop $Types %>
-class $Name extends ObjectType {
+class $Name extends <% if $IsInput %>InputObjectType<% else %>ObjectType<% end_if %>  {
     public function __construct()
     {
         parent::__construct([
@@ -40,6 +41,41 @@ class $Name extends ObjectType {
     }
 }
 
+<% end_loop %>
+
+<% loop $Models %>
+class $Name extends ObjectType {
+    public function __construct()
+    {
+        parent::__construct([
+            'name' => '$Name',
+            'fields' => function () {
+                return [
+                <% loop $FieldList %>
+                    [
+                        'name' => '$Name',
+                        'type' => $EncodedType,
+                        'resolve' => $getEncodedResolver($Up.Name),
+                        <% if $Description %>
+                        'description' => '$Description',
+                        <% end_if %>
+                        <% if $ArgList %>
+                        'args' => [
+                        <% loop $ArgList %>
+                            [
+                                'name' => '$Name',
+                                'type' => $EncodedType
+                            ],
+                        <% end_loop %>
+                        ],
+                        <% end_if %>
+                    ],
+                <% end_loop %>
+                ];
+            }
+        ]);
+    }
+}
 <% end_loop %>
 
 <% loop $Enums %>
@@ -83,9 +119,10 @@ class $TypesClassName
             if (class_exists(\$classname)) {
                 \$type = new \$classname();
             }
+            self::\$types[\$cacheName] = \$type;
         }
 
-        self::\$types[\$cacheName] = \$type;
+
         \$type = self::\$types[\$cacheName];
 
         if (!\$type) {
@@ -104,6 +141,9 @@ class $TypesClassName
     public static function nonNull(\$type) { return new NonNull(\$type); }
 
     <% loop $Types %>
+    public static function {$Name}() { return static::get({$Name}::class); }
+    <% end_loop %>
+    <% loop $Models %>
     public static function {$Name}() { return static::get({$Name}::class); }
     <% end_loop %>
     <% loop $Enums %>

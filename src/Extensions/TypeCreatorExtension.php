@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\GraphQL\Scaffolding\Extensions;
+namespace SilverStripe\GraphQL\Extensions;
 
 use Exception;
 use SilverStripe\Core\Config\Config;

@@ -1,6 +1,5 @@
 <?php
 
-
 namespace SilverStripe\GraphQL\Schema;
 
 
@@ -8,15 +7,17 @@ use GraphQL\Error\SyntaxError;
 use GraphQL\Language\AST\NameNode;
 use GraphQL\Language\AST\NodeList;
 use GraphQL\Language\Parser;
-use GraphQL\Language\Source;
 use GraphQL\Language\Token;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ViewableData;
+use ReflectionException;
 
 class FieldAbstraction extends ViewableData implements ConfigurationApplier
 {
+    const DEFAULT_TYPE = 'String';
+
     /**
      * @var ResolverRegistry
      */
@@ -43,23 +44,42 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
     private $description;
 
     /**
-     * @var EncodedResolver
+     * @var array|null
      */
-    private $resolverOverride;
+    private $resolver;
+
+    /**
+     * @var array|null
+     */
+    private $defaultResolver;
+
+    /**
+     * @var array|null
+     */
+    private $resolverContext;
 
     /**
      * FieldAbstraction constructor.
      * @param string|array $name
-     * @param $config
+     * @param array|string $config
      * @throws SchemaBuilderException
+     * @throws ReflectionException
      */
     public function __construct(string $name, $config)
     {
         parent::__construct();
         $this->setResolverRegistry(Injector::inst()->get(ResolverRegistry::class));
-        $this->parseName($name);
+        list ($name, $args) = static::parseName($name);
+        $this->setName($name);
+        $this->applyArgs($args);
+
+        SchemaBuilder::invariant(
+            is_string($config) || is_array($config),
+            'Config for field %s must be a string or array',
+            $name
+        );
         if (is_string($config)) {
-            $this->setEncodedType($this->toEncodedType($config));
+            $this->applyType($config);
         } else {
             $this->applyConfig($config);
         }
@@ -71,27 +91,83 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
      */
     public function applyConfig(array $config)
     {
-        SchemaBuilder::assertValidConfig($config, ['type', 'args', 'description', 'resolver']);
+        SchemaBuilder::assertValidConfig($config, [
+            'type',
+            'args',
+            'description',
+            'resolver',
+            'resolverContext',
+            'defaultResolver',
+        ]);
 
         $type = $config['type'] ?? null;
         SchemaBuilder::invariant($type, 'Field %s has no type defined', $this->name);
-        $this->setEncodedType($this->toEncodedType($type));
+        $this->applyType($type);
 
         $description = $config['description'] ?? null;
         $args = $config['args'] ?? [];
         $resolver = $config['resolver'] ?? null;
+        $defaultResolver = $config['defaultResolver'] ?? null;
+        $resolverCreator = $config['resolverContext'] ?? null;
 
+        foreach ([$resolver, $defaultResolver] as $callable) {
+            SchemaBuilder::invariant(
+                $callable === null || (is_array($callable) && count($callable) === 2),
+                'Resolvers must be an array tuple of class name, method name'
+            );
+        }
         $this->setDescription($description);
         $this->applyArgs($args);
+        $this->setResolver($resolver);
+        $this->setDefaultResolver($defaultResolver);
+        $this->setResolverContext($resolverCreator);
+    }
 
-        if ($resolver) {
-            SchemaBuilder::invariant(
-                is_array($resolver) && is_callable($resolver),
-                'Resolver for %s must be a callable (tuple of classname, method name)',
-                $this->name
-            );
-            $this->setResolverOverride(EncodedResolver::create($resolver));
+    /**
+     * @param string|EncodedType $type
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function applyType($type): self
+    {
+        $encodedType = $type instanceof EncodedType ? $type : $this->toEncodedType($type);
+        return $this->setEncodedType($encodedType);
+    }
+
+    /**
+     * @param array $args
+     * @throws SchemaBuilderException
+     * @return $this
+     */
+    public function applyArgs(array $args): self
+    {
+        SchemaBuilder::assertValidConfig($args);
+        foreach ($args as $argName => $config) {
+            if ($config === false) {
+                continue;
+            }
+            SchemaBuilder::assertValidName($argName);
+            if (is_string($config)) {
+                $this->args[$argName] = ArgumentAbstraction::create(
+                    $argName,
+                    $config
+                );
+            } else {
+                SchemaBuilder::assertValidConfig($config);
+                $type = $config['type'] ?? null;
+                SchemaBuilder::invariant(
+                    $type,
+                    'Argument %s on %s has no type defined',
+                    $argName,
+                    $this->name
+                );
+                $argAbstract = ArgumentAbstraction::create($argName, $type);
+                $argAbstract->applyConfig($config);
+                $this->args[$argName] = $argAbstract;
+            }
         }
+
+        return $this;
     }
 
     /**
@@ -114,75 +190,72 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
         }
     }
 
-    /**
-     * @param array $args
-     * @throws SchemaBuilderException
-     */
-    private function applyArgs(array $args): void
-    {
-        SchemaBuilder::assertValidConfig($args);
-        foreach ($args as $argName => $config) {
-            if ($config === false) {
-                continue;
-            }
-            SchemaBuilder::assertValidName($argName);
-            if (is_string($config)) {
-                $this->args[$argName] = ArgumentAbstraction::create(
-                    $argName,
-                    $config
-                );
-            } else {
-                SchemaBuilder::assertValidConfig($config);
-                $type = $config['type'] ?? null;
-                SchemaBuilder::invariant(
-                    $type,
-                    'Argument %s on %s has no type defined',
-                    $argName,
-                    $this->name
-                );
-                $this->args[$argName] = ArgumentAbstraction::create($argName, $type)
-                    ->applyConfig($config);
-            }
-        }
-    }
 
     /**
-     * @param string $name
+     * @param string $def
      * @throws SchemaBuilderException
+     * @throws ReflectionException
+     * @return array
      */
-    private function parseName(string $name)
+    public static function parseName(string $def): array
     {
-        $parser = new Parser(new Source($name), ['noLocation' => true]);
-        $parser->skip(Token::SOF);
+        $name = null;
+        $args = null;
+        $pos = strpos($def, Token::PAREN_L);
+        if ($pos === false) {
+            $name = $def;
+        } else {
+            $name = substr($def, 0, $pos);
+            $args = substr($def, $pos);
+        }
         try {
-            $nameNode = $parser->parseName();
+            $nameNode = Parser::name($name);
             SchemaBuilder::invariant(
                 $nameNode instanceof NameNode,
                 'Could not parse field name "%s"',
                 $name
             );
             SchemaBuilder::assertValidName($nameNode->value);
-            $this->name = $nameNode->value;
+            $name = $nameNode->value;
         } catch (SyntaxError $e) {
             throw new SchemaBuilderException(sprintf(
                 'The name "%s" is not formatted correctly',
                 $name
             ));
         }
+
+        if (!$args) {
+            return [$name, []];
+        }
+
         try {
-            $args = $parser->parseArgumentDefs();
+            // Not the hack it appears to be!
+            // This API is meant to be public, but there is a bug
+            // related to strict typing https://github.com/webonyx/graphql-php/issues/698
+
+            $parser = new Parser($args, ['noLocation' => true]);
+            $reflect = new \ReflectionClass(Parser::class);
+            $expect = $reflect->getMethod('expect');
+            $expect->setAccessible(true);
+            $argMethod = $reflect->getMethod('parseArgumentsDefinition');
+            $argMethod->setAccessible(true);
+            $expect->invoke($parser, Token::SOF);
+            $argsNode = $argMethod->invoke($parser);
+            $expect->invoke($parser, Token::EOF);
             SchemaBuilder::invariant(
-                $args instanceof NodeList,
+                $argsNode instanceof NodeList,
                 'Could not parse args on "%s"',
-                $name
+                $def
             );
-            foreach ($args as $arg) {
-                $name = $arg->name->value;
-                $this->args[$name] = ArgumentAbstraction::create(
-                    $name,
-                    EncodedType::create($arg->type)
-                );
+            $argList = [];
+            foreach ($argsNode as $arg) {
+                $argName = $arg->name->value;
+                $argList[$argName] = [
+                    'type' => EncodedType::create($arg->type)
+                ];
             }
+
+            return [$name, $argList];
         } catch (SyntaxError $e) {
             throw new SchemaBuilderException(sprintf(
                 'The arguments for %s are not formatted correctly',
@@ -254,33 +327,23 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
     }
 
     /**
+     * @param string|null $typeName
      * @return EncodedResolver
      */
-    public function getResolverOverride(): EncodedResolver
-    {
-        return $this->resolverOverride;
-    }
-
-    /**
-     * @param EncodedResolver $resolverOverride
-     * @return FieldAbstraction
-     */
-    public function setResolverOverride(EncodedResolver $resolverOverride): FieldAbstraction
-    {
-        $this->resolverOverride = $resolverOverride;
-        return $this;
-    }
-
-
     public function getEncodedResolver(?string $typeName = null): EncodedResolver
     {
-        if ($this->resolverOverride) {
-            return $this->resolverOverride;
+        if ($this->getResolver()) {
+            return EncodedResolver::create($this->getResolver())
+                ->setContext($this->getResolverContext());
         }
+        $resolver = $this->getResolverRegistry()->findResolver(
+            $typeName,
+            $this->name,
+            $this->getDefaultResolver()
+        );
 
-        $resolver = $this->getResolverRegistry()->findResolver($typeName, $this->name);
-
-        return EncodedResolver::create($resolver);
+        return EncodedResolver::create($resolver)
+            ->setContext($this->getResolverContext());
     }
 
     /**
@@ -302,6 +365,43 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
     }
 
     /**
+     * @return array|null
+     */
+    public function getResolver(): ?array
+    {
+        return $this->resolver;
+    }
+
+    /**
+     * @param array|null $resolver
+     * @return FieldAbstraction
+     */
+    public function setResolver(?array $resolver): FieldAbstraction
+    {
+        $this->resolver = $resolver;
+        return $this;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getDefaultResolver(): ?array
+    {
+        return $this->defaultResolver;
+    }
+
+    /**
+     * @param array|null $defaultResolver
+     * @return FieldAbstraction
+     */
+    public function setDefaultResolver(?array $defaultResolver): FieldAbstraction
+    {
+        $this->defaultResolver = $defaultResolver;
+        return $this;
+    }
+
+
+    /**
      * @return ResolverRegistry
      */
     public function getResolverRegistry(): ResolverRegistry
@@ -318,5 +418,24 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
         $this->resolverRegistry = $resolverRegistry;
         return $this;
     }
+
+    /**
+     * @return array|null
+     */
+    public function getResolverContext(): ?array
+    {
+        return $this->resolverContext;
+    }
+
+    /**
+     * @param array|null $resolverContext
+     * @return FieldAbstraction
+     */
+    public function setResolverContext(?array $resolverContext): FieldAbstraction
+    {
+        $this->resolverContext = $resolverContext;
+        return $this;
+    }
+
 
 }

@@ -1,0 +1,18 @@
+---
+Name: graphql-global-schema-assets
+Only:
+  moduleexists: 'silverstripe/assets'
+---
+SilverStripe\GraphQL\Schema\SchemaBuilder:
+  schemas:
+    '*':
+      types:
+        DBFile:
+          fields:
+            filename: String
+            hash: String
+            variant: String
+            url: String
+            width: Int
+            height: Int
+

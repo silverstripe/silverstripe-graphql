@@ -86,7 +86,7 @@ class ArgumentAbstraction extends ViewableData implements ConfigurationApplier
      */
     public function applyConfig(array $config)
     {
-        SchemaBuilder::assertValidConfig($config, ['description', 'defaultValue']);
+        SchemaBuilder::assertValidConfig($config, ['description', 'defaultValue', 'type']);
         $description = $config['description'] ?? null;
         $default = $config['defaultValue'] ?? null;
 

@@ -18,10 +18,7 @@ class SandboxTest extends SapphireTest
 {
     public function testSandbox()
     {
-        $parser = new Parser(new Source('[MyType]!', ['noLocation' => true]));
-        $parser->skip(Token::SOF);
-        $result = $parser->parseTypeReference();
-
+        $result = Parser::parseType('[MyType]!', ['noLocation' => true]);
         $node = $result;
         $path = [];
         while($node->kind !== NodeKind::NAMED_TYPE) {

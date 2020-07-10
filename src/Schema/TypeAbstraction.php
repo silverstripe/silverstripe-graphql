@@ -4,10 +4,11 @@
 namespace SilverStripe\GraphQL\Schema;
 
 
+use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ViewableData;
 
-class TypeAbstraction extends ViewableData
+class TypeAbstraction extends ViewableData implements ConfigurationApplier
 {
     /**
      * @var string
@@ -17,7 +18,7 @@ class TypeAbstraction extends ViewableData
     /**
      * @var FieldAbstraction[]
      */
-    private $fields = [];
+    protected $fields = [];
 
     /**
      * @var string|null
@@ -30,23 +31,45 @@ class TypeAbstraction extends ViewableData
     private $interfaces = [];
 
     /**
+     * @var bool
+     */
+    private $isInput = false;
+
+    /**
      * TypeAbstraction constructor.
      * @param string $name
+     * @param array|null $config
+     * @throws SchemaBuilderException
+     */
+    public function __construct(string $name, ?array $config = null)
+    {
+        parent::__construct();
+        $this->setName($name);
+        if ($config) {
+            $this->applyConfig($config);
+        }
+    }
+
+    /**
      * @param array $config
      * @throws SchemaBuilderException
      */
-    public function __construct(string $name, array $config)
+    public function applyConfig(array $config)
     {
-        parent::__construct();
-        $this->name = $name;
-        SchemaBuilder::assertValidConfig($config, ['fields', 'description', 'interfaces']);
+        SchemaBuilder::assertValidConfig($config, [
+            'fields',
+            'description',
+            'interfaces',
+            'isInput',
+        ]);
 
         $fields = $config['fields'] ?? [];
-        SchemaBuilder::invariant(count($fields), 'Fields cannot be empty for type %s', $name);
+        SchemaBuilder::invariant(count($fields), 'Fields cannot be empty for type %s', $this->getName());
 
-        $this->setFields($fields);
+        $this->applyFieldsConfig($fields);
         $this->setDescription($config['description'] ?? null);
         $this->setInterfaces($config['interfaces'] ?? []);
+        $this->setIsInput($config['isInput'] ?? false);
     }
 
     /**
@@ -80,7 +103,7 @@ class TypeAbstraction extends ViewableData
      */
     public function getFieldList(): ArrayList
     {
-        return ArrayList::create(array_values($this->fields));
+        return ArrayList::create(array_values($this->getFields()));
     }
 
     /**
@@ -88,18 +111,42 @@ class TypeAbstraction extends ViewableData
      * @return TypeAbstraction
      * @throws SchemaBuilderException
      */
-    public function setFields(array $fields): TypeAbstraction
+    public function applyFieldsConfig(array $fields): TypeAbstraction
     {
         SchemaBuilder::assertValidConfig($fields);
         foreach ($fields as $fieldName => $fieldConfig) {
             if ($fieldConfig === false) {
                 continue;
             }
-            $abstract = FieldAbstraction::create(
-                $fieldName,
-                $fieldConfig
-            );
+            $abstract = $fieldConfig instanceof FieldAbstraction
+                ? $fieldConfig
+                : FieldAbstraction::create(
+                    $fieldName,
+                    $fieldConfig
+                );
+
             $this->fields[$fieldName] = $abstract;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param FieldAbstraction[] $fields
+     * @return TypeAbstraction
+     * @throws SchemaBuilderException
+     */
+    public function setFields(array $fields): TypeAbstraction
+    {
+        /* @var FieldAbstraction $fieldAbstract */
+        foreach ($fields as $fieldAbstract) {
+            SchemaBuilder::invariant(
+                $fieldAbstract instanceof FieldAbstraction,
+                '%s takes an array of %s instances',
+                __FUNCTION__,
+                FieldAbstraction::class
+            );
+            $this->fields[$fieldAbstract->getName()] = $fieldAbstract;
         }
 
         return $this;
@@ -138,6 +185,24 @@ class TypeAbstraction extends ViewableData
     public function setInterfaces(array $interfaces): TypeAbstraction
     {
         $this->interfaces = $interfaces;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getIsInput(): bool
+    {
+        return $this->isInput;
+    }
+
+    /**
+     * @param bool $isInput
+     * @return TypeAbstraction
+     */
+    public function setIsInput(bool $isInput): TypeAbstraction
+    {
+        $this->isInput = $isInput;
         return $this;
     }
 
