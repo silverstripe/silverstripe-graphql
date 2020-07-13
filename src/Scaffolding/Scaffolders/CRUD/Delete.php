@@ -65,36 +65,36 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
 
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        DB::get_conn()->withTransaction(function () use ($args, $context, $info) {
-            // Build list to filter
-            $results = DataList::create($this->getDataObjectClass())
-                ->byIDs($args['IDs']);
-            $extensionResults = $this->extend('augmentMutation', $results, $args, $context, $info);
-
-            // Extension points that return false should kill the deletion
-            if (in_array(false, $extensionResults, true)) {
-                return;
-            }
-
-            // Before deleting, check if any items fail canDelete()
-            /** @var DataObject[] $resultsList */
-            $resultsList = $results->toArray();
-            foreach ($resultsList as $obj) {
-                if (!$obj->canDelete($context['currentUser'])) {
-                    throw new Exception(sprintf(
-                        'Cannot delete %s with ID %s',
-                        $this->getDataObjectClass(),
-                        $obj->ID
-                    ));
-                }
-            }
-
-            // Delete
-            foreach ($resultsList as $obj) {
-                $obj->delete();
-            }
-
-            $this->extend('afterMutation', $resultsList, $args, $context, $info);
-        });
+//        DB::get_conn()->withTransaction(function () use ($args, $context, $info) {
+//            // Build list to filter
+//            $results = DataList::create($this->getDataObjectClass())
+//                ->byIDs($args['IDs']);
+//            $extensionResults = $this->extend('augmentMutation', $results, $args, $context, $info);
+//
+//            // Extension points that return false should kill the deletion
+//            if (in_array(false, $extensionResults, true)) {
+//                return;
+//            }
+//
+//            // Before deleting, check if any items fail canDelete()
+//            /** @var DataObject[] $resultsList */
+//            $resultsList = $results->toArray();
+//            foreach ($resultsList as $obj) {
+//                if (!$obj->canDelete($context['currentUser'])) {
+//                    throw new Exception(sprintf(
+//                        'Cannot delete %s with ID %s',
+//                        $this->getDataObjectClass(),
+//                        $obj->ID
+//                    ));
+//                }
+//            }
+//
+//            // Delete
+//            foreach ($resultsList as $obj) {
+//                $obj->delete();
+//            }
+//
+//            $this->extend('afterMutation', $resultsList, $args, $context, $info);
+//        });
     }
 }

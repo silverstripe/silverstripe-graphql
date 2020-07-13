@@ -119,6 +119,7 @@ class ModelAbstraction extends TypeAbstraction
             $this->getName(),
             OperationProvider::class
         );
+
         /* @var SchemaModelInterface&OperationProvider $model */
         $model = $this->getModel();
 
@@ -126,21 +127,38 @@ class ModelAbstraction extends TypeAbstraction
             if ($data === false) {
                 continue;
             }
+
             SchemaBuilder::invariant(
                 is_array($data) || $data === true,
                 'Operation data for %s must be a map of config or true for a generic implementation',
                 $operationName
             );
+
             $config = ($data === true) ? [] : $data;
             $operationCreator = $model->getOperationCreatorByIdentifier($operationName);
+
             SchemaBuilder::invariant($operationCreator, 'Invalid operation: %s', $operationName);
-            $this->operations[] = $operationCreator->createOperation($this->getModel(), $this->getName(), $config);
+
+            $this->operations[] = $operationCreator->createOperation(
+                $this->getModel(),
+                $this->getName(),
+                $config
+            );
+
             if ($operationCreator instanceof InputTypeProvider) {
                 $types = $operationCreator->provideInputTypes(
                     $this->getModel(),
                     $this->getName(),
                     $config
                 );
+                foreach ($types as $type) {
+                    SchemaBuilder::invariant(
+                        $type instanceof InputTypeAbstraction,
+                        'Input types must be instances of %s on %s',
+                        InputTypeAbstraction::class,
+                        $this->getName()
+                    );
+                }
                 $this->extraTypes = array_merge($this->extraTypes, $types);
             }
         }

@@ -16,17 +16,17 @@ class EncodedResolver extends ViewableData implements Encoder
     private $resolverFunc;
 
     /**
-     * @var array|null
+     * @var array
      */
-    private $context;
+    private $context = [];
 
     /**
      * EncodedResolver constructor.
      * @param string|array $resolverFunc
-     * @param array|null $context
+     * @param array $context
      * @throws SchemaBuilderException
      */
-    public function __construct($resolverFunc, ?array $context = null)
+    public function __construct($resolverFunc, array $context = [])
     {
         parent::__construct();
         SchemaBuilder::invariant(
@@ -65,27 +65,11 @@ class EncodedResolver extends ViewableData implements Encoder
     }
 
     /**
-     * @return ArrayList
-     * @throws SchemaBuilderException
+     * @return string|null
      */
-    public function getContextArgs(): ArrayList
+    public function getContextArgs(): ?string
     {
-        $list = ArrayList::create();
-        foreach ($this->getContext() as $arg) {
-            SchemaBuilder::invariant(
-                is_scalar($arg),
-                'Args for dynamic resolvers must be scalar. Provided %s to %s',
-                gettype($arg),
-                $this->getCallable()
-            );
-
-            $data = ArrayData::create([
-                'EncodedArg' => is_string($arg) ? sprintf("'%s'", addslashes($arg)) : $arg,
-            ]);
-            $list->push($data);
-        }
-
-        return $list;
+        return !empty($this->getContext()) ? var_export($this->getContext(), true) : null;
     }
 
     /**
@@ -115,20 +99,39 @@ class EncodedResolver extends ViewableData implements Encoder
     }
 
     /**
-     * @return array|null
+     * @return array
      */
-    public function getContext(): ?array
+    public function getContext(): array
     {
         return $this->context;
     }
 
     /**
-     * @param array|null $context
+     * @param array $context
      * @return EncodedResolver
      */
-    public function setContext(?array $context): EncodedResolver
+    public function setContext(array $context): EncodedResolver
     {
         $this->context = $context;
+        return $this;
+    }
+
+    /**
+     * @param string $key
+     * @param $val
+     * @return EncodedResolver
+     * @throws SchemaBuilderException
+     */
+    public function addContext(string $key, $val): EncodedResolver
+    {
+        SchemaBuilder::invariant(
+            is_scalar($val) || is_array($val),
+            'Resolver context must be a scalar value or an array on %s',
+            $this->getCallable()
+        );
+
+        $this->context[$key] = $val;
+
         return $this;
     }
 

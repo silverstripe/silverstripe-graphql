@@ -5,3 +5,6 @@ SilverStripe\GraphQL\Schema\DataObject\DataObjectModel:
   operations:
     read: 'SilverStripe\GraphQL\Schema\DataObject\ReadCreator'
     readOne: 'SilverStripe\GraphQL\Schema\DataObject\ReadOneCreator'
+    delete: 'SilverStripe\GraphQL\Schema\DataObject\DeleteCreator'
+    update: 'SilverStripe\GraphQL\Schema\DataObject\UpdateCreator'
+    create: 'SilverStripe\GraphQL\Schema\DataObject\CreateCreator'

@@ -4,6 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
 
+use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
@@ -11,6 +12,13 @@ use SilverStripe\ORM\FieldType\DBField;
 class FieldAccessor
 {
     use Injectable;
+    use Configurable;
+
+    /**
+     * @var callable
+     * @config
+     */
+    private static $normaliser = 'strtolower';
 
     /**
      * @var array
@@ -34,7 +42,7 @@ class FieldAccessor
             $schema = $dataObject->getSchema();
             $db = $schema->fieldSpecs(get_class($dataObject));
             $normalFields = array_keys($db);
-            $lowercaseFields = array_map('strtolower', $normalFields);
+            $lowercaseFields = array_map($this->config()->get('normaliser'), $normalFields);
             $lookup = array_combine($lowercaseFields, $normalFields);
             self::$__mappingCache[$cacheKey] = $lookup;
         }
@@ -53,7 +61,8 @@ class FieldAccessor
         }
         $lookup = $this->getCaseInsensitiveMapping($dataObject);
 
-        return $lookup[strtolower($field)] ?? null;
+        $normalised = call_user_func_array($this->config()->get('normaliser'), [$field]);
+        return $lookup[$normalised] ?? null;
     }
 
     /**
@@ -79,5 +88,17 @@ class FieldAccessor
         }
 
         return $dataObject->obj($fieldName);
+    }
+
+    /**
+     * @param DataObject $dataObject
+     * @return array
+     */
+    public function getAllFields(DataObject $dataObject): array
+    {
+        return array_map(
+            $this->config()->get('normaliser'),
+            array_keys($this->getCaseInsensitiveMapping($dataObject))
+        );
     }
 }

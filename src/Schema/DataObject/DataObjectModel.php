@@ -7,19 +7,21 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Schema\OperationCreator;
 use SilverStripe\GraphQL\Schema\OperationProvider;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\SchemaModelInterface;
 use SilverStripe\ORM\DataObject;
-use SilverStripe\ORM\FieldType\DBField;
 
 class DataObjectModel implements SchemaModelInterface, OperationProvider
 {
     use Injectable;
     use Configurable;
+
+    private static $dependencies = [
+        'FieldAccessor' => '%$' . FieldAccessor::class,
+    ];
 
     /**
      * @var array
@@ -31,6 +33,11 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
      * @var DataObject
      */
     private $dataObject;
+
+    /**
+     * @var FieldAccessor
+     */
+    private $fieldAccessor;
 
     /**
      * DataObjectModel constructor.
@@ -55,7 +62,7 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
      */
     public function hasField(string $fieldName): bool
     {
-        return FieldAccessor::singleton()->hasField($this->dataObject, $fieldName);
+        return $this->getFieldAccessor()->hasField($this->dataObject, $fieldName);
     }
 
     /**
@@ -64,7 +71,7 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
      */
     public function getTypeForField(string $fieldName): ?string
     {
-        $result = FieldAccessor::singleton()->accessField($this->dataObject, $fieldName);
+        $result = $this->getFieldAccessor()->accessField($this->dataObject, $fieldName);
         if (!$result) {
             return null;
         }
@@ -83,6 +90,14 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
     }
 
     /**
+     * @return array
+     */
+    public function getAllFields(): array
+    {
+        return $this->getFieldAccessor()->getAllFields($this->dataObject);
+    }
+
+    /**
      * @return callable
      */
     public function getDefaultResolver(): callable
@@ -96,6 +111,24 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
     public function getSourceClass(): string
     {
         return get_class($this->dataObject);
+    }
+
+    /**
+     * @return FieldAccessor
+     */
+    public function getFieldAccessor(): FieldAccessor
+    {
+        return $this->fieldAccessor;
+    }
+
+    /**
+     * @param FieldAccessor $fieldAccessor
+     * @return DataObjectModel
+     */
+    public function setFieldAccessor(FieldAccessor $fieldAccessor): DataObjectModel
+    {
+        $this->fieldAccessor = $fieldAccessor;
+        return $this;
     }
 
     /**

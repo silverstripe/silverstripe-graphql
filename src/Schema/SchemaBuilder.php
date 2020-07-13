@@ -131,7 +131,7 @@ class SchemaBuilder implements ConfigurationApplier
                 }
             }
             foreach ($abstract->getExtraTypes() as $type) {
-                $this->types[$abstract->getName()] = $type;
+                $this->types[$type->getName()] = $type;
             }
         }
 
@@ -205,10 +205,11 @@ class SchemaBuilder implements ConfigurationApplier
         $hash = $this->getHash();
         $namespace = 'SilverStripe\\GraphQL\\Schema\\Generated\\Schema_' . $hash;
         $registry = $namespace . '\\Types';
+        $hasMutations = method_exists($registry, self::MUTATION_TYPE);
         $schemaConfig = new SchemaConfig();
         $callback = call_user_func([$registry, self::QUERY_TYPE]);
         $schemaConfig->setQuery($callback());
-        if (!empty($this->mutations)) {
+        if ($hasMutations) {
             $callback = call_user_func([$registry, self::MUTATION_TYPE]);
             $schemaConfig->setMutation($callback());
         }

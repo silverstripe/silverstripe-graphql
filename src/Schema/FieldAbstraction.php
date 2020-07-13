@@ -54,9 +54,9 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
     private $defaultResolver;
 
     /**
-     * @var array|null
+     * @var array
      */
-    private $resolverContext;
+    private $resolverContext = [];
 
     /**
      * FieldAbstraction constructor.
@@ -108,7 +108,7 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
         $args = $config['args'] ?? [];
         $resolver = $config['resolver'] ?? null;
         $defaultResolver = $config['defaultResolver'] ?? null;
-        $resolverCreator = $config['resolverContext'] ?? null;
+        $resolverContext = $config['resolverContext'] ?? null;
 
         foreach ([$resolver, $defaultResolver] as $callable) {
             SchemaBuilder::invariant(
@@ -120,7 +120,9 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
         $this->applyArgs($args);
         $this->setResolver($resolver);
         $this->setDefaultResolver($defaultResolver);
-        $this->setResolverContext($resolverCreator);
+        if ($resolverContext) {
+            $this->setResolverContext($resolverContext);
+        }
     }
 
     /**
@@ -329,21 +331,26 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
     /**
      * @param string|null $typeName
      * @return EncodedResolver
+     * @throws SchemaBuilderException
      */
     public function getEncodedResolver(?string $typeName = null): EncodedResolver
     {
         if ($this->getResolver()) {
-            return EncodedResolver::create($this->getResolver())
-                ->setContext($this->getResolverContext());
+            $encodedResolver = EncodedResolver::create($this->getResolver());
+        } else {
+            $resolver = $this->getResolverRegistry()->findResolver(
+                $typeName,
+                $this->name,
+                $this->getDefaultResolver()
+            );
+            $encodedResolver = EncodedResolver::create($resolver);
         }
-        $resolver = $this->getResolverRegistry()->findResolver(
-            $typeName,
-            $this->name,
-            $this->getDefaultResolver()
-        );
 
-        return EncodedResolver::create($resolver)
-            ->setContext($this->getResolverContext());
+        foreach ($this->getResolverContext() as $name => $value) {
+            $encodedResolver->addContext($name, $value);
+        }
+
+        return $encodedResolver;
     }
 
     /**

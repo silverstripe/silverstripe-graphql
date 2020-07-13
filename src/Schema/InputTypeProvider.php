@@ -9,12 +9,12 @@ interface InputTypeProvider
     /**
      * @param SchemaModelInterface $model
      * @param string $typeName
-     * @param array|null $config
-     * @return TypeAbstraction[]
+     * @param array $config
+     * @return InputTypeAbstraction[]
      */
     public function provideInputTypes(
         SchemaModelInterface $model,
         string $typeName,
-        ?array $config = null
+        array $config = []
     ): array;
 }
