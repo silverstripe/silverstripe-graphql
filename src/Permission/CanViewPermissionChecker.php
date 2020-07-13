@@ -16,18 +16,9 @@ class CanViewPermissionChecker implements QueryPermissionChecker
      */
     public function applyToList(Filterable $list, Member $member = null)
     {
-        $excludes = [];
-        foreach ($list as $record) {
-            if (ClassInfo::hasMethod($record, 'canView') && !$record->canView($member)) {
-                $excludes[] = $record->ID;
-            }
-        }
-
-        if (!empty($excludes)) {
-            return $list->exclude(['ID' => $excludes]);
-        }
-
-        return $list;
+        return $list->filterByCallback(function ($item) use ($member) {
+            return !ClassInfo::hasMethod($item, 'canView') || $item->canView($member);
+        });
     }
 
     /**
