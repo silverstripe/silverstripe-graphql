@@ -11,4 +11,9 @@ interface OperationProvider
      * @return FieldAbstraction|null
      */
     public function getOperationCreatorByIdentifier(string $id): ?OperationCreator;
+
+    /**
+     * @return string[]
+     */
+    public function getAllOperationIdentifiers(): array;
 }

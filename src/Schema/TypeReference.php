@@ -22,10 +22,10 @@ class TypeReference
 
     /**
      * @return Node
-     * @throws SyntaxError
      */
     public function toAST(): Node
     {
         return Parser::parseType($this->typeStr, ['noLocation' => true]);
     }
+
 }

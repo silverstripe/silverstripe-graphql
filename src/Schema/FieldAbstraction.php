@@ -444,5 +444,17 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
         return $this;
     }
 
+    /**
+     * @param string $key
+     * @param $value
+     * @return FieldAbstraction
+     */
+    public function addResolverContext(string $key, $value): FieldAbstraction
+    {
+        $this->resolverContext[$key] = $value;
+
+        return $this;
+    }
+
 
 }

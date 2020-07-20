@@ -76,9 +76,14 @@ class CreateCreator implements OperationCreator, InputTypeProvider
                 throw new PermissionsException("Cannot create {$dataClass}");
             }
 
+            $fieldAccessor = FieldAccessor::singleton();
             /** @var DataObject $newObject */
             $newObject = Injector::inst()->create($dataClass);
-            $newObject->update($args['Input']);
+            $update = [];
+            foreach ($args['Input'] as $fieldName => $value) {
+                $update[$fieldAccessor->normaliseField($newObject, $fieldName)] = $value;
+            }
+            $newObject->update($update);
 
             // Save and return
             $newObject->write();
@@ -91,7 +96,7 @@ class CreateCreator implements OperationCreator, InputTypeProvider
     public function provideInputTypes(SchemaModelInterface $model, string $typeName, array $config = []): array
     {
         $dataObject = Injector::inst()->get($model->getSourceClass());
-        $allFields = $this->getFieldAccessor()->getAllFields($dataObject);
+        $allFields = $this->getFieldAccessor()->getAllFields($dataObject, false);
         $excluded = $config['exclude'] ?? [];
         $includedFields = array_diff($allFields, $excluded);
         $fieldMap = [];

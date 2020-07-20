@@ -43,10 +43,9 @@ class EncodedType extends ViewableData implements Encoder
     }
 
     /**
-     * @return string
-     * @throws SchemaBuilderException
+     * @return array
      */
-    public function encode(): string
+    public function getTypeName(): array
     {
         $node = $this->ast;
         $path = [];
@@ -54,13 +53,25 @@ class EncodedType extends ViewableData implements Encoder
             $path[] = $node->kind;
             $node = $node->type;
         }
-        SchemaBuilder::invariant($node, 'No named type was found on %s', $this->typeStr);
-        $named = $node->name->value;
+
+        $named = $node ? $node->name->value : null;
+
+        return [$named, $path];
+    }
+
+    /**
+     * @return string
+     * @throws SchemaBuilderException
+     */
+    public function encode(): string
+    {
+        list ($named, $path) = $this->getTypeName();
+        SchemaBuilder::invariant($named, 'No named type was found on %s', $this->ast);
 
         $code = '';
         foreach ($path as $token) {
             $func = static::$typeMap[$token] ?? null;
-            SchemaBuilder::invariant($func, 'Node kind %s is invalid on %s', $token, $this->typeStr);
+            SchemaBuilder::invariant($func, 'Node kind %s is invalid on %s', $token, $this->ast);
             $code .= self::TYPE_CLASS_NAME . '::' . $func . '(';
         }
         $code .= self::TYPE_CLASS_NAME . '::' . $named . '()';

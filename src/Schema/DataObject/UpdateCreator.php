@@ -89,8 +89,13 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
                     $dataClass
                 ));
             }
+            $fieldAccessor = FieldAccessor::singleton();
+            $update = [];
+            foreach ($input as $fieldName => $value) {
+                $update[$fieldAccessor->normaliseField($obj, $fieldName)] = $value;
+            }
 
-            $obj->update($input);
+            $obj->update($update);
             $obj->write();
 
             return $obj;
@@ -100,7 +105,7 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
     public function provideInputTypes(SchemaModelInterface $model, string $typeName, array $config = []): array
     {
         $dataObject = Injector::inst()->get($model->getSourceClass());
-        $allFields = $this->getFieldAccessor()->getAllFields($dataObject);
+        $allFields = $this->getFieldAccessor()->getAllFields($dataObject, false);
         $excluded = $config['exclude'] ?? [];
         $includedFields = array_diff($allFields, $excluded);
         $fieldMap = [];

@@ -28,13 +28,14 @@ class ModelAbstraction extends TypeAbstraction
      */
     private $extraTypes = [];
 
+
     /**
      * ModelAbstraction constructor.
      * @param string $class
-     * @param array|null $config
+     * @param array $config
      * @throws SchemaBuilderException
      */
-    public function __construct(string $class, ?array $config = null)
+    public function __construct(string $class, array $config = [])
     {
         /* @var SchemaModelCreatorRegistry $registry */
         $registry = Injector::inst()->get(SchemaModelCreatorRegistry::class);
@@ -44,18 +45,16 @@ class ModelAbstraction extends TypeAbstraction
         $this->setModel($model);
         $this->setSourceClass($class);
 
-        $type = $config['type'] ?? null;
+        $type = $this->getModel()->getTypeName();
         SchemaBuilder::invariant(
             $type,
-            'Model for %s has no type declared. All class names must specify types explicitly.',
+            'Could not determine type for model %s',
             $this->getSourceClass()
         );
 
         parent::__construct($type);
 
-        if ($config) {
-            $this->applyConfig($config);
-        }
+        $this->applyConfig($config);
     }
 
     /**
@@ -64,40 +63,71 @@ class ModelAbstraction extends TypeAbstraction
      */
     public function applyConfig(array $config)
     {
-        SchemaBuilder::assertValidConfig($config, ['fields', 'type', 'operations']);
-        $fields = $config['fields'] ?? [];
+        SchemaBuilder::assertValidConfig($config, ['fields', 'operations']);
+        $defaultFields = $this->getModel()->getDefaultFields();
+        $fieldConfig = $config['fields'] ?? [];
+
+        if ($fieldConfig === SchemaBuilder::ALL) {
+            $fieldConfig = [];
+            foreach ($this->getModel()->getAllFields() as $fieldName) {
+                $fieldConfig[$fieldName] = $this->getModel()->getTypeForField($fieldName);
+            }
+        }
+
+        $fields = array_merge($defaultFields, $fieldConfig);
         $this->applyFieldsConfig($fields);
-        $operations = $config['operations'] ?? [];
+        $operations = $config['operations'] ?? null;
+        if (!$operations) {
+            return;
+        }
+        SchemaBuilder::invariant(
+            $this->getModel() instanceof OperationProvider,
+            'Model for %s does not implement %s. No operations are allowed',
+            $this->getName(),
+            OperationProvider::class
+        );
+        /* @var SchemaModelInterface&OperationProvider $model */
+        $model = $this->getModel();
+        if ($operations === SchemaBuilder::ALL) {
+            $operations = [];
+            foreach ($model->getAllOperationIdentifiers() as $id) {
+                $operations[$id] = true;
+            }
+        }
         $this->applyOperationsConfig($operations);
     }
 
     /**
-     * @param array $fieldConfig
+     * @param array $fields
      * @return ModelAbstraction
      * @throws SchemaBuilderException
      */
-    public function applyFieldsConfig(array $fieldConfig): TypeAbstraction
+    public function applyFieldsConfig(array $fields): TypeAbstraction
     {
-        $defaultFields = $this->getModel()->getDefaultFields();
-        $fields = array_merge($defaultFields, $fieldConfig);
         SchemaBuilder::assertValidConfig($fields);
-
-        $blackListedFields = $this->getModel() instanceof ModelBlacklist ?
-            array_map('strtolower', $this->getModel()->getBlacklistedFields()) :
+        $model = $this->getModel();
+        /* @var SchemaModelInterface&ModelBlacklist $model */
+        $blackListedFields = $model instanceof ModelBlacklist ?
+            array_map('strtolower', $model->getBlacklistedFields()) :
             null;
 
         foreach ($fields as $fieldName => $data) {
             if ($data === false) {
                 continue;
             }
-            $abstract = ModelFieldAbstraction::create($fieldName, $data, $this->getModel());
+            $abstract = ModelFieldAbstraction::create($fieldName, $data, $model);
             $this->fields[$abstract->getName()] = $abstract;
+            if ($modelType = $abstract->getModelType()) {
+                $this->addExtraTypes($modelType->getExtraTypes());
+                $this->addExtraTypes([$modelType]);
+                $this->operations = array_merge($this->operations, $modelType->getOperations());
+            }
             if ($blackListedFields) {
                 SchemaBuilder::invariant(
                     !in_array(strtolower($abstract->getName()), $blackListedFields),
                     'Field %s is not allowed on %s',
                     $abstract->getName(),
-                    $this->getModel()->getSourceClass()
+                    $model->getSourceClass()
                 );
             }
         }
@@ -113,13 +143,6 @@ class ModelAbstraction extends TypeAbstraction
     public function applyOperationsConfig(array $operations): ModelAbstraction
     {
         SchemaBuilder::assertValidConfig($operations);
-        SchemaBuilder::invariant(
-            $this->getModel() instanceof OperationProvider,
-            'Model for %s does not implement %s. No operations are allowed',
-            $this->getName(),
-            OperationProvider::class
-        );
-
         /* @var SchemaModelInterface&OperationProvider $model */
         $model = $this->getModel();
 
@@ -159,7 +182,7 @@ class ModelAbstraction extends TypeAbstraction
                         $this->getName()
                     );
                 }
-                $this->extraTypes = array_merge($this->extraTypes, $types);
+                $this->addExtraTypes($types);
             }
         }
 
@@ -218,5 +241,11 @@ class ModelAbstraction extends TypeAbstraction
         return $this;
     }
 
-
+    /**
+     * @param TypeAbstraction[] $types
+     */
+    private function addExtraTypes(array $types)
+    {
+        $this->extraTypes = array_merge($this->extraTypes, $types);
+    }
 }

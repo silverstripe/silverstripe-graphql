@@ -4,21 +4,40 @@
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
 
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Schema\ModelAbstraction;
 use SilverStripe\GraphQL\Schema\OperationCreator;
 use SilverStripe\GraphQL\Schema\OperationProvider;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\SchemaModelInterface;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\ORM\SS_List;
 
 class DataObjectModel implements SchemaModelInterface, OperationProvider
 {
     use Injectable;
     use Configurable;
 
+    /**
+     * @var callable
+     * @config
+     */
+    private static $type_formatter = [ ClassInfo::class, 'shortName' ];
+
+    /**
+     * @var string
+     */
+    private static $type_prefix = '';
+
+    /**
+     * @var array
+     */
     private static $dependencies = [
         'FieldAccessor' => '%$' . FieldAccessor::class,
     ];
@@ -57,6 +76,19 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
     }
 
     /**
+     * @return string
+     * @throws SchemaBuilderException
+     */
+    public function getTypeName(): string
+    {
+        $class = get_class($this->dataObject);
+        $typeName = $this->formatClass($class);
+        $prefix = $this->getPrefix($class);
+
+        return $prefix . $typeName;
+    }
+
+    /**
      * @param string $fieldName
      * @return bool
      */
@@ -68,6 +100,7 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
     /**
      * @param string $fieldName
      * @return string|null
+     * @throws SchemaBuilderException
      */
     public function getTypeForField(string $fieldName): ?string
     {
@@ -75,8 +108,20 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
         if (!$result) {
             return null;
         }
+        if ($result instanceof DBField) {
+            return $result->config()->get('graphql_type');
+        }
+        $class = $this->getModelClass($result);
+        SchemaBuilder::invariant(
+            $class,
+            'Cannot determine data class for field %s on %s',
+            $fieldName,
+            get_class($this->dataObject)
+        );
 
-        return $result->config()->get('graphql_type');
+        $type = DataObjectModel::create($class)->getTypeName();
+
+        return sprintf('[%s]', $type);
     }
 
     /**
@@ -98,11 +143,15 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
     }
 
     /**
+     * @param array|null $context
      * @return callable
      */
-    public function getDefaultResolver(): callable
+    public function getDefaultResolver(?array $context = []): callable
     {
-        return [Resolver::class, 'resolve'];
+        return empty($context)
+            ? [Resolver::class, 'resolve']
+            : [Resolver::class, 'resolveContext'];
+
     }
 
     /**
@@ -158,6 +207,89 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
         );
 
         return $obj;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getAllOperationIdentifiers(): array
+    {
+        $registeredOperations = $this->config()->get('operations') ?? [];
+
+        return array_keys($registeredOperations);
+    }
+
+    /**
+     * @param string $fieldName
+     * @return ModelAbstraction|null
+     */
+    public function getModelField(string $fieldName): ?ModelAbstraction
+    {
+        $result = $this->getFieldAccessor()->accessField($this->dataObject, $fieldName);
+        $class = $this->getModelClass($result);
+        if (!$class) {
+            return null;
+        }
+        $model = SchemaModelCreatorRegistry::singleton()->getModel($class);
+        if (!$model) {
+            return null;
+        }
+
+        return ModelAbstraction::create($class);
+    }
+
+    /**
+     * @param $result
+     * @return string|null
+     */
+    private function getModelClass($result): ?string
+    {
+        if ($result instanceof DataObject) {
+            return get_class($result);
+        }
+        if ($result instanceof SS_List && method_exists($result, 'dataClass')) {
+            return $result->dataClass();
+        }
+
+        return null;
+    }
+
+    /**
+     * @param string $class
+     * @return string
+     * @throws SchemaBuilderException
+     */
+    private function formatClass(string $class): string
+    {
+        $formatter = $this->config()->get('type_formatter');
+        SchemaBuilder::invariant(
+            is_callable($formatter, false),
+            'type_formatter property for %s is not callable',
+            __CLASS__
+        );
+
+        return call_user_func_array($formatter, [$class]);
+    }
+
+    /**
+     * @param string $class
+     * @return string
+     * @throws SchemaBuilderException
+     */
+    private function getPrefix(string $class): string
+    {
+        $prefix = $this->config()->get('type_prefix');
+        if (is_callable($prefix, false)) {
+            return call_user_func_array($prefix, [$class]);
+        }
+
+        SchemaBuilder::invariant(
+            is_string($prefix),
+            'type_prefix on %s must be a string',
+            __CLASS__
+        );
+
+        return $prefix;
     }
 
 }
