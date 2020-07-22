@@ -8,7 +8,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ViewableData;
 
-class TypeAbstraction extends ViewableData implements ConfigurationApplier
+class TypeAbstraction extends ViewableData implements ConfigurationApplier, SchemaValidator
 {
     /**
      * @var string
@@ -36,6 +36,11 @@ class TypeAbstraction extends ViewableData implements ConfigurationApplier
     private $isInput = false;
 
     /**
+     * @var array
+     */
+    private $fieldResolver;
+
+    /**
      * TypeAbstraction constructor.
      * @param string $name
      * @param array|null $config
@@ -61,11 +66,11 @@ class TypeAbstraction extends ViewableData implements ConfigurationApplier
             'description',
             'interfaces',
             'isInput',
+            'fieldResolver',
         ]);
 
         $fields = $config['fields'] ?? [];
-        SchemaBuilder::invariant(count($fields), 'Fields cannot be empty for type %s', $this->getName());
-
+        $this->setFieldResolver($config['fieldResolver'] ?? null);
         $this->applyFieldsConfig($fields);
         $this->setDescription($config['description'] ?? null);
         $this->setInterfaces($config['interfaces'] ?? []);
@@ -91,7 +96,7 @@ class TypeAbstraction extends ViewableData implements ConfigurationApplier
     }
 
     /**
-     * @return array
+     * @return FieldAbstraction[]
      */
     public function getFields(): array
     {
@@ -125,6 +130,10 @@ class TypeAbstraction extends ViewableData implements ConfigurationApplier
                     $fieldConfig
                 );
 
+            $defaultResolver = $abstract->getDefaultResolver();
+            if (!$defaultResolver) {
+                $abstract->setDefaultResolver($this->getFieldResolver());
+            }
             $this->fields[$fieldName] = $abstract;
         }
 
@@ -158,6 +167,49 @@ class TypeAbstraction extends ViewableData implements ConfigurationApplier
     public function getDescription()
     {
         return $this->description;
+    }
+
+    /**
+     * @param TypeAbstraction $type
+     * @return TypeAbstraction
+     * @throws SchemaBuilderException
+     */
+    public function mergeWith(TypeAbstraction $type): TypeAbstraction
+    {
+        SchemaBuilder::invariant(
+            $type->getIsInput() === $this->getIsInput(),
+            'Cannot merge an input type %s with an object type %s',
+            $type->getName(),
+            $this->getName()
+        );
+        foreach ($type->getFields() as $fieldAbstraction) {
+            $existing = $this->fields[$fieldAbstraction->getName()] ?? null;
+            if (!$existing) {
+                $this->fields[$fieldAbstraction->getName()] = $fieldAbstraction;
+            } else {
+                $this->fields[$fieldAbstraction->getName()] = $existing->mergeWith($fieldAbstraction);
+            }
+        }
+
+        foreach ($type->getInterfaces() as $interfaceAbstraction) {
+            // to do
+        }
+
+        return $this;
+    }
+
+    /**
+     * @throws SchemaBuilderException
+     */
+    public function validate(): void
+    {
+        SchemaBuilder::invariant(
+            $this->getFieldList()->exists(),
+            'Fields cannot be empty for type %s', $this->getName()
+        );
+        foreach ($this->getFields() as $fieldAbstraction) {
+            $fieldAbstraction->validate();;
+        }
     }
 
     /**
@@ -205,5 +257,25 @@ class TypeAbstraction extends ViewableData implements ConfigurationApplier
         $this->isInput = $isInput;
         return $this;
     }
+
+    /**
+     * @return array|null
+     */
+    public function getFieldResolver(): ?array
+    {
+        return $this->fieldResolver;
+    }
+
+    /**
+     * @param array|null $fieldResolver
+     * @return TypeAbstraction
+     */
+    public function setFieldResolver(?array $fieldResolver): TypeAbstraction
+    {
+        $this->fieldResolver = $fieldResolver;
+        return $this;
+    }
+
+
 
 }

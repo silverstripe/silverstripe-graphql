@@ -6,7 +6,7 @@ namespace SilverStripe\GraphQL\Schema;
 
 use SilverStripe\Core\Injector\Injector;
 
-class ModelAbstraction extends TypeAbstraction
+class ModelAbstraction extends TypeAbstraction implements ExtraTypeProvider
 {
     /**
      * @var SchemaModelInterface
@@ -19,9 +19,9 @@ class ModelAbstraction extends TypeAbstraction
     private $sourceClass;
 
     /**
-     * @var FieldAbstraction[]
+     * @var array
      */
-    private $operations = [];
+    private $operationCreators = [];
 
     /**
      * @var TypeAbstraction[]
@@ -64,7 +64,11 @@ class ModelAbstraction extends TypeAbstraction
     public function applyConfig(array $config)
     {
         SchemaBuilder::assertValidConfig($config, ['fields', 'operations']);
-        $defaultFields = $this->getModel()->getDefaultFields();
+        $model = $this->getModel();
+
+        /* @var SchemaModelInterface&DefaultFieldsProvider&RequiredFieldsProvider $model */
+        $defaultFields = $model instanceof DefaultFieldsProvider ? $model->getDefaultFields() : [];
+        $requiredFields = $model instanceof RequiredFieldsProvider ? $model->getRequiredFields() : [];
         $fieldConfig = $config['fields'] ?? [];
 
         if ($fieldConfig === SchemaBuilder::ALL) {
@@ -74,7 +78,7 @@ class ModelAbstraction extends TypeAbstraction
             }
         }
 
-        $fields = array_merge($defaultFields, $fieldConfig);
+        $fields = array_merge($defaultFields, $requiredFields, $fieldConfig);
         $this->applyFieldsConfig($fields);
         $operations = $config['operations'] ?? null;
         if (!$operations) {
@@ -116,12 +120,6 @@ class ModelAbstraction extends TypeAbstraction
                 continue;
             }
             $abstract = ModelFieldAbstraction::create($fieldName, $data, $model);
-            $this->fields[$abstract->getName()] = $abstract;
-            if ($modelType = $abstract->getModelType()) {
-                $this->addExtraTypes($modelType->getExtraTypes());
-                $this->addExtraTypes([$modelType]);
-                $this->operations = array_merge($this->operations, $modelType->getOperations());
-            }
             if ($blackListedFields) {
                 SchemaBuilder::invariant(
                     !in_array(strtolower($abstract->getName()), $blackListedFields),
@@ -130,6 +128,8 @@ class ModelAbstraction extends TypeAbstraction
                     $model->getSourceClass()
                 );
             }
+
+            $this->fields[$abstract->getName()] = $abstract;
         }
 
         return $this;
@@ -143,9 +143,6 @@ class ModelAbstraction extends TypeAbstraction
     public function applyOperationsConfig(array $operations): ModelAbstraction
     {
         SchemaBuilder::assertValidConfig($operations);
-        /* @var SchemaModelInterface&OperationProvider $model */
-        $model = $this->getModel();
-
         foreach ($operations as $operationName => $data) {
             if ($data === false) {
                 continue;
@@ -158,32 +155,7 @@ class ModelAbstraction extends TypeAbstraction
             );
 
             $config = ($data === true) ? [] : $data;
-            $operationCreator = $model->getOperationCreatorByIdentifier($operationName);
-
-            SchemaBuilder::invariant($operationCreator, 'Invalid operation: %s', $operationName);
-
-            $this->operations[] = $operationCreator->createOperation(
-                $this->getModel(),
-                $this->getName(),
-                $config
-            );
-
-            if ($operationCreator instanceof InputTypeProvider) {
-                $types = $operationCreator->provideInputTypes(
-                    $this->getModel(),
-                    $this->getName(),
-                    $config
-                );
-                foreach ($types as $type) {
-                    SchemaBuilder::invariant(
-                        $type instanceof InputTypeAbstraction,
-                        'Input types must be instances of %s on %s',
-                        InputTypeAbstraction::class,
-                        $this->getName()
-                    );
-                }
-                $this->addExtraTypes($types);
-            }
+            $this->operationCreators[$operationName] = $config;
         }
 
         return $this;
@@ -191,18 +163,73 @@ class ModelAbstraction extends TypeAbstraction
 
     /**
      * @return FieldAbstraction[]
+     * @throws SchemaBuilderException
      */
     public function getOperations(): array
     {
-        return $this->operations;
+        $operations = [];
+        foreach ($this->operationCreators as $operationName => $config) {
+            $operationCreator = $this->getOperationCreator($operationName);
+            $operations[] = $operationCreator->createOperation(
+                $this->getModel(),
+                $this->getName(),
+                $config
+            );
+        }
+        foreach ($this->getFields() as $fieldAbstraction) {
+            if (!$fieldAbstraction instanceof ModelFieldAbstraction) {
+                continue;
+            }
+            if ($modelType = $fieldAbstraction->getModelType()) {
+                $operations = array_merge($operations, $modelType->getOperations());
+            }
+        }
+
+
+        return $operations;
     }
 
     /**
      * @return TypeAbstraction[]
+     * @throws SchemaBuilderException
      */
     public function getExtraTypes(): array
     {
-        return $this->extraTypes;
+        $extraTypes = $this->extraTypes;
+        foreach ($this->operationCreators as $operationName => $config) {
+            $operationCreator = $this->getOperationCreator($operationName);
+            if (!$operationCreator instanceof InputTypeProvider) {
+                continue;
+            }
+            $types = $operationCreator->provideInputTypes(
+                $this->getModel(),
+                $this->getName(),
+                $config
+            );
+            foreach ($types as $type) {
+                SchemaBuilder::invariant(
+                    $type instanceof InputTypeAbstraction,
+                    'Input types must be instances of %s on %s',
+                    InputTypeAbstraction::class,
+                    $this->getName()
+                );
+                $extraTypes[] = $type;
+            }
+        }
+        foreach ($this->getFields() as $fieldAbstraction) {
+            if (!$fieldAbstraction instanceof ModelFieldAbstraction) {
+                continue;
+            }
+            if ($modelType = $fieldAbstraction->getModelType()) {
+                $extraTypes = array_merge($extraTypes, $modelType->getExtraTypes());
+                $extraTypes[] = $modelType;
+            }
+        }
+        if ($this->getModel() instanceof ExtraTypeProvider) {
+            $extraTypes = array_merge($extraTypes, $this->getModel()->getExtraTypes());
+        }
+
+        return $extraTypes;
     }
 
     /**
@@ -247,5 +274,18 @@ class ModelAbstraction extends TypeAbstraction
     private function addExtraTypes(array $types)
     {
         $this->extraTypes = array_merge($this->extraTypes, $types);
+    }
+
+    /**
+     * @param string $operationName
+     * @return OperationCreator
+     * @throws SchemaBuilderException
+     */
+    private function getOperationCreator(string $operationName): OperationCreator
+    {
+        $operationCreator = $this->getModel()->getOperationCreatorByIdentifier($operationName);
+        SchemaBuilder::invariant($operationCreator, 'Invalid operation: %s', $operationName);
+
+        return $operationCreator;
     }
 }

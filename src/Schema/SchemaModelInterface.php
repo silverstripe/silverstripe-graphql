@@ -24,15 +24,10 @@ interface SchemaModelInterface
     public function getTypeName(): string;
 
     /**
+     * @param array|null $context
      * @return array
      */
-    public function getDefaultFields(): array;
-
-    /**
-     * @param array|null $context
-     * @return callable
-     */
-    public function getDefaultResolver(?array $context): callable;
+    public function getDefaultResolver(?array $context): array;
 
     /**
      * @return string

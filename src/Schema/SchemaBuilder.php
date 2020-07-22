@@ -11,7 +11,7 @@ use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
 
-class SchemaBuilder implements ConfigurationApplier
+class SchemaBuilder implements ConfigurationApplier, SchemaValidator
 {
     use Injectable;
     use Configurable;
@@ -62,6 +62,21 @@ class SchemaBuilder implements ConfigurationApplier
     private $enums = [];
 
     /**
+     * @var QueryAbstraction[]
+     */
+    private $queryFields = [];
+
+    /**
+     * @var MutationAbstraction[]
+     */
+    private $mutationFields = [];
+
+    /**
+     * @var array
+     */
+    private $modelDependencies = [];
+
+    /**
      * Schema constructor.
      * @param string $schemaKey
      */
@@ -84,26 +99,23 @@ class SchemaBuilder implements ConfigurationApplier
         $models = $schema[self::MODELS] ?? [];
         $enums = $schema[self::ENUMS] ?? [];
 
-        $queryFields = [];
-        $mutationFields = [];
-
         static::assertValidConfig($types);
         foreach ($types as $typeName => $typeConfig) {
             static::assertValidName($typeName);
             $abstract = TypeAbstraction::create($typeName, $typeConfig);
-            $this->types[$typeName] = $abstract;
+            $this->addType($abstract);
         }
 
         static::assertValidConfig($queries);
         foreach ($queries as $queryName => $queryConfig) {
             $abstract = QueryAbstraction::create($queryName, $queryConfig);
-            $queryFields[$abstract->getName()] = $abstract;
+            $this->queryFields[$abstract->getName()] = $abstract;
         }
 
         static::assertValidConfig($mutations);
         foreach ($mutations as $mutationName => $mutationConfig) {
             $abstract = MutationAbstraction::create($mutationName, $mutationConfig);
-            $mutationFields[$abstract->getName()] = $abstract;
+            $this->mutationFields[$abstract->getName()] = $abstract;
         }
 
         static::assertValidConfig($interfaces);
@@ -116,23 +128,7 @@ class SchemaBuilder implements ConfigurationApplier
         static::assertValidConfig($models);
         foreach ($models as $modelName => $modelConfig) {
             $abstract = ModelAbstraction::create($modelName, $modelConfig);
-            $this->models[$modelName] = $abstract;
-            foreach ($abstract->getOperations() as $operationAbstraction) {
-                SchemaBuilder::invariant(
-                    $operationAbstraction instanceof QueryAbstraction ||
-                    $operationAbstraction instanceof MutationAbstraction,
-                    'Invalid operation defined on %s',
-                    $modelName
-                );
-                if ($operationAbstraction instanceof QueryAbstraction) {
-                    $queryFields[$operationAbstraction->getName()] = $operationAbstraction;
-                } else if ($operationAbstraction instanceof MutationAbstraction) {
-                    $mutationFields[$operationAbstraction->getName()] = $operationAbstraction;
-                }
-            }
-            foreach ($abstract->getExtraTypes() as $type) {
-                $this->types[$type->getName()] = $type;
-            }
+            $this->addModel($abstract);
         }
 
         static::assertValidConfig($enums);
@@ -145,14 +141,22 @@ class SchemaBuilder implements ConfigurationApplier
             $this->enums[$enumName] = $abstract;
         }
 
+        foreach ($this->modelDependencies as $modelClass) {
+            $this->addModel(ModelAbstraction::create($modelClass));
+        }
+
+        foreach ($this->models as $modelAbstraction) {
+            $this->addType($modelAbstraction);
+        }
+
         $queryType = TypeAbstraction::create(self::QUERY_TYPE, [
-            'fields' => $queryFields,
+            'fields' => $this->queryFields,
         ]);
         $this->types[self::QUERY_TYPE] = $queryType;
 
         if (!empty($mutationFields)) {
             $mutationType = TypeAbstraction::create(self::MUTATION_TYPE, [
-                'fields' => $mutationFields,
+                'fields' => $this->mutationFields,
             ]);
             $this->types[self::MUTATION_TYPE] = $mutationType;
         }
@@ -185,8 +189,7 @@ class SchemaBuilder implements ConfigurationApplier
             'Hash' => $this->getHash(),
             'Types' => ArrayList::create(array_values($this->types)),
             'Queries' => ArrayList::create(array_values($this->queries)),
-            'Mutations' => ArrayList::create(array_values($this->queries)),
-            'Models' => ArrayList::create(array_values($this->models)),
+            'Mutations' => ArrayList::create(array_values($this->mutations)),
             'Interfaces' => ArrayList::create(array_values($this->interfaces)),
             'Enums' => ArrayList::create(array_values($this->enums)),
             'QueryType' => self::QUERY_TYPE,
@@ -214,6 +217,78 @@ class SchemaBuilder implements ConfigurationApplier
             $schemaConfig->setMutation($callback());
         }
         return new Schema($schemaConfig);
+    }
+
+    /**
+     * @throws SchemaBuilderException
+     */
+    public function validate(): void
+    {
+        $validators = array_merge(
+            $this->types,
+            $this->queries,
+            $this->mutations,
+            $this->enums,
+            $this->interfaces
+        );
+        /* @var SchemaValidator $abstraction */
+        foreach ($validators as $abstraction) {
+            $abstraction->validate();
+        }
+    }
+
+    /**
+     * @param TypeAbstraction $type
+     * @return SchemaBuilder
+     * @throws SchemaBuilderException
+     */
+    public function addType(TypeAbstraction $type): SchemaBuilder
+    {
+        $existing = $this->types[$type->getName()] ?? null;
+        $this->types[$type->getName()] = $existing ? $existing->mergeWith($type) : $type;
+
+        return $this;
+    }
+
+    /**
+     * @param ModelAbstraction $modelAbstract
+     * @return SchemaBuilder
+     * @throws SchemaBuilderException
+     */
+    public function addModel(ModelAbstraction $modelAbstract): SchemaBuilder
+    {
+        $existing = $this->models[$modelAbstract->getName()] ?? null;
+        $this->models[$modelAbstract->getName()] = $existing
+            ? $existing->mergeWith($modelAbstract)
+            : $modelAbstract;
+
+        foreach ($modelAbstract->getExtraTypes() as $type) {
+            $this->addType($type);
+        }
+
+        foreach ($modelAbstract->getOperations() as $operationAbstraction) {
+            SchemaBuilder::invariant(
+                $operationAbstraction instanceof QueryAbstraction ||
+                $operationAbstraction instanceof MutationAbstraction,
+                'Invalid operation defined on %s',
+                $modelAbstract->getName()
+            );
+            if ($operationAbstraction instanceof QueryAbstraction) {
+                $this->queryFields[$operationAbstraction->getName()] = $operationAbstraction;
+            } else if ($operationAbstraction instanceof MutationAbstraction) {
+                $this->mutationFields[$operationAbstraction->getName()] = $operationAbstraction;
+            }
+        }
+
+        if ($modelAbstract->getModel() instanceof ModelDependencyProvider) {
+            /* @var SchemaModelInterface&ModelDependencyProvider $model */
+            $model = $modelAbstract->getModel();
+            foreach ($model->getModelDependencies() as $class) {
+                $this->modelDependencies[$class] = $class;
+            }
+        }
+
+        return $this;
     }
 
     private function getHash(): string

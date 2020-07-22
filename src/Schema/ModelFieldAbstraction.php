@@ -7,6 +7,8 @@ use ReflectionException;
 
 class ModelFieldAbstraction extends FieldAbstraction
 {
+    const INTROSPECT_TYPE = '__INTROSPECT_TYPE__';
+
     /**
      * @var SchemaModelInterface
      */
@@ -23,6 +25,11 @@ class ModelFieldAbstraction extends FieldAbstraction
     private $modelTypeOperations = null;
 
     /**
+     * @var string
+     */
+    private $property;
+
+    /**
      * ModelFieldAbstraction constructor.
      * @param string $name
      * @param $config
@@ -33,53 +40,80 @@ class ModelFieldAbstraction extends FieldAbstraction
     public function __construct(string $name, $config, SchemaModelInterface $model)
     {
         $this->setModel($model);
-        list($fieldName, $args) = static::parseName($name);
-        $property = $config['property'] ?? $fieldName;
-
-        SchemaBuilder::invariant(
-            $this->getModel()->hasField($property),
-            'DataObject %s does not have a field "%s"',
-            $this->getModel()->getSourceClass(),
-            $property
-        );
         SchemaBuilder::invariant(
             is_array($config) || is_string($config) || $config === true,
             'Config for field %s must be a string representing a type, a map of config or a value of true
                 to for type introspection from the model.',
-            $fieldName
+            $name
         );
+        $this->setResolver($model->getDefaultResolver());
 
-        $fieldConfig = [
-            'args' => $args,
-            'type' => is_string($config) ? $config : $this->getModel()->getTypeForField($property),
-        ];
-        if (is_array($config)) {
-            $fieldConfig = array_merge($fieldConfig, $config);
+        if ($config === true) {
+            $config = [
+                'type' => true,
+            ];
         }
+
+        $this->setProperty($config['property'] ?? null);
+        parent::__construct($name, $config);
+    }
+
+    public function applyConfig(array $config)
+    {
         SchemaBuilder::invariant(
-            $fieldConfig['type'],
-            'Could not introspect type for field %s',
-            $fieldName
+            $this->getModel()->hasField($this->getFieldName()),
+            'DataObject %s does not have a field "%s"',
+            $this->getModel()->getSourceClass(),
+            $this->getFieldName()
         );
-
-        if ($property !== $fieldName) {
-            $this->addResolverContext('propertyMapping', [
-                $fieldName => $property,
-            ]);
+        $type = $config['type'] ?? true;
+        if ($type === true) {
+            $config['type'] = $this->getModel()->getTypeForField($this->getFieldName());
         }
-        $resolver = $fieldConfig['resolver'] ?? null;
+        $resolver = $config['resolver'] ?? null;
         if (!$resolver) {
-            $fieldConfig['resolver'] = $this->getModel()->getDefaultResolver($this->getResolverContext());
+            $config['resolver'] = $this->getModel()->getDefaultResolver($this->getResolverContext());
         }
 
-        $this->modelTypeFields = $fieldConfig['fields'] ?? null;
-        $this->modelTypeOperations = $fieldConfig['operations'] ?? null;
+        $this->modelTypeFields = $config['fields'] ?? null;
+        $this->modelTypeOperations = $config['operations'] ?? null;
 
-        unset($fieldConfig['fields']);
-        unset($fieldConfig['operations']);
-        unset($fieldConfig['property']);
+        unset($config['fields']);
+        unset($config['operations']);
+        unset($config['property']);
 
-        parent::__construct($fieldName, $fieldConfig);
+        parent::applyConfig($config);
+    }
+
+    /**
+     * @param EncodedType|string $type
+     * @return FieldAbstraction
+     * @throws SchemaBuilderException
+     */
+    public function applyType($type): FieldAbstraction
+    {
+        $fieldType = $type === self::INTROSPECT_TYPE
+            ? $this->getModel()->getTypeForField($this->getFieldName())
+            : $type;
+
+        return parent::applyType($fieldType);
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getResolverContext(): ?array
+    {
+        $context = [];
+        if ($this->getProperty() && $this->getProperty() !== $this->getName()) {
+            $context = [
+                'propertyMapping' => [
+                    $this->getName() => $this->getProperty(),
+                ]
+            ];
+        }
+
+        return array_merge(parent::getResolverContext(), $context);
     }
 
     /**
@@ -120,4 +154,33 @@ class ModelFieldAbstraction extends FieldAbstraction
         $this->model = $model;
         return $this;
     }
+
+    /**
+     * @return string|null
+     */
+    public function getProperty(): ?string
+    {
+        return $this->property;
+    }
+
+    /**
+     * @param string|null $property
+     * @return ModelFieldAbstraction
+     */
+    public function setProperty(?string $property): ModelFieldAbstraction
+    {
+        $this->property = $property;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFieldName(): string
+    {
+        return $this->getProperty() ?: $this->getName();
+    }
+
+
 }

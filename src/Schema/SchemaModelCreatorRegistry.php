@@ -15,6 +15,11 @@ class SchemaModelCreatorRegistry
     private $modelCreators = [];
 
     /**
+     * @var array
+     */
+    private static$__cache = [];
+
+    /**
      * SchemaModelCreatorRegistry constructor.
      * @param array $modelCreators
      */
@@ -56,9 +61,16 @@ class SchemaModelCreatorRegistry
      */
     public function getModel(string $class): ?SchemaModelInterface
     {
+        $cached = static::$__cache[$class] ?? null;
+        if ($cached) {
+            return $cached;
+        }
         foreach ($this->modelCreators as $creator) {
             if ($creator->appliesTo($class)) {
-                return $creator->createModel($class);
+                $model = $creator->createModel($class);
+                static::$__cache[$class] = $model;
+
+                return $model;
             }
         }
 

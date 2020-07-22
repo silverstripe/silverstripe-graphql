@@ -8,7 +8,7 @@ use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
 use SilverStripe\View\ViewableData;
 
-class EnumAbstraction extends ViewableData
+class EnumAbstraction extends ViewableData implements SchemaValidator
 {
     /**
      * @var string
@@ -55,6 +55,18 @@ class EnumAbstraction extends ViewableData
         }
 
         return $list;
+    }
+
+    /**
+     * @throws SchemaBuilderException
+     */
+    public function validate(): void
+    {
+        SchemaBuilder::invariant(
+            $this->getValueList()->exists(),
+            'Enum type %s has no values defined',
+            $this->getName()
+        );
     }
 
     /**

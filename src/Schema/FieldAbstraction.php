@@ -14,7 +14,7 @@ use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ViewableData;
 use ReflectionException;
 
-class FieldAbstraction extends ViewableData implements ConfigurationApplier
+class FieldAbstraction extends ViewableData implements ConfigurationApplier, SchemaValidator
 {
     const DEFAULT_TYPE = 'String';
 
@@ -75,8 +75,9 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
 
         SchemaBuilder::invariant(
             is_string($config) || is_array($config),
-            'Config for field %s must be a string or array',
-            $name
+            'Config for field %s must be a string or array. Got %s',
+            $name,
+            gettype($config)
         );
         if (is_string($config)) {
             $this->applyType($config);
@@ -101,8 +102,9 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
         ]);
 
         $type = $config['type'] ?? null;
-        SchemaBuilder::invariant($type, 'Field %s has no type defined', $this->name);
-        $this->applyType($type);
+        if ($type) {
+            $this->applyType($type);
+        }
 
         $description = $config['description'] ?? null;
         $args = $config['args'] ?? [];
@@ -173,6 +175,31 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
     }
 
     /**
+     * @param FieldAbstraction $fieldAbstraction
+     * @return FieldAbstraction
+     */
+    public function mergeWith(FieldAbstraction $fieldAbstraction): FieldAbstraction
+    {
+        foreach ($fieldAbstraction->getArgs() as $argAbstract) {
+            $this->args[$argAbstract->getName()] = $argAbstract;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @throws SchemaBuilderException
+     */
+    public function validate(): void
+    {
+        SchemaBuilder::invariant(
+            $this->getEncodedType(),
+            'Field %s has no type defined',
+            $this->getName()
+        );
+    }
+
+    /**
      * @param string $type
      * @return EncodedType
      * @throws SchemaBuilderException
@@ -235,6 +262,9 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
             // This API is meant to be public, but there is a bug
             // related to strict typing https://github.com/webonyx/graphql-php/issues/698
 
+            // Edit: this has now been fixed in https://github.com/webonyx/graphql-php/pull/693/
+            // Remove this when the patch is in a stable release.
+
             $parser = new Parser($args, ['noLocation' => true]);
             $reflect = new \ReflectionClass(Parser::class);
             $expect = $reflect->getMethod('expect');
@@ -285,11 +315,11 @@ class FieldAbstraction extends ViewableData implements ConfigurationApplier
     }
 
     /**
-     * @return array
+     * @return ArgumentAbstraction[]
      */
     public function getArgs(): array
     {
-        $this->args;
+        return $this->args;
     }
 
     /**

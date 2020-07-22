@@ -43,41 +43,6 @@ class $Name extends <% if $IsInput %>InputObjectType<% else %>ObjectType<% end_i
 
 <% end_loop %>
 
-<% loop $Models %>
-class $Name extends ObjectType {
-    public function __construct()
-    {
-        parent::__construct([
-            'name' => '$Name',
-            'fields' => function () {
-                return [
-                <% loop $FieldList %>
-                    [
-                        'name' => '$Name',
-                        'type' => $EncodedType,
-                        'resolve' => $getEncodedResolver($Up.Name),
-                        <% if $Description %>
-                        'description' => '$Description',
-                        <% end_if %>
-                        <% if $ArgList %>
-                        'args' => [
-                        <% loop $ArgList %>
-                            [
-                                'name' => '$Name',
-                                'type' => $EncodedType
-                            ],
-                        <% end_loop %>
-                        ],
-                        <% end_if %>
-                    ],
-                <% end_loop %>
-                ];
-            }
-        ]);
-    }
-}
-<% end_loop %>
-
 <% loop $Enums %>
 class $Name extends EnumType
 {
@@ -141,9 +106,6 @@ class $TypesClassName
     public static function nonNull(\$type) { return new NonNull(\$type); }
 
     <% loop $Types %>
-    public static function {$Name}() { return static::get({$Name}::class); }
-    <% end_loop %>
-    <% loop $Models %>
     public static function {$Name}() { return static::get({$Name}::class); }
     <% end_loop %>
     <% loop $Enums %>

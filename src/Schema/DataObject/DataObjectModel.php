@@ -8,18 +8,30 @@ use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Schema\DefaultFieldsProvider;
+use SilverStripe\GraphQL\Schema\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\ModelAbstraction;
+use SilverStripe\GraphQL\Schema\ModelDependencyProvider;
 use SilverStripe\GraphQL\Schema\OperationCreator;
 use SilverStripe\GraphQL\Schema\OperationProvider;
+use SilverStripe\GraphQL\Schema\RequiredFieldsProvider;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\SchemaModelInterface;
+use SilverStripe\GraphQL\Schema\TypeAbstraction;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\ORM\SS_List;
+use ReflectionException;
 
-class DataObjectModel implements SchemaModelInterface, OperationProvider
+class DataObjectModel implements
+    SchemaModelInterface,
+    OperationProvider,
+    DefaultFieldsProvider,
+    RequiredFieldsProvider,
+    ExtraTypeProvider,
+    ModelDependencyProvider
 {
     use Injectable;
     use Configurable;
@@ -59,6 +71,11 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
     private $fieldAccessor;
 
     /**
+     * @var InheritanceChain
+     */
+    private $inheritanceChain;
+
+    /**
      * DataObjectModel constructor.
      * @param string $class
      * @throws SchemaBuilderException
@@ -71,8 +88,8 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
             static::class,
             DataObject::class
         );
-
         $this->dataObject = Injector::inst()->get($class);
+        $this->setInheritanceChain(InheritanceChain::create($this->dataObject));
     }
 
     /**
@@ -94,6 +111,9 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
      */
     public function hasField(string $fieldName): bool
     {
+        if ($fieldName === $this->getInheritanceChain()->getName()) {
+            return true;
+        }
         return $this->getFieldAccessor()->hasField($this->dataObject, $fieldName);
     }
 
@@ -136,6 +156,37 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
 
     /**
      * @return array
+     * @throws ReflectionException
+     */
+    public function getRequiredFields(): array
+    {
+        $descendants = $this->getInheritanceChain()->getDescendantModels();
+        if (empty($descendants)) {
+            return [];
+        }
+        $descendantsType = $this->getInheritanceChain()->getExtensionType();
+
+        return [
+            $this->getInheritanceChain()->getName() => $descendantsType->getName()
+        ];
+    }
+
+    /**
+     * @return TypeAbstraction[]
+     * @throws ReflectionException
+     */
+    public function getExtraTypes(): array
+    {
+        $types = [];
+        if ($extensionType = $this->getInheritanceChain()->getExtensionType()) {
+            $types[] = $this->getInheritanceChain()->getExtensionType();
+        }
+
+        return $types;
+    }
+
+    /**
+     * @return array
      */
     public function getAllFields(): array
     {
@@ -144,9 +195,9 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
 
     /**
      * @param array|null $context
-     * @return callable
+     * @return array
      */
-    public function getDefaultResolver(?array $context = []): callable
+    public function getDefaultResolver(?array $context = []): array
     {
         return empty($context)
             ? [Resolver::class, 'resolve']
@@ -236,6 +287,36 @@ class DataObjectModel implements SchemaModelInterface, OperationProvider
         }
 
         return ModelAbstraction::create($class);
+    }
+
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    public function getModelDependencies(): array
+    {
+        return array_merge(
+            $this->getInheritanceChain()->getAncestralModels(),
+            $this->getInheritanceChain()->getDescendantModels()
+        );
+    }
+
+    /**
+     * @return InheritanceChain
+     */
+    public function getInheritanceChain(): InheritanceChain
+    {
+        return $this->inheritanceChain;
+    }
+
+    /**
+     * @param InheritanceChain $inheritanceChain
+     * @return DataObjectModel
+     */
+    public function setInheritanceChain(InheritanceChain $inheritanceChain): DataObjectModel
+    {
+        $this->inheritanceChain = $inheritanceChain;
+        return $this;
     }
 
     /**
