@@ -3,7 +3,7 @@ Name: graphql-global-schema-assets
 Only:
   moduleexists: 'silverstripe/assets'
 ---
-SilverStripe\GraphQL\Schema\SchemaBuilder:
+SilverStripe\GraphQL\Schema\Schema:
   schemas:
     '*':
       types:

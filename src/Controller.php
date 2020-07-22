@@ -19,7 +19,7 @@ use SilverStripe\GraphQL\Permission\MemberContextProvider;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Schema\ContextProvider;
-use SilverStripe\GraphQL\Schema\SchemaBuilder;
+use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
@@ -67,7 +67,7 @@ class Controller extends BaseController implements Flushable
     private static $cache_on_flush = true;
 
     /**
-     * @var SchemaBuilder
+     * @var Schema
      */
     private $builder;
 
@@ -88,10 +88,10 @@ class Controller extends BaseController implements Flushable
     protected $corsConfig = [];
 
     /**
-     * @param SchemaBuilder $builder
+     * @param Schema $builder
      * @param QueryHandlerInterface $queryHandler
      */
-    public function __construct(SchemaBuilder $builder, QueryHandlerInterface $queryHandler)
+    public function __construct(Schema $builder, QueryHandlerInterface $queryHandler)
     {
         parent::__construct();
         $this->setBuilder($builder);
@@ -480,18 +480,18 @@ class Controller extends BaseController implements Flushable
     }
 
     /**
-     * @return SchemaBuilder
+     * @return Schema
      */
-    public function getBuilder(): SchemaBuilder
+    public function getBuilder(): Schema
     {
         return $this->builder;
     }
 
     /**
-     * @param SchemaBuilder $builder
+     * @param Schema $builder
      * @return Controller
      */
-    public function setBuilder(SchemaBuilder $builder): Controller
+    public function setBuilder(Schema $builder): Controller
     {
         $this->builder = $builder;
         return $this;

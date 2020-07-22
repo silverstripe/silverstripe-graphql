@@ -31,14 +31,14 @@ SilverStripe\Core\Injector\Injector:
       permissionChecker: '%$SilverStripe\GraphQL\Permission\QueryPermissionChecker.default'
 
   # Set up a default endpoint that can be activated with a Director rule
-  SilverStripe\GraphQL\Schema\SchemaBuilder.default:
-    class: SilverStripe\GraphQL\Schema\SchemaBuilder
+  SilverStripe\GraphQL\Schema\Schema.default:
+    class: SilverStripe\GraphQL\Schema\Schema
     constructor:
       schemaKey: default
   SilverStripe\GraphQL\Controller.default:
     class: SilverStripe\GraphQL\Controller
     constructor:
-      builder: '%$SilverStripe\GraphQL\Schema\SchemaBuilder.default'
+      builder: '%$SilverStripe\GraphQL\Schema\Schema.default'
       queryHandler: '%$SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface'
 
 

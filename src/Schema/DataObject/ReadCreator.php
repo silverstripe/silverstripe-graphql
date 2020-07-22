@@ -4,13 +4,13 @@
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\GraphQL\Schema\FieldAbstraction;
-use SilverStripe\GraphQL\Schema\OperationCreator;
-use SilverStripe\GraphQL\Schema\QueryAbstraction;
-use SilverStripe\GraphQL\Schema\SchemaModelInterface;
-use SilverStripe\GraphQL\Schema\SchemaUtils;
+use SilverStripe\GraphQL\Schema\Field\Field;
+use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
+use SilverStripe\GraphQL\Schema\Field\Query;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
+use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataList;
-use \Closure;
+use Closure;
 
 class ReadCreator implements OperationCreator
 {
@@ -20,16 +20,16 @@ class ReadCreator implements OperationCreator
      * @param SchemaModelInterface $model
      * @param string $typeName
      * @param array $config
-     * @return FieldAbstraction
+     * @return Field
      */
     public function createOperation(
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): FieldAbstraction
+    ): Field
     {
-        return QueryAbstraction::create(
-            'read' . ucfirst(SchemaUtils::pluralise($typeName)),
+        return Query::create(
+            'read' . ucfirst(Schema::pluralise($typeName)),
             [
                 'type' => sprintf('[%s]', $typeName),
                 'defaultResolver' => [static::class, 'resolve'],

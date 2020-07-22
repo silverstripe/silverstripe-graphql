@@ -8,18 +8,18 @@ use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Schema\DefaultFieldsProvider;
-use SilverStripe\GraphQL\Schema\ExtraTypeProvider;
-use SilverStripe\GraphQL\Schema\ModelAbstraction;
-use SilverStripe\GraphQL\Schema\ModelDependencyProvider;
-use SilverStripe\GraphQL\Schema\OperationCreator;
-use SilverStripe\GraphQL\Schema\OperationProvider;
-use SilverStripe\GraphQL\Schema\RequiredFieldsProvider;
-use SilverStripe\GraphQL\Schema\SchemaBuilder;
-use SilverStripe\GraphQL\Schema\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\SchemaModelCreatorRegistry;
-use SilverStripe\GraphQL\Schema\SchemaModelInterface;
-use SilverStripe\GraphQL\Schema\TypeAbstraction;
+use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
+use SilverStripe\GraphQL\Schema\Type\ModelType;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelDependencyProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
+use SilverStripe\GraphQL\Schema\Interfaces\OperationProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\RequiredFieldsProvider;
+use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
+use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\ORM\SS_List;
@@ -82,7 +82,7 @@ class DataObjectModel implements
      */
     public function __construct(string $class)
     {
-        SchemaBuilder::invariant(
+        Schema::invariant(
             is_subclass_of($class, DataObject::class),
             '%s only accepts %s subclasses',
             static::class,
@@ -132,7 +132,7 @@ class DataObjectModel implements
             return $result->config()->get('graphql_type');
         }
         $class = $this->getModelClass($result);
-        SchemaBuilder::invariant(
+        Schema::invariant(
             $class,
             'Cannot determine data class for field %s on %s',
             $fieldName,
@@ -172,7 +172,7 @@ class DataObjectModel implements
     }
 
     /**
-     * @return TypeAbstraction[]
+     * @return Type[]
      * @throws ReflectionException
      */
     public function getExtraTypes(): array
@@ -244,13 +244,13 @@ class DataObjectModel implements
         if (!$creator) {
             return null;
         }
-        SchemaBuilder::invariant(
+        Schema::invariant(
             class_exists($creator),
             'Operation creator %s does not exist'
         );
         /* @var OperationCreator $obj */
         $obj = Injector::inst()->get($creator);
-        SchemaBuilder::invariant(
+        Schema::invariant(
             $obj instanceof OperationCreator,
             'Operation %s is not an instance of %s',
             $creator,
@@ -272,9 +272,9 @@ class DataObjectModel implements
 
     /**
      * @param string $fieldName
-     * @return ModelAbstraction|null
+     * @return ModelType|null
      */
-    public function getModelField(string $fieldName): ?ModelAbstraction
+    public function getModelField(string $fieldName): ?ModelType
     {
         $result = $this->getFieldAccessor()->accessField($this->dataObject, $fieldName);
         $class = $this->getModelClass($result);
@@ -286,7 +286,7 @@ class DataObjectModel implements
             return null;
         }
 
-        return ModelAbstraction::create($class);
+        return ModelType::create($class);
     }
 
     /**
@@ -343,7 +343,7 @@ class DataObjectModel implements
     private function formatClass(string $class): string
     {
         $formatter = $this->config()->get('type_formatter');
-        SchemaBuilder::invariant(
+        Schema::invariant(
             is_callable($formatter, false),
             'type_formatter property for %s is not callable',
             __CLASS__
@@ -364,7 +364,7 @@ class DataObjectModel implements
             return call_user_func_array($prefix, [$class]);
         }
 
-        SchemaBuilder::invariant(
+        Schema::invariant(
             is_string($prefix),
             'type_prefix on %s must be a string',
             __CLASS__

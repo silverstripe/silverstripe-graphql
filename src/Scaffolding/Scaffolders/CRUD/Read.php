@@ -104,22 +104,6 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
     }
 
     /**
-     * Pluralise a name
-     *
-     * @param string $typeName
-     * @return string
-     */
-    protected function pluralise($typeName)
-    {
-        // Ported from DataObject::plural_name()
-        if (preg_match('/[^aeiou]y$/i', $typeName)) {
-            $typeName = substr($typeName, 0, -1) . 'ie';
-        }
-        $typeName .= 's';
-        return $typeName;
-    }
-
-    /**
      * Use a generated Input type, and require an ID.
      *
      * @param Manager $manager

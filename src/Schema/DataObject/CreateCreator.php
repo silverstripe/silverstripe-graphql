@@ -8,13 +8,13 @@ use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Schema\FieldAbstraction;
-use SilverStripe\GraphQL\Schema\InputTypeAbstraction;
-use SilverStripe\GraphQL\Schema\InputTypeProvider;
-use SilverStripe\GraphQL\Schema\MutationAbstraction;
-use SilverStripe\GraphQL\Schema\OperationCreator;
-use SilverStripe\GraphQL\Schema\PermissionsException;
-use SilverStripe\GraphQL\Schema\SchemaModelInterface;
+use SilverStripe\GraphQL\Schema\Field\Field;
+use SilverStripe\GraphQL\Schema\Type\InputType;
+use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
+use SilverStripe\GraphQL\Schema\Field\Mutation;
+use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
+use SilverStripe\GraphQL\Schema\Exception\PermissionsException;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use Closure;
 use SilverStripe\ORM\DataObject;
 
@@ -37,15 +37,15 @@ class CreateCreator implements OperationCreator, InputTypeProvider
      * @param SchemaModelInterface $model
      * @param string $typeName
      * @param array $config
-     * @return FieldAbstraction
+     * @return Field
      */
     public function createOperation(
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): FieldAbstraction
+    ): Field
     {
-        return MutationAbstraction::create(
+        return Mutation::create(
             'create' . ucfirst($typeName),
             [
                 'type' => $typeName,
@@ -103,7 +103,7 @@ class CreateCreator implements OperationCreator, InputTypeProvider
         foreach ($includedFields as $fieldName) {
             $fieldMap[$fieldName] = $model->getTypeForField($fieldName);
         }
-        $inputType = InputTypeAbstraction::create(
+        $inputType = InputType::create(
             self::inputTypeName($typeName),
             [
                 'fields' => $fieldMap

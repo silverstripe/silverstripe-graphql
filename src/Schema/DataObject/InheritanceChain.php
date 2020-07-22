@@ -4,13 +4,12 @@
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
 
-use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\GraphQL\Schema\ModelAbstraction;
-use SilverStripe\GraphQL\Schema\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\TypeAbstraction;
+use SilverStripe\GraphQL\Schema\Type\ModelType;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\ORM\DataObject;
 use ReflectionException;
 
@@ -37,7 +36,7 @@ class InheritanceChain
     private static $descendant_typename_creator = [ self::class, 'createDescendantTypename' ];
 
     /**
-     * @var TypeAbstraction
+     * @var Type
      */
     private $descendantType;
 
@@ -59,7 +58,7 @@ class InheritanceChain
     }
 
     /**
-     * @return ModelAbstraction[]
+     * @return ModelType[]
      */
     public function getAncestralModels(): array
     {
@@ -80,7 +79,7 @@ class InheritanceChain
     }
 
     /**
-     * @return ModelAbstraction[]
+     * @return ModelType[]
      * @throws ReflectionException
      */
     public function getDescendantModels(): array
@@ -91,10 +90,10 @@ class InheritanceChain
     }
 
     /**
-     * @return TypeAbstraction|null
+     * @return Type|null
      * @throws ReflectionException
      */
-    public function getExtensionType(): ?TypeAbstraction
+    public function getExtensionType(): ?Type
     {
         if ($this->descendantType) {
             return $this->descendantType;
@@ -108,12 +107,12 @@ class InheritanceChain
         );
         $fields = [];
         foreach ($this->getDescendantModels() as $className) {
-            $abstract = ModelAbstraction::create($className);
-            $fieldName = static::typeNameToFieldName($abstract->getName());
-            $fields[$fieldName] = $abstract->getName();
+            $modelType = ModelType::create($className);
+            $fieldName = static::typeNameToFieldName($modelType->getName());
+            $fields[$fieldName] = $modelType->getName();
         }
 
-        $this->descendantType = TypeAbstraction::create($typeName, [
+        $this->descendantType = Type::create($typeName, [
             'fields' => $fields,
             'fieldResolver' => [static::class, 'resolveExtensionType'],
         ]);

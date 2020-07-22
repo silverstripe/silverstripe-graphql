@@ -5,12 +5,12 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 
 
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\GraphQL\Schema\FieldAbstraction;
-use SilverStripe\GraphQL\Schema\OperationCreator;
-use SilverStripe\GraphQL\Schema\QueryAbstraction;
-use SilverStripe\GraphQL\Schema\SchemaModelInterface;
+use SilverStripe\GraphQL\Schema\Field\Field;
+use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
+use SilverStripe\GraphQL\Schema\Field\Query;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\ORM\DataObject;
-use \Closure;
+use Closure;
 
 class ReadOneCreator implements OperationCreator
 {
@@ -20,15 +20,15 @@ class ReadOneCreator implements OperationCreator
      * @param SchemaModelInterface $model
      * @param string $typeName
      * @param array $config
-     * @return FieldAbstraction
+     * @return Field
      */
     public function createOperation(
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): FieldAbstraction
+    ): Field
     {
-        return QueryAbstraction::create(
+        return Query::create(
             'readOne' . ucfirst($typeName),
             [
                 'type' => $typeName,

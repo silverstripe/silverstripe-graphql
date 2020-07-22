@@ -3,7 +3,7 @@
 namespace SilverStripe\GraphQL\Tasks;
 
 use SilverStripe\Dev\BuildTask;
-use SilverStripe\GraphQL\Schema\SchemaBuilder;
+use SilverStripe\GraphQL\Schema\Schema;
 
 class BuildSchemaTask extends BuildTask
 {
@@ -12,7 +12,7 @@ class BuildSchemaTask extends BuildTask
     public function run($request)
     {
         $startTime = microtime(true);
-        $builder = SchemaBuilder::create('default');
+        $builder = Schema::create('default');
         $builder->loadFromConfig();
         $builder->persistSchema();
         $endTime = microtime(true);

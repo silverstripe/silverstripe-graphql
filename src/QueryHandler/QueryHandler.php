@@ -17,7 +17,7 @@ use SilverStripe\GraphQL\Permission\MemberAware;
 use SilverStripe\GraphQL\Permission\MemberContextProvider;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryProvider;
-use SilverStripe\GraphQL\Schema\ContextProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
 use SilverStripe\ORM\ValidationException;
 use InvalidArgumentException;
 
