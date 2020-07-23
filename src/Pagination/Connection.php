@@ -441,7 +441,7 @@ class Connection implements OperationResolver
      * @param array $args
      * @return array
      */
-    public function getPageinfo($list, array $args)
+    private function getPageinfo($list, array $args)
     {
         $nextPage = false;
         $previousPage = false;
