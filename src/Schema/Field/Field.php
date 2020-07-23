@@ -41,9 +41,9 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     private $args = [];
 
     /**
-     * @var EncodedType
+     * @var string|EncodedType
      */
-    private $encodedType;
+    private $type;
 
     /**
      * @var string|null
@@ -81,16 +81,14 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
         $this->applyArgs($args);
 
         Schema::invariant(
-            is_string($config) || is_array($config),
-            'Config for field %s must be a string or array. Got %s',
+            is_string($config) || is_array($config) || $config instanceof Field,
+            'Config for field %s must be a string, array, or instance of %s. Got %s',
             $name,
+            Field::class,
             gettype($config)
         );
-        if (is_string($config)) {
-            $this->applyType($config);
-        } else {
-            $this->applyConfig($config);
-        }
+        $appliedConfig = is_string($config) ? ['type' => $config] : $config;
+        $this->applyConfig($appliedConfig);
     }
 
     /**
@@ -110,39 +108,32 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
 
         $type = $config['type'] ?? null;
         if ($type) {
-            $this->applyType($type);
+            $this->setType($type);
+        }
+        foreach (['resolver', 'defaultResolver'] as $key) {
+            if (isset($config[$key])) {
+                Schema::invariant(
+                    $config[$key] === null || (is_array($config[$key]) && count($config[$key]) === 2),
+                    'Resolvers must be an array tuple of class name, method name'
+                );
+            }
         }
 
-        $description = $config['description'] ?? null;
-        $args = $config['args'] ?? [];
-        $resolver = $config['resolver'] ?? null;
-        $defaultResolver = $config['defaultResolver'] ?? null;
-        $resolverContext = $config['resolverContext'] ?? null;
-
-        foreach ([$resolver, $defaultResolver] as $callable) {
-            Schema::invariant(
-                $callable === null || (is_array($callable) && count($callable) === 2),
-                'Resolvers must be an array tuple of class name, method name'
-            );
+        if (isset($config['description'])) {
+            $this->setDescription($config['description']);
         }
-        $this->setDescription($description);
-        $this->applyArgs($args);
-        $this->setResolver($resolver);
-        $this->setDefaultResolver($defaultResolver);
-        if ($resolverContext) {
-            $this->setResolverContext($resolverContext);
-        }
-    }
 
-    /**
-     * @param string|EncodedType $type
-     * @return $this
-     * @throws SchemaBuilderException
-     */
-    public function applyType($type): self
-    {
-        $encodedType = $type instanceof EncodedType ? $type : $this->toEncodedType($type);
-        return $this->setEncodedType($encodedType);
+        $this->applyArgs($config['args'] ?? []);
+
+        if (isset($config['resolver'])) {
+            $this->setResolver($config['resolver']);
+        }
+        if (isset($config['defaultResolver'])) {
+            $this->setDefaultResolver($config['defaultResolver']);
+        }
+        if (isset($config['resolverContext'])) {
+            $this->setResolverContext($config['resolverContext']);
+        }
     }
 
     /**
@@ -157,26 +148,32 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
             if ($config === false) {
                 continue;
             }
-            Schema::assertValidName($argName);
-            if (is_string($config)) {
-                $this->args[$argName] = Argument::create(
-                    $argName,
-                    $config
-                );
-            } else {
-                Schema::assertValidConfig($config);
-                $type = $config['type'] ?? null;
-                Schema::invariant(
-                    $type,
-                    'Argument %s on %s has no type defined',
-                    $argName,
-                    $this->name
-                );
-                $arg = Argument::create($argName, $type);
-                $arg->applyConfig($config);
-                $this->args[$argName] = $arg;
-            }
+            $this->addArg($argName, $config);
         }
+
+        return $this;
+    }
+
+    /**
+     * @param $arg
+     * @param null $config
+     * @return Field
+     * @throws SchemaBuilderException
+     */
+    public function addArg($arg, $config = null): Field
+    {
+        Schema::invariant(
+            is_string($arg) || $arg instanceof Argument,
+            '%s::%s takes a string as an argument name or an instance of %s',
+            __CLASS__,
+            __FUNCTION__,
+            Argument::class
+        );
+        $argObj = $arg instanceof Argument
+            ? $arg
+            : Argument::create($arg, $config);
+
+        $this->args[$argObj->getName()] = $argObj;
 
         return $this;
     }
@@ -304,6 +301,26 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     }
 
     /**
+     * @param $type
+     * @return Field
+     * @throws SchemaBuilderException
+     */
+    public function setType($type): Field
+    {
+        Schema::invariant(
+            is_string($type) || $type instanceof EncodedType,
+            '%s::%s must be a string or an instance of %s',
+            __CLASS__,
+            __FUNCTION__,
+            EncodedType::class
+        );
+
+        $this->type = $type;
+
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getName(): string
@@ -349,20 +366,11 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
 
     /**
      * @return EncodedType
+     * @throws SchemaBuilderException
      */
     public function getEncodedType(): EncodedType
     {
-        return $this->encodedType;
-    }
-
-    /**
-     * @param EncodedType $encodedType
-     * @return Field
-     */
-    public function setEncodedType(EncodedType $encodedType): Field
-    {
-        $this->encodedType = $encodedType;
-        return $this;
+        return $this->type instanceof EncodedType ? $this->type : $this->toEncodedType($this->type);
     }
 
     /**

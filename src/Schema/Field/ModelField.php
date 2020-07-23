@@ -59,7 +59,10 @@ class ModelField extends Field
             ];
         }
 
-        $this->setProperty($config['property'] ?? null);
+        if (isset($config['property'])) {
+            $this->setProperty($config['property']);
+        }
+
         parent::__construct($name, $config);
     }
 
@@ -95,13 +98,13 @@ class ModelField extends Field
      * @return Field
      * @throws SchemaBuilderException
      */
-    public function applyType($type): Field
+    public function setType($type): Field
     {
         $fieldType = $type === self::INTROSPECT_TYPE
             ? $this->getModel()->getTypeForField($this->getFieldName())
             : $type;
 
-        return parent::applyType($fieldType);
+        return parent::setType($fieldType);
     }
 
     /**

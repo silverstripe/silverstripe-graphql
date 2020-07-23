@@ -11,7 +11,6 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\View\ViewableData;
-use InvalidArgumentException;
 
 class Argument extends ViewableData implements ConfigurationApplier
 {
@@ -21,9 +20,9 @@ class Argument extends ViewableData implements ConfigurationApplier
     private $name;
 
     /**
-     * @var EncodedType
+     * @var string|EncodedType|TypeReference
      */
-    private $encodedType;
+    private $type;
 
     /**
      * @var string|int|bool|null
@@ -42,46 +41,20 @@ class Argument extends ViewableData implements ConfigurationApplier
      * @param array $config
      * @throws SchemaBuilderException
      */
-    public function __construct(string $name, $type, array $config = [])
+    public function __construct(string $name, $config)
     {
         parent::__construct();
         Schema::assertValidName($name);
         $this->name = $name;
-        $this->setType($type);
-    }
+        Schema::invariant(
+            is_string($config) || is_array($config),
+            '%::%s requires a string type name or an array as a second parameter',
+            __CLASS__,
+            __FUNCTION__
+        );
 
-    /**
-     * @param string|TypeReference|EncodedType $type
-     * @return $this
-     * @throws SchemaBuilderException
-     */
-    public function setType($type): self
-    {
-        if ($type instanceof EncodedType) {
-            $this->encodedType = $type;
-
-            return $this;
-        }
-
-        if (!is_string($type) && !$type instanceof TypeReference) {
-            throw new InvalidArgumentException(sprintf(
-                'Illegal type passed to argument "%"',
-                $this->name
-            ));
-        }
-
-        $ref = $type instanceof TypeReference ? $type : TypeReference::create($type);
-
-        try {
-            $this->encodedType = EncodedType::create($ref->toAST());
-        } catch (SyntaxError $e) {
-            throw new SchemaBuilderException(sprintf(
-                'The type for argument "%s" is not properly formatted',
-                $this->name
-            ));
-        }
-
-        return $this;
+        $appliedConfig = is_string($config) ? ['type' => $config] : $config;
+        $this->applyConfig($appliedConfig);
     }
 
     /**
@@ -91,12 +64,42 @@ class Argument extends ViewableData implements ConfigurationApplier
     public function applyConfig(array $config)
     {
         Schema::assertValidConfig($config, ['description', 'defaultValue', 'type']);
-        $description = $config['description'] ?? null;
-        $default = $config['defaultValue'] ?? null;
+        $type = $config['type'] ?? null;
+        Schema::invariant(
+            $type,
+            'No type provided for argument %s',
+            $this->getName()
+        );
+        $this->setType($type);
 
-        $this->setDescription($description);
-        $this->setDefaultValue($default);
+        if (isset($config['description'])) {
+            $this->setDescription($config['description']);
+        }
+        if (isset($config['defaultValue'])) {
+            $this->setDefaultValue($config['defaultValue']);
+        }
     }
+
+    /**
+     * @param string|TypeReference|EncodedType $type
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function setType($type): self
+    {
+        Schema::invariant(
+            is_string($type) || $type instanceof EncodedType || $type instanceof TypeReference,
+            'Type on arg %s must be a string or instance of %s or %s',
+            $this->getName(),
+            EncodedType::class,
+            TypeReference::class
+        );
+
+        $this->type = $type;
+
+        return $this;
+    }
+
 
     /**
      * @return string
@@ -118,20 +121,27 @@ class Argument extends ViewableData implements ConfigurationApplier
 
     /**
      * @return EncodedType
+     * @throws SchemaBuilderException
      */
     public function getEncodedType(): EncodedType
     {
-        return $this->encodedType;
-    }
+        if ($this->type instanceof EncodedType) {
+            return $this->type;
+        }
 
-    /**
-     * @param EncodedType $encodedType
-     * @return Argument
-     */
-    public function setEncodedType(EncodedType $encodedType): Argument
-    {
-        $this->encodedType = $encodedType;
-        return $this;
+        $ref = $this->type instanceof TypeReference
+            ? $this->type
+            : TypeReference::create($this->type);
+
+
+        try {
+            return EncodedType::create($ref->toAST());
+        } catch (SyntaxError $e) {
+            throw new SchemaBuilderException(sprintf(
+                'The type for argument "%s" is not properly formatted',
+                $this->getName()
+            ));
+        }
     }
 
     /**

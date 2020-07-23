@@ -74,11 +74,20 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
         ]);
 
         $fields = $config['fields'] ?? [];
-        $this->setFieldResolver($config['fieldResolver'] ?? null);
+        if (isset($config['fieldResolver'])) {
+            $this->setFieldResolver($config['fieldResolver']);
+        }
         $this->applyFieldsConfig($fields);
-        $this->setDescription($config['description'] ?? null);
-        $this->setInterfaces($config['interfaces'] ?? []);
-        $this->setIsInput($config['isInput'] ?? false);
+        if (isset($config['description'])) {
+            $this->setDescription($config['description']);
+        }
+        if (isset($config['interfaces'])) {
+            $this->setInterfaces($config['interfaces']);
+        }
+        if (isset($config['isInput'])) {
+            $this->setIsInput($config['isInput']);
+        }
+
     }
 
     /**
@@ -127,18 +136,11 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
             if ($fieldConfig === false) {
                 continue;
             }
-            $field = $fieldConfig instanceof Field
-                ? $fieldConfig
-                : Field::create(
-                    $fieldName,
-                    $fieldConfig
-                );
-
-            $defaultResolver = $field->getDefaultResolver();
-            if (!$defaultResolver) {
-                $field->setDefaultResolver($this->getFieldResolver());
+            if ($fieldConfig instanceof Field) {
+                $this->addField($fieldConfig);
+            } else {
+                $this->addField($fieldName, $fieldConfig);
             }
-            $this->fields[$fieldName] = $field;
         }
 
         return $this;
@@ -166,9 +168,51 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @return mixed
+     * @param string|Field $field
+     * @param string|array|null $config
+     * @return Type
+     * @throws SchemaBuilderException
      */
-    public function getDescription()
+    public function addField($field, $config = null): Type
+    {
+        Schema::invariant(
+            is_string($field) || $field instanceof Field,
+            '%s::%s must be passed a field name as a string or a %s instance',
+            __CLASS__,
+            __FUNCTION__,
+            Field::class
+        );
+        $fieldObj = $field instanceof Field
+            ? $field
+            : Field::create(
+                $field,
+                $config
+            );
+
+        $defaultResolver = $fieldObj->getDefaultResolver();
+        if (!$defaultResolver) {
+            $fieldObj->setDefaultResolver($this->getFieldResolver());
+        }
+        $this->fields[$fieldObj->getName()] = $fieldObj;
+
+        return $this;
+    }
+
+    /**
+     * @param string $field
+     * @return Type
+     */
+    public function removeField(string $field): Type
+    {
+        unset($this->fields[$field]);
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDescription(): ?string
     {
         return $this->description;
     }
@@ -212,7 +256,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
             'Fields cannot be empty for type %s', $this->getName()
         );
         foreach ($this->getFields() as $field) {
-            $field->validate();;
+            $field->validate();
         }
     }
 

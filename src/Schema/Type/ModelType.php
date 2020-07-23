@@ -41,6 +41,11 @@ class ModelType extends Type implements ExtraTypeProvider
      */
     private $extraTypes = [];
 
+    /**
+     * @var array
+     */
+    private $blacklistedFields = [];
+
 
     /**
      * ModelType constructor.
@@ -65,6 +70,11 @@ class ModelType extends Type implements ExtraTypeProvider
             $this->getSourceClass()
         );
 
+        /* @var SchemaModelInterface&ModelBlacklist $model */
+        $this->blacklistedFields = $model instanceof ModelBlacklist ?
+            array_map('strtolower', $model->getBlacklistedFields()) :
+            [];
+
         parent::__construct($type);
 
         $this->applyConfig($config);
@@ -77,41 +87,24 @@ class ModelType extends Type implements ExtraTypeProvider
     public function applyConfig(array $config)
     {
         Schema::assertValidConfig($config, ['fields', 'operations']);
-        $model = $this->getModel();
 
-        /* @var SchemaModelInterface&DefaultFieldsProvider&RequiredFieldsProvider $model */
-        $defaultFields = $model instanceof DefaultFieldsProvider ? $model->getDefaultFields() : [];
-        $requiredFields = $model instanceof RequiredFieldsProvider ? $model->getRequiredFields() : [];
         $fieldConfig = $config['fields'] ?? [];
-
         if ($fieldConfig === Schema::ALL) {
-            $fieldConfig = [];
-            foreach ($this->getModel()->getAllFields() as $fieldName) {
-                $fieldConfig[$fieldName] = $this->getModel()->getTypeForField($fieldName);
-            }
+            $this->addAllFields();
+        } else {
+            $fields = array_merge($this->getBaseFields(), $fieldConfig);
+            $this->applyFieldsConfig($fields);
         }
 
-        $fields = array_merge($defaultFields, $requiredFields, $fieldConfig);
-        $this->applyFieldsConfig($fields);
         $operations = $config['operations'] ?? null;
         if (!$operations) {
             return;
         }
-        Schema::invariant(
-            $this->getModel() instanceof OperationProvider,
-            'Model for %s does not implement %s. No operations are allowed',
-            $this->getName(),
-            OperationProvider::class
-        );
-        /* @var SchemaModelInterface&OperationProvider $model */
-        $model = $this->getModel();
         if ($operations === Schema::ALL) {
-            $operations = [];
-            foreach ($model->getAllOperationIdentifiers() as $id) {
-                $operations[$id] = true;
-            }
+            $this->addAllOperations();
+        } else {
+            $this->applyOperationsConfig($operations);
         }
-        $this->applyOperationsConfig($operations);
     }
 
     /**
@@ -122,31 +115,91 @@ class ModelType extends Type implements ExtraTypeProvider
     public function applyFieldsConfig(array $fields): Type
     {
         Schema::assertValidConfig($fields);
-        $model = $this->getModel();
-        /* @var SchemaModelInterface&ModelBlacklist $model */
-        $blackListedFields = $model instanceof ModelBlacklist ?
-            array_map('strtolower', $model->getBlacklistedFields()) :
-            null;
 
         foreach ($fields as $fieldName => $data) {
             if ($data === false) {
                 continue;
             }
-            $field = ModelField::create($fieldName, $data, $model);
-            if ($blackListedFields) {
-                Schema::invariant(
-                    !in_array(strtolower($field->getName()), $blackListedFields),
-                    'Field %s is not allowed on %s',
-                    $field->getName(),
-                    $model->getSourceClass()
-                );
-            }
-
-            $this->fields[$field->getName()] = $field;
+            $this->addField($fieldName, $data);
         }
 
         return $this;
     }
+
+    /**
+     * @param Field|string $field
+     * @param array|string|null $config
+     * @return Type
+     * @throws SchemaBuilderException
+     */
+    public function addField($field, $config = null): Type
+    {
+        Schema::invariant(
+            is_string($field) || $field instanceof ModelField,
+            'Argument 1 for %s::%s must be an field name or an instance of %s',
+            __CLASS__,
+            __FUNCTION__,
+            ModelField::class
+        );
+
+        $fieldObj = $field instanceof ModelField
+            ? $field
+            : ModelField::create($field, $config, $this->getModel());
+
+        Schema::invariant(
+            !in_array(strtolower($fieldObj->getName()), $this->blacklistedFields),
+            'Field %s is not allowed on %s',
+            $fieldObj->getName(),
+            $this->getModel()->getSourceClass()
+        );
+
+        $this->fields[$fieldObj->getName()] = $fieldObj;
+
+        return $this;
+    }
+
+    /**
+     * @return ModelType
+     * @throws SchemaBuilderException
+     */
+    public function addAllFields(): ModelType
+    {
+        /* @var SchemaModelInterface&DefaultFieldsProvider&RequiredFieldsProvider $model */
+        $defaultFields = $model instanceof DefaultFieldsProvider ? $model->getDefaultFields() : [];
+        $requiredFields = $model instanceof RequiredFieldsProvider ? $model->getRequiredFields() : [];
+        foreach (array_merge($defaultFields, $requiredFields) as $fieldName => $fieldType) {
+            $this->addField($fieldName, $fieldType);
+        }
+        $allFields = $this->getModel()->getAllFields();
+        foreach ($allFields as $fieldName) {
+            $this->addField($fieldName, $this->getModel()->getTypeForField($fieldName));
+        }
+    }
+
+    /**
+     * @return Type
+     * @throws SchemaBuilderException
+     */
+    public function addAllOperations(): Type
+    {
+        Schema::invariant(
+            $this->getModel() instanceof OperationProvider,
+            'Model for %s does not implement %s. No operations are allowed',
+            $this->getName(),
+            OperationProvider::class
+        );
+        /* @var SchemaModelInterface&OperationProvider $model */
+        $model = $this->getModel();
+
+        $operations = [];
+        foreach ($model->getAllOperationIdentifiers() as $id) {
+            $operations[$id] = true;
+        }
+        $this->applyOperationsConfig($operations);
+
+        return $this;
+    }
+
 
     /**
      * @param array $operations
@@ -168,8 +221,20 @@ class ModelType extends Type implements ExtraTypeProvider
             );
 
             $config = ($data === true) ? [] : $data;
-            $this->operationCreators[$operationName] = $config;
+            $this->addOperation($operationName, $config);
         }
+
+        return $this;
+    }
+
+    /**
+     * @param string $operationName
+     * @param array $config
+     * @return Type
+     */
+    public function addOperation(string $operationName, array $config = []): Type
+    {
+        $this->operationCreators[$operationName] = $config;
 
         return $this;
     }
@@ -279,6 +344,19 @@ class ModelType extends Type implements ExtraTypeProvider
     {
         $this->sourceClass = $sourceClass;
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    private function getBaseFields(): array
+    {
+        $model = $this->getModel();
+        /* @var SchemaModelInterface&DefaultFieldsProvider&RequiredFieldsProvider $model */
+        $defaultFields = $model instanceof DefaultFieldsProvider ? $model->getDefaultFields() : [];
+        $requiredFields = $model instanceof RequiredFieldsProvider ? $model->getRequiredFields() : [];
+
+        return array_merge($defaultFields, $requiredFields);
     }
 
     /**
