@@ -468,7 +468,7 @@ class Connection implements OperationResolver
      * @param array $args
      * @return int
      */
-    protected function getLimit(array $args)
+    private function getLimit(array $args)
     {
         $limit = (isset($args['limit']) && $args['limit']) ? $args['limit'] : $this->defaultLimit;
 
