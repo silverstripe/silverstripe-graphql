@@ -78,16 +78,19 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
         $this->setResolverRegistry(Injector::inst()->get(ResolverRegistry::class));
         list ($name, $args) = static::parseName($name);
         $this->setName($name);
-        $this->applyArgs($args);
 
         Schema::invariant(
-            is_string($config) || is_array($config) || $config instanceof Field,
-            'Config for field %s must be a string, array, or instance of %s. Got %s',
+            is_string($config) || is_array($config),
+            'Config for field %s must be a string or array. Got %s',
             $name,
             Field::class,
             gettype($config)
         );
         $appliedConfig = is_string($config) ? ['type' => $config] : $config;
+        if ($args) {
+            $configArgs = $config['args'] ?? [];
+            $appliedConfig['args'] = array_merge($configArgs, $args);
+        }
         $this->applyConfig($appliedConfig);
     }
 
@@ -122,9 +125,6 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
         if (isset($config['description'])) {
             $this->setDescription($config['description']);
         }
-
-        $this->applyArgs($config['args'] ?? []);
-
         if (isset($config['resolver'])) {
             $this->setResolver($config['resolver']);
         }
@@ -134,15 +134,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
         if (isset($config['resolverContext'])) {
             $this->setResolverContext($config['resolverContext']);
         }
-    }
-
-    /**
-     * @param array $args
-     * @throws SchemaBuilderException
-     * @return $this
-     */
-    public function applyArgs(array $args): self
-    {
+        $args = $config['args'] ?? [];
         Schema::assertValidConfig($args);
         foreach ($args as $argName => $config) {
             if ($config === false) {
@@ -150,29 +142,16 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
             }
             $this->addArg($argName, $config);
         }
-
-        return $this;
     }
 
     /**
-     * @param $arg
+     * @param string $argName
      * @param null $config
      * @return Field
-     * @throws SchemaBuilderException
      */
-    public function addArg($arg, $config = null): Field
+    public function addArg(string $argName, $config): Field
     {
-        Schema::invariant(
-            is_string($arg) || $arg instanceof Argument,
-            '%s::%s takes a string as an argument name or an instance of %s',
-            __CLASS__,
-            __FUNCTION__,
-            Argument::class
-        );
-        $argObj = $arg instanceof Argument
-            ? $arg
-            : Argument::create($arg, $config);
-
+        $argObj = $config instanceof Argument ? $config : Argument::create($argName, $config);
         $this->args[$argObj->getName()] = $argObj;
 
         return $this;

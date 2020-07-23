@@ -72,12 +72,9 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
             'isInput',
             'fieldResolver',
         ]);
-
-        $fields = $config['fields'] ?? [];
         if (isset($config['fieldResolver'])) {
             $this->setFieldResolver($config['fieldResolver']);
         }
-        $this->applyFieldsConfig($fields);
         if (isset($config['description'])) {
             $this->setDescription($config['description']);
         }
@@ -87,6 +84,18 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
         if (isset($config['isInput'])) {
             $this->setIsInput($config['isInput']);
         }
+
+        $fields = $config['fields'] ?? [];
+        Schema::assertValidConfig($fields);
+        foreach ($fields as $fieldName => $fieldConfig) {
+            if ($fieldConfig === false) {
+                continue;
+            }
+            $this->addField($fieldName, $fieldConfig);
+        }
+
+        return $this;
+
 
     }
 
@@ -125,28 +134,6 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @param array $fields
-     * @return Type
-     * @throws SchemaBuilderException
-     */
-    public function applyFieldsConfig(array $fields): Type
-    {
-        Schema::assertValidConfig($fields);
-        foreach ($fields as $fieldName => $fieldConfig) {
-            if ($fieldConfig === false) {
-                continue;
-            }
-            if ($fieldConfig instanceof Field) {
-                $this->addField($fieldConfig);
-            } else {
-                $this->addField($fieldName, $fieldConfig);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * @param Field[] $fields
      * @return Type
      * @throws SchemaBuilderException
@@ -168,26 +155,19 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @param string|Field $field
-     * @param string|array|null $config
+     * @param string $fieldName
+     * @param string|array|Field $fieldConfig
      * @return Type
      * @throws SchemaBuilderException
      */
-    public function addField($field, $config = null): Type
+    public function addField(string $fieldName, $fieldConfig): Type
     {
-        Schema::invariant(
-            is_string($field) || $field instanceof Field,
-            '%s::%s must be passed a field name as a string or a %s instance',
-            __CLASS__,
-            __FUNCTION__,
-            Field::class
-        );
-        $fieldObj = $field instanceof Field
-            ? $field
-            : Field::create(
-                $field,
-                $config
-            );
+        if (!$fieldConfig instanceof Field) {
+            $config = is_string($fieldConfig) ? ['type' => $fieldConfig] : $fieldConfig;
+            $fieldObj = Field::create($fieldName, $config);
+        } else {
+            $fieldObj = $fieldConfig;
+        }
 
         $defaultResolver = $fieldObj->getDefaultResolver();
         if (!$defaultResolver) {
@@ -207,6 +187,15 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
         unset($this->fields[$field]);
 
         return $this;
+    }
+
+    /**
+     * @param string $fieldName
+     * @return Field|null
+     */
+    public function getFieldByName(string $fieldName): ?Field
+    {
+        return $this->fields[$fieldName] ?? null;
     }
 
     /**

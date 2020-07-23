@@ -93,7 +93,14 @@ class ModelType extends Type implements ExtraTypeProvider
             $this->addAllFields();
         } else {
             $fields = array_merge($this->getBaseFields(), $fieldConfig);
-            $this->applyFieldsConfig($fields);
+            Schema::assertValidConfig($fields);
+
+            foreach ($fields as $fieldName => $data) {
+                if ($data === false) {
+                    continue;
+                }
+                $this->addField($fieldName, $data);
+            }
         }
 
         $operations = $config['operations'] ?? null;
@@ -108,43 +115,19 @@ class ModelType extends Type implements ExtraTypeProvider
     }
 
     /**
-     * @param array $fields
-     * @return ModelType
-     * @throws SchemaBuilderException
-     */
-    public function applyFieldsConfig(array $fields): Type
-    {
-        Schema::assertValidConfig($fields);
-
-        foreach ($fields as $fieldName => $data) {
-            if ($data === false) {
-                continue;
-            }
-            $this->addField($fieldName, $data);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param Field|string $field
-     * @param array|string|null $config
+     * @param string $fieldName
+     * @param array|string|Field $fieldConfig
      * @return Type
      * @throws SchemaBuilderException
      */
-    public function addField($field, $config = null): Type
+    public function addField(string $fieldName, $fieldConfig): Type
     {
-        Schema::invariant(
-            is_string($field) || $field instanceof ModelField,
-            'Argument 1 for %s::%s must be an field name or an instance of %s',
-            __CLASS__,
-            __FUNCTION__,
-            ModelField::class
-        );
-
-        $fieldObj = $field instanceof ModelField
-            ? $field
-            : ModelField::create($field, $config, $this->getModel());
+        if (!$fieldConfig instanceof Field) {
+            $config = is_string($fieldConfig) ? ['type' => $fieldConfig] : $fieldConfig;
+            $fieldObj = ModelField::create($fieldName, $config, $this->getModel());
+        } else {
+            $fieldObj = $fieldConfig;
+        }
 
         Schema::invariant(
             !in_array(strtolower($fieldObj->getName()), $this->blacklistedFields),
@@ -235,6 +218,40 @@ class ModelType extends Type implements ExtraTypeProvider
     public function addOperation(string $operationName, array $config = []): Type
     {
         $this->operationCreators[$operationName] = $config;
+
+        return $this;
+    }
+
+    /**
+     * @param string $operationName
+     * @return Type
+     */
+    public function removeOperation(string $operationName): Type
+    {
+        unset($this->operationCreators[$operationName]);
+
+        return $this;
+    }
+
+    /**
+     * @param string $operationName
+     * @param array $config
+     * @return Type
+     * @throws SchemaBuilderException
+     */
+    public function updateOperation(string $operationName, array $config = []): Type
+    {
+        Schema::invariant(
+            isset($this->operationCreators[$operationName]),
+            'Cannot update nonexistent operation %s on %s',
+            $operationName,
+            $this->getName()
+        );
+
+        $this->operationCreators[$operationName] = array_merge(
+            $this->operationCreators[$operationName],
+            $config
+        );
 
         return $this;
     }

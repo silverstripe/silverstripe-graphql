@@ -109,6 +109,33 @@ class Enum extends ViewableData implements SchemaValidator
     }
 
     /**
+     * @param $key
+     * @param null $val
+     * @return Enum
+     */
+    public function addValue($key, $val = null): Enum
+    {
+        if ($val === null) {
+            $this->values[$key] = $key;
+        } else {
+            $this->values[$key] = $val;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param string $key
+     * @return Enum
+     */
+    public function removeValue(string $key): Enum
+    {
+        unset($this->values[$key]);
+
+        return $this;
+    }
+
+    /**
      * @return string|null
      */
     public function getDescription(): ?string
