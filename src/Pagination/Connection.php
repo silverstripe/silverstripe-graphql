@@ -484,7 +484,7 @@ class Connection implements OperationResolver
      * @param array $args
      * @return int
      */
-    protected function getOffset(array $args)
+    private function getOffset(array $args)
     {
         return (isset($args['offset'])) ? $args['offset'] : 0;
     }
