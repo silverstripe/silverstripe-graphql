@@ -1,0 +1,7 @@
+---
+Name: graphql-plugins
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Schema\Registry\PluginRegistry:
+    constructor:
+      dataobjectPaginator: '%$SilverStripe\GraphQL\Schema\Plugin\DataObjectPaginator'

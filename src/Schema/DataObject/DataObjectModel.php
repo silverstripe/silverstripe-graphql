@@ -10,6 +10,7 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
+use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelDependencyProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
@@ -195,14 +196,15 @@ class DataObjectModel implements
 
     /**
      * @param array|null $context
-     * @return array
+     * @return ResolverReference
      */
-    public function getDefaultResolver(?array $context = []): array
+    public function getDefaultResolver(?array $context = []): ResolverReference
     {
-        return empty($context)
+        $callable = empty($context)
             ? [Resolver::class, 'resolve']
             : [Resolver::class, 'resolveContext'];
 
+        return ResolverReference::create($callable);
     }
 
     /**

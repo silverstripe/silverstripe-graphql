@@ -13,11 +13,19 @@ class ModelCreator implements SchemaModelCreatorInterface
 {
     use Injectable;
 
+    /**
+     * @param string $class
+     * @return bool
+     */
     public function appliesTo(string $class): bool
     {
         return is_subclass_of($class, DataObject::class);
     }
 
+    /**
+     * @param string $class
+     * @return SchemaModelInterface
+     */
     public function createModel(string $class): SchemaModelInterface
     {
         return DataObjectModel::create($class);

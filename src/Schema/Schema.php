@@ -12,7 +12,10 @@ use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelDependencyProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
+use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\Enum;
@@ -159,6 +162,34 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
         foreach ($this->models as $modelType) {
             $this->addType($modelType);
+        }
+
+        $schemaUpdates = [];
+        foreach ($this->queryFields as $query) {
+            foreach ($query->loadPlugins() as $data) {
+                list ($plugin, $config) = $data;
+                if ($plugin instanceof QueryPlugin) {
+                    $plugin->apply($query, $this, $config);
+                }
+                if ($plugin instanceof SchemaUpdater) {
+                    $schemaUpdates[get_class($plugin)] = $plugin;
+                }
+            }
+        }
+        foreach ($this->mutations as $mutation) {
+            foreach ($mutation->loadPlugins() as $data) {
+                list ($plugin, $config) = $data;
+                if ($plugin instanceof MutationPlugin) {
+                    $plugin->apply($mutation, $this, $config);
+                }
+                if ($plugin instanceof SchemaUpdater) {
+                    $schemaUpdates[get_class($plugin)] = get_class($plugin);
+                }
+            }
+        }
+        /* @var SchemaUpdater $builder */
+        foreach ($schemaUpdates as $class) {
+            $class::updateSchemaOnce($this);
         }
 
         $queryType = Type::create(self::QUERY_TYPE, [

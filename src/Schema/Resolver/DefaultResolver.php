@@ -38,4 +38,9 @@ class DefaultResolver
 
         return $property instanceof Closure ? $property($source, $args, $context, $info) : $property;
     }
+
+    public static function noop($obj)
+    {
+        return $obj;
+    }
 }

@@ -6,6 +6,7 @@ use GraphQL\\Type\\Definition\\EnumType;
 use GraphQL\\Type\\Definition\\Type;
 use GraphQL\\Type\\Definition\\NonNull;
 use GraphQL\\Type\\Definition\\ListOfType;
+use SilverStripe\\GraphQL\\Schema\\Resolver\\ComposedResolver;
 
 <% loop $Types %>
 class $Name extends <% if $IsInput %>InputObjectType<% else %>ObjectType<% end_if %>  {
@@ -28,7 +29,10 @@ class $Name extends <% if $IsInput %>InputObjectType<% else %>ObjectType<% end_i
                                 <% loop $ArgList %>
                                     [
                                         'name' => '$Name',
-                                        'type' => $EncodedType
+                                        'type' => $EncodedType,
+                                        <% if $DefaultValue %>
+                                        'defaultValue' => $DefaultValue.RAW,
+                                        <% end_if %>
                                     ],
                                 <% end_loop %>
                             ],

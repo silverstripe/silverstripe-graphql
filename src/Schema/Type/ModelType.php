@@ -117,10 +117,11 @@ class ModelType extends Type implements ExtraTypeProvider
     /**
      * @param string $fieldName
      * @param array|string|Field $fieldConfig
+     * @param callable|null $callback
      * @return Type
      * @throws SchemaBuilderException
      */
-    public function addField(string $fieldName, $fieldConfig): Type
+    public function addField(string $fieldName, $fieldConfig, ?callable $callback = null): Type
     {
         if (!$fieldConfig instanceof Field) {
             $config = is_string($fieldConfig) ? ['type' => $fieldConfig] : $fieldConfig;
@@ -137,7 +138,9 @@ class ModelType extends Type implements ExtraTypeProvider
         );
 
         $this->fields[$fieldObj->getName()] = $fieldObj;
-
+        if ($callback) {
+            call_user_func_array($callback, [$fieldObj]);
+        }
         return $this;
     }
 

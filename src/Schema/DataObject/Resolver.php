@@ -18,7 +18,7 @@ class Resolver
      * @param ResolveInfo $info
      * @return string|bool|int|float|null
      */
-    public static function resolve(DataObject $obj, array $args = [], array $context = [], ResolveInfo $info)
+    public static function resolve(DataObject $obj, array $args, array $context, ResolveInfo $info)
     {
         $fieldName = $info->fieldName;
         return static::resolveField($obj, $fieldName);
@@ -33,8 +33,8 @@ class Resolver
         $propertyMapping = $resolverContext['propertyMapping'];
         return function(
             DataObject $obj,
-            array $args = [],
-            array $context = [],
+            array $args,
+            array $context,
             ResolveInfo $info
         ) use ($propertyMapping) {
             $fieldName = $info->fieldName;

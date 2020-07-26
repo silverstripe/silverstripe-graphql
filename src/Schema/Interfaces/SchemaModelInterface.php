@@ -4,6 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
 
+use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 
 interface SchemaModelInterface
@@ -27,9 +28,9 @@ interface SchemaModelInterface
 
     /**
      * @param array|null $context
-     * @return array
+     * @return ResolverReference
      */
-    public function getDefaultResolver(?array $context = []): array;
+    public function getDefaultResolver(?array $context = []): ResolverReference;
 
     /**
      * @return string

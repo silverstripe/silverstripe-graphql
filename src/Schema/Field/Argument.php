@@ -10,6 +10,7 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
+use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\View\ViewableData;
 
 class Argument extends ViewableData implements ConfigurationApplier
@@ -94,8 +95,13 @@ class Argument extends ViewableData implements ConfigurationApplier
             EncodedType::class,
             TypeReference::class
         );
-
-        $this->type = $type;
+        if (is_string($type) && stristr($type, '=') !== false) {
+            list ($type, $defaultValue) = explode('=', $type);
+            $this->setDefaultValue(trim($defaultValue));
+            $this->type = trim($type);
+        } else {
+            $this->type = $type;
+        }
 
         return $this;
     }

@@ -4,22 +4,22 @@ namespace SilverStripe\GraphQL\Schema\Field;
 
 
 use GraphQL\Error\SyntaxError;
-use GraphQL\Language\AST\NameNode;
-use GraphQL\Language\AST\NodeList;
-use GraphQL\Language\Parser;
 use GraphQL\Language\Token;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
+use SilverStripe\GraphQL\Schema\Registry\PluginRegistry;
 use SilverStripe\GraphQL\Schema\Registry\ResolverRegistry;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
+use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ViewableData;
-use ReflectionException;
+use Generator;
 
 class Field extends ViewableData implements ConfigurationApplier, SchemaValidator
 {
@@ -29,6 +29,11 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @var ResolverRegistry
      */
     private $resolverRegistry;
+
+    /**
+     * @var PluginRegistry
+     */
+    private $pluginRegistry;
 
     /**
      * @var string
@@ -51,12 +56,12 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     private $description;
 
     /**
-     * @var array|null
+     * @var ResolverReference|null
      */
     private $resolver;
 
     /**
-     * @var array|null
+     * @var ResolverReference|null
      */
     private $defaultResolver;
 
@@ -66,11 +71,20 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     private $resolverContext = [];
 
     /**
+     * @var EncodedResolver[]
+     */
+    private $resolverMiddlewares = [];
+
+    /**
+     * @var array
+     */
+    private $plugins = [];
+
+    /**
      * Field constructor.
      * @param string|array $name
      * @param array|string $config
      * @throws SchemaBuilderException
-     * @throws ReflectionException
      */
     public function __construct(string $name, $config)
     {
@@ -95,6 +109,47 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     }
 
     /**
+     * @param string $def
+     * @throws SchemaBuilderException
+     * @return array
+     */
+    public static function parseName(string $def): array
+    {
+        $name = null;
+        $args = null;
+        if (stristr($def, Token::PAREN_L) !== false) {
+            list ($name, $args) = explode(Token::PAREN_L, $def);
+        } else {
+            $name = $def;
+        }
+        Schema::assertValidName($name);
+
+        if (!$args) {
+            return [$name, []];
+        }
+
+        preg_match('/^(.*?)\)$/', $args, $matches);
+
+        Schema::invariant(
+            $matches,
+            'Could not parse args on "%s"',
+            $def
+        );
+        $argList = [];
+        $argDefs = explode(',', $matches[1]);
+        foreach ($argDefs as $argDef) {
+            Schema::invariant(
+                stristr($argDef, Token::COLON) !== false,
+                'Invalid arg: %s',
+                $argDef
+            );
+            list ($argName, $argType) = explode(':', $argDef);
+            $argList[trim($argName)] = trim($argType);
+        }
+        return [$name, $argList];
+    }
+
+    /**
      * @param array $config
      * @throws SchemaBuilderException
      */
@@ -107,19 +162,12 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
             'resolver',
             'resolverContext',
             'defaultResolver',
+            'plugins',
         ]);
 
         $type = $config['type'] ?? null;
         if ($type) {
             $this->setType($type);
-        }
-        foreach (['resolver', 'defaultResolver'] as $key) {
-            if (isset($config[$key])) {
-                Schema::invariant(
-                    $config[$key] === null || (is_array($config[$key]) && count($config[$key]) === 2),
-                    'Resolvers must be an array tuple of class name, method name'
-                );
-            }
         }
 
         if (isset($config['description'])) {
@@ -134,6 +182,16 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
         if (isset($config['resolverContext'])) {
             $this->setResolverContext($config['resolverContext']);
         }
+
+        $plugins = $config['plugins'] ?? [];
+        Schema::assertValidConfig($plugins);
+        foreach ($plugins as $pluginName => $config) {
+            if ($config === false) {
+                continue;
+            }
+            $pluginConfig = $config === true ? [] : $config;
+            $this->addPlugin($pluginName, $pluginConfig);
+        }
         $args = $config['args'] ?? [];
         Schema::assertValidConfig($args);
         foreach ($args as $argName => $config) {
@@ -147,13 +205,16 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     /**
      * @param string $argName
      * @param null $config
+     * @param callable|null $callback
      * @return Field
      */
-    public function addArg(string $argName, $config): Field
+    public function addArg(string $argName, $config, ?callable $callback = null): Field
     {
         $argObj = $config instanceof Argument ? $config : Argument::create($argName, $config);
         $this->args[$argObj->getName()] = $argObj;
-
+        if ($callback) {
+            call_user_func_array($callback, [$argObj]);
+        }
         return $this;
     }
 
@@ -183,103 +244,6 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     }
 
     /**
-     * @param string $type
-     * @return EncodedType
-     * @throws SchemaBuilderException
-     */
-    private function toEncodedType(string $type): EncodedType
-    {
-        try {
-            $ref = TypeReference::create($type);
-            $ast = $ref->toAST();
-            return EncodedType::create($ast);
-        } catch (SyntaxError $e) {
-            throw new SchemaBuilderException(sprintf(
-                'The type for field "%s" is invalid: "%s"',
-                $this->name,
-                $type
-            ));
-        }
-    }
-
-
-    /**
-     * @param string $def
-     * @throws SchemaBuilderException
-     * @throws ReflectionException
-     * @return array
-     */
-    public static function parseName(string $def): array
-    {
-        $name = null;
-        $args = null;
-        $pos = strpos($def, Token::PAREN_L);
-        if ($pos === false) {
-            $name = $def;
-        } else {
-            $name = substr($def, 0, $pos);
-            $args = substr($def, $pos);
-        }
-        try {
-            $nameNode = Parser::name($name);
-            Schema::invariant(
-                $nameNode instanceof NameNode,
-                'Could not parse field name "%s"',
-                $name
-            );
-            Schema::assertValidName($nameNode->value);
-            $name = $nameNode->value;
-        } catch (SyntaxError $e) {
-            throw new SchemaBuilderException(sprintf(
-                'The name "%s" is not formatted correctly',
-                $name
-            ));
-        }
-
-        if (!$args) {
-            return [$name, []];
-        }
-
-        try {
-            // Not the hack it appears to be!
-            // This API is meant to be public, but there is a bug
-            // related to strict typing https://github.com/webonyx/graphql-php/issues/698
-
-            // Edit: this has now been fixed in https://github.com/webonyx/graphql-php/pull/693/
-            // Remove this when the patch is in a stable release.
-
-            $parser = new Parser($args, ['noLocation' => true]);
-            $reflect = new \ReflectionClass(Parser::class);
-            $expect = $reflect->getMethod('expect');
-            $expect->setAccessible(true);
-            $argMethod = $reflect->getMethod('parseArgumentsDefinition');
-            $argMethod->setAccessible(true);
-            $expect->invoke($parser, Token::SOF);
-            $argsNode = $argMethod->invoke($parser);
-            $expect->invoke($parser, Token::EOF);
-            Schema::invariant(
-                $argsNode instanceof NodeList,
-                'Could not parse args on "%s"',
-                $def
-            );
-            $argList = [];
-            foreach ($argsNode as $arg) {
-                $argName = $arg->name->value;
-                $argList[$argName] = [
-                    'type' => EncodedType::create($arg->type)
-                ];
-            }
-
-            return [$name, $argList];
-        } catch (SyntaxError $e) {
-            throw new SchemaBuilderException(sprintf(
-                'The arguments for %s are not formatted correctly',
-                $name
-            ));
-        }
-    }
-
-    /**
      * @param $type
      * @return Field
      * @throws SchemaBuilderException
@@ -300,9 +264,9 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }
@@ -353,27 +317,36 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     }
 
     /**
+     * @return string
+     * @throws SchemaBuilderException
+     */
+    public function getNamedType(): string
+    {
+        list($name) = $this->getEncodedType()->getTypeName();
+
+        return $name;
+    }
+
+    /**
      * @param string|null $typeName
      * @return EncodedResolver
-     * @throws SchemaBuilderException
      */
     public function getEncodedResolver(?string $typeName = null): EncodedResolver
     {
         if ($this->getResolver()) {
-            $encodedResolver = EncodedResolver::create($this->getResolver());
+            $encodedResolver = EncodedResolver::create($this->getResolver(), $this->getResolverContext());
         } else {
             $resolver = $this->getResolverRegistry()->findResolver(
                 $typeName,
                 $this->name,
                 $this->getDefaultResolver()
             );
-            $encodedResolver = EncodedResolver::create($resolver);
+            $encodedResolver = EncodedResolver::create($resolver, $this->getResolverContext());
         }
 
-        foreach ($this->getResolverContext() as $name => $value) {
-            $encodedResolver->addContext($name, $value);
+        foreach ($this->resolverMiddlewares as $middlewareRef) {
+            $encodedResolver->addMiddleware($middlewareRef);
         }
-
         return $encodedResolver;
     }
 
@@ -396,41 +369,54 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     }
 
     /**
-     * @return array|null
+     * @return ResolverReference|null
      */
-    public function getResolver(): ?array
+    public function getResolver(): ?ResolverReference
     {
         return $this->resolver;
     }
 
     /**
-     * @param array|null $resolver
+     * @param array|string|ResolverReference|null $resolver
      * @return Field
      */
-    public function setResolver(?array $resolver): Field
+    public function setResolver($resolver): Field
     {
-        $this->resolver = $resolver;
+        if ($resolver) {
+            $this->resolver = $resolver instanceof ResolverReference
+                ? $resolver
+                : ResolverReference::create($resolver);
+        } else {
+            $this->resolver = null;
+        }
+
         return $this;
     }
 
     /**
-     * @return array|null
+     * @return ResolverReference|null
      */
-    public function getDefaultResolver(): ?array
+    public function getDefaultResolver(): ?ResolverReference
     {
         return $this->defaultResolver;
     }
 
     /**
-     * @param array|null $defaultResolver
+     * @param array|string|ResolverReference|null $defaultResolver
      * @return Field
      */
-    public function setDefaultResolver(?array $defaultResolver): Field
+    public function setDefaultResolver($defaultResolver): Field
     {
-        $this->defaultResolver = $defaultResolver;
+        if ($defaultResolver) {
+            $this->defaultResolver = $defaultResolver instanceof ResolverReference
+                ? $defaultResolver
+                : ResolverReference::create($defaultResolver);
+        } else {
+            $this->defaultResolver = null;
+        }
+
         return $this;
     }
-
 
     /**
      * @return ResolverRegistry
@@ -478,6 +464,100 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
         $this->resolverContext[$key] = $value;
 
         return $this;
+    }
+
+    /**
+     * @param string $pluginName
+     * @param $config
+     * @return Field
+     */
+    public function addPlugin(string $pluginName, $config): Field
+    {
+        $this->plugins[$pluginName] = $config;
+
+        return $this;
+    }
+
+    /**
+     * @param string $pluginName
+     * @return Field
+     */
+    public function removePlugin(string $pluginName): Field
+    {
+        unset($this->plugins[$pluginName]);
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getPlugins()
+    {
+        return $this->plugins;
+    }
+
+    /**
+     * @return PluginRegistry
+     */
+    public function getPluginRegistry(): PluginRegistry
+    {
+        return Injector::inst()->get(PluginRegistry::class);
+    }
+
+    /**
+     * @return Generator
+     * @throws SchemaBuilderException
+     */
+    public function loadPlugins(): Generator
+    {
+        foreach ($this->getPlugins() as $pluginName => $config) {
+            $plugin = $this->getPluginRegistry()->getPluginByID($pluginName);
+            Schema::invariant(
+                $plugin && $plugin instanceof FieldPlugin,
+                'Plugin %s not found or not an instance of %s',
+                $pluginName,
+                FieldPlugin::class
+            );
+            yield [$plugin, $config];
+        }
+    }
+
+    /**
+     * @param array|string|ResolverReference|null $middleware
+     * @param array|null $context
+     * @return Field
+     */
+    public function addResolverMiddleware($middleware, ?array $context = null): Field
+    {
+        if ($middleware) {
+            $ref = $middleware instanceof ResolverReference
+                ? $middleware
+                : ResolverReference::create($middleware);
+            $this->resolverMiddlewares[] = EncodedResolver::create($ref, $context);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param string $type
+     * @return EncodedType
+     * @throws SchemaBuilderException
+     */
+    private function toEncodedType(string $type): EncodedType
+    {
+        try {
+            $ref = TypeReference::create($type);
+            $ast = $ref->toAST();
+            return EncodedType::create($ast);
+        } catch (SyntaxError $e) {
+            throw new SchemaBuilderException(sprintf(
+                'The type for field "%s" is invalid: "%s"',
+                $this->name,
+                $type
+            ));
+        }
     }
 
 }

@@ -7,14 +7,15 @@ namespace SilverStripe\GraphQL\Schema\Resolver;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\Encoder;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ViewableData;
 
 class EncodedResolver extends ViewableData implements Encoder
 {
     /**
-     * @var array|string
+     * @var ResolverReference
      */
-    private $resolverFunc;
+    private $resolverRef;
 
     /**
      * @var array
@@ -22,20 +23,19 @@ class EncodedResolver extends ViewableData implements Encoder
     private $context = [];
 
     /**
-     * EncodedResolver constructor.
-     * @param string|array $resolverFunc
-     * @param array $context
-     * @throws SchemaBuilderException
+     * @var EncodedResolver[]
      */
-    public function __construct($resolverFunc, array $context = [])
+    private $middleware = [];
+
+    /**
+     * EncodedResolver constructor.
+     * @param ResolverReference $resolver
+     * @param array $context
+     */
+    public function __construct(ResolverReference $resolver, array $context = [])
     {
         parent::__construct();
-        Schema::invariant(
-            (is_array($resolverFunc) || is_string($resolverFunc)) && is_callable($resolverFunc),
-            '%s not passed a valid callable',
-            __CLASS__
-        );
-        $this->resolverFunc = $resolverFunc;
+        $this->resolverRef = $resolver;
         $this->context = $context;
     }
 
@@ -44,25 +44,28 @@ class EncodedResolver extends ViewableData implements Encoder
      */
     public function encode(): string
     {
-        if ($this->context) {
-            return $this->renderWith(__NAMESPACE__ . '\\ContextResolver');
-        }
-
-        return $this->getCallable();
+        return $this->renderWith(__NAMESPACE__ . '\\Resolver');
     }
 
     /**
      * @return string
      */
-    public function getCallable(): string
+    public function getExpression(): string
     {
-        if (is_string($this->resolverFunc)) {
-            return sprintf('%s', $this->resolverFunc);
+        $callable = sprintf(
+            "['%s', '%s']",
+            $this->resolverRef->getClass(),
+            $this->resolverRef->getMethod()
+        );
+        if (empty($this->getContext())) {
+            return $callable;
         }
 
-        list($class, $method) = $this->resolverFunc;
-
-        return sprintf("['%s', '%s']", $class, $method);
+        return sprintf(
+            'call_user_func_array(%s, [%s])',
+            $callable,
+            $this->getContextArgs()
+        );
     }
 
     /**
@@ -79,24 +82,6 @@ class EncodedResolver extends ViewableData implements Encoder
     public function forTemplate(): string
     {
         return $this->encode();
-    }
-
-    /**
-     * @return array|string
-     */
-    public function getResolverFunc()
-    {
-        return $this->resolverFunc;
-    }
-
-    /**
-     * @param array|string $resolverFunc
-     * @return EncodedResolver
-     */
-    public function setResolverFunc($resolverFunc)
-    {
-        $this->resolverFunc = $resolverFunc;
-        return $this;
     }
 
     /**
@@ -128,7 +113,7 @@ class EncodedResolver extends ViewableData implements Encoder
         Schema::invariant(
             is_scalar($val) || is_array($val),
             'Resolver context must be a scalar value or an array on %s',
-            $this->getCallable()
+            $this->resolverRef->toString()
         );
 
         $this->context[$key] = $val;
@@ -136,4 +121,22 @@ class EncodedResolver extends ViewableData implements Encoder
         return $this;
     }
 
+    /**
+     * @param EncodedResolver $ref
+     * @return EncodedResolver
+     */
+    public function addMiddleware(EncodedResolver $ref): EncodedResolver
+    {
+        $this->middleware[] = $ref;
+
+        return $this;
+    }
+
+    /**
+     * @return ArrayList
+     */
+    public function getResolverMiddlewares(): ArrayList
+    {
+        return ArrayList::create($this->middleware);
+    }
 }

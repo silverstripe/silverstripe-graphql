@@ -35,7 +35,8 @@ class ReadCreator implements OperationCreator
                 'defaultResolver' => [static::class, 'resolve'],
                 'resolverContext' => [
                     'dataClass' => $model->getSourceClass()
-                ]
+                ],
+                'plugins' => $config['plugins'] ?? [],
             ]
         );
     }
