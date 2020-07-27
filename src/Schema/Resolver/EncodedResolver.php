@@ -96,7 +96,7 @@ class EncodedResolver extends ViewableData implements Encoder
      * @param array $context
      * @return EncodedResolver
      */
-    public function setContext(array $context): EncodedResolver
+    public function setContext(array $context): self
     {
         $this->context = $context;
         return $this;
@@ -108,7 +108,7 @@ class EncodedResolver extends ViewableData implements Encoder
      * @return EncodedResolver
      * @throws SchemaBuilderException
      */
-    public function addContext(string $key, $val): EncodedResolver
+    public function addContext(string $key, $val): self
     {
         Schema::invariant(
             is_scalar($val) || is_array($val),
@@ -125,7 +125,7 @@ class EncodedResolver extends ViewableData implements Encoder
      * @param EncodedResolver $ref
      * @return EncodedResolver
      */
-    public function addMiddleware(EncodedResolver $ref): EncodedResolver
+    public function addMiddleware(EncodedResolver $ref): self
     {
         $this->middleware[] = $ref;
 

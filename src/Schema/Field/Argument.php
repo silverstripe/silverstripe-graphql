@@ -119,7 +119,7 @@ class Argument extends ViewableData implements ConfigurationApplier
      * @param string $name
      * @return Argument
      */
-    public function setName(string $name): Argument
+    public function setName(string $name): self
     {
         $this->name = $name;
         return $this;
@@ -162,7 +162,7 @@ class Argument extends ViewableData implements ConfigurationApplier
      * @param bool|int|string|null $defaultValue
      * @return Argument
      */
-    public function setDefaultValue($defaultValue): Argument
+    public function setDefaultValue($defaultValue): self
     {
         $this->defaultValue = $defaultValue;
         return $this;
@@ -180,7 +180,7 @@ class Argument extends ViewableData implements ConfigurationApplier
      * @param string|null $description
      * @return Argument
      */
-    public function setDescription(?string $description): Argument
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
         return $this;

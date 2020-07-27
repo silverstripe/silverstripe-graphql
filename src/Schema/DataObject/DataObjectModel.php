@@ -227,7 +227,7 @@ class DataObjectModel implements
      * @param FieldAccessor $fieldAccessor
      * @return DataObjectModel
      */
-    public function setFieldAccessor(FieldAccessor $fieldAccessor): DataObjectModel
+    public function setFieldAccessor(FieldAccessor $fieldAccessor): self
     {
         $this->fieldAccessor = $fieldAccessor;
         return $this;
@@ -315,10 +315,18 @@ class DataObjectModel implements
      * @param InheritanceChain $inheritanceChain
      * @return DataObjectModel
      */
-    public function setInheritanceChain(InheritanceChain $inheritanceChain): DataObjectModel
+    public function setInheritanceChain(InheritanceChain $inheritanceChain): self
     {
         $this->inheritanceChain = $inheritanceChain;
         return $this;
+    }
+
+    /**
+     * @return DataObject
+     */
+    public function getDataObject(): DataObject
+    {
+        return $this->dataObject;
     }
 
     /**

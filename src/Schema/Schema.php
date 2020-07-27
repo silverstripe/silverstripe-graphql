@@ -9,9 +9,12 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
+use SilverStripe\GraphQL\Schema\Field\ModelMutation;
+use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelDependencyProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
@@ -294,6 +297,15 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
+     * @param string $name
+     * @return Type|null
+     */
+    public function getType(string $name): ?Type
+    {
+        return $this->types[$name] ?? null;
+    }
+
+    /**
      * @param ModelType $modelType
      * @return Schema
      * @throws SchemaBuilderException
@@ -306,19 +318,23 @@ class Schema implements ConfigurationApplier, SchemaValidator
             : $modelType;
 
         foreach ($modelType->getExtraTypes() as $type) {
-            $this->addType($type);
+            if ($type instanceof ModelType) {
+                $this->addModel($type);
+            } else {
+                $this->addType($type);
+            }
         }
 
         foreach ($modelType->getOperations() as $operationType) {
             Schema::invariant(
-                $operationType instanceof Query ||
-                $operationType instanceof Mutation,
-                'Invalid operation defined on %s',
-                $modelType->getName()
+                $operationType instanceof ModelOperation,
+                'Invalid operation defined on %s. Must implement %s',
+                $modelType->getName(),
+                ModelOperation::class
             );
-            if ($operationType instanceof Query) {
+            if ($operationType instanceof ModelQuery) {
                 $this->queryFields[$operationType->getName()] = $operationType;
-            } else if ($operationType instanceof Mutation) {
+            } else if ($operationType instanceof ModelMutation) {
                 $this->mutationFields[$operationType->getName()] = $operationType;
             }
         }
@@ -334,9 +350,26 @@ class Schema implements ConfigurationApplier, SchemaValidator
         return $this;
     }
 
+    /**
+     * @param string $name
+     * @return ModelType|null
+     */
+    public function getModel(string $name): ?ModelType
+    {
+        return $this->models[$name] ?? null;
+    }
+
     private function getHash(): string
     {
         return md5('UncleCheese');
+    }
+
+    /**
+     * @return array
+     */
+    public static function getInternalTypes(): array
+    {
+        return ['String', 'Boolean', 'Int', 'Float', 'ID'];
     }
 
     /**

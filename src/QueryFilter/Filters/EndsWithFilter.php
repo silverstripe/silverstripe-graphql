@@ -8,17 +8,18 @@ use SilverStripe\ORM\DataList;
 
 class EndsWithFilter implements FieldFilterInterface
 {
-    public function applyInclusion(DataList $list, $fieldName, $value)
+    /**
+     * @inheritDoc
+     */
+    public function apply(DataList $list, string $fieldName, $value): DataList
     {
         return $list->filter($fieldName . ':EndsWith', $value);
     }
 
-    public function applyExclusion(DataList $list, $fieldName, $value)
-    {
-        return $list->exclude($fieldName . ':EndsWith', $value);
-    }
-
-    public function getIdentifier()
+    /**
+     * @inheritDoc
+     */
+    public function getIdentifier(): string
     {
         return 'endswith';
     }

@@ -16,18 +16,10 @@ interface FieldFilterInterface
      * @param string $value
      * @return DataList
      */
-    public function applyInclusion(DataList $list, $fieldName, $value);
-
-    /**
-     * @param DataList $list
-     * @param string $fieldName
-     * @param string $value
-     * @return DataList
-     */
-    public function applyExclusion(DataList $list, $fieldName, $value);
+    public function apply(DataList $list, string $fieldName, $value): DataList;
 
     /**
      * @return string
      */
-    public function getIdentifier();
+    public function getIdentifier(): string;
 }

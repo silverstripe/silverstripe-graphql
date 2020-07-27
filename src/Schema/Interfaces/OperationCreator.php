@@ -17,5 +17,5 @@ interface OperationCreator
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): Field;
+    ): ModelOperation;
 }

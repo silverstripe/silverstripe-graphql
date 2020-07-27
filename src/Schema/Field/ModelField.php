@@ -12,12 +12,9 @@ use SilverStripe\GraphQL\Schema\Type\ModelType;
 
 class ModelField extends Field
 {
-    const INTROSPECT_TYPE = '__INTROSPECT_TYPE__';
+    use ModelAware;
 
-    /**
-     * @var SchemaModelInterface
-     */
-    private $model;
+    const INTROSPECT_TYPE = '__INTROSPECT_TYPE__';
 
     /**
      * @var array|null
@@ -40,8 +37,7 @@ class ModelField extends Field
      * @param $config
      * @param SchemaModelInterface $model
      * @throws SchemaBuilderException
-     * @throws ReflectionException
-     */
+\     */
     public function __construct(string $name, $config, SchemaModelInterface $model)
     {
         $this->setModel($model);
@@ -146,24 +142,6 @@ class ModelField extends Field
     }
 
     /**
-     * @return SchemaModelInterface
-     */
-    public function getModel(): SchemaModelInterface
-    {
-        return $this->model;
-    }
-
-    /**
-     * @param SchemaModelInterface $model
-     * @return ModelField
-     */
-    public function setModel(SchemaModelInterface $model): ModelField
-    {
-        $this->model = $model;
-        return $this;
-    }
-
-    /**
      * @return string|null
      */
     public function getProperty(): ?string
@@ -175,7 +153,7 @@ class ModelField extends Field
      * @param string|null $property
      * @return ModelField
      */
-    public function setProperty(?string $property): ModelField
+    public function setProperty(?string $property): self
     {
         $this->property = $property;
 

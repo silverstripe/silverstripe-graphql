@@ -19,7 +19,7 @@ class SchemaModelCreatorRegistry
     /**
      * @var array
      */
-    private static$__cache = [];
+    private static $__cache = [];
 
     /**
      * SchemaModelCreatorRegistry constructor.

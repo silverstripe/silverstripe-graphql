@@ -23,10 +23,6 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
 {
     use QueryFilterAware;
 
-    const FILTER = 'Filter';
-
-    const EXCLUDE = 'Exclude';
-
     /**
      * Read constructor.
      *

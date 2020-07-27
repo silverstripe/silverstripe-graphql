@@ -22,7 +22,6 @@ class TypeReference
 
     /**
      * @return Node
-     * @throws SyntaxError
      */
     public function toAST(): Node
     {

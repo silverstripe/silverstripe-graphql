@@ -184,22 +184,9 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
         }
 
         $plugins = $config['plugins'] ?? [];
-        Schema::assertValidConfig($plugins);
-        foreach ($plugins as $pluginName => $config) {
-            if ($config === false) {
-                continue;
-            }
-            $pluginConfig = $config === true ? [] : $config;
-            $this->addPlugin($pluginName, $pluginConfig);
-        }
+        $this->setPlugins($plugins);
         $args = $config['args'] ?? [];
-        Schema::assertValidConfig($args);
-        foreach ($args as $argName => $config) {
-            if ($config === false) {
-                continue;
-            }
-            $this->addArg($argName, $config);
-        }
+        $this->setArgs($args);
     }
 
     /**
@@ -208,7 +195,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @param callable|null $callback
      * @return Field
      */
-    public function addArg(string $argName, $config, ?callable $callback = null): Field
+    public function addArg(string $argName, $config, ?callable $callback = null): self
     {
         $argObj = $config instanceof Argument ? $config : Argument::create($argName, $config);
         $this->args[$argObj->getName()] = $argObj;
@@ -219,10 +206,28 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     }
 
     /**
+     * @param array $args
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function setArgs(array $args): self
+    {
+        Schema::assertValidConfig($args);
+        foreach ($args as $argName => $config) {
+            if ($config === false) {
+                continue;
+            }
+            $this->addArg($argName, $config);
+        }
+
+        return $this;
+    }
+
+    /**
      * @param Field $field
      * @return Field
      */
-    public function mergeWith(Field $field): Field
+    public function mergeWith(Field $field): self
     {
         foreach ($field->getArgs() as $arg) {
             $this->args[$arg->getName()] = $arg;
@@ -248,7 +253,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @return Field
      * @throws SchemaBuilderException
      */
-    public function setType($type): Field
+    public function setType($type): self
     {
         Schema::invariant(
             is_string($type) || $type instanceof EncodedType,
@@ -275,7 +280,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @param string $name
      * @return Field
      */
-    public function setName(string $name): Field
+    public function setName(string $name): self
     {
         $this->name = $name;
         return $this;
@@ -295,16 +300,6 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     public function getArgList(): ArrayList
     {
         return ArrayList::create(array_values($this->args));
-    }
-
-    /**
-     * @param Argument[] $args
-     * @return Field
-     */
-    public function setArgs(array $args): Field
-    {
-        $this->args = $args;
-        return $this;
     }
 
     /**
@@ -362,7 +357,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @param string|null $description
      * @return Field
      */
-    public function setDescription(?string $description): Field
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
         return $this;
@@ -380,7 +375,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @param array|string|ResolverReference|null $resolver
      * @return Field
      */
-    public function setResolver($resolver): Field
+    public function setResolver($resolver): self
     {
         if ($resolver) {
             $this->resolver = $resolver instanceof ResolverReference
@@ -405,7 +400,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @param array|string|ResolverReference|null $defaultResolver
      * @return Field
      */
-    public function setDefaultResolver($defaultResolver): Field
+    public function setDefaultResolver($defaultResolver): self
     {
         if ($defaultResolver) {
             $this->defaultResolver = $defaultResolver instanceof ResolverReference
@@ -430,7 +425,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @param ResolverRegistry $resolverRegistry
      * @return $this
      */
-    public function setResolverRegistry(ResolverRegistry $resolverRegistry): Field
+    public function setResolverRegistry(ResolverRegistry $resolverRegistry): self
     {
         $this->resolverRegistry = $resolverRegistry;
         return $this;
@@ -448,7 +443,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @param array|null $resolverContext
      * @return Field
      */
-    public function setResolverContext(?array $resolverContext): Field
+    public function setResolverContext(?array $resolverContext): self
     {
         $this->resolverContext = $resolverContext;
         return $this;
@@ -459,7 +454,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @param $value
      * @return Field
      */
-    public function addResolverContext(string $key, $value): Field
+    public function addResolverContext(string $key, $value): self
     {
         $this->resolverContext[$key] = $value;
 
@@ -471,7 +466,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @param $config
      * @return Field
      */
-    public function addPlugin(string $pluginName, $config): Field
+    public function addPlugin(string $pluginName, $config): self
     {
         $this->plugins[$pluginName] = $config;
 
@@ -482,9 +477,28 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @param string $pluginName
      * @return Field
      */
-    public function removePlugin(string $pluginName): Field
+    public function removePlugin(string $pluginName): self
     {
         unset($this->plugins[$pluginName]);
+
+        return $this;
+    }
+
+    /**
+     * @param array $plugins
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function setPlugins(array $plugins): self
+    {
+        Schema::assertValidConfig($plugins);
+        foreach ($plugins as $pluginName => $config) {
+            if ($config === false) {
+                continue;
+            }
+            $pluginConfig = $config === true ? [] : $config;
+            $this->addPlugin($pluginName, $pluginConfig);
+        }
 
         return $this;
     }
@@ -528,7 +542,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @param array|null $context
      * @return Field
      */
-    public function addResolverMiddleware($middleware, ?array $context = null): Field
+    public function addResolverMiddleware($middleware, ?array $context = null): self
     {
         if ($middleware) {
             $ref = $middleware instanceof ResolverReference

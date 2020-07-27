@@ -8,17 +8,18 @@ use SilverStripe\ORM\DataList;
 
 class StartsWithFilter implements FieldFilterInterface
 {
-    public function applyInclusion(DataList $list, $fieldName, $value)
+    /**
+     * @inheritDoc
+     */
+    public function apply(DataList $list, string $fieldName, $value): DataList
     {
         return $list->filter($fieldName . ':StartsWith', $value);
     }
 
-    public function applyExclusion(DataList $list, $fieldName, $value)
-    {
-        return $list->exclude($fieldName . ':StartsWith', $value);
-    }
-
-    public function getIdentifier()
+    /**
+     * @inheritDoc
+     */
+    public function getIdentifier(): string
     {
         return 'startswith';
     }

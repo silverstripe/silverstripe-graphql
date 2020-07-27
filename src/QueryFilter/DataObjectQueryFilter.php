@@ -3,19 +3,21 @@
 
 namespace SilverStripe\GraphQL\QueryFilter;
 
-use Exception;
-use GraphQL\Type\Definition\InputObjectType;
-use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Scaffolding\Traits\Chainable;
 use SilverStripe\GraphQL\Scaffolding\Traits\DataObjectTypeTrait;
+use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
+use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\FieldType\DBField;
+use Generator;
 
 class DataObjectQueryFilter implements ConfigurationApplier
 {
@@ -26,29 +28,36 @@ class DataObjectQueryFilter implements ConfigurationApplier
     const SEPARATOR = '__';
 
     /**
+     * @var array
+     */
+    private static $dependencies = [
+        'FieldAccessor' => '%$' . FieldAccessor::class,
+    ];
+
+    /**
      * @var FilterRegistryInterface
      */
-    protected $filterRegistry;
+    private $filterRegistry;
 
     /**
      * @var array A map of field name to a list of filter identifiers
      */
-    protected $filteredFields = [];
+    private $filteredFields = [];
 
     /**
      * @var string
      */
-    protected $filterKey = 'Filter';
+    private $fieldName = 'filter';
 
     /**
-     * @var string
+     * @var InputType[]
      */
-    protected $excludeKey = 'Exclude';
+    private $inputTypeCache;
 
     /**
-     * @var InputObjectType[]
+     * @var FieldAccessor
      */
-    protected $inputTypeCache;
+    private $fieldAccessor;
 
     /**
      * DataObjectQueryFilter constructor.
@@ -60,74 +69,19 @@ class DataObjectQueryFilter implements ConfigurationApplier
     }
 
     /**
-     * @param FilterRegistryInterface $registry
-     * @return $this
-     */
-    public function setFilterRegistry(FilterRegistryInterface $registry)
-    {
-        $this->filterRegistry = $registry;
-
-        return $this;
-    }
-
-    /**
-     * @return FilterRegistryInterface
-     */
-    public function getFilterRegistry()
-    {
-        return $this->filterRegistry;
-    }
-
-    /**
-     * @return string
-     */
-    public function getFilterKey()
-    {
-        return $this->filterKey;
-    }
-
-    /**
-     * @param string $filterKey
-     * @return DataObjectQueryFilter
-     */
-    public function setFilterKey($filterKey)
-    {
-        $this->filterKey = $filterKey;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getExcludeKey()
-    {
-        return $this->excludeKey;
-    }
-
-    /**
-     * @param string $excludeKey
-     * @return DataObjectQueryFilter
-     */
-    public function setExcludeKey($excludeKey)
-    {
-        $this->excludeKey = $excludeKey;
-        return $this;
-    }
-
-    /**
      * @return bool
      */
-    public function exists()
+    public function exists(): bool
     {
         return !empty($this->filteredFields);
     }
 
     /**
-     * @param $fieldName
-     * @param $filterIdentifier
+     * @param string $fieldName
+     * @param string $filterIdentifier
      * @return $this
      */
-    public function addFieldFilterByIdentifier($fieldName, $filterIdentifier)
+    public function addFieldFilterByIdentifier(string $fieldName, string $filterIdentifier): DataObjectQueryFilter
     {
         if (!isset($this->filteredFields[$fieldName])) {
             $this->filteredFields[$fieldName] = [];
@@ -141,8 +95,9 @@ class DataObjectQueryFilter implements ConfigurationApplier
     /**
      * @param $fieldName
      * @param FieldFilterInterface $filter
+     * @return $this
      */
-    public function addFieldFilter($fieldName, FieldFilterInterface $filter)
+    public function addFieldFilter($fieldName, FieldFilterInterface $filter): DataObjectQueryFilter
     {
         if (!isset($this->filteredFields[$fieldName])) {
             $this->filteredFields[$fieldName] = [];
@@ -157,7 +112,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
      * @param string $field
      * @return $this
      */
-    public function addDefaultFilters($field)
+    public function addDefaultFilters(string $field): DataObjectQueryFilter
     {
         $dbField = $this->getDBField($field);
         if (!$dbField) {
@@ -167,7 +122,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
                 $this->getDataObjectClass()
             ));
         }
-        foreach ($dbField->config()->graphql_default_filters as $filterID) {
+        foreach ($dbField->config()->get('graphql_default_filters') as $filterID) {
             $this->addFieldFilterByIdentifier($field, $filterID);
         }
 
@@ -178,7 +133,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
      * Adds all the default filters for every field on the dataobject
      * @return $this
      */
-    public function addAllFilters()
+    public function addAllFilters(): DataObjectQueryFilter
     {
         $fields = array_keys($this->getDataObjectInstance()->searchableFields());
         foreach ($fields as $fieldName) {
@@ -191,49 +146,44 @@ class DataObjectQueryFilter implements ConfigurationApplier
     /**
      * @param string $name
      * @param bool $cached
-     * @return InputObjectType
+     * @return InputType
+     * @throws SchemaBuilderException
+     *
      */
-    public function getInputType($name, $cached = true)
+    public function getInputType(string $name, bool $cached = true): InputType
     {
         if ($cached && isset($this->inputTypeCache[$name])) {
             return $this->inputTypeCache[$name];
         }
 
         $filteredFields = $this->filteredFields;
-        $input = new InputObjectType([
-            'name' => $name,
-            'fields' => function () use ($filteredFields) {
-                $fields = [];
-                foreach ($filteredFields as $fieldName => $filterIDs) {
-                    /* @var DBField|TypeCreatorExtension $db */
-                    $db = $this->getDBField($fieldName);
-                    foreach ($filterIDs as $filterIdOrInstance) {
-                        $filter = $filterIdOrInstance instanceof FieldFilterInterface
-                            ? $filterIdOrInstance
-                            : $this->getFilterRegistry()->getFilterByIdentifier($filterIdOrInstance);
-
-                        if (!$filter) {
-                            throw new Exception(sprintf(
-                                'Filter %s not found',
-                                $filterIdOrInstance
-                            ));
-                        }
-                        $filterType = $db->getGraphQLType();
-                        if ($filter instanceof ListFieldFilterInterface) {
-                            $filterType = Type::listOf($filterType);
-                        }
-                        $id = $filterIdOrInstance instanceof FieldFilterInterface
-                            ? $filterIdOrInstance->getIdentifier()
-                            : $filterIdOrInstance;
-
-                         $fields[$fieldName . self::SEPARATOR . $id] = [
-                            'type' => $filterType,
-                         ];
-                    }
+        $model = DataObjectModel::create($this->dataObjectClass);
+        $input = InputType::create($name);
+        foreach ($filteredFields as $fieldName => $filterIDs) {
+            foreach ($filterIDs as $filterIdOrInstance) {
+                $filter = $filterIdOrInstance instanceof FieldFilterInterface
+                    ? $filterIdOrInstance
+                    : $this->getFilterRegistry()->getFilterByIdentifier($filterIdOrInstance);
+                Schema::invariant(
+                    $filter,
+                    'Filter %s not found',
+                    $filterIdOrInstance
+                );
+                $filterType = $model->getTypeForField($fieldName);
+                if (!$filterType) {
+                    continue;
                 }
-                return $fields;
+                if ($filter instanceof ListFieldFilterInterface) {
+                    $filterType = "[{$filterType}]";
+                }
+                $id = $filterIdOrInstance instanceof FieldFilterInterface
+                    ? $filterIdOrInstance->getIdentifier()
+                    : $filterIdOrInstance;
+
+                $fieldName .= self::SEPARATOR . $id;
+                $input->addField($fieldName, $filterType);
             }
-        ]);
+        }
 
         $this->inputTypeCache[$name] = $input;
 
@@ -245,21 +195,16 @@ class DataObjectQueryFilter implements ConfigurationApplier
      * @param array $args
      * @return DataList
      */
-    public function applyArgsToList(DataList $list, $args = [])
+    public function applyArgsToList(DataList $list, array $args = []): DataList
     {
-        if (isset($args[$this->getFilterKey()]) && !empty($args[$this->getFilterKey()])) {
-            foreach ($this->getFieldFilters($args[$this->getFilterKey()]) as $tuple) {
-                /* @var FieldFilterInterface $filter */
-                list ($filter, $field, $value) = $tuple;
-                $list = $filter->applyInclusion($list, $field, $value);
-            }
+        $filters = $args[$this->getFieldName()] ?? null;
+        if (!$filters) {
+            return $list;
         }
-        if (isset($args[$this->getExcludeKey()]) && !empty($args[$this->getExcludeKey()])) {
-            foreach ($this->getFieldFilters($args[$this->getExcludeKey()]) as $tuple) {
-                /* @var FieldFilterInterface $filter */
-                list ($filter, $field, $value) = $tuple;
-                $list = $filter->applyExclusion($list, $field, $value);
-            }
+        foreach ($this->getFieldFilters($filters) as $tuple) {
+            /* @var FieldFilterInterface $filter */
+            list ($filter, $field, $value) = $tuple;
+            $list = $filter->applyInclusion($list, $field, $value);
         }
 
         return $list;
@@ -270,7 +215,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
      * @return array
      * @throws InvalidArgumentException
      */
-    public function getFiltersForField($fieldName)
+    public function getFiltersForField(string $fieldName): array
     {
         if (isset($this->filteredFields[$fieldName])) {
             return $this->filteredFields[$fieldName];
@@ -287,7 +232,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
      * @return array
      * @throws InvalidArgumentException
      */
-    public function getFilterIdentifiersForField($fieldName)
+    public function getFilterIdentifiersForField(string $fieldName): array
     {
         return array_keys($this->getFiltersForField($fieldName));
     }
@@ -297,7 +242,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
      * @param string $fieldName
      * @return bool
      */
-    public function isFieldFiltered($fieldName)
+    public function isFieldFiltered(string $fieldName): bool
     {
         try {
             $filters = $this->getFiltersForField($fieldName);
@@ -313,7 +258,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
      * @param string $id
      * @return bool
      */
-    public function fieldHasFilter($fieldName, $id)
+    public function fieldHasFilter(string $fieldName, string $id): bool
     {
         if ($this->isFieldFiltered($fieldName)) {
             return in_array($id, $this->getFilterIdentifiersForField($fieldName));
@@ -327,7 +272,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
      * @param string $id
      * @return $this
      */
-    public function removeFieldFilterByIdentifier($fieldName, $id)
+    public function removeFieldFilterByIdentifier(string $fieldName, string $id): DataObjectQueryFilter
     {
         if ($this->isFieldFiltered($fieldName)) {
             unset($this->filteredFields[$fieldName][$id]);
@@ -341,7 +286,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
      * @param $id
      * @return FieldFilterInterface|null
      */
-    public function getFieldFilterByIdentifier($fieldName, $id)
+    public function getFieldFilterByIdentifier(string $fieldName, string $id): ?FieldFilterInterface
     {
         $filters = $this->getFiltersForField($fieldName);
 
@@ -373,8 +318,64 @@ class DataObjectQueryFilter implements ConfigurationApplier
     }
 
     /**
+     * @param FilterRegistryInterface $registry
+     * @return $this
+     */
+    public function setFilterRegistry(FilterRegistryInterface $registry): DataObjectQueryFilter
+    {
+        $this->filterRegistry = $registry;
+
+        return $this;
+    }
+
+    /**
+     * @return FilterRegistryInterface
+     */
+    public function getFilterRegistry()
+    {
+        return $this->filterRegistry;
+    }
+
+    /**
+     * @return FieldAccessor
+     */
+    public function getFieldAccessor(): FieldAccessor
+    {
+        return $this->fieldAccessor;
+    }
+
+    /**
+     * @param FieldAccessor $fieldAccessor
+     * @return DataObjectQueryFilter
+     */
+    public function setFieldAccessor(FieldAccessor $fieldAccessor): DataObjectQueryFilter
+    {
+        $this->fieldAccessor = $fieldAccessor;
+        return $this;
+    }
+
+
+    /**
+     * @return string
+     */
+    public function getFieldName(): string
+    {
+        return $this->fieldName;
+    }
+
+    /**
+     * @param string $fieldName
+     * @return DataObjectQueryFilter
+     */
+    public function setFieldName(string $fieldName): DataObjectQueryFilter
+    {
+        $this->fieldName = $fieldName;
+        return $this;
+    }
+
+    /**
      * @param array $filters An array of Field__Filter => Value
-     * @return \Generator
+     * @return Generator
      */
     protected function getFieldFilters(array $filters)
     {
@@ -392,9 +393,6 @@ class DataObjectQueryFilter implements ConfigurationApplier
             $filterIdentifier = array_pop($parts);
             // If the field segment contained __, that implies relationship (dot notation)
             $field = implode('.', $parts);
-            if (!isset($result[$field])) {
-                $result[$field] = [];
-            }
             $filter = $this->getFieldFilterByIdentifier($field, $filterIdentifier);
             if (!$filter instanceof FieldFilterInterface) {
                 $filter = $this->getFilterRegistry()->getFilterByIdentifier($filterIdentifier);
@@ -415,22 +413,29 @@ class DataObjectQueryFilter implements ConfigurationApplier
      * @param string $field
      * @return DBField
      */
-    protected function getDBField($field)
+    protected function getDBField($field): DBField
     {
         $dbField = null;
-        if (stristr($field, self::SEPARATOR) !== false) {
-            list ($relationName, $relationField) = explode(self::SEPARATOR, $field);
-            $class = $this->getDataObjectInstance()->getRelationClass($relationName);
-            if (!$class) {
-                throw new InvalidArgumentException(sprintf(
-                    'Could not find relation %s on %s',
-                    $relationName,
-                    $this->getDataObjectClass()
-                ));
-            }
-            return Injector::inst()->get($class)->dbObject($relationField);
+        if (stristr($field, self::SEPARATOR) === false) {
+            $normalisedField = $this->getFieldAccessor()->normaliseField($this->getDataObjectInstance(), $field);
+            return $this->getDataObjectInstance()->dbObject($normalisedField);
         }
 
-        return $this->getDataObjectInstance()->dbObject($field);
+        list ($relationName, $relationField) = explode(self::SEPARATOR, $field);
+        $class = $this->getDataObjectInstance()->getRelationClass($relationName);
+        if (!$class) {
+            throw new InvalidArgumentException(sprintf(
+                'Could not find relation %s on %s',
+                $relationName,
+                $this->getDataObjectClass()
+            ));
+        }
+        $relatedObj = Injector::inst()->get($class);
+        $normalisedField = $this->getFieldAccessor()->normaliseField($relatedObj, $relationField);
+
+        return $relatedObj->dbObject($normalisedField);
+
     }
+
+
 }

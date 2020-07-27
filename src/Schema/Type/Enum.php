@@ -84,7 +84,7 @@ class Enum extends ViewableData implements SchemaValidator
      * @param string $name
      * @return Enum
      */
-    public function setName(string $name): Enum
+    public function setName(string $name): self
     {
         $this->name = $name;
         return $this;
@@ -102,7 +102,7 @@ class Enum extends ViewableData implements SchemaValidator
      * @param array $values
      * @return Enum
      */
-    public function setValues(array $values): Enum
+    public function setValues(array $values): self
     {
         $this->values = $values;
         return $this;
@@ -113,7 +113,7 @@ class Enum extends ViewableData implements SchemaValidator
      * @param null $val
      * @return Enum
      */
-    public function addValue($key, $val = null): Enum
+    public function addValue($key, $val = null): self
     {
         if ($val === null) {
             $this->values[$key] = $key;
@@ -128,7 +128,7 @@ class Enum extends ViewableData implements SchemaValidator
      * @param string $key
      * @return Enum
      */
-    public function removeValue(string $key): Enum
+    public function removeValue(string $key): self
     {
         unset($this->values[$key]);
 
@@ -147,7 +147,7 @@ class Enum extends ViewableData implements SchemaValidator
      * @param string|null $description
      * @return Enum
      */
-    public function setDescription(?string $description): Enum
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
         return $this;

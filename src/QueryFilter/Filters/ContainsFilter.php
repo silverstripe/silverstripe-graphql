@@ -8,17 +8,17 @@ use SilverStripe\ORM\DataList;
 
 class ContainsFilter implements FieldFilterInterface
 {
-    public function applyInclusion(DataList $list, $fieldName, $value)
+    /**
+     * @inheritDoc
+     */
+    public function apply(DataList $list, string $fieldName, $value): DataList
     {
         return $list->filter($fieldName . ':PartialMatch', $value);
     }
-
-    public function applyExclusion(DataList $list, $fieldName, $value)
-    {
-        return $list->exclude($fieldName . ':PartialMatch', $value);
-    }
-
-    public function getIdentifier()
+    /**
+     * @inheritDoc
+     */
+    public function getIdentifier(): string
     {
         return 'contains';
     }

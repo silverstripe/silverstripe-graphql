@@ -17,15 +17,3 @@ SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\QueryFilter\DataObjectQueryFilter:
     properties:
       filterRegistry: '%$SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface'
-SilverStripe\ORM\FieldType\DBField:
-  graphql_default_filters: [ eq, in ]
-SilverStripe\ORM\FieldType\DBInt:
-  graphql_default_filters: [ gt, lt, gte, lte ]
-SilverStripe\ORM\FieldType\DBDate:
-  graphql_default_filters: [ gt, lt, gte, lte ]
-SilverStripe\ORM\FieldType\DBTime:
-  graphql_default_filters: [ gt, lt, gte, lte ]
-SilverStripe\ORM\FieldType\DBFloat:
-  graphql_default_filters: [ gt, lt, gte, lte ]
-SilverStripe\ORM\FieldType\DBString:
-  graphql_default_filters: [ contains ]

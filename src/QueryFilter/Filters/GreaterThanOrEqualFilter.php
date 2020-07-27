@@ -8,17 +8,12 @@ use SilverStripe\ORM\DataList;
 
 class GreaterThanOrEqualFilter implements FieldFilterInterface
 {
-    public function applyInclusion(DataList $list, $fieldName, $value)
+    public function apply(DataList $list, string $fieldName, $value): DataList
     {
         return $list->filter($fieldName . ':GreaterThanOrEqual', $value);
     }
 
-    public function applyExclusion(DataList $list, $fieldName, $value)
-    {
-        return $list->exclude($fieldName . ':GreaterThanOrEqual', $value);
-    }
-
-    public function getIdentifier()
+    public function getIdentifier(): string
     {
         return 'gte';
     }

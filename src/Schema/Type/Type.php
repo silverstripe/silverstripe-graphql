@@ -41,7 +41,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
     private $isInput = false;
 
     /**
-     * @var array
+     * @var ResolverReference|null
      */
     private $fieldResolver;
 
@@ -87,17 +87,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
         }
 
         $fields = $config['fields'] ?? [];
-        Schema::assertValidConfig($fields);
-        foreach ($fields as $fieldName => $fieldConfig) {
-            if ($fieldConfig === false) {
-                continue;
-            }
-            $this->addField($fieldName, $fieldConfig);
-        }
-
-        return $this;
-
-
+        $this->setFields($fields);
     }
 
     /**
@@ -112,7 +102,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
      * @param string $name
      * @return Type
      */
-    public function setName(string $name): Type
+    public function setName(string $name): self
     {
         $this->name = $name;
         return $this;
@@ -135,21 +125,18 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @param Field[] $fields
+     * @param array $fields
      * @return Type
      * @throws SchemaBuilderException
      */
-    public function setFields(array $fields): Type
+    public function setFields(array $fields): self
     {
-        /* @var Field $field */
-        foreach ($fields as $field) {
-            Schema::invariant(
-                $field instanceof Field,
-                '%s takes an array of %s instances',
-                __FUNCTION__,
-                Field::class
-            );
-            $this->fields[$field->getName()] = $field;
+        Schema::assertValidConfig($fields);
+        foreach ($fields as $fieldName => $fieldConfig) {
+            if ($fieldConfig === false) {
+                continue;
+            }
+            $this->addField($fieldName, $fieldConfig);
         }
 
         return $this;
@@ -162,7 +149,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
      * @return Type
      * @throws SchemaBuilderException
      */
-    public function addField(string $fieldName, $fieldConfig, ?callable $callback = null): Type
+    public function addField(string $fieldName, $fieldConfig, ?callable $callback = null): self
     {
         if (!$fieldConfig instanceof Field) {
             $config = is_string($fieldConfig) ? ['type' => $fieldConfig] : $fieldConfig;
@@ -186,7 +173,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
      * @param string $field
      * @return Type
      */
-    public function removeField(string $field): Type
+    public function removeField(string $field): self
     {
         unset($this->fields[$field]);
 
@@ -215,7 +202,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
      * @return Type
      * @throws SchemaBuilderException
      */
-    public function mergeWith(Type $type): Type
+    public function mergeWith(Type $type): self
     {
         Schema::invariant(
             $type->getIsInput() === $this->getIsInput(),
@@ -275,7 +262,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
      * @param array $interfaces
      * @return Type
      */
-    public function setInterfaces(array $interfaces): Type
+    public function setInterfaces(array $interfaces): self
     {
         $this->interfaces = $interfaces;
         return $this;
@@ -293,7 +280,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
      * @param bool $isInput
      * @return Type
      */
-    public function setIsInput(bool $isInput): Type
+    public function setIsInput(bool $isInput): self
     {
         $this->isInput = $isInput;
         return $this;
@@ -311,7 +298,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
      * @param array|string|ResolverReference|null $fieldResolver
      * @return Type
      */
-    public function setFieldResolver($fieldResolver): Type
+    public function setFieldResolver($fieldResolver): self
     {
         if ($fieldResolver) {
             $this->fieldResolver = $fieldResolver instanceof ResolverReference

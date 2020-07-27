@@ -7,11 +7,13 @@ namespace SilverStripe\GraphQL\Schema\Type;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
+use SilverStripe\GraphQL\Schema\Field\ModelAware;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\RequiredFieldsProvider;
@@ -21,10 +23,7 @@ use SilverStripe\GraphQL\Schema\Schema;
 
 class ModelType extends Type implements ExtraTypeProvider
 {
-    /**
-     * @var SchemaModelInterface
-     */
-    private $model;
+    use ModelAware;
 
     /**
      * @var string
@@ -163,10 +162,10 @@ class ModelType extends Type implements ExtraTypeProvider
     }
 
     /**
-     * @return Type
+     * @return ModelType
      * @throws SchemaBuilderException
      */
-    public function addAllOperations(): Type
+    public function addAllOperations(): self
     {
         Schema::invariant(
             $this->getModel() instanceof OperationProvider,
@@ -214,11 +213,27 @@ class ModelType extends Type implements ExtraTypeProvider
     }
 
     /**
+     * @param string $fieldName
+     * @return Field|null
+     */
+    public function getFieldByName(string $fieldName): ?Field
+    {
+        /* @var ModelField $fieldObj */
+        foreach ($this->getFields() as $fieldObj) {
+            if ($fieldObj->getFieldName() === $fieldName) {
+                return $fieldObj;
+            }
+        }
+        return null;
+    }
+
+
+    /**
      * @param string $operationName
      * @param array $config
-     * @return Type
+     * @return ModelType
      */
-    public function addOperation(string $operationName, array $config = []): Type
+    public function addOperation(string $operationName, array $config = []): self
     {
         $this->operationCreators[$operationName] = $config;
 
@@ -227,9 +242,9 @@ class ModelType extends Type implements ExtraTypeProvider
 
     /**
      * @param string $operationName
-     * @return Type
+     * @return ModelType
      */
-    public function removeOperation(string $operationName): Type
+    public function removeOperation(string $operationName): self
     {
         unset($this->operationCreators[$operationName]);
 
@@ -239,10 +254,10 @@ class ModelType extends Type implements ExtraTypeProvider
     /**
      * @param string $operationName
      * @param array $config
-     * @return Type
+     * @return ModelType
      * @throws SchemaBuilderException
      */
-    public function updateOperation(string $operationName, array $config = []): Type
+    public function updateOperation(string $operationName, array $config = []): self
     {
         Schema::invariant(
             isset($this->operationCreators[$operationName]),
@@ -260,7 +275,7 @@ class ModelType extends Type implements ExtraTypeProvider
     }
 
     /**
-     * @return Field[]
+     * @return ModelOperation[]
      * @throws SchemaBuilderException
      */
     public function getOperations(): array
@@ -328,24 +343,6 @@ class ModelType extends Type implements ExtraTypeProvider
         }
 
         return $extraTypes;
-    }
-
-    /**
-     * @return SchemaModelInterface
-     */
-    public function getModel(): SchemaModelInterface
-    {
-        return $this->model;
-    }
-
-    /**
-     * @param SchemaModelInterface $model
-     * @return ModelType
-     */
-    public function setModel(SchemaModelInterface $model): ModelType
-    {
-        $this->model = $model;
-        return $this;
     }
 
     /**

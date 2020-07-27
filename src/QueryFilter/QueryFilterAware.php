@@ -12,7 +12,7 @@ trait QueryFilterAware
     /**
      * @var DataObjectQueryFilter
      */
-    protected $queryFilter;
+    private $queryFilter;
 
     /**
      * @param DataObjectQueryFilter $filter
@@ -31,26 +31,5 @@ trait QueryFilterAware
     public function queryFilter()
     {
         return $this->queryFilter;
-    }
-
-    /**
-     * @param Manager $manager
-     */
-    public function addToManager(Manager $manager)
-    {
-        if ($this->queryFilter()->exists()) {
-            $manager->addType(
-                $this->queryFilter->getInputType(
-                    $this->inputTypeName(Read::FILTER)
-                )
-            );
-            $manager->addType(
-                $this->queryFilter->getInputType(
-                    $this->inputTypeName(Read::EXCLUDE)
-                )
-            );
-        }
-
-        parent::addToManager($manager);
     }
 }

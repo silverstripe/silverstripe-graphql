@@ -66,7 +66,8 @@ class FieldAccessor
     public function hasField(DataObject $dataObject, string $field): bool
     {
         $path = explode('.', $field);
-        return $this->normaliseField($dataObject, $path[0]) !== null;
+        $fieldName = array_shift($path);
+        return $this->normaliseField($dataObject, $fieldName) !== null;
     }
 
     /**
@@ -145,7 +146,7 @@ class FieldAccessor
     }
 
     /**
-     * @param DataObject|DataList $subject
+     * @param DataObject|DataList|DBField $subject
      * @param array $path
      * @return string|int|bool|array|DataList
      * @throws LogicException

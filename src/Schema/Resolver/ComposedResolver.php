@@ -7,6 +7,11 @@ use Closure;
 
 class ComposedResolver
 {
+    /**
+     * @param callable $first
+     * @param array $callables
+     * @return Closure
+     */
     public static function create(callable $first, array $callables = []): Closure
     {
         return function (...$params) use ($first, $callables) {

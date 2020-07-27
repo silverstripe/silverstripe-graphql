@@ -1,0 +1,12 @@
+---
+Name: graphql-plugins
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Schema\Registry\PluginRegistry:
+    constructor:
+      dataobjectPaginator: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\Paginator'
+      dataobjectQueryFilter: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter'
+SilverStripe\GraphQL\Schema\DataObject\ReadCreator:
+  default_plugins:
+    dataobjectPaginator: true
+    dataobjectQueryFilter: true

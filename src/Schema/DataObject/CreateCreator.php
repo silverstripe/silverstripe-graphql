@@ -8,7 +8,9 @@ use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Schema\Field\Field;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\ModelMutation;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
@@ -29,6 +31,12 @@ class CreateCreator implements OperationCreator, InputTypeProvider
     ];
 
     /**
+     * @var array
+     * @config
+     */
+    private static $default_plugins = [];
+
+    /**
      * @var FieldAccessor
      */
     private $fieldAccessor;
@@ -37,27 +45,29 @@ class CreateCreator implements OperationCreator, InputTypeProvider
      * @param SchemaModelInterface $model
      * @param string $typeName
      * @param array $config
-     * @return Field
+     * @return ModelOperation
+     * @throws SchemaBuilderException
      */
     public function createOperation(
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): Field
+    ): ModelOperation
     {
-        return Mutation::create(
-            'create' . ucfirst($typeName),
-            [
-                'type' => $typeName,
-                'defaultResolver' => [static::class, 'resolve'],
-                'resolverContext' => [
-                    'dataClass' => $model->getSourceClass()
-                ],
-                'args' => [
-                    'Input' => self::inputTypeName($typeName) . '!',
-                ],
-            ]
-        );
+        $defaultPlugins = $this->config()->get('default_plugins');
+        $configPlugins = $config['plugins'] ?? [];
+        $plugins = array_merge($defaultPlugins, $configPlugins);
+        $mutationName = 'create' . ucfirst($typeName);
+        $inputTypeName = self::inputTypeName($typeName);
+
+        return ModelMutation::create($model, $mutationName)
+            ->setType($typeName)
+            ->setPlugins($plugins)
+            ->setDefaultResolver([static::class, 'resolve'])
+            ->setResolverContext([
+                'dataClass' => $model->getSourceClass(),
+            ])
+            ->addArg('Input', "{$inputTypeName}!");
     }
 
     /**

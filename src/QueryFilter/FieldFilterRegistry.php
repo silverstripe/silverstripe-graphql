@@ -34,7 +34,7 @@ class FieldFilterRegistry implements FilterRegistryInterface
             throw new InvalidArgumentException(sprintf(
                 '%s filters must be implement the %s interface. See: %s',
                 __CLASS__,
-                FilterInterface::class,
+                FieldFilterInterface::class,
                 get_class($filter)
             ));
         }
@@ -65,7 +65,7 @@ class FieldFilterRegistry implements FilterRegistryInterface
     }
 
     /**
-     * @return FilterInterface[]
+     * @return FieldFilterInterface[]
      */
     public function getAll()
     {
