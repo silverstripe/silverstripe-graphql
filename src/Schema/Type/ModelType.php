@@ -220,13 +220,12 @@ class ModelType extends Type implements ExtraTypeProvider
     {
         /* @var ModelField $fieldObj */
         foreach ($this->getFields() as $fieldObj) {
-            if ($fieldObj->getFieldName() === $fieldName) {
+            if ($fieldObj->getName() === $fieldName) {
                 return $fieldObj;
             }
         }
         return null;
     }
-
 
     /**
      * @param string $operationName

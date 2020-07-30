@@ -7,9 +7,9 @@ interface FilterRegistryInterface
 {
     /**
      * @param $identifier
-     * @return mixed
+     * @return FieldFilterInterface|null
      */
-    public function getFilterByIdentifier($identifier);
+    public function getFilterByIdentifier($identifier): ?FieldFilterInterface;
 
     /**
      * @return FieldFilterInterface[]

@@ -317,9 +317,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      */
     public function getNamedType(): string
     {
-        list($name) = $this->getEncodedType()->getTypeName();
-
-        return $name;
+        return $this->getEncodedType()->getTypeName()[0];
     }
 
     /**

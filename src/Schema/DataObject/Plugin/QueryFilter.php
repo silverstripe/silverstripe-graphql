@@ -4,14 +4,14 @@
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
 
+use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
 use SilverStripe\GraphQL\QueryFilter\FieldFilterRegistry;
 use SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface;
 use SilverStripe\GraphQL\QueryFilter\ListFieldFilterInterface;
 use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
-use SilverStripe\GraphQL\Schema\DataObject\InheritanceChain;
+use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
@@ -21,16 +21,12 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
+use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DataObject;
 
 class QueryFilter implements QueryPlugin, SchemaUpdater
 {
     use Configurable;
-
-    /**
-     * @var array
-     * @config
-     */
-    private static $dbfield_filters = [];
 
     /**
      * @var string
@@ -106,18 +102,35 @@ class QueryFilter implements QueryPlugin, SchemaUpdater
         );
 
         if ($configFilters === Schema::ALL) {
-            $configFilters = $this->buildAllFieldsMapping($modelType, $schema);
+            $configFilters = $this->buildAllFieldsConfig($modelType, $schema);
         }
 
         Schema::assertValidConfig($configFilters);
-        $filters = $this->buildFilterMap($modelType, $configFilters);
-        list ($rootType, $allTypes) = $this->extractTypes($query->getName(), $filters);
+        $fields = $this->buildInputTypeFields($modelType, $configFilters);
+        list ($rootType, $allTypes) = $this->extractTypes($query->getName(), $fields);
         foreach ($allTypes as $type) {
             $schema->addType($type);
         }
 
         $fieldName = $this->config()->get('field_name');
         $query->addArg($fieldName, $rootType);
+
+        $rawFieldMapping = $this->getFieldMapping($modelType, $fields);
+        $pathMapping = self::buildPathsFromFieldMapping($rawFieldMapping);
+        $fieldMapping = [];
+        foreach ($pathMapping as $fieldPath => $propPath) {
+            if ($fieldPath !== $propPath) {
+                $fieldMapping[$fieldPath] = $propPath;
+            }
+        }
+
+        $query->addResolverMiddleware(
+            [static::class, 'filter'],
+            [
+                'fieldMapping' => $fieldMapping,
+                'fieldName' => $fieldName,
+            ]
+        );
     }
 
     /**
@@ -126,22 +139,21 @@ class QueryFilter implements QueryPlugin, SchemaUpdater
      * @return array
      * @throws SchemaBuilderException
      */
-    private function buildAllFieldsMapping(ModelType $modelType, Schema $schema): array
+    private function buildAllFieldsConfig(ModelType $modelType, Schema $schema): array
     {
-        $filters = [];
         /* @var ModelField $fieldObj */
-        foreach ($modelType->getModel()->getAllFields() as $fieldName) {
-            $fieldObj = $modelType->getFieldByName($fieldName);
-            if (!$fieldObj) {
+        foreach ($modelType->getFields() as $fieldObj) {
+            $fieldName = $fieldObj->getFieldName();
+            if (!$modelType->getModel()->hasField($fieldName)) {
                 continue;
             }
             if ($relatedModel = $fieldObj->getModelType()) {
-                $filters[$fieldObj->getFieldName()] = $this->buildAllFieldsMapping(
+                $filters[$fieldObj->getFieldName()] = $this->buildAllFieldsConfig(
                     $relatedModel,
                     $schema
                 );
             } else {
-                $filters[$fieldObj->getFieldName()] = true;
+                $filters[$fieldObj->getName()] = true;
             }
         }
 
@@ -154,7 +166,7 @@ class QueryFilter implements QueryPlugin, SchemaUpdater
      * @return array
      * @throws SchemaBuilderException
      */
-    private function buildFilterMap(ModelType $modelType, array $fields): array
+    private function buildInputTypeFields(ModelType $modelType, array $fields): array
     {
         $filters = [];
         foreach ($fields as $fieldName => $data) {
@@ -170,7 +182,7 @@ class QueryFilter implements QueryPlugin, SchemaUpdater
                     'Filter for field %s is declared as an array, but the field is not a nested object type',
                     $fieldName
                 );
-                $filters[$fieldName] = $this->buildFilterMap($relatedModel, $data);
+                $filters[$fieldName] = $this->buildInputTypeFields($relatedModel, $data);
             } else {
                 if ($data === true) {
                     $fieldType = $fieldObj->getNamedType();
@@ -217,6 +229,125 @@ class QueryFilter implements QueryPlugin, SchemaUpdater
         $allTypes[] = $type;
 
         return [$typeName, $allTypes];
+    }
+
+    /**
+     * @param array $mapping
+     * @param array $fieldOrigin
+     * @param array $propOrigin
+     * @return array
+     */
+    public static function buildPathsFromFieldMapping(
+        array $mapping,
+        array $fieldOrigin = [],
+        array $propOrigin = []
+    ): array {
+        $allPaths = [];
+        $fieldAccessor = FieldAccessor::singleton();
+        foreach ($mapping as $fieldName => $config) {
+            $fieldPath = array_merge($fieldOrigin, [$fieldName]);
+            $sng = DataObject::singleton($config['class']);
+            $prop = $fieldAccessor->normaliseField($sng, $fieldName);
+            $propPath = array_merge($propOrigin, [$prop]);
+            $children = $config['children'] ?? null;
+            if (is_array($children)) {
+                $allPaths = array_merge(
+                    $allPaths,
+                    static::buildPathsFromFieldMapping($children, $fieldPath, $propPath)
+                );
+            } else {
+                $allPaths[implode('.', $fieldPath)] = implode('.', $propPath);
+            }
+        }
+
+        return $allPaths;
+    }
+
+    public static function filter(array $context)
+    {
+        $mapping = $context['fieldMapping'] ?? [];
+        $fieldName = $context['fieldName'];
+
+        return function (DataList $list, array $args, array $context, ResolveInfo $info) use ($mapping, $fieldName) {
+            $filterArgs = $args[$fieldName] ?? [];
+            /* @var FilterRegistryInterface $registry */
+            $registry = Injector::inst()->get(FilterRegistryInterface::class);
+            $paths = static::buildPathsFromArgs($filterArgs);
+            foreach ($paths as $path => $value) {
+                $fieldParts = explode('.', $path);
+                $filterID = array_pop($fieldParts);
+                $fieldPath = implode('.', $fieldParts);
+                $normalised = $mapping[$fieldPath] ?? $fieldPath;
+                $filter = $registry->getFilterByIdentifier($filterID);
+                if ($filter) {
+                    $list = $filter->apply($list, $normalised, $value);
+                }
+            }
+
+            return $list;
+        };
+    }
+
+    /**
+     * @param array $argFilters
+     * @param array $origin
+     * @return array
+     */
+    public static function buildPathsFromArgs(array $argFilters, array $origin = []): array
+    {
+        $allPaths = [];
+        foreach ($argFilters as $fieldName => $val) {
+            $path = array_merge($origin, [$fieldName]);
+            if (is_array($val)) {
+                $allPaths = array_merge($allPaths, static::buildPathsFromArgs($val, $path));
+            } else {
+                $allPaths[implode('.', $path)] = $val;
+            }
+        }
+
+        return $allPaths;
+    }
+
+    /**
+     * @param ModelType $modelType
+     * @param array $filters
+     * @return array
+     * @throws SchemaBuilderException
+     */
+    private function getFieldMapping(ModelType $modelType, array $filters): array
+    {
+        $mapping = [];
+        /* @var DataObjectModel $model */
+        foreach ($filters as $fieldName => $typeOrArray) {
+            /* @var ModelField $fieldObj */
+            $fieldObj = $modelType->getFieldByName($fieldName);
+            Schema::invariant(
+                $fieldObj,
+                'Could not map field %s',
+                $fieldName
+            );
+            $isNested = is_array($typeOrArray);
+            $class = $modelType->getModel()->getSourceClass();
+            if ($isNested) {
+                $relatedModel = $fieldObj->getModelType();
+                Schema::invariant(
+                    $relatedModel,
+                    'Cannot find related model type for field %s',
+                    $fieldName
+                );
+                $mapping[$fieldName] = [
+                    'class' => $class,
+                    'children' => $this->getFieldMapping($relatedModel, $typeOrArray)
+                ];
+            } else {
+                $mapping[$fieldName] = [
+                    'class' => $class,
+                    'children' => null
+                ];
+            }
+        }
+
+        return $mapping;
     }
 
     /**

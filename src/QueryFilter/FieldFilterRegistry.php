@@ -28,7 +28,7 @@ class FieldFilterRegistry implements FilterRegistryInterface
      * @return $this
      * @throws InvalidArgumentException
      */
-    public function addFilter(FieldFilterInterface $filter, $identifier = null)
+    public function addFilter(FieldFilterInterface $filter, $identifier = null): self
     {
         if (!$filter instanceof FieldFilterInterface) {
             throw new InvalidArgumentException(sprintf(
@@ -53,9 +53,9 @@ class FieldFilterRegistry implements FilterRegistryInterface
 
     /**
      * @param $identifier
-     * @return mixed
+     * @return FieldFilterInterface|null
      */
-    public function getFilterByIdentifier($identifier)
+    public function getFilterByIdentifier($identifier): ?FieldFilterInterface
     {
         if (isset($this->filters[$identifier])) {
             return $this->filters[$identifier];

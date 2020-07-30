@@ -18,7 +18,7 @@ use SilverStripe\GraphQL\Dev\State\DisableTypeCacheState;
 use SilverStripe\GraphQL\Permission\MemberContextProvider;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
-use SilverStripe\GraphQL\Schema\ContextProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\Security\Member;
@@ -28,7 +28,6 @@ use InvalidArgumentException;
 
 /**
  * Top level controller for handling graphql requests.
- * @todo CSRF protection (or token-based auth)
  * @skipUpgrade
  */
 class Controller extends BaseController implements Flushable

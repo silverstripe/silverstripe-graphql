@@ -13,7 +13,6 @@ use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
-use SilverStripe\GraphQL\Schema\Interfaces\ModelDependencyProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
@@ -145,7 +144,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
         static::assertValidConfig($models);
         foreach ($models as $modelName => $modelConfig) {
-            $model = ModelType::create($modelName, $modelConfig);
+             $model = ModelType::create($modelName, $modelConfig);
             $this->addModel($model);
         }
 
@@ -336,14 +335,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 $this->queryFields[$operationType->getName()] = $operationType;
             } else if ($operationType instanceof ModelMutation) {
                 $this->mutationFields[$operationType->getName()] = $operationType;
-            }
-        }
-
-        if ($modelType->getModel() instanceof ModelDependencyProvider) {
-            /* @var SchemaModelInterface&ModelDependencyProvider $model */
-            $model = $modelType->getModel();
-            foreach ($model->getModelDependencies() as $class) {
-                $this->modelDependencies[$class] = $class;
             }
         }
 

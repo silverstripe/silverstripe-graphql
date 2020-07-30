@@ -147,7 +147,6 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
      * @param string|array|Field $fieldConfig
      * @param callable|null $callback
      * @return Type
-     * @throws SchemaBuilderException
      */
     public function addField(string $fieldName, $fieldConfig, ?callable $callback = null): self
     {

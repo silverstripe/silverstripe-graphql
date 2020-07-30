@@ -29,10 +29,7 @@ use ReflectionException;
 class DataObjectModel implements
     SchemaModelInterface,
     OperationProvider,
-    DefaultFieldsProvider,
-    RequiredFieldsProvider,
-    ExtraTypeProvider,
-    ModelDependencyProvider
+    DefaultFieldsProvider
 {
     use Injectable;
     use Configurable;
@@ -72,11 +69,6 @@ class DataObjectModel implements
     private $fieldAccessor;
 
     /**
-     * @var InheritanceChain
-     */
-    private $inheritanceChain;
-
-    /**
      * DataObjectModel constructor.
      * @param string $class
      * @throws SchemaBuilderException
@@ -90,7 +82,6 @@ class DataObjectModel implements
             DataObject::class
         );
         $this->dataObject = Injector::inst()->get($class);
-        $this->setInheritanceChain(InheritanceChain::create($this->dataObject));
     }
 
     /**
@@ -112,9 +103,6 @@ class DataObjectModel implements
      */
     public function hasField(string $fieldName): bool
     {
-        if ($fieldName === $this->getInheritanceChain()->getName()) {
-            return true;
-        }
         return $this->getFieldAccessor()->hasField($this->dataObject, $fieldName);
     }
 
@@ -153,37 +141,6 @@ class DataObjectModel implements
         return [
             'id' => 'ID',
         ];
-    }
-
-    /**
-     * @return array
-     * @throws ReflectionException
-     */
-    public function getRequiredFields(): array
-    {
-        $descendants = $this->getInheritanceChain()->getDescendantModels();
-        if (empty($descendants)) {
-            return [];
-        }
-        $descendantsType = $this->getInheritanceChain()->getExtensionType();
-
-        return [
-            $this->getInheritanceChain()->getName() => $descendantsType->getName()
-        ];
-    }
-
-    /**
-     * @return Type[]
-     * @throws ReflectionException
-     */
-    public function getExtraTypes(): array
-    {
-        $types = [];
-        if ($extensionType = $this->getInheritanceChain()->getExtensionType()) {
-            $types[] = $this->getInheritanceChain()->getExtensionType();
-        }
-
-        return $types;
     }
 
     /**
@@ -289,36 +246,6 @@ class DataObjectModel implements
         }
 
         return ModelType::create($class);
-    }
-
-    /**
-     * @return array
-     * @throws ReflectionException
-     */
-    public function getModelDependencies(): array
-    {
-        return array_merge(
-            $this->getInheritanceChain()->getAncestralModels(),
-            $this->getInheritanceChain()->getDescendantModels()
-        );
-    }
-
-    /**
-     * @return InheritanceChain
-     */
-    public function getInheritanceChain(): InheritanceChain
-    {
-        return $this->inheritanceChain;
-    }
-
-    /**
-     * @param InheritanceChain $inheritanceChain
-     * @return DataObjectModel
-     */
-    public function setInheritanceChain(InheritanceChain $inheritanceChain): self
-    {
-        $this->inheritanceChain = $inheritanceChain;
-        return $this;
     }
 
     /**

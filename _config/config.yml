@@ -5,10 +5,6 @@ Name: graphqlconfig
 SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface:
     class: SilverStripe\GraphQL\QueryHandler\QueryHandler
-  SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.string:
-    class: SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser
-  SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.array:
-    class: SilverStripe\GraphQL\Scaffolding\Util\ArrayTypeParser
   SilverStripe\GraphQL\Middleware\QueryMiddleware.csrf:
     class: SilverStripe\GraphQL\Middleware\CSRFMiddleware
   SilverStripe\GraphQL\Middleware\QueryMiddleware.httpMethod:
@@ -38,7 +34,7 @@ SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Controller.default:
     class: SilverStripe\GraphQL\Controller
     constructor:
-      builder: '%$SilverStripe\GraphQL\Schema\Schema.default'
+      schema: '%$SilverStripe\GraphQL\Schema\Schema.default'
       queryHandler: '%$SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface'
 
 
@@ -54,7 +50,7 @@ SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder:
 SilverStripe\GraphQL\Controller:
   extensions:
     - SilverStripe\GraphQL\Extensions\IntrospectionProvider
-SilverStripe\GraphQL\SchemaBuilder\SchemaBuilder:
+SilverStripe\GraphQL\Schema\Schema:
   schemas: []
 ---
 Only:

@@ -49,13 +49,27 @@ class FieldAccessor
      */
     public function normaliseField(DataObject $dataObject, string $field): ?string
     {
-        if ($dataObject->hasField($field)) {
+        $schema = $dataObject->getSchema();
+        $class = get_class($dataObject);
+
+        if ($schema->fieldSpec($class, $field) || $schema->unaryComponent($class, $field)) {
             return $field;
         }
         $lookup = $this->getCaseInsensitiveMapping($dataObject);
 
         $normalised = call_user_func_array($this->config()->get('normaliser'), [$field]);
-        return $lookup[$normalised] ?? null;
+        $property = $lookup[$normalised] ?? null;
+        if ($property) {
+            return $property;
+        }
+
+        // Sometimes, getters and DB fields overlap, e.g. "getTitle", so this check comes last to ensure
+        // the native field gets priority.
+        if ($dataObject->hasMethod('get' . $field)) {
+            return $field;
+        }
+
+        return null;
     }
 
     /**
