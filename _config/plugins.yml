@@ -11,4 +11,7 @@ SilverStripe\GraphQL\Schema\DataObject\ReadCreator:
   default_plugins:
     dataobjectQueryFilter: true
     dataobjectPaginator: true
+SilverStripe\GraphQL\Schema\DataObject\DataObjectModel:
+  default_plugins:
+    dataobjectInheritance: true
 

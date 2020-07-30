@@ -4,10 +4,10 @@ namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\ORM\Limitable;
-use SilverStripe\GraphQL\Schema\Plugin\PaginationPlugin;
+use SilverStripe\GraphQL\Schema\Plugin\AbstractPaginationPlugin;
 use Closure;
 
-class Paginator extends PaginationPlugin
+class Paginator extends AbstractPaginationPlugin
 {
     const IDENTIFIER = 'dataobjectPaginator';
 

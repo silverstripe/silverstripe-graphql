@@ -11,12 +11,12 @@ use SilverStripe\ORM\DataList;
 interface FieldFilterInterface
 {
     /**
-     * @param DataList $list
+     * @param iterable $list
      * @param string $fieldName
      * @param string $value
      * @return DataList
      */
-    public function apply(DataList $list, string $fieldName, $value): DataList;
+    public function apply(iterable $list, string $fieldName, $value): iterable;
 
     /**
      * @return string

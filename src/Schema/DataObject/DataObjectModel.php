@@ -38,6 +38,12 @@ class DataObjectModel implements
     use Configurable;
 
     /**
+     * @var array
+     * @config
+     */
+    private static $default_plugins = [];
+
+    /**
      * @var callable
      * @config
      */
@@ -151,7 +157,7 @@ class DataObjectModel implements
      */
     public function getDefaultPlugins(): array
     {
-        return [Inheritance::IDENTIFIER];
+        return $this->config()->get('default_plugins');
     }
 
     /**

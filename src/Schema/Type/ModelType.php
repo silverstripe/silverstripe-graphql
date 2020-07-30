@@ -17,7 +17,6 @@ use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationProvider;
-use SilverStripe\GraphQL\Schema\Interfaces\RequiredFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -77,10 +76,7 @@ class ModelType extends Type implements ExtraTypeProvider
 
         if ($model instanceof DefaultPluginProvider) {
             $plugins = $config['plugins'] ?? [];
-            foreach ($model->getDefaultPlugins() as $pluginID) {
-                $plugins[$pluginID] = true;
-            }
-            $config['plugins'] = $plugins;
+            $config['plugins'] = array_merge($plugins, $model->getDefaultPlugins());
         }
 
         parent::__construct($type);

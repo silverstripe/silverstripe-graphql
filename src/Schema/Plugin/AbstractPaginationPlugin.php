@@ -13,7 +13,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\Type;
 
-abstract class PaginationPlugin implements QueryPlugin, SchemaUpdater
+abstract class AbstractPaginationPlugin implements QueryPlugin, SchemaUpdater
 {
     use Configurable;
 
