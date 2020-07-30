@@ -64,15 +64,16 @@ class ModelField extends Field
 
     public function applyConfig(array $config)
     {
-        Schema::invariant(
-            $this->getModel()->hasField($this->getFieldName()),
-            'DataObject %s does not have a field "%s"',
-            $this->getModel()->getSourceClass(),
-            $this->getFieldName()
-        );
         $type = $config['type'] ?? true;
+        Schema::invariant(
+            $type !== true || $this->getModel()->hasField($this->getPropertyName()),
+            'DataObject %s does not have a field "%s". Cannot introspect type.',
+            $this->getModel()->getSourceClass(),
+            $this->getPropertyName()
+        );
+
         if ($type === true) {
-            $config['type'] = $this->getModel()->getTypeForField($this->getFieldName());
+            $config['type'] = $this->getModel()->getTypeForField($this->getPropertyName());
         }
         $resolver = $config['resolver'] ?? null;
         if (!$resolver) {
@@ -97,7 +98,7 @@ class ModelField extends Field
     public function setType($type): Field
     {
         $fieldType = $type === self::INTROSPECT_TYPE
-            ? $this->getModel()->getTypeForField($this->getFieldName())
+            ? $this->getModel()->getTypeForField($this->getPropertyName())
             : $type;
 
         return parent::setType($fieldType);
@@ -163,7 +164,7 @@ class ModelField extends Field
     /**
      * @return string
      */
-    public function getFieldName(): string
+    public function getPropertyName(): string
     {
         return $this->getProperty() ?: $this->getName();
     }

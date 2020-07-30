@@ -8,7 +8,9 @@ use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Schema\DataObject\Plugin\Inheritance;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\DefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
@@ -29,7 +31,8 @@ use ReflectionException;
 class DataObjectModel implements
     SchemaModelInterface,
     OperationProvider,
-    DefaultFieldsProvider
+    DefaultFieldsProvider,
+    DefaultPluginProvider
 {
     use Injectable;
     use Configurable;
@@ -141,6 +144,14 @@ class DataObjectModel implements
         return [
             'id' => 'ID',
         ];
+    }
+
+    /**
+     * @return array
+     */
+    public function getDefaultPlugins(): array
+    {
+        return [Inheritance::IDENTIFIER];
     }
 
     /**

@@ -8,6 +8,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
+use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\ArrayList;
@@ -15,6 +16,8 @@ use SilverStripe\View\ViewableData;
 
 class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
 {
+    use PluginConsumer;
+
     /**
      * @var string
      */
@@ -72,6 +75,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
             'interfaces',
             'isInput',
             'fieldResolver',
+            'plugins',
         ]);
         if (isset($config['fieldResolver'])) {
             $this->setFieldResolver($config['fieldResolver']);
@@ -84,6 +88,9 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
         }
         if (isset($config['isInput'])) {
             $this->setIsInput($config['isInput']);
+        }
+        if (isset($config['plugins'])) {
+            $this->setPlugins($config['plugins']);
         }
 
         $fields = $config['fields'] ?? [];
@@ -217,6 +224,8 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
                 $this->fields[$field->getName()] = $existing->mergeWith($field);
             }
         }
+
+        $this->mergePlugins($type->getPlugins());
 
         foreach ($type->getInterfaces() as $interface) {
             // to do

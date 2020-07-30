@@ -28,6 +28,8 @@ class QueryFilter implements QueryPlugin, SchemaUpdater
 {
     use Configurable;
 
+    const IDENTIFIER = 'dataobjectQueryFilter';
+
     /**
      * @var string
      * @config
@@ -39,7 +41,7 @@ class QueryFilter implements QueryPlugin, SchemaUpdater
      */
     public function getIdentifier(): string
     {
-        return 'dataobjectQueryFilter';
+        return self::IDENTIFIER;
     }
 
     /**
@@ -143,12 +145,12 @@ class QueryFilter implements QueryPlugin, SchemaUpdater
     {
         /* @var ModelField $fieldObj */
         foreach ($modelType->getFields() as $fieldObj) {
-            $fieldName = $fieldObj->getFieldName();
+            $fieldName = $fieldObj->getPropertyName();
             if (!$modelType->getModel()->hasField($fieldName)) {
                 continue;
             }
             if ($relatedModel = $fieldObj->getModelType()) {
-                $filters[$fieldObj->getFieldName()] = $this->buildAllFieldsConfig(
+                $filters[$fieldObj->getPropertyName()] = $this->buildAllFieldsConfig(
                     $relatedModel,
                     $schema
                 );

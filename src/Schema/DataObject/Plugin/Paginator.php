@@ -9,6 +9,8 @@ use Closure;
 
 class Paginator extends PaginationPlugin
 {
+    const IDENTIFIER = 'dataobjectPaginator';
+
     /**
      * @return array
      */
@@ -22,7 +24,7 @@ class Paginator extends PaginationPlugin
      */
     public function getIdentifier(): string
     {
-        return 'dataobjectPaginator';
+        return self::IDENTIFIER;
     }
 
 

@@ -6,6 +6,7 @@ SilverStripe\Core\Injector\Injector:
     constructor:
       dataobjectPaginator: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\Paginator'
       dataobjectQueryFilter: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter'
+      dataobjectInheritance: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\Inheritance'
 SilverStripe\GraphQL\Schema\DataObject\ReadCreator:
   default_plugins:
     dataobjectQueryFilter: true

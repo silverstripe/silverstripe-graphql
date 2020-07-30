@@ -31,6 +31,12 @@ class PluginRegistry
                 __CLASS__,
                 PluginInterface::class
             );
+            $existing = $this->plugins[$plugin->getIdentifier()] ?? null;
+            Schema::invariant(
+                !$existing || (get_class($existing) === get_class($plugin)),
+                'Two different plugins are registered under identifier %s',
+                $plugin->getIdentifier()
+            );
             $this->plugins[$plugin->getIdentifier()] = $plugin;
         }
     }

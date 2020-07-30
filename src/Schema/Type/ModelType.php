@@ -10,6 +10,7 @@ use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelAware;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\DefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
@@ -74,6 +75,14 @@ class ModelType extends Type implements ExtraTypeProvider
             array_map('strtolower', $model->getBlacklistedFields()) :
             [];
 
+        if ($model instanceof DefaultPluginProvider) {
+            $plugins = $config['plugins'] ?? [];
+            foreach ($model->getDefaultPlugins() as $pluginID) {
+                $plugins[$pluginID] = true;
+            }
+            $config['plugins'] = $plugins;
+        }
+
         parent::__construct($type);
 
         $this->applyConfig($config);
@@ -85,7 +94,7 @@ class ModelType extends Type implements ExtraTypeProvider
      */
     public function applyConfig(array $config)
     {
-        Schema::assertValidConfig($config, ['fields', 'operations']);
+        Schema::assertValidConfig($config, ['fields', 'operations', 'plugins']);
 
         $fieldConfig = $config['fields'] ?? [];
         if ($fieldConfig === Schema::ALL) {
@@ -103,13 +112,16 @@ class ModelType extends Type implements ExtraTypeProvider
         }
 
         $operations = $config['operations'] ?? null;
-        if (!$operations) {
-            return;
+        if ($operations) {
+            if ($operations === Schema::ALL) {
+                $this->addAllOperations();
+            } else {
+                $this->applyOperationsConfig($operations);
+            }
         }
-        if ($operations === Schema::ALL) {
-            $this->addAllOperations();
-        } else {
-            $this->applyOperationsConfig($operations);
+
+        if (isset($config['plugins'])) {
+            $this->setPlugins($config['plugins']);
         }
     }
 

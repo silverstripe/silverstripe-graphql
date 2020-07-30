@@ -14,11 +14,13 @@ use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelTypePlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
+use SilverStripe\GraphQL\Schema\Interfaces\TypePlugin;
 use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
@@ -162,10 +164,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $this->addModel(ModelType::create($modelClass));
         }
 
-        foreach ($this->models as $modelType) {
-            $this->addType($modelType);
-        }
-
         $schemaUpdates = [];
         foreach ($this->queryFields as $query) {
             foreach ($query->loadPlugins() as $data) {
@@ -189,9 +187,37 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 }
             }
         }
+        foreach ($this->types as $type) {
+            foreach ($type->loadPlugins() as $data) {
+                list ($plugin, $config) = $data;
+                if ($plugin instanceof TypePlugin) {
+                    $plugin->apply($type, $this, $config);
+                }
+                if ($plugin instanceof SchemaUpdater) {
+                    $schemaUpdates[get_class($plugin)] = get_class($plugin);
+                }
+            }
+        }
+        foreach ($this->models as $modelType) {
+            foreach ($modelType->loadPlugins() as $data) {
+                list ($plugin, $config) = $data;
+                if ($plugin instanceof ModelTypePlugin) {
+                    $plugin->apply($modelType, $this, $config);
+                }
+                if ($plugin instanceof SchemaUpdater) {
+                    $schemaUpdates[get_class($plugin)] = get_class($plugin);
+                }
+            }
+        }
+
         /* @var SchemaUpdater $builder */
         foreach ($schemaUpdates as $class) {
             $class::updateSchemaOnce($this);
+        }
+
+        // Models are meaningless once we're ready to generate code, so merge them into types
+        foreach ($this->models as $modelType) {
+            $this->addType($modelType);
         }
 
         $queryType = Type::create(self::QUERY_TYPE, [
@@ -305,6 +331,30 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
+     * @param string $name
+     * @return Type
+     * @throws SchemaBuilderException
+     */
+    public function findOrMakeType(string $name): Type
+    {
+        $existing = $this->getType($name);
+        if ($existing) {
+            return $existing;
+        }
+        $this->addType(Type::create($name));
+
+        return $this->getType($name);
+    }
+
+    /**
+     * @return Type[]
+     */
+    public function getTypes(): array
+    {
+        return $this->types;
+    }
+
+    /**
      * @param ModelType $modelType
      * @return Schema
      * @throws SchemaBuilderException
@@ -348,6 +398,33 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public function getModel(string $name): ?ModelType
     {
         return $this->models[$name] ?? null;
+    }
+
+    /**
+     * @param string $class
+     * @return ModelType
+     * @throws SchemaBuilderException
+     */
+    public function findOrMakeModel(string $class): ModelType
+    {
+        $newModel = ModelType::create($class);
+        $name = $newModel->getName();
+        $existing = $this->getModel($name);
+        if ($existing) {
+            return $existing;
+        }
+        $this->addModel($newModel);
+
+        return $this->getModel($name);
+    }
+
+
+    /**
+     * @return ModelType[]
+     */
+    public function getModels(): array
+    {
+        return $this->models;
     }
 
     private function getHash(): string

@@ -10,6 +10,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
+use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
 use SilverStripe\GraphQL\Schema\Registry\PluginRegistry;
 use SilverStripe\GraphQL\Schema\Registry\ResolverRegistry;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
@@ -23,17 +24,14 @@ use Generator;
 
 class Field extends ViewableData implements ConfigurationApplier, SchemaValidator
 {
+    use PluginConsumer;
+
     const DEFAULT_TYPE = 'String';
 
     /**
      * @var ResolverRegistry
      */
     private $resolverRegistry;
-
-    /**
-     * @var PluginRegistry
-     */
-    private $pluginRegistry;
 
     /**
      * @var string
@@ -74,11 +72,6 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @var EncodedResolver[]
      */
     private $resolverMiddlewares = [];
-
-    /**
-     * @var array
-     */
-    private $plugins = [];
 
     /**
      * Field constructor.
@@ -232,6 +225,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
         foreach ($field->getArgs() as $arg) {
             $this->args[$arg->getName()] = $arg;
         }
+        $this->mergePlugins($field->getPlugins());
 
         return $this;
     }
@@ -459,81 +453,6 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
         return $this;
     }
 
-    /**
-     * @param string $pluginName
-     * @param $config
-     * @return Field
-     */
-    public function addPlugin(string $pluginName, $config): self
-    {
-        $this->plugins[$pluginName] = $config;
-
-        return $this;
-    }
-
-    /**
-     * @param string $pluginName
-     * @return Field
-     */
-    public function removePlugin(string $pluginName): self
-    {
-        unset($this->plugins[$pluginName]);
-
-        return $this;
-    }
-
-    /**
-     * @param array $plugins
-     * @return $this
-     * @throws SchemaBuilderException
-     */
-    public function setPlugins(array $plugins): self
-    {
-        Schema::assertValidConfig($plugins);
-        foreach ($plugins as $pluginName => $config) {
-            if ($config === false) {
-                continue;
-            }
-            $pluginConfig = $config === true ? [] : $config;
-            $this->addPlugin($pluginName, $pluginConfig);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return array
-     */
-    public function getPlugins()
-    {
-        return $this->plugins;
-    }
-
-    /**
-     * @return PluginRegistry
-     */
-    public function getPluginRegistry(): PluginRegistry
-    {
-        return Injector::inst()->get(PluginRegistry::class);
-    }
-
-    /**
-     * @return Generator
-     * @throws SchemaBuilderException
-     */
-    public function loadPlugins(): Generator
-    {
-        foreach ($this->getPlugins() as $pluginName => $config) {
-            $plugin = $this->getPluginRegistry()->getPluginByID($pluginName);
-            Schema::invariant(
-                $plugin && $plugin instanceof FieldPlugin,
-                'Plugin %s not found or not an instance of %s',
-                $pluginName,
-                FieldPlugin::class
-            );
-            yield [$plugin, $config];
-        }
-    }
 
     /**
      * @param array|string|ResolverReference|null $middleware
@@ -555,21 +474,13 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     /**
      * @param string $type
      * @return EncodedType
-     * @throws SchemaBuilderException
      */
     private function toEncodedType(string $type): EncodedType
     {
-        try {
-            $ref = TypeReference::create($type);
-            $ast = $ref->toAST();
-            return EncodedType::create($ast);
-        } catch (SyntaxError $e) {
-            throw new SchemaBuilderException(sprintf(
-                'The type for field "%s" is invalid: "%s"',
-                $this->name,
-                $type
-            ));
-        }
+        $ref = TypeReference::create($type);
+        $ast = $ref->toAST();
+
+        return EncodedType::create($ast);
     }
 
 }

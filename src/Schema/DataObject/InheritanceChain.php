@@ -12,6 +12,7 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\ORM\DataObject;
 use ReflectionException;
+use InvalidArgumentException;
 
 class InheritanceChain
 {
@@ -19,9 +20,14 @@ class InheritanceChain
     use Configurable;
 
     /**
+     * @var string
+     */
+    private $dataObjectClass;
+
+    /**
      * @var DataObject
      */
-    private $dataObject;
+    private $inst;
 
     /**
      * @var string
@@ -42,11 +48,19 @@ class InheritanceChain
 
     /**
      * InheritanceChain constructor.
-     * @param DataObject $dataObject
+     * @param string $dataObjectClass
      */
-    public function __construct(DataObject $dataObject)
+    public function __construct(string $dataObjectClass)
     {
-        $this->dataObject = $dataObject;
+        $this->dataObjectClass = $dataObjectClass;
+        if (!is_subclass_of($this->dataObjectClass, DataObject::class)) {
+            throw new InvalidArgumentException(sprintf(
+                '%s only accepts %s subclasses',
+                __CLASS__,
+                DataObject::class
+            ));
+        }
+        $this->inst = DataObject::singleton($this->dataObjectClass);
     }
 
     /**
@@ -58,15 +72,15 @@ class InheritanceChain
     }
 
     /**
-     * @return ModelType[]
+     * @return array
      */
     public function getAncestralModels(): array
     {
         $classes = [];
-        $ancestry = array_reverse(ClassInfo::ancestry($this->dataObject));
+        $ancestry = array_reverse(ClassInfo::ancestry($this->dataObjectClass));
 
         foreach ($ancestry as $class) {
-            if ($class === get_class($this->dataObject)) {
+            if ($class === $this->dataObjectClass) {
                 continue;
             }
             if ($class == DataObject::class) {
@@ -79,14 +93,51 @@ class InheritanceChain
     }
 
     /**
-     * @return ModelType[]
+     * @return bool
+     */
+    public function hasAncestors(): bool
+    {
+        return count($this->getAncestralModels()) > 1;
+    }
+
+    /**
+     * @return array
      * @throws ReflectionException
      */
     public function getDescendantModels(): array
     {
-        $descendants = ClassInfo::subclassesFor($this->dataObject, false);
+        $descendants = ClassInfo::subclassesFor($this->dataObjectClass, false);
 
         return array_values($descendants);
+    }
+
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    public function getDirectDescendants(): array
+    {
+        $parentClass = $this->dataObjectClass;
+        return array_filter($this->getDescendantModels(), function ($class) use ($parentClass) {
+            return get_parent_class($class) === $parentClass;
+        });
+    }
+
+    /**
+     * @return bool
+     * @throws ReflectionException
+     */
+    public function hasDescendants(): bool
+    {
+        return count($this->getDescendantModels()) > 0;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBaseClass(): string
+    {
+        return $this->inst->baseClass();
     }
 
     /**
@@ -103,7 +154,7 @@ class InheritanceChain
         }
         $typeName = call_user_func_array(
             $this->config()->get('descendant_typename_creator'),
-            [$this->dataObject]
+            [$this->inst]
         );
         $fields = [];
         foreach ($this->getDescendantModels() as $className) {
