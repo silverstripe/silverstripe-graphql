@@ -27,7 +27,10 @@ class Paginator extends AbstractPaginationPlugin
         return self::IDENTIFIER;
     }
 
-
+    /**
+     * @param array $context
+     * @return Closure
+     */
     public static function paginate(array $context): Closure
     {
         $maxLimit = $context['maxLimit'];

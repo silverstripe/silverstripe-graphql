@@ -7,6 +7,7 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
@@ -80,7 +81,7 @@ class DeleteCreator implements OperationCreator
                 /** @var DataObject[] $resultsList */
                 $resultsList = $results->toArray();
                 foreach ($resultsList as $obj) {
-                    if (!$obj->canDelete($context['currentUser'])) {
+                    if (!$obj->canDelete($context[QueryHandler::CURRENT_USER])) {
                         throw new PermissionsException(sprintf(
                             'Cannot delete %s with ID %s',
                             $dataClass,

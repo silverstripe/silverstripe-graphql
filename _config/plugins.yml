@@ -6,11 +6,20 @@ SilverStripe\Core\Injector\Injector:
     constructor:
       dataobjectPaginator: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\Paginator'
       dataobjectQueryFilter: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter'
+      dataobjectQuerySort: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QuerySort'
       dataobjectInheritance: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\Inheritance'
+      canViewListPermission: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\CanViewListPermission'
+      canViewPaginatedPermission: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\CanViewPaginatedPermission'
+      canViewItemPermission: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\CanViewItemPermission'
 SilverStripe\GraphQL\Schema\DataObject\ReadCreator:
   default_plugins:
     dataobjectQueryFilter: true
+    dataobjectQuerySort: true
     dataobjectPaginator: true
+    canViewPaginatedPermission: true
+SilverStripe\GraphQL\Schema\DataObject\ReadOneCreator:
+  default_plugins:
+    canViewItemPermission: true
 SilverStripe\GraphQL\Schema\DataObject\DataObjectModel:
   default_plugins:
     dataobjectInheritance: true

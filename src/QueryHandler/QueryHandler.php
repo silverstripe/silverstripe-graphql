@@ -32,6 +32,8 @@ class QueryHandler implements
     use Injectable;
     use MemberAware;
 
+    const CURRENT_USER = 'currentUser';
+
     /**
      * @var array
      */
@@ -165,7 +167,7 @@ class QueryHandler implements
     protected function getContextDefaults()
     {
         return [
-            'currentUser' => $this->getMemberContext(),
+            self::CURRENT_USER => $this->getMemberContext(),
         ];
     }
 

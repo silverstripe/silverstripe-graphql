@@ -8,6 +8,7 @@ use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
@@ -90,7 +91,7 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
                 ));
             }
             unset($input['id']);
-            if (!$obj->canEdit($context['currentUser'])) {
+            if (!$obj->canEdit($context[QueryHandler::CURRENT_USER])) {
                 throw new PermissionsException(sprintf(
                     'Cannot edit this %s',
                     $dataClass

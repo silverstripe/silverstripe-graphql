@@ -36,18 +36,26 @@ class Inheritance implements PluginInterface, SchemaUpdater
      */
     public static function updateSchemaOnce(Schema $schema): void
     {
+        $s = microtime(true);
         foreach ($schema->getModels() as $modelType) {
             $class = $modelType->getModel()->getSourceClass();
-            if (self::isTouched($class)) {
-                continue;
-            }
             if (!is_subclass_of($class, DataObject::class)) {
                 continue;
             }
             $baseClass = InheritanceChain::create($class)->getBaseClass();
+            if (self::isTouched($baseClass)) {
+                continue;
+            }
+            $start = microtime(true);
             self::addInheritance($schema, $baseClass);
+            $end = microtime(true);
+            $elapsed = round($end - $start, 3);
+            echo "inheritance for $baseClass added in $elapsed seconds\n";
             self::touchNode($baseClass);
         }
+        $e = microtime(true);
+        $d = round($e-$s, 3);
+        echo "Inheritance plugin took $d seconds\n";
     }
 
     /**

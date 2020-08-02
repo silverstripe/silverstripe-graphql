@@ -46,6 +46,19 @@ class EncodedType extends ViewableData implements Encoder
     }
 
     /**
+     * @return bool
+     */
+    public function isList(): bool
+    {
+        list ($named, $path) = $this->getTypeName();
+
+        if (empty($path)) {
+            return false;
+        }
+
+        return $path[0] === NodeKind::LIST_TYPE;
+    }
+    /**
      * @return array
      */
     public function getTypeName(): array

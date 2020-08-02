@@ -30,9 +30,9 @@ class EncodedResolver extends ViewableData implements Encoder
     /**
      * EncodedResolver constructor.
      * @param ResolverReference $resolver
-     * @param array $context
+     * @param array|null $context
      */
-    public function __construct(ResolverReference $resolver, array $context = [])
+    public function __construct(ResolverReference $resolver, ?array $context = [])
     {
         parent::__construct();
         $this->resolverRef = $resolver;
@@ -85,9 +85,9 @@ class EncodedResolver extends ViewableData implements Encoder
     }
 
     /**
-     * @return array
+     * @return array|null
      */
-    public function getContext(): array
+    public function getContext(): ?array
     {
         return $this->context;
     }

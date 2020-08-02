@@ -3,21 +3,24 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
-use SilverStripe\Core\Injector\Injector;
+
 use SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\Field;
+use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Field\Query;
-use SilverStripe\GraphQL\Schema\Plugin\AbstractQueryFilterPlugin;
+use SilverStripe\GraphQL\Schema\Plugin\AbstractQuerySortPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use Closure;
 
-class QueryFilter extends AbstractQueryFilterPlugin
+class QuerySort extends AbstractQuerySortPlugin
 {
-    const IDENTIFIER = 'dataobjectQueryFilter';
+    const IDENTIFIER = 'dataobjectQuerySort';
 
     /**
      * @return string
@@ -32,7 +35,7 @@ class QueryFilter extends AbstractQueryFilterPlugin
      */
     protected function getResolver(): array
     {
-        return [static::class, 'filter'];
+        return [static::class, 'sort'];
     }
 
     /**
@@ -55,11 +58,37 @@ class QueryFilter extends AbstractQueryFilterPlugin
     }
 
     /**
+     * @param ModelType $modelType
+     * @return array
+     * @throws SchemaBuilderException
+     */
+    protected function buildAllFieldsConfig(ModelType $modelType): array
+    {
+        $filters = [];
+        /* @var ModelField $fieldObj */
+        foreach ($modelType->getFields() as $fieldObj) {
+            $fieldName = $fieldObj->getPropertyName();
+            if (!$modelType->getModel()->hasField($fieldName)) {
+                continue;
+            }
+            // Plural relationships are not sortable. No nested lists allowed.
+            if (!$fieldObj->isList() && $relatedModel = $fieldObj->getModelType()) {
+                $filters[$fieldObj->getPropertyName()] = $this->buildAllFieldsConfig($relatedModel);
+            } else {
+                $filters[$fieldObj->getName()] = true;
+            }
+        }
+
+        return $filters;
+    }
+
+
+    /**
      * @param string $class
      * @param string $fieldName
-     * @return string|null
+     * @return string
      */
-    public static function getObjectProperty(string $class, string $fieldName): string
+    protected static function getObjectProperty(string $class, string $fieldName): string
     {
         $sng = DataObject::singleton($class);
         return FieldAccessor::singleton()->normaliseField($sng, $fieldName) ?: $fieldName;
@@ -69,7 +98,7 @@ class QueryFilter extends AbstractQueryFilterPlugin
      * @param array $context
      * @return Closure
      */
-    public static function filter(array $context)
+    public static function sort(array $context)
     {
         $mapping = $context['fieldMapping'] ?? [];
         $fieldName = $context['fieldName'];
@@ -77,20 +106,24 @@ class QueryFilter extends AbstractQueryFilterPlugin
         return function (DataList $list, array $args) use ($mapping, $fieldName) {
             $filterArgs = $args[$fieldName] ?? [];
             /* @var FilterRegistryInterface $registry */
-            $registry = Injector::inst()->get(FilterRegistryInterface::class);
             $paths = static::buildPathsFromArgs($filterArgs);
             foreach ($paths as $path => $value) {
-                $fieldParts = explode('.', $path);
-                $filterID = array_pop($fieldParts);
-                $fieldPath = implode('.', $fieldParts);
-                $normalised = $mapping[$fieldPath] ?? $fieldPath;
-                $filter = $registry->getFilterByIdentifier($filterID);
-                if ($filter) {
-                    $list = $filter->apply($list, $normalised, $value);
-                }
+                $normalised = $mapping[$path] ?? $path;
+                $list = $list->sort($normalised, $value);
             }
 
             return $list;
         };
     }
+
+    /**
+     * @param ModelField $field
+     * @param ModelType $modelType
+     * @return bool
+     */
+    protected function shouldAddField(ModelField $field, ModelType $modelType): bool
+    {
+        return !$field->isList();
+    }
+
 }

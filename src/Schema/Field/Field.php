@@ -231,6 +231,14 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     }
 
     /**
+     * @return bool
+     */
+    public function isList(): bool
+    {
+        return $this->getEncodedType()->isList();
+    }
+
+    /**
      * @throws SchemaBuilderException
      */
     public function validate(): void
@@ -298,7 +306,6 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
 
     /**
      * @return EncodedType
-     * @throws SchemaBuilderException
      */
     public function getEncodedType(): EncodedType
     {

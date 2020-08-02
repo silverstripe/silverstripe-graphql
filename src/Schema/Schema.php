@@ -61,11 +61,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
     private $queries = [];
 
     /**
-     * @var Field[]
-     */
-    private $mutations = [];
-
-    /**
      * @var ModelType[]
      */
     private $models = [];
@@ -165,28 +160,27 @@ class Schema implements ConfigurationApplier, SchemaValidator
         }
 
         $schemaUpdates = [];
-        foreach ($this->queryFields as $query) {
-            foreach ($query->loadPlugins() as $data) {
-                list ($plugin, $config) = $data;
-                if ($plugin instanceof QueryPlugin) {
-                    $plugin->apply($query, $this, $config);
-                }
-                if ($plugin instanceof SchemaUpdater) {
-                    $schemaUpdates[get_class($plugin)] = $plugin;
-                }
-            }
-        }
-        foreach ($this->mutations as $mutation) {
-            foreach ($mutation->loadPlugins() as $data) {
-                list ($plugin, $config) = $data;
-                if ($plugin instanceof MutationPlugin) {
-                    $plugin->apply($mutation, $this, $config);
-                }
-                if ($plugin instanceof SchemaUpdater) {
-                    $schemaUpdates[get_class($plugin)] = get_class($plugin);
+        $allComponents = [
+            $this->types,
+            $this->models,
+            $this->queryFields,
+            $this->mutationFields,
+        ];
+        foreach($allComponents as $list) {
+            foreach ($list as $component) {
+                foreach ($component->loadPlugins() as $data) {
+                    list ($plugin) = $data;
+                    if ($plugin instanceof SchemaUpdater) {
+                        $schemaUpdates[get_class($plugin)] = get_class($plugin);
+                    }
                 }
             }
         }
+        /* @var SchemaUpdater $builder */
+        foreach ($schemaUpdates as $class) {
+            $class::updateSchemaOnce($this);
+        }
+
         foreach ($this->types as $type) {
             foreach ($type->loadPlugins() as $data) {
                 list ($plugin, $config) = $data;
@@ -210,12 +204,28 @@ class Schema implements ConfigurationApplier, SchemaValidator
             }
         }
 
-        /* @var SchemaUpdater $builder */
-        foreach ($schemaUpdates as $class) {
-            $class::updateSchemaOnce($this);
+        foreach ($this->queryFields as $query) {
+            foreach ($query->loadPlugins() as $data) {
+                list ($plugin, $config) = $data;
+                if ($plugin instanceof QueryPlugin) {
+                    $plugin->apply($query, $this, $config);
+                }
+                if ($plugin instanceof SchemaUpdater) {
+                    $schemaUpdates[get_class($plugin)] = $plugin;
+                }
+            }
         }
-
-        // Models are meaningless once we're ready to generate code, so merge them into types
+        foreach ($this->mutationFields as $mutation) {
+            foreach ($mutation->loadPlugins() as $data) {
+                list ($plugin, $config) = $data;
+                if ($plugin instanceof MutationPlugin) {
+                    $plugin->apply($mutation, $this, $config);
+                }
+                if ($plugin instanceof SchemaUpdater) {
+                    $schemaUpdates[get_class($plugin)] = get_class($plugin);
+                }
+            }
+        }
         foreach ($this->models as $modelType) {
             $this->addType($modelType);
         }
@@ -260,13 +270,18 @@ class Schema implements ConfigurationApplier, SchemaValidator
             'Hash' => $this->getHash(),
             'Types' => ArrayList::create(array_values($this->types)),
             'Queries' => ArrayList::create(array_values($this->queries)),
-            'Mutations' => ArrayList::create(array_values($this->mutations)),
+            'Mutations' => ArrayList::create(array_values($this->mutationFields)),
             'Interfaces' => ArrayList::create(array_values($this->interfaces)),
             'Enums' => ArrayList::create(array_values($this->enums)),
             'QueryType' => self::QUERY_TYPE,
             'MutationType' => self::MUTATION_TYPE,
         ]);
+        $s = microtime(true);
         $code = $data->renderWith(__NAMESPACE__ . '\\GraphQLTypeRegistry');
+        $e = microtime(true);
+        $d = round($e-$s, 3);
+        echo "Code generated in $d seconds\n";
+
         $code = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $code);
         $php = "<?php\n\n{$code}";
         file_put_contents($schemaFileName, $php);
@@ -298,7 +313,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $validators = array_merge(
             $this->types,
             $this->queries,
-            $this->mutations,
+            $this->mutationFields,
             $this->enums,
             $this->interfaces
         );
@@ -352,6 +367,34 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public function getTypes(): array
     {
         return $this->types;
+    }
+
+    /**
+     * @param Enum $enum
+     * @return $this
+     */
+    public function addEnum(Enum $enum): self
+    {
+        $this->enums[$enum->getName()] = $enum;
+
+        return $this;
+    }
+
+    /**
+     * @return Enum[]
+     */
+    public function getEnums(): array
+    {
+        return $this->enums;
+    }
+
+    /**
+     * @param $name
+     * @return Enum|null
+     */
+    public function getEnum($name): ?Enum
+    {
+        return $this->enums[$name] ?? null;
     }
 
     /**
