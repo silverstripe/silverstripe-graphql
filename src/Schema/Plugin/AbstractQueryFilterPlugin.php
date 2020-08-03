@@ -41,7 +41,7 @@ abstract class AbstractQueryFilterPlugin extends AbstractNestedInputPlugin imple
      * @param Schema $schema
      * @throws SchemaBuilderException
      */
-    public static function updateSchemaOnce(Schema $schema): void
+    public static function updateSchema(Schema $schema): void
     {
         /* @var FieldFilterRegistry $registry */
         $registry = Injector::inst()->get(FilterRegistryInterface::class);
@@ -63,20 +63,13 @@ abstract class AbstractQueryFilterPlugin extends AbstractNestedInputPlugin imple
     }
 
     /**
-     * @param Query $query
      * @param ModelType $modelType
-     * @param array $path
      * @return string
      */
-    public static function getTypeName(Query $query, ModelType $modelType, array $path = []): string
+    public static function getTypeName(ModelType $modelType): string
     {
-        $pathNames = array_map('ucfirst', $path);
-        return sprintf(
-            '%s%s%s',
-            ucfirst($query->getName()),
-            implode('', $pathNames),
-            'FilterFields'
-        );
+        $modelTypeName = $modelType->getModel()->getTypeName();
+        return $modelTypeName . 'FilterFields';
     }
 
     /**

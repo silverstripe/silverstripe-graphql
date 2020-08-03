@@ -30,7 +30,7 @@ class FieldAccessor
      * @var callable
      * @config
      */
-    private static $normaliser = 'strtolower';
+    private static $field_formatter = 'lcfirst';
 
     /**
      * @var array
@@ -57,7 +57,7 @@ class FieldAccessor
         }
         $lookup = $this->getCaseInsensitiveMapping($dataObject);
 
-        $normalised = call_user_func_array($this->config()->get('normaliser'), [$field]);
+        $normalised = strtolower($field);
         $property = $lookup[$normalised] ?? null;
         if ($property) {
             return $property;
@@ -113,8 +113,8 @@ class FieldAccessor
     public function getAllFields(DataObject $dataObject, $includeRelations = true): array
     {
         return array_map(
-            $this->config()->get('normaliser'),
-            array_keys($this->getCaseInsensitiveMapping($dataObject, $includeRelations))
+            $this->config()->get('field_formatter'),
+            array_values($this->getCaseInsensitiveMapping($dataObject, $includeRelations))
         );
     }
 
@@ -152,7 +152,7 @@ class FieldAccessor
         $cached = self::$__mappingCache[$cacheKey] ?? null;
         if (!$cached) {
             $normalFields = $this->getAccessibleFields($dataObject, $includeRelations);
-            $lowercaseFields = array_map($this->config()->get('normaliser'), $normalFields);
+            $lowercaseFields = array_map('strtolower', $normalFields);
             $lookup = array_combine($lowercaseFields, $normalFields);
             self::$__mappingCache[$cacheKey] = $lookup;
         }

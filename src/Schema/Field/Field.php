@@ -3,15 +3,12 @@
 namespace SilverStripe\GraphQL\Schema\Field;
 
 
-use GraphQL\Error\SyntaxError;
 use GraphQL\Language\Token;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
-use SilverStripe\GraphQL\Schema\Registry\PluginRegistry;
 use SilverStripe\GraphQL\Schema\Registry\ResolverRegistry;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
@@ -20,7 +17,6 @@ use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ViewableData;
-use Generator;
 
 class Field extends ViewableData implements ConfigurationApplier, SchemaValidator
 {
@@ -239,12 +235,20 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     }
 
     /**
+     * @return bool
+     */
+    public function isRequired(): bool
+    {
+        return $this->getEncodedType()->isRequired();
+    }
+
+    /**
      * @throws SchemaBuilderException
      */
     public function validate(): void
     {
         Schema::invariant(
-            $this->getEncodedType(),
+            $this->type,
             'Field %s has no type defined',
             $this->getName()
         );
@@ -306,9 +310,15 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
 
     /**
      * @return EncodedType
+     * @throws SchemaBuilderException
      */
     public function getEncodedType(): EncodedType
     {
+        Schema::invariant(
+            $this->type,
+            'Field %s has no type defined.',
+            $this->getName()
+        );
         return $this->type instanceof EncodedType ? $this->type : $this->toEncodedType($this->type);
     }
 

@@ -8,7 +8,6 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Field\Query;
@@ -67,10 +66,12 @@ abstract class AbstractNestedInputPlugin implements QueryPlugin
 
         Schema::assertValidConfig($configFields);
         $fields = $this->buildInputTypeFields($modelType, $configFields);
-        list ($allTypes) = $this->extractTypes($query, $modelType, $fields);
-        $this->allTypes = $allTypes;
+        $allTypes = $this->extractTypes(
+            static::getTypeName($modelType),
+            $fields
+        );
 
-        $fieldGraph = $this->getFieldGraph($modelType, $fields);
+        $fieldGraph = $this->getRelationalModelGraph($modelType, $fields);
         $pathMapping = $this->buildPathsFromFieldMapping($fieldGraph);
         $fieldMapping = [];
         foreach ($pathMapping as $fieldPath => $propPath) {
@@ -79,11 +80,9 @@ abstract class AbstractNestedInputPlugin implements QueryPlugin
             }
         }
 
-        $this->fieldMapping = $fieldMapping;
+        $query->addArg($fieldName, static::getTypeName($modelType));
 
-        $query->addArg($fieldName, static::getTypeName($query, $modelType));
-
-        foreach ($this->getAllTypes() as $inputType) {
+        foreach ($allTypes as $inputType) {
             $schema->addType($inputType);
         }
 
@@ -147,62 +146,61 @@ abstract class AbstractNestedInputPlugin implements QueryPlugin
                     'Filter for field %s is declared as an array, but the field is not a nested object type',
                     $fieldName
                 );
-                $filters[$fieldName] = $this->buildInputTypeFields($relatedModel, $data);
-            } else {
-                if ($data === true) {
-                    $fieldType = $fieldObj->getNamedType();
-                    Schema::invariant(
-                        !$relatedModel && in_array($fieldType, Schema::getInternalTypes()),
-                        'Filter for field %s is declared as true, but the field is not a scalar type',
-                        $fieldName
-                    );
-                    $filters[$fieldName] = static::getLeafNodeType($fieldType);
-                }
+                $filters[$fieldName] = [
+                    'children' => $this->buildInputTypeFields($relatedModel, $data),
+                    'type' => static::getTypeName($relatedModel),
+                ];
+            } else if ($data === true) {
+                $fieldType = $fieldObj->getNamedType();
+                Schema::invariant(
+                    !$relatedModel && in_array($fieldType, Schema::getInternalTypes()),
+                    'Filter for field %s is declared as true, but the field is not a scalar type',
+                    $fieldName
+                );
+                $filters[$fieldName] = [
+                    'type' => static::getLeafNodeType($fieldType),
+                    'children' => null
+                ];
             }
         }
+
 
         return $filters;
     }
 
     /**
-     * @param Query $query
-     * @param ModelType $modelType
+     * @param string $typeName
      * @param array $filters
      * @param array $allTypes
-     * @param array $parentStack
      * @return array
      * @throws SchemaBuilderException
      */
     protected function extractTypes(
-        Query $query,
-        ModelType $modelType,
+        string $typeName,
         array $filters,
-        array $allTypes = [],
-        array $parentStack = []
+        array $allTypes = []
     ): array {
         $fields = [];
         foreach ($filters as $fieldName => $data) {
-            if (is_array($data)) {
-                $parents = array_merge($parentStack, [$fieldName]);
-                list($cumulativeTypes, $typeCreated) = $this->extractTypes(
-                    $query,
-                    $modelType,
-                    $data,
-                    $allTypes,
-                    $parents
+            $children = $data['children'];
+            $childTypeName = $data['type'];
+            if ($children) {
+                $cumulativeTypes = $this->extractTypes(
+                    $childTypeName,
+                    $children,
+                    $allTypes
                 );
                 $allTypes = array_merge($allTypes, $cumulativeTypes);
-                $fields[$fieldName] = $typeCreated;
+                $fields[$fieldName] = $childTypeName;
             } else {
-                $fields[$fieldName] = $data;
+                $fields[$fieldName] = $childTypeName;
             }
         }
-        $typeName = static::getTypeName($query, $modelType, $parentStack);
         $type = InputType::create($typeName)
             ->setFields($fields);
-        $allTypes[] = $type;
+        $allTypes[$typeName] = $type;
 
-        return [$allTypes, $typeName];
+        return $allTypes;
     }
 
     /**
@@ -211,11 +209,12 @@ abstract class AbstractNestedInputPlugin implements QueryPlugin
      * @return array
      * @throws SchemaBuilderException
      */
-    protected function getFieldGraph(ModelType $modelType, array $fields): array
+    protected function getRelationalModelGraph(ModelType $modelType, array $fields): array
     {
         $mapping = [];
         /* @var DataObjectModel $model */
-        foreach ($fields as $fieldName => $typeOrArray) {
+        foreach ($fields as $fieldName => $data) {
+            $children = $data['children'];
             /* @var ModelField $fieldObj */
             $fieldObj = $modelType->getFieldByName($fieldName);
             Schema::invariant(
@@ -223,7 +222,7 @@ abstract class AbstractNestedInputPlugin implements QueryPlugin
                 'Could not map field %s',
                 $fieldName
             );
-            $isNested = is_array($typeOrArray);
+            $isNested = is_array($children);
             $class = $modelType->getModel()->getSourceClass();
             if ($isNested) {
                 $relatedModel = $fieldObj->getModelType();
@@ -234,7 +233,7 @@ abstract class AbstractNestedInputPlugin implements QueryPlugin
                 );
                 $mapping[$fieldName] = [
                     'class' => $class,
-                    'children' => $this->getFieldGraph($relatedModel, $typeOrArray)
+                    'children' => $this->getRelationalModelGraph($relatedModel, $children)
                 ];
             } else {
                 $mapping[$fieldName] = [
@@ -328,14 +327,6 @@ abstract class AbstractNestedInputPlugin implements QueryPlugin
     }
 
     /**
-     * @return InputType[]
-     */
-    public function getAllTypes(): array
-    {
-        return $this->allTypes;
-    }
-
-    /**
      * @return array
      */
     public function getFieldMapping(): array
@@ -354,14 +345,8 @@ abstract class AbstractNestedInputPlugin implements QueryPlugin
     abstract protected function getResolver(): array;
 
     /**
-     * @param Query $query
      * @param ModelType $modelType
-     * @param array $path
      * @return string
      */
-    abstract public static function getTypeName(
-        Query $query,
-        ModelType $modelType,
-        array $path = []
-    ): string;
+    abstract public static function getTypeName(ModelType $modelType): string;
 }

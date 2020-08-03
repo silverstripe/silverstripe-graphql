@@ -155,18 +155,19 @@ class ModelType extends Type implements ExtraTypeProvider
      * @return ModelType
      * @throws SchemaBuilderException
      */
-    public function addAllFields(): ModelType
+    public function addAllFields(): self
     {
-        /* @var SchemaModelInterface&DefaultFieldsProvider&RequiredFieldsProvider $model */
+        /* @var SchemaModelInterface&DefaultFieldsProvider $model */
+        $model = $this->getModel();
         $defaultFields = $model instanceof DefaultFieldsProvider ? $model->getDefaultFields() : [];
-        $requiredFields = $model instanceof RequiredFieldsProvider ? $model->getRequiredFields() : [];
-        foreach (array_merge($defaultFields, $requiredFields) as $fieldName => $fieldType) {
+        foreach ($defaultFields as $fieldName => $fieldType) {
             $this->addField($fieldName, $fieldType);
         }
         $allFields = $this->getModel()->getAllFields();
         foreach ($allFields as $fieldName) {
             $this->addField($fieldName, $this->getModel()->getTypeForField($fieldName));
         }
+        return $this;
     }
 
     /**

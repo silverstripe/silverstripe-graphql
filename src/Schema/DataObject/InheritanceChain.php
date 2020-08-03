@@ -6,6 +6,7 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Convert;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -159,7 +160,7 @@ class InheritanceChain
         $fields = [];
         foreach ($this->getDescendantModels() as $className) {
             $modelType = ModelType::create($className);
-            $fieldName = static::typeNameToFieldName($modelType->getName());
+            $fieldName = Convert::upperCamelToLowerCamel($modelType->getName());
             $fields[$fieldName] = $modelType->getName();
         }
 
@@ -179,24 +180,6 @@ class InheritanceChain
     public static function createDescendantTypename(DataObject $dataObject): string
     {
         return DataObjectModel::create($dataObject)->getTypeName() . 'Descendants';
-    }
-
-    /**
-     * SiteTree -> siteTree, PDOQuery -> pdoQuery
-     * @param string $typeName
-     * @return string
-     */
-    public static function typeNameToFieldName(string $typeName): string
-    {
-        return preg_replace_callback('/^([A-Z]+)/', function ($matches) use ($typeName) {
-            $part = strtolower($matches[1]);
-            $len = strlen($matches[1]);
-            if (strlen($len > 1 && $len < strlen($typeName))) {
-                $last = strlen($part) - 1;
-                $part[$last] = strtoupper($part[$last]);
-            }
-            return $part;
-        }, $typeName);
     }
 
     /**

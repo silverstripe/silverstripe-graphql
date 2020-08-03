@@ -6,6 +6,7 @@ use GraphQL\Type\Schema as GraphQLSchema;
 use GraphQL\Type\SchemaConfig;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
@@ -100,18 +101,19 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @param array $schema
+     * @param array $schemaConfig
      * @return Schema
      * @throws SchemaBuilderException
      */
-    public function applyConfig(array $schema): Schema
+    public function applyConfig(array $schemaConfig): Schema
     {
-        $types = $schema[self::TYPES] ?? [];
-        $queries = $schema[self::QUERIES] ?? [];
-        $mutations = $schema[self::MUTATIONS] ?? [];
-        $interfaces = $schema[self::INTERFACES] ?? [];
-        $models = $schema[self::MODELS] ?? [];
-        $enums = $schema[self::ENUMS] ?? [];
+        Benchmark::start('schema-config');
+        $types = $schemaConfig[self::TYPES] ?? [];
+        $queries = $schemaConfig[self::QUERIES] ?? [];
+        $mutations = $schemaConfig[self::MUTATIONS] ?? [];
+        $interfaces = $schemaConfig[self::INTERFACES] ?? [];
+        $models = $schemaConfig[self::MODELS] ?? [];
+        $enums = $schemaConfig[self::ENUMS] ?? [];
 
         static::assertValidConfig($types);
         foreach ($types as $typeName => $typeConfig) {
@@ -142,7 +144,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         static::assertValidConfig($models);
         foreach ($models as $modelName => $modelConfig) {
              $model = ModelType::create($modelName, $modelConfig);
-            $this->addModel($model);
+             $this->addModel($model);
         }
 
         static::assertValidConfig($enums);
@@ -158,74 +160,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
         foreach ($this->modelDependencies as $modelClass) {
             $this->addModel(ModelType::create($modelClass));
         }
+        Benchmark::start('schema-updates');
+        $this->applySchemaUpdates($schemaConfig);
+        Benchmark::end('schema-updates', 'Schema updates took %s ms');
 
-        $schemaUpdates = [];
-        $allComponents = [
-            $this->types,
-            $this->models,
-            $this->queryFields,
-            $this->mutationFields,
-        ];
-        foreach($allComponents as $list) {
-            foreach ($list as $component) {
-                foreach ($component->loadPlugins() as $data) {
-                    list ($plugin) = $data;
-                    if ($plugin instanceof SchemaUpdater) {
-                        $schemaUpdates[get_class($plugin)] = get_class($plugin);
-                    }
-                }
-            }
-        }
-        /* @var SchemaUpdater $builder */
-        foreach ($schemaUpdates as $class) {
-            $class::updateSchemaOnce($this);
-        }
-
-        foreach ($this->types as $type) {
-            foreach ($type->loadPlugins() as $data) {
-                list ($plugin, $config) = $data;
-                if ($plugin instanceof TypePlugin) {
-                    $plugin->apply($type, $this, $config);
-                }
-                if ($plugin instanceof SchemaUpdater) {
-                    $schemaUpdates[get_class($plugin)] = get_class($plugin);
-                }
-            }
-        }
-        foreach ($this->models as $modelType) {
-            foreach ($modelType->loadPlugins() as $data) {
-                list ($plugin, $config) = $data;
-                if ($plugin instanceof ModelTypePlugin) {
-                    $plugin->apply($modelType, $this, $config);
-                }
-                if ($plugin instanceof SchemaUpdater) {
-                    $schemaUpdates[get_class($plugin)] = get_class($plugin);
-                }
-            }
-        }
-
-        foreach ($this->queryFields as $query) {
-            foreach ($query->loadPlugins() as $data) {
-                list ($plugin, $config) = $data;
-                if ($plugin instanceof QueryPlugin) {
-                    $plugin->apply($query, $this, $config);
-                }
-                if ($plugin instanceof SchemaUpdater) {
-                    $schemaUpdates[get_class($plugin)] = $plugin;
-                }
-            }
-        }
-        foreach ($this->mutationFields as $mutation) {
-            foreach ($mutation->loadPlugins() as $data) {
-                list ($plugin, $config) = $data;
-                if ($plugin instanceof MutationPlugin) {
-                    $plugin->apply($mutation, $this, $config);
-                }
-                if ($plugin instanceof SchemaUpdater) {
-                    $schemaUpdates[get_class($plugin)] = get_class($plugin);
-                }
-            }
-        }
         foreach ($this->models as $modelType) {
             $this->addType($modelType);
         }
@@ -242,7 +180,71 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $this->types[self::MUTATION_TYPE] = $mutationType;
         }
 
+        Benchmark::end('schema-config', 'Schema config took %s ms');
         return $this;
+    }
+
+    /**
+     * @param array $schemaConfig
+     * @throws SchemaBuilderException
+     */
+    private function applySchemaUpdates(array $schemaConfig): void
+    {
+        Benchmark::start('builders');
+        $builders = $schemaConfig['builders'] ?? [];
+        foreach ($builders as $builderClass) {
+            static::invariant(
+                is_subclass_of($builderClass, SchemaUpdater::class),
+                'The schema builder %s is not an instance of %s',
+                $builderClass,
+                SchemaUpdater::class
+            );
+            $builderClass::updateSchema($this);
+        }
+        Benchmark::end('builders');
+
+        // Create a map of all the lists we need to apply plugins to, and their
+        // required plugin interface
+        $allComponents = [
+            'types' => TypePlugin::class,
+            'models' => ModelTypePlugin::class,
+            'queryFields' => QueryPlugin::class,
+            'mutationFields' => MutationPlugin::class,
+        ];
+
+        $schemaUpdates = [];
+        foreach($allComponents as $propertyName => $pluginInterface) {
+            foreach ($this->$propertyName as $component) {
+                /* @var Type|Field $component */
+                foreach ($component->loadPlugins() as $data) {
+                    list ($plugin) = $data;
+                    if ($plugin instanceof SchemaUpdater) {
+                        $schemaUpdates[get_class($plugin)] = get_class($plugin);
+                    }
+                }
+            }
+        }
+        Benchmark::start('plugin-schema-update');
+        /* @var SchemaUpdater $builder */
+        foreach ($schemaUpdates as $class) {
+            $class::updateSchema($this);
+        }
+        Benchmark::end('plugin-schema-update');
+
+        foreach ($allComponents as $propertyName => $pluginInterface) {
+            Benchmark::start($propertyName . '-plugins');
+            foreach ($this->$propertyName as $component) {
+                /* @var Type|Field $component */
+                foreach ($component->loadPlugins() as $data) {
+                    list ($plugin, $config) = $data;
+                    /* @var QueryPlugin|MutationPlugin|TypePlugin|ModelType $plugin */
+                    if ($plugin instanceof $pluginInterface) {
+                        $plugin->apply($component, $this, $config);
+                    }
+                }
+            }
+            Benchmark::end($propertyName . '-plugins');
+        }
     }
 
     /**
@@ -264,7 +266,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
     public function persistSchema(): void
     {
-        $schemaFileName = BASE_PATH . '/schema.php';
+        $this->validate();
+        $schemaFileName = ASSETS_PATH . '/schema.php';
         $data = new ArrayData([
             'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
             'Hash' => $this->getHash(),
@@ -276,12 +279,9 @@ class Schema implements ConfigurationApplier, SchemaValidator
             'QueryType' => self::QUERY_TYPE,
             'MutationType' => self::MUTATION_TYPE,
         ]);
-        $s = microtime(true);
+        Benchmark::start('render');
         $code = $data->renderWith(__NAMESPACE__ . '\\GraphQLTypeRegistry');
-        $e = microtime(true);
-        $d = round($e-$s, 3);
-        echo "Code generated in $d seconds\n";
-
+        Benchmark::end('render', 'Code generation took %s ms');
         $code = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $code);
         $php = "<?php\n\n{$code}";
         file_put_contents($schemaFileName, $php);
@@ -289,7 +289,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
     public function getSchema(): GraphQLSchema
     {
-        $schemaFileName = BASE_PATH . '/schema.php';
+        $schemaFileName = ASSETS_PATH . '/schema.php';
         require_once($schemaFileName);
         $hash = $this->getHash();
         $namespace = 'SilverStripe\\GraphQL\\Schema\\Generated\\Schema_' . $hash;
@@ -325,14 +325,18 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
     /**
      * @param Type $type
+     * @param callable|null $callback
      * @return Schema
      * @throws SchemaBuilderException
      */
-    public function addType(Type $type): Schema
+    public function addType(Type $type, ?callable $callback = null): Schema
     {
         $existing = $this->types[$type->getName()] ?? null;
-        $this->types[$type->getName()] = $existing ? $existing->mergeWith($type) : $type;
-
+        $typeObj = $existing ? $existing->mergeWith($type) : $type;
+        $this->types[$type->getName()] = $typeObj;
+        if ($callback) {
+            $callback($typeObj);
+        }
         return $this;
     }
 
@@ -399,15 +403,17 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
     /**
      * @param ModelType $modelType
+     * @param callable|null $callback
      * @return Schema
      * @throws SchemaBuilderException
      */
-    public function addModel(ModelType $modelType): Schema
+    public function addModel(ModelType $modelType, ?callable $callback = null): Schema
     {
         $existing = $this->models[$modelType->getName()] ?? null;
-        $this->models[$modelType->getName()] = $existing
+        $typeObj = $existing
             ? $existing->mergeWith($modelType)
             : $modelType;
+        $this->models[$modelType->getName()] = $typeObj;
 
         foreach ($modelType->getExtraTypes() as $type) {
             if ($type instanceof ModelType) {
@@ -429,6 +435,9 @@ class Schema implements ConfigurationApplier, SchemaValidator
             } else if ($operationType instanceof ModelMutation) {
                 $this->mutationFields[$operationType->getName()] = $operationType;
             }
+        }
+        if ($callback) {
+            $callback($typeObj);
         }
 
         return $this;
@@ -559,4 +568,5 @@ class Schema implements ConfigurationApplier, SchemaValidator
             throw new SchemaBuilderException($message);
         }
     }
+
 }

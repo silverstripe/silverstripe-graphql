@@ -97,7 +97,7 @@ class ModelField extends Field
      */
     public function setType($type): Field
     {
-        $fieldType = $type === self::INTROSPECT_TYPE
+        $fieldType = $type === true
             ? $this->getModel()->getTypeForField($this->getPropertyName())
             : $type;
 

@@ -53,9 +53,6 @@ class Resolver
      */
     protected static function resolveField(DataObject $obj, string $fieldName)
     {
-        if ($fieldName === InheritanceChain::getName()) {
-            return $obj;
-        }
         $result = FieldAccessor::singleton()->accessField($obj, $fieldName);
         if ($result instanceof DBField) {
             return $result->getValue();

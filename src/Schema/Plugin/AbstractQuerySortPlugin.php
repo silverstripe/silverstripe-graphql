@@ -30,7 +30,7 @@ abstract class AbstractQuerySortPlugin extends AbstractNestedInputPlugin impleme
     /**
      * @param Schema $schema
      */
-    public static function updateSchemaOnce(Schema $schema): void
+    public static function updateSchema(Schema $schema): void
     {
         $type = Enum::create(
             'SortDirection',
@@ -43,20 +43,13 @@ abstract class AbstractQuerySortPlugin extends AbstractNestedInputPlugin impleme
     }
 
     /**
-     * @param Query $query
      * @param ModelType $modelType
-     * @param array $path
      * @return string
      */
-    public static function getTypeName(Query $query, ModelType $modelType, array $path = []): string
+    public static function getTypeName(ModelType $modelType): string
     {
-        $pathNames = array_map('ucfirst', $path);
-        return sprintf(
-            '%s%s%s',
-            ucfirst($query->getName()),
-            implode('', $pathNames),
-            'SortFields'
-        );
+        $modelTypeName = $modelType->getModel()->getTypeName();
+        return $modelTypeName . 'SortFields';
     }
 
     /**

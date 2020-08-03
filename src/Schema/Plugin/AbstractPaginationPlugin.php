@@ -35,7 +35,7 @@ abstract class AbstractPaginationPlugin implements QueryPlugin, SchemaUpdater
      * @param Schema $schema
      * @throws SchemaBuilderException
      */
-    public static function updateSchemaOnce(Schema $schema): void
+    public static function updateSchema(Schema $schema): void
     {
         // Create the PageInfo type, which is universal
         $pageinfoType = Type::create('PageInfo')

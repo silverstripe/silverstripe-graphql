@@ -3,6 +3,7 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
+use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceChain;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\PluginInterface;
@@ -34,9 +35,9 @@ class Inheritance implements PluginInterface, SchemaUpdater
      * @throws ReflectionException
      * @throws SchemaBuilderException
      */
-    public static function updateSchemaOnce(Schema $schema): void
+    public static function updateSchema(Schema $schema): void
     {
-        $s = microtime(true);
+        Benchmark::start('inheritance');
         foreach ($schema->getModels() as $modelType) {
             $class = $modelType->getModel()->getSourceClass();
             if (!is_subclass_of($class, DataObject::class)) {
@@ -46,16 +47,10 @@ class Inheritance implements PluginInterface, SchemaUpdater
             if (self::isTouched($baseClass)) {
                 continue;
             }
-            $start = microtime(true);
             self::addInheritance($schema, $baseClass);
-            $end = microtime(true);
-            $elapsed = round($end - $start, 3);
-            echo "inheritance for $baseClass added in $elapsed seconds\n";
             self::touchNode($baseClass);
         }
-        $e = microtime(true);
-        $d = round($e-$s, 3);
-        echo "Inheritance plugin took $d seconds\n";
+        Benchmark::end('inheritance');
     }
 
     /**
