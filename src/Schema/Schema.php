@@ -31,6 +31,7 @@ use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\UnionType;
+use SilverStripe\GraphQL\SchemaPersister;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
@@ -100,6 +101,18 @@ class Schema implements ConfigurationApplier, SchemaValidator
      * @var array
      */
     private $modelDependencies = [];
+
+    /**
+     * @var SchemaPersister
+     */
+    private $persister;
+
+    /**
+     * @var array
+     */
+    private static $dependencies = [
+        'persister' => '%$' . SchemaPersister::class,
+    ];
 
     /**
      * Schema constructor.
@@ -311,10 +324,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public function persistSchema(): void
     {
         $this->validate();
-        $schemaFileName = ASSETS_PATH . '/schema-' . $this->schemaKey . '.php';
         $data = new ArrayData([
             'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
-            'Hash' => $this->getHash(),
             'Types' => ArrayList::create(array_values($this->types)),
             'Interfaces' => ArrayList::create(array_values($this->interfaces)),
             'Unions' => ArrayList::create(array_values($this->unions)),
@@ -322,21 +333,12 @@ class Schema implements ConfigurationApplier, SchemaValidator
             'QueryType' => self::QUERY_TYPE,
             'MutationType' => self::MUTATION_TYPE,
         ]);
-        Benchmark::start('render');
-        $code = $data->renderWith(__NAMESPACE__ . '\\GraphQLTypeRegistry');
-        Benchmark::end('render', 'Code generation took %s ms');
-        $code = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $code);
-        $php = "<?php\n\n{$code}";
-        file_put_contents($schemaFileName, $php);
+        $this->getAdaptor()->persistSchema($data);
     }
 
     public function getSchema(): GraphQLSchema
     {
-        $schemaFileName = ASSETS_PATH . '/schema-' . $this->schemaKey . '.php';
-        require_once($schemaFileName);
-        $hash = $this->getHash();
-        $namespace = 'SilverStripe\\GraphQL\\Schema\\Generated\\Schema_' . $hash;
-        $registry = $namespace . '\\Types';
+        $registry = $this->getAdaptor()->getRegistry();
         $hasMutations = method_exists($registry, self::MUTATION_TYPE);
         $schemaConfig = new SchemaConfig();
         $callback = call_user_func([$registry, self::QUERY_TYPE]);
@@ -619,12 +621,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
         return $this->unions;
     }
 
-    // Probably don't need hashing since re-builds are not implicit
-    private function getHash(): string
-    {
-        return md5('UncleCheese');
-    }
-
     /**
      * @return array
      */
@@ -708,6 +704,25 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $message = call_user_func_array('sprintf', array_merge([$message], $params));
             throw new SchemaBuilderException($message);
         }
+    }
+
+    /**
+     * @return SchemaPersister
+     */
+    public function getPersister(): SchemaPersister
+    {
+        return $this->persister;
+    }
+
+    /**
+     * @param SchemaPersister $persister
+     * @return Schema
+     */
+    public function setPersister(SchemaPersister $persister): Schema
+    {
+        $this->persister = $persister;
+
+        return $this;
     }
 
 }
