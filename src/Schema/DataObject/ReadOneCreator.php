@@ -64,7 +64,8 @@ class ReadOneCreator implements OperationCreator
             if (!$dataClass) {
                 return null;
             }
-            return DataObject::get_by_id($dataClass, $args['ID']);
+            $idField = FieldAccessor::singleton()->formatField('ID');
+            return DataObject::get_by_id($dataClass, $args[$idField]);
         };
     }
 
