@@ -14,6 +14,7 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Flushable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Auth\Handler;
+use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Dev\State\DisableTypeCacheState;
 use SilverStripe\GraphQL\Permission\MemberContextProvider;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
@@ -115,21 +116,26 @@ class Controller extends BaseController implements Flushable
         if ($request->httpMethod() === 'OPTIONS') {
             return $this->handleOptions($request);
         }
-
+        $queryPerf = '';
+        $schemaPerf = '';
         // Main query handling
         try {
             list($query, $variables) = $this->getRequestQueryVariables($request);
             if (!$query) {
                 $this->httpError(400, 'This endpoint requires a "query" parameter');
             }
-
+            // Temporary, maybe useful by feature flag later..
+            Benchmark::start('schema-perf');
             $schema = $this->getBuilder()->getSchema();
+            $schemaPerf = Benchmark::end('schema-perf', '%sms', true);
             $handler = $this->getQueryHandler();
             if ($handler instanceof ContextProvider) {
                 $this->applyContext($handler, $request);
             }
-
+            Benchmark::start('query-perf');
             $result = $handler->query($schema, $query, $variables);
+            $queryPerf = Benchmark::end('query-perf', '%sms', true);
+
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
 
@@ -146,7 +152,9 @@ class Controller extends BaseController implements Flushable
         }
 
         $response = $this->addCorsHeaders($request, new HTTPResponse(json_encode($result)));
-        return $response->addHeader('Content-Type', 'application/json');
+        return $response->addHeader('Content-Type', 'application/json')
+            ->addHeader('X-QueryPerf', $queryPerf)
+            ->addHeader('X-SchemaPerf', $schemaPerf);
     }
 
     /**
