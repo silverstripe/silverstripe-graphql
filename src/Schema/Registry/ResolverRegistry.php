@@ -7,6 +7,7 @@ namespace SilverStripe\GraphQL\Schema\Registry;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use InvalidArgumentException;
+use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Interfaces\ResolverProvider;
 use SilverStripe\GraphQL\Schema\Resolver\DefaultResolver;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
@@ -38,22 +39,20 @@ class ResolverRegistry
 
     /**
      * @param string|null $typeName
-     * @param string|null $fieldName
-     * @param ResolverReference|null $default
+     * @param Field|null $field
      * @return ResolverReference
      */
     public function findResolver(
         ?string $typeName = null,
-        ?string $fieldName = null,
-        ?ResolverReference $default = null
+        ?Field $field = null
     ): ResolverReference {
         foreach ($this->resolverProviders as $provider) {
-            $resolver = $provider->getResolverMethod($typeName, $fieldName);
+            $resolver = $provider->getResolverMethod($typeName, $field);
             if ($resolver) {
                 return ResolverReference::create([get_class($provider), $resolver]);
             }
         }
-
+        $default = $field->getDefaultResolver();
         return $default ?: ResolverReference::create(
             $this->config()->get('default_resolver')
         );

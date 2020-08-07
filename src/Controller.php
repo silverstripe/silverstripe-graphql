@@ -428,14 +428,8 @@ class Controller extends BaseController implements Flushable
      */
     public function writeSchemaToFilesystem()
     {
-        if (Injector::inst()->has(HTTPRequest::class)) {
-            $request = Injector::inst()->get(HTTPRequest::class);
-        } else {
-            $request = new NullHTTPRequest();
-        }
-        $manager = $this->getManager($request);
         try {
-            $types = StaticSchema::inst()->introspectTypes($manager);
+            $types = $this->introspectTypes();
         } catch (Exception $e) {
             throw new Exception(sprintf(
                 'There was an error caching the GraphQL types: %s',
@@ -445,6 +439,44 @@ class Controller extends BaseController implements Flushable
 
         $this->writeTypes(json_encode($types));
     }
+
+    /**
+     * @return array
+     * @throws Exception
+     */
+    public function introspectTypes()
+    {
+        $fragments = $this->getQueryHandler()->query(
+            $this->getBuilder()->getSchema(),
+            <<<GRAPHQL
+query IntrospectionQuery {
+    __schema {
+      types {
+        kind
+        name
+        possibleTypes {
+          name
+        }
+      }
+    }
+}
+GRAPHQL
+        );
+
+        if (isset($fragments['errors'])) {
+            $messages = array_map(function ($error) {
+                return $error['message'];
+            }, $fragments['errors']);
+
+            throw new Exception(sprintf(
+                'There were some errors with the introspection query: %s',
+                implode(PHP_EOL, $messages)
+            ));
+        }
+
+        return $fragments;
+    }
+
 
     public function removeSchemaFromFilesystem()
     {
@@ -556,6 +588,6 @@ class Controller extends BaseController implements Flushable
      */
     protected function generateCacheFilename()
     {
-        return $this->getManager()->getSchemaKey() . '.' . self::CACHE_FILENAME;
+        return $this->getBuilder()->getSchemaKey() . '.' . self::CACHE_FILENAME;
     }
 }

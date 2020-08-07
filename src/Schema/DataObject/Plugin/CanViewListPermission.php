@@ -10,12 +10,14 @@ use SilverStripe\ORM\Filterable;
 
 class CanViewListPermission extends AbstractCanViewPermission
 {
+    const IDENTIFIER = 'canViewList';
+
     /**
      * @return string
      */
     public function getIdentifier(): string
     {
-        return 'canViewListPermission';
+        return self::IDENTIFIER;
     }
 
     protected function getPermissionResolver(): array

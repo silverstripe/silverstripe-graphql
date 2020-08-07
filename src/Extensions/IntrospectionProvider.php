@@ -22,8 +22,7 @@ class IntrospectionProvider extends Extension
      */
     public function types(HTTPRequest $request)
     {
-        $manager = $this->owner->getManager();
-        $fragments = StaticSchema::inst()->introspectTypes($manager);
+        $fragments = $this->owner->introspectTypes();
 
         return (new HTTPResponse(json_encode($fragments), 200))
             ->addHeader('Content-Type', 'application/json');

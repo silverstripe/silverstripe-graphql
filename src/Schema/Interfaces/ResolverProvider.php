@@ -4,6 +4,8 @@
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
 
+use SilverStripe\GraphQL\Schema\Field\Field;
+
 interface ResolverProvider
 {
     /**
@@ -13,8 +15,8 @@ interface ResolverProvider
 
     /**
      * @param string|null $typeName
-     * @param string|null $fieldName
+     * @param Field|null $field
      * @return string|null
      */
-    public static function getResolverMethod(?string $typeName = null, ?string $fieldName = null): ?string;
+    public static function getResolverMethod(?string $typeName = null, ?Field $field = null): ?string;
 }

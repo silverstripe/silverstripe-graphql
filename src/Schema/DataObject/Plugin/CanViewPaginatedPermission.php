@@ -7,12 +7,14 @@ use InvalidArgumentException;
 
 class CanViewPaginatedPermission extends AbstractCanViewPermission
 {
+    const IDENTIFIER = 'canViewPaginated';
+
     /**
      * @return string
      */
     public function getIdentifier(): string
     {
-        return 'canViewPaginatedPermission';
+        return self::IDENTIFIER;
     }
 
     /**

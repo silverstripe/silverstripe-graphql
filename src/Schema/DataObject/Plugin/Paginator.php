@@ -9,7 +9,7 @@ use Closure;
 
 class Paginator extends AbstractPaginationPlugin
 {
-    const IDENTIFIER = 'dataobjectPaginator';
+    const IDENTIFIER = 'paginate';
 
     /**
      * @return array

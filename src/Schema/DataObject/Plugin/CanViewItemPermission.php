@@ -8,12 +8,13 @@ use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 
 class CanViewItemPermission extends AbstractCanViewPermission
 {
+    const IDENTIFIER = 'canViewItem';
     /**
      * @return string
      */
     public function getIdentifier(): string
     {
-        return 'canViewItemPermission';
+        return self::IDENTIFIER;
     }
 
     /**

@@ -307,7 +307,7 @@ class ModelType extends Type implements ExtraTypeProvider
         }
 
 
-        return $operations;
+        return array_filter($operations);
     }
 
     /**

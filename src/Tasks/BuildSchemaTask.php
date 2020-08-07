@@ -12,10 +12,16 @@ class BuildSchemaTask extends BuildTask
 
     public function run($request)
     {
-        Benchmark::start('build-schema');
-        $schema = Schema::create('default');
-        $schema->loadFromConfig();
-        $schema->persistSchema();
-        Benchmark::end('build-schema', 'Built schema in %s ms.');
+        $keys = $request->getVar('schema')
+            ? [$request->getVar('schema')]
+            : array_keys(Schema::config()->get('schemas'));
+        foreach ($keys as $key) {
+            Benchmark::start('build-schema-' . $key);
+            $schema = Schema::create($key);
+            $schema->loadFromConfig();
+            $schema->persistSchema();
+            Benchmark::end('build-schema-' . $key, 'Built schema in %s ms.');
+
+        }
     }
 }

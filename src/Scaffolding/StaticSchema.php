@@ -265,43 +265,6 @@ class StaticSchema
     }
 
     /**
-     * @param Manager $manager
-     * @return array
-     * @throws Exception
-     */
-    public function introspectTypes(Manager $manager)
-    {
-        $fragments = $manager->query(
-            <<<GRAPHQL
-query IntrospectionQuery {
-    __schema {
-      types {
-        kind
-        name
-        possibleTypes {
-          name
-        }
-      }
-    }
-}
-GRAPHQL
-        );
-
-        if (isset($fragments['errors'])) {
-            $messages = array_map(function ($error) {
-                return $error['message'];
-            }, $fragments['errors']);
-
-            throw new Exception(sprintf(
-                'There were some errors with the introspection query: %s',
-                implode(PHP_EOL, $messages)
-            ));
-        }
-
-        return $fragments;
-    }
-
-    /**
      * @param string $class
      * @return mixed|null
      */

@@ -8,7 +8,6 @@ use SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
-use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Plugin\AbstractQueryFilterPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataList;
@@ -17,7 +16,7 @@ use Closure;
 
 class QueryFilter extends AbstractQueryFilterPlugin
 {
-    const IDENTIFIER = 'dataobjectQueryFilter';
+    const IDENTIFIER = 'filter';
 
     /**
      * @return string
@@ -36,15 +35,14 @@ class QueryFilter extends AbstractQueryFilterPlugin
     }
 
     /**
-     * @param Query $query
+     * @param ModelQuery $query
      * @param Schema $schema
      * @param array $config
      * @throws SchemaBuilderException
      */
-    public function apply(Query $query, Schema $schema, array $config = []): void
+    public function apply(ModelQuery $query, Schema $schema, array $config = []): void
     {
         Schema::invariant(
-            $query instanceof ModelQuery &&
             is_subclass_of(
                 $query->getModel()->getSourceClass(),
                 DataObject::class

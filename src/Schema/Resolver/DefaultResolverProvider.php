@@ -5,6 +5,8 @@ namespace SilverStripe\GraphQL\Schema\Resolver;
 
 
 use SilverStripe\Core\Config\Configurable;
+use SilverStripe\GraphQL\Schema\Field\Field;
+use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\ResolverProvider;
 
 abstract class DefaultResolverProvider implements ResolverProvider
@@ -28,20 +30,33 @@ abstract class DefaultResolverProvider implements ResolverProvider
 
     /**
      * @param string|null $typeName
-     * @param string $fieldName
+     * @param Field|null $field
      * @return string|null
      */
-    public static function getResolverMethod(?string $typeName = null, ?string $fieldName = null): ?string
+    public static function getResolverMethod(?string $typeName = null, ?Field $field = null): ?string
     {
+        /* @var ModelField $field */
+        $fieldName = $field->getName();
         $candidates = array_filter([
-            // resolveMyTypeMyField()
+
+            // resolveHomePageContent()
             $typeName && $fieldName ?
                 sprintf('resolve%s%s', ucfirst($typeName), ucfirst($fieldName)) :
                 null,
-            // resolveMyType()
+
+            // resolveHomePage()
             $typeName ? sprintf('resolve%s', ucfirst($typeName)) : null,
-            // resolveMyField()
+
+            // resolveDataObjectContent()
+            $field instanceof ModelField ? sprintf(
+                'resolve%s%s',
+                ucfirst($field->getModel()->getIdentifier()),
+                ucfirst($fieldName)
+            ) : null,
+
+            // resolveContent()
             $fieldName ? sprintf('resolve%s', ucfirst($fieldName)) : null,
+
             // resolve()
             'resolve',
         ]);

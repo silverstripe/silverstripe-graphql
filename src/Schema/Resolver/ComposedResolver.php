@@ -8,14 +8,17 @@ use Closure;
 class ComposedResolver
 {
     /**
-     * @param callable $first
-     * @param array $callables
+     * @param callable $resolver
+     * @param array $before
+     * @param array $after
      * @return Closure
      */
-    public static function create(callable $first, array $callables = []): Closure
+    public static function create(callable $resolver, array $before = [], array $after = []): Closure
     {
-        return function (...$params) use ($first, $callables) {
+        return function (...$params) use ($resolver, $before, $after) {
             $obj = array_shift($params);
+            $callables = array_merge($before, [$resolver], $after);
+            $first = array_shift($callables);
             $result = $first($obj, ...$params);
             foreach ($callables as $callable) {
                 $args = array_merge([$result], $params);

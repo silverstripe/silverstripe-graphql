@@ -12,6 +12,9 @@ use SilverStripe\View\ViewableData;
 
 class EncodedResolver extends ViewableData implements Encoder
 {
+    const AFTERWARE = 'afterware';
+    const MIDDLEWARE = 'middleware';
+
     /**
      * @var ResolverReference
      */
@@ -26,6 +29,11 @@ class EncodedResolver extends ViewableData implements Encoder
      * @var EncodedResolver[]
      */
     private $middleware = [];
+
+    /**
+     * @var EncodedResolver[]
+     */
+    private $afterware = [];
 
     /**
      * EncodedResolver constructor.
@@ -139,4 +147,24 @@ class EncodedResolver extends ViewableData implements Encoder
     {
         return ArrayList::create($this->middleware);
     }
+
+    /**
+     * @param EncodedResolver $ref
+     * @return EncodedResolver
+     */
+    public function addAfterware(EncodedResolver $ref): self
+    {
+        $this->afterware[] = $ref;
+
+        return $this;
+    }
+
+    /**
+     * @return ArrayList
+     */
+    public function getResolverAfterwares(): ArrayList
+    {
+        return ArrayList::create($this->afterware);
+    }
+
 }

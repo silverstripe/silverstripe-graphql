@@ -78,6 +78,14 @@ class DataObjectModel implements
     private $fieldAccessor;
 
     /**
+     * @return string
+     */
+    public static function getIdentifier(): string
+    {
+        return 'DataObject';
+    }
+
+    /**
      * DataObjectModel constructor.
      * @param string $class
      * @throws SchemaBuilderException
@@ -222,7 +230,8 @@ class DataObjectModel implements
         }
         Schema::invariant(
             class_exists($creator),
-            'Operation creator %s does not exist'
+            'Operation creator %s does not exist',
+            $creator
         );
         /* @var OperationCreator $obj */
         $obj = Injector::inst()->get($creator);

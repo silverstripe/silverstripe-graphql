@@ -31,7 +31,7 @@ class ResolverReference
         Schema::invariant(
             is_callable($callableArray),
             'Callable string %s provided to %s is not valid',
-            $callable,
+            var_export($callable, true),
             __CLASS__
         );
 

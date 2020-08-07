@@ -8,12 +8,13 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\Query;
+use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\Type;
 
-abstract class AbstractPaginationPlugin implements QueryPlugin, SchemaUpdater
+abstract class AbstractPaginationPlugin implements FieldPlugin, SchemaUpdater
 {
     use Configurable;
 
@@ -49,29 +50,29 @@ abstract class AbstractPaginationPlugin implements QueryPlugin, SchemaUpdater
     }
 
     /**
-     * @param Query $query
+     * @param Query $field
      * @param Schema $schema
      * @param array|null $config
      * @throws SchemaBuilderException
      */
-    public function apply(Query $query, Schema $schema, array $config = []): void
+    public function apply(Field $field, Schema $schema, array $config = []): void
     {
         $defaultLimit = $config['defaultLimit'] ?? $this->config()->get('default_limit');
         $max = $this->config()->get('max_limit');
         $limit = min($defaultLimit, $max);
-        $query->addArg('limit', "Int = $limit")
+        $field->addArg('limit', "Int = $limit")
             ->addArg('offset', "Int = 0")
-            ->addResolverMiddleware(
+            ->addResolverAfterware(
                 $this->getPaginationResolver(),
                 ['maxLimit' => $max]
             );
 
         // Set the new return type
-        $plainType = $query->getNamedType();
-        $query->setType($query->getName() . 'Connection');
+        $plainType = $field->getNamedType();
+        $field->setType($field->getName() . 'Connection');
 
         // Create the edge type for this query
-        $edgeType = Type::create($query->getName() . 'Edge')
+        $edgeType = Type::create($field->getName() . 'Edge')
             ->setDescription('The collections edge')
             ->addField('node', $plainType, function (Field $field) {
                 $field->setResolver([static::class, 'noop'])
@@ -80,7 +81,7 @@ abstract class AbstractPaginationPlugin implements QueryPlugin, SchemaUpdater
         $schema->addType($edgeType);
 
         // Create the connection type for this query
-        $connectionType = Type::create($query->getName() . 'Connection')
+        $connectionType = Type::create($field->getName() . 'Connection')
             ->addField('edges', "[{$edgeType->getName()}]!")
             ->addField('nodes', "[$plainType]!")
             ->addField('pageInfo', 'PageInfo!');

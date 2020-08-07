@@ -21,6 +21,7 @@ use SilverStripe\GraphQL\Schema\Exception\PermissionsException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\ORM\DataList;
 use Closure;
+use SilverStripe\ORM\DataObject;
 
 
 class UpdateCreator implements OperationCreator, InputTypeProvider
@@ -47,14 +48,14 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
      * @param SchemaModelInterface $model
      * @param string $typeName
      * @param array $config
-     * @return ModelOperation
+     * @return ModelOperation|null
      * @throws SchemaBuilderException
      */
     public function createOperation(
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): ModelOperation
+    ): ?ModelOperation
     {
         $defaultPlugins = $this->config()->get('default_plugins');
         $configPlugins = $config['plugins'] ?? [];
@@ -66,7 +67,8 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
             ->setType($typeName)
             ->setPlugins($plugins)
             ->setDefaultResolver([static::class, 'resolve'])
-            ->addArg('Input', "{$inputTypeName}!");
+            ->addResolverContext('dataClass', $model->getSourceClass())
+            ->addArg('input', "{$inputTypeName}!");
     }
 
     /**
@@ -76,21 +78,22 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
     public static function resolve(array $resolverContext = []): Closure
     {
         $dataClass = $resolverContext['dataClass'] ?? null;
-        return static function ($obj, array $args, array $context, ResolveInfo $info) use ($dataClass) {
+        return function ($obj, array $args, array $context, ResolveInfo $info) use ($dataClass) {
             if (!$dataClass) {
                 return null;
             }
-            $input = $args['Input'];
+            $idField = FieldAccessor::singleton()->formatField('ID');
+            $input = $args['input'];
             $obj = DataList::create($dataClass)
-                ->byID($input['id']);
+                ->byID($input[$idField]);
             if (!$obj) {
                 throw new MutationException(sprintf(
                     '%s with ID %s not found',
                     $dataClass,
-                    $input['id']
+                    $input[$idField]
                 ));
             }
-            unset($input['id']);
+            unset($input[$idField]);
             if (!$obj->canEdit($context[QueryHandler::CURRENT_USER])) {
                 throw new PermissionsException(sprintf(
                     'Cannot edit this %s',

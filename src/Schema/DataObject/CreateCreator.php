@@ -46,14 +46,14 @@ class CreateCreator implements OperationCreator, InputTypeProvider
      * @param SchemaModelInterface $model
      * @param string $typeName
      * @param array $config
-     * @return ModelOperation
+     * @return ModelOperation|null
      * @throws SchemaBuilderException
      */
     public function createOperation(
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): ModelOperation
+    ): ?ModelOperation
     {
         $defaultPlugins = $this->config()->get('default_plugins');
         $configPlugins = $config['plugins'] ?? [];
@@ -68,7 +68,7 @@ class CreateCreator implements OperationCreator, InputTypeProvider
             ->setResolverContext([
                 'dataClass' => $model->getSourceClass(),
             ])
-            ->addArg('Input', "{$inputTypeName}!");
+            ->addArg('input', "{$inputTypeName}!");
     }
 
     /**
@@ -78,7 +78,7 @@ class CreateCreator implements OperationCreator, InputTypeProvider
     public static function resolve(array $resolverContext = []): Closure
     {
         $dataClass = $resolverContext['dataClass'] ?? null;
-        return static function ($obj, $args = [], $context = [], ResolveInfo $info) use ($dataClass) {
+        return function ($obj, $args = [], $context = [], ResolveInfo $info) use ($dataClass) {
             if (!$dataClass) {
                 return null;
             }
@@ -91,7 +91,7 @@ class CreateCreator implements OperationCreator, InputTypeProvider
             /** @var DataObject $newObject */
             $newObject = Injector::inst()->create($dataClass);
             $update = [];
-            foreach ($args['Input'] as $fieldName => $value) {
+            foreach ($args['input'] as $fieldName => $value) {
                 $update[$fieldAccessor->normaliseField($newObject, $fieldName)] = $value;
             }
             $newObject->update($update);

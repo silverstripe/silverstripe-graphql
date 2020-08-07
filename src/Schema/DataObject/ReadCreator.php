@@ -29,14 +29,14 @@ class ReadCreator implements OperationCreator
      * @param SchemaModelInterface $model
      * @param string $typeName
      * @param array $config
-     * @return ModelOperation
+     * @return ModelOperation|null
      * @throws SchemaBuilderException
      */
     public function createOperation(
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): ModelOperation
+    ): ?ModelOperation
     {
         $defaultPlugins = $this->config()->get('default_plugins');
         $configPlugins = $config['plugins'] ?? [];
@@ -59,7 +59,7 @@ class ReadCreator implements OperationCreator
     public static function resolve(array $resolverContext = []): Closure
     {
         $dataClass = $resolverContext['dataClass'] ?? null;
-        return static function () use ($dataClass) {
+        return function () use ($dataClass) {
             if (!$dataClass) {
                 return null;
             }

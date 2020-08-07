@@ -10,7 +10,6 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelMutation;
-use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Exception\PermissionsException;
@@ -36,14 +35,14 @@ class DeleteCreator implements OperationCreator
      * @param SchemaModelInterface $model
      * @param string $typeName
      * @param array $config
-     * @return ModelOperation
+     * @return ModelOperation|null
      * @throws SchemaBuilderException
      */
     public function createOperation(
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): ModelOperation
+    ): ?ModelOperation
     {
         $defaultPlugins = $this->config()->get('default_plugins');
         $configPlugins = $config['plugins'] ?? [];
@@ -57,7 +56,7 @@ class DeleteCreator implements OperationCreator
             ->setResolverContext([
                 'dataClass' => $model->getSourceClass(),
             ])
-            ->addArg('IDs', '[ID]!');
+            ->addArg('ids', '[ID]!');
     }
 
     /**
@@ -67,7 +66,7 @@ class DeleteCreator implements OperationCreator
     public static function resolve(array $resolverContext = []): Closure
     {
         $dataClass = $resolverContext['dataClass'] ?? null;
-        return static function ($obj, $args = [], $context = [], ResolveInfo $info) use ($dataClass) {
+        return function ($obj, array $args, array $context, ResolveInfo $info) use ($dataClass) {
             if (!$dataClass) {
                 return null;
             }
@@ -75,7 +74,7 @@ class DeleteCreator implements OperationCreator
             DB::get_conn()->withTransaction(function () use ($args, $context, $info, $dataClass, $ids) {
                 // Build list to filter
                 $results = DataList::create($dataClass)
-                    ->byIDs($args['IDs']);
+                    ->byIDs($args['ids']);
 
                 // Before deleting, check if any items fail canDelete()
                 /** @var DataObject[] $resultsList */
@@ -93,7 +92,7 @@ class DeleteCreator implements OperationCreator
                 // Delete
                 foreach ($resultsList as $obj) {
                     $obj->delete();
-                    $ids[] = $obj->OldID;
+                    $ids[] = $obj;
                 }
             });
 

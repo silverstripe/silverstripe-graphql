@@ -10,6 +10,11 @@ use SilverStripe\GraphQL\Schema\Type\ModelType;
 interface SchemaModelInterface
 {
     /**
+     * @return string
+     */
+    public static function getIdentifier(): string;
+
+    /**
      * @param string $fieldName
      * @return bool
      */

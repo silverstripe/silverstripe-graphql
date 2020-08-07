@@ -227,9 +227,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
 
         $this->mergePlugins($type->getPlugins());
 
-        foreach ($type->getInterfaces() as $interface) {
-            // to do
-        }
+        $this->setInterfaces(array_merge($this->interfaces, $type->getInterfaces()));
 
         return $this;
     }
@@ -267,12 +265,33 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
     }
 
     /**
+     * @return string
+     */
+    public function getEncodedInterfaces(): string
+    {
+        return var_export($this->interfaces, true);
+    }
+
+    /**
      * @param array $interfaces
      * @return Type
      */
     public function setInterfaces(array $interfaces): self
     {
         $this->interfaces = $interfaces;
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return $this
+     */
+    public function addInterface(string $name): self
+    {
+        if (!in_array($name, $this->interfaces)) {
+            $this->interfaces[] = $name;
+        }
+
         return $this;
     }
 

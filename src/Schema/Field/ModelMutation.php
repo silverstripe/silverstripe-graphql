@@ -5,8 +5,13 @@ namespace SilverStripe\GraphQL\Schema\Field;
 
 
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelMutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
+use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
+use SilverStripe\GraphQL\Schema\Schema;
+use Generator;
 
 class ModelMutation extends Query implements ModelOperation
 {
@@ -25,4 +30,22 @@ class ModelMutation extends Query implements ModelOperation
         parent::__construct($mutationName, $config);
     }
 
+    /**
+     * @param string $pluginName
+     * @param $plugin
+     * @throws SchemaBuilderException
+     */
+    public function validatePlugin(string $pluginName, $plugin): void
+    {
+        Schema::invariant(
+            $plugin && (
+                $plugin instanceof ModelMutationPlugin ||
+                $plugin instanceof MutationPlugin ||
+                $plugin instanceof FieldPlugin
+            ),
+            'Plugin %s not found or not an instance of %s',
+            $pluginName,
+            ModelMutationPlugin::class
+        );
+    }
 }

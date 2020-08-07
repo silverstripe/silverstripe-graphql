@@ -46,14 +46,25 @@ class Enum extends ViewableData implements SchemaValidator
 
     /**
      * @return ArrayList
+     * @throws SchemaBuilderException
      */
     public function getValueList(): ArrayList
     {
         $list = ArrayList::create();
         foreach ($this->getValues() as $key => $val) {
+            $value = null;
+            $description = null;
+            if (is_array($val)) {
+                Schema::assertValidConfig($val, ['value', 'description']);
+                $value = $val['value'];
+                $description = $val['description'] ?? null;
+            } else {
+                $value = $val;
+            }
             $list->push(ArrayData::create([
-                'Key' => is_string($key) ? $key : null,
-                'Value' => $val,
+                'Key' => $key,
+                'Value' => $value,
+                'Description' => $description,
             ]));
         }
 

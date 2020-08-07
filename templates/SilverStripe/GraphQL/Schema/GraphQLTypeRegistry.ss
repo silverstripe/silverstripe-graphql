@@ -1,6 +1,8 @@
 namespace SilverStripe\\GraphQL\\Schema\\Generated\\Schema_{$Hash};
 
 use GraphQL\\Type\\Definition\\ObjectType;
+use GraphQL\\Type\\Definition\\InterfaceType;
+use GraphQL\\Type\\Definition\\UnionType;
 use GraphQL\\Type\\Definition\\InputObjectType;
 use GraphQL\\Type\\Definition\\EnumType;
 use GraphQL\\Type\\Definition\\Type;
@@ -14,6 +16,16 @@ class $Name extends <% if $IsInput %>InputObjectType<% else %>ObjectType<% end_i
     {
         parent::__construct([
             'name' => '$Name',
+            <% if $Description %>
+            'description' => '$Description',
+            <% if $Interfaces %>
+            'interfaces' => function () {
+                return array_map(function (\$interface) {
+                    return call_user_func([__NAMESPACE__ . '\\{$Top.TypesClassName}', \$interface]);
+                }, $EncodedInterfaces.RAW);
+            },
+            <% end_if %>
+            <% end_if %>
             'fields' => function () {
                 return [
                     <% loop $FieldList %>
@@ -47,6 +59,75 @@ class $Name extends <% if $IsInput %>InputObjectType<% else %>ObjectType<% end_i
 
 <% end_loop %>
 
+<% loop $Interfaces %>
+class $Name extends InterfaceType
+{
+    public function __construct()
+    {
+        parent::__construct([
+            'name' => '$Name',
+            'resolveType' => function (\$obj) {
+                \$type = call_user_func_array($EncodedTypeResolver, [\$obj]);
+                return call_user_func([__NAMESPACE__ . '\\{$Top.TypesClassName}', \$type]);
+            },
+            <% if $Description %>
+            'description' => '$Description',
+            <% end_if %>
+            'fields' => function () {
+                return [
+                <% loop $FieldList %>
+                    [
+                    'name' => '$Name',
+                    'type' => $EncodedType,
+                    <% if $Description %>
+                        'description' => '$Description',
+                    <% end_if %>
+                    <% if $ArgList %>
+                        'args' => [
+                        <% loop $ArgList %>
+                            [
+                            'name' => '$Name',
+                            'type' => $EncodedType,
+                            <% if $DefaultValue %>
+                                'defaultValue' => $DefaultValue.RAW,
+                            <% end_if %>
+                            ],
+                        <% end_loop %>
+                        ],
+                    <% end_if %>
+                    ],
+                <% end_loop %>
+                ];
+            }
+        ]);
+    }
+}
+<% end_loop %>
+
+<% loop $Unions %>
+class $Name extends UnionType
+{
+    public function __construct()
+    {
+        parent::__construct([
+            'name' => '$Name',
+            'types' => function () {
+                return array_map(function (\$type) {
+                    return call_user_func([__NAMESPACE__ . '\\{$Top.TypesClassName}', \$type]);
+                }, $EncodedTypes.RAW);
+            },
+            'resolveType' => function (\$obj) {
+                \$type = call_user_func_array($EncodedTypeResolver, [\$obj]);
+                return call_user_func([__NAMESPACE__ . '\\{$Top.TypesClassName}', \$type]);
+            },
+            <% if $Description %>
+            'description' => '$Description',
+            <% end_if %>
+        ]);
+    }
+}
+<% end_loop %>
+
 <% loop $Enums %>
 class $Name extends EnumType
 {
@@ -56,7 +137,7 @@ class $Name extends EnumType
             'name' => '$Name',
             'values' => [
                 <% loop $ValueList %>
-                <% if $Key %>'$Key' => <% end_if %>'$Value',
+                '$Key' => ['value' => '$Value',<% if $Description %> 'description' => '$Description'<% end_if %>],
                 <% end_loop %>
             ],
             <% if $Description %>
@@ -115,7 +196,12 @@ class $TypesClassName
     <% loop $Enums %>
     public static function {$Name}() { return static::get({$Name}::class); }
     <% end_loop %>
-
+    <% loop $Interfaces %>
+    public static function {$Name}() { return static::get({$Name}::class); }
+    <% end_loop %>
+    <% loop $Unions %>
+    public static function {$Name}() { return static::get({$Name}::class); }
+    <% end_loop %>
 
 
 }

@@ -7,6 +7,7 @@ use GraphQL\Language\Token;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Interfaces\PluginValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
 use SilverStripe\GraphQL\Schema\Registry\ResolverRegistry;
@@ -68,6 +69,11 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      * @var EncodedResolver[]
      */
     private $resolverMiddlewares = [];
+
+    /**
+     * @var EncodedResolver[]
+     */
+    private $resolverAfterwares = [];
 
     /**
      * Field constructor.
@@ -228,6 +234,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
 
     /**
      * @return bool
+     * @throws SchemaBuilderException
      */
     public function isList(): bool
     {
@@ -236,6 +243,7 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
 
     /**
      * @return bool
+     * @throws SchemaBuilderException
      */
     public function isRequired(): bool
     {
@@ -261,6 +269,11 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
      */
     public function setType($type): self
     {
+        Schema::invariant(
+            !is_array($type),
+            'Type on %s is an array. Did you forget to quote the [TypeName] syntax in your YAML?',
+            $this->getName()
+        );
         Schema::invariant(
             is_string($type) || $type instanceof EncodedType,
             '%s::%s must be a string or an instance of %s',
@@ -340,16 +353,15 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
         if ($this->getResolver()) {
             $encodedResolver = EncodedResolver::create($this->getResolver(), $this->getResolverContext());
         } else {
-            $resolver = $this->getResolverRegistry()->findResolver(
-                $typeName,
-                $this->name,
-                $this->getDefaultResolver()
-            );
+            $resolver = $this->getResolverRegistry()->findResolver($typeName, $this);
             $encodedResolver = EncodedResolver::create($resolver, $this->getResolverContext());
         }
 
         foreach ($this->resolverMiddlewares as $middlewareRef) {
             $encodedResolver->addMiddleware($middlewareRef);
+        }
+        foreach ($this->resolverAfterwares as $afterwareRef) {
+            $encodedResolver->addAfterware($afterwareRef);
         }
         return $encodedResolver;
     }
@@ -470,19 +482,43 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
         return $this;
     }
 
+    /**
+     * @param array|string|ResolverReference|null $resolver
+     * @param array|null $context
+     * @return $this
+     */
+    public function addResolverMiddleware($resolver, ?array $context = null): self
+    {
+        return $this->decorateResolver(EncodedResolver::MIDDLEWARE, $resolver, $context);
+    }
 
     /**
-     * @param array|string|ResolverReference|null $middleware
+     * @param array|string|ResolverReference|null $resolver
+     * @param array|null $context
+     * @return $this
+     */
+    public function addResolverAfterware($resolver, ?array $context = null): self
+    {
+        return $this->decorateResolver(EncodedResolver::AFTERWARE, $resolver, $context);
+    }
+
+    /**
+     * @param string $position
+     * @param array|string|ResolverReference|null $resolver
      * @param array|null $context
      * @return Field
      */
-    public function addResolverMiddleware($middleware, ?array $context = null): self
+    private function decorateResolver(string $position, $resolver, ?array $context = null): self
     {
-        if ($middleware) {
-            $ref = $middleware instanceof ResolverReference
-                ? $middleware
-                : ResolverReference::create($middleware);
-            $this->resolverMiddlewares[] = EncodedResolver::create($ref, $context);
+        if ($resolver) {
+            $ref = $resolver instanceof ResolverReference
+                ? $resolver
+                : ResolverReference::create($resolver);
+            if ($position === EncodedResolver::MIDDLEWARE) {
+                $this->resolverMiddlewares[] = EncodedResolver::create($ref, $context);
+            } else if ($position === EncodedResolver::AFTERWARE) {
+                $this->resolverAfterwares[] = EncodedResolver::create($ref, $context);
+            }
         }
 
         return $this;

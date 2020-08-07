@@ -82,30 +82,25 @@ class Argument extends ViewableData implements ConfigurationApplier
     }
 
     /**
-     * @param string|TypeReference|EncodedType $type
+     * @param string|EncodedType $type
      * @return $this
      * @throws SchemaBuilderException
      */
     public function setType($type): self
     {
         Schema::invariant(
-            is_string($type) || $type instanceof EncodedType || $type instanceof TypeReference,
-            'Type on arg %s must be a string or instance of %s or %s',
+            is_string($type) || $type instanceof EncodedType,
+            'Type on arg %s must be a string or instance of %s',
             $this->getName(),
-            EncodedType::class,
-            TypeReference::class
+            EncodedType::class
         );
-        if (is_string($type) && stristr($type, '=') !== false) {
-            list ($type, $defaultValue) = explode('=', $type);
-            $this->setDefaultValue(trim($defaultValue));
-            $this->type = trim($type);
-        } else {
-            $this->type = $type;
+        if (is_string($type)) {
+            $ref = TypeReference::create($type);
+            $this->setDefaultValue($ref->getDefaultValue());
         }
-
+        $this->type = $type;
         return $this;
     }
-
 
     /**
      * @return string
@@ -135,10 +130,7 @@ class Argument extends ViewableData implements ConfigurationApplier
             return $this->type;
         }
 
-        $ref = $this->type instanceof TypeReference
-            ? $this->type
-            : TypeReference::create($this->type);
-
+        $ref = TypeReference::create($this->type);
 
         try {
             return EncodedType::create($ref->toAST());

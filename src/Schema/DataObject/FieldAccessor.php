@@ -6,6 +6,7 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Convert;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
@@ -30,7 +31,7 @@ class FieldAccessor
      * @var callable
      * @config
      */
-    private static $field_formatter = 'lcfirst';
+    private static $field_formatter = [Convert::class, 'upperCamelToLowerCamel'];
 
     /**
      * @var array
@@ -103,6 +104,15 @@ class FieldAccessor
         }
 
         return $this->parsePath($dataObject, $path);
+    }
+
+    /**
+     * @param string $field
+     * @return string
+     */
+    public static function formatField(string $field): string
+    {
+        return call_user_func_array(static::config()->get('field_formatter'), [$field]);
     }
 
     /**

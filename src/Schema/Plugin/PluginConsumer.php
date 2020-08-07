@@ -4,8 +4,12 @@
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
 
+use MJS\TopSort\CircularDependencyException;
+use MJS\TopSort\ElementNotFoundException;
+use MJS\TopSort\Implementations\ArraySort;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Interfaces\PluginValidator;
 use SilverStripe\GraphQL\Schema\Registry\PluginRegistry;
 use SilverStripe\GraphQL\Schema\Schema;
 use Generator;
@@ -98,18 +102,87 @@ trait PluginConsumer
     /**
      * @return Generator
      * @throws SchemaBuilderException
+     * @throws CircularDependencyException
+     * @throws ElementNotFoundException
      */
     public function loadPlugins(): Generator
     {
-        foreach ($this->getPlugins() as $pluginName => $config) {
+        foreach ($this->getSortedPlugins() as $pluginData) {
+            $pluginName = $pluginData['name'];
+            $config = $pluginData['config'];
             $plugin = $this->getPluginRegistry()->getPluginByID($pluginName);
-            Schema::invariant(
-                $plugin,
-                'Plugin %s not found',
-                $pluginName
-            );
+            if ($this instanceof PluginValidator) {
+                $this->validatePlugin($pluginName, $plugin);
+            } else {
+                Schema::invariant(
+                    $plugin,
+                    'Plugin %s not found',
+                    $pluginName
+                );
+            }
             yield [$plugin, $config];
         }
+    }
+
+    /**
+     * @return array
+     * @throws CircularDependencyException
+     * @throws ElementNotFoundException
+     */
+    protected function getSortedPlugins(): array
+    {
+        $dependencies = [];
+        $beforeAll = [];
+        $afterAll = [];
+        $allPlugins = $this->getPlugins();
+        $allPluginNames = array_keys($allPlugins);
+        foreach ($allPlugins as $pluginName => $pluginConfig) {
+            $before = $pluginConfig['before'] ?? [];
+            if ($before === Schema::ALL) {
+                $beforeAll[] = $before;
+                continue;
+            }
+            $before = !is_array($before) ? [$before] : $before;
+            $before = array_intersect($before, $allPluginNames);
+
+            $after = $pluginConfig['after'] ?? [];
+            if ($after === Schema::ALL) {
+                $afterAll[] = $before;
+                continue;
+            }
+            $after = !is_array($after) ? [$after] : $after;
+            $after = array_intersect($after, $allPluginNames);
+
+            if (!isset($dependencies[$pluginName])) {
+                $dependencies[$pluginName] = [];
+            }
+            $dependencies[$pluginName] = array_merge($dependencies[$pluginName], $after);
+
+            foreach ($before as $dependant) {
+                if (!isset($dependencies[$dependant])) {
+                    $dependencies[$dependant] = [];
+                }
+                $dependencies[$dependant][] = $pluginName;
+            }
+        }
+        $sorter = new ArraySort($dependencies);
+
+        $middle = $sorter->sort();
+
+        $sorted = array_merge(
+            $beforeAll,
+            $middle,
+            $afterAll
+        );
+        $map = [];
+        foreach ($sorted as $pluginName) {
+            $map[] = [
+                'name' => $pluginName,
+                'config' => $allPlugins[$pluginName] ?? [],
+            ];
+        }
+
+        return $map;
     }
 
 }

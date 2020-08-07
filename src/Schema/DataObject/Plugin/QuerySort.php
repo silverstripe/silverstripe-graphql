@@ -9,7 +9,6 @@ use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
-use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Plugin\AbstractQuerySortPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
@@ -19,7 +18,7 @@ use Closure;
 
 class QuerySort extends AbstractQuerySortPlugin
 {
-    const IDENTIFIER = 'dataobjectQuerySort';
+    const IDENTIFIER = 'sort';
 
     /**
      * @return string
@@ -38,15 +37,14 @@ class QuerySort extends AbstractQuerySortPlugin
     }
 
     /**
-     * @param Query $query
+     * @param ModelQuery $query
      * @param Schema $schema
      * @param array $config
      * @throws SchemaBuilderException
      */
-    public function apply(Query $query, Schema $schema, array $config = []): void
+    public function apply(ModelQuery $query, Schema $schema, array $config = []): void
     {
         Schema::invariant(
-            $query instanceof ModelQuery &&
             is_subclass_of(
                 $query->getModel()->getSourceClass(),
                 DataObject::class

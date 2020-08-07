@@ -14,7 +14,10 @@ use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
+use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelMutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelTypePlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
@@ -24,9 +27,11 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\TypePlugin;
 use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\Enum;
+use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\Type;
+use SilverStripe\GraphQL\Schema\Type\UnionType;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
@@ -41,6 +46,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
     const MUTATIONS = 'mutations';
     const MODELS = 'models';
     const INTERFACES = 'interfaces';
+    const UNIONS = 'unions';
     const ENUMS = 'enums';
     const QUERY_TYPE = 'Query';
     const MUTATION_TYPE = 'Mutation';
@@ -57,11 +63,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
     private $types = [];
 
     /**
-     * @var Field[]
-     */
-    private $queries = [];
-
-    /**
      * @var ModelType[]
      */
     private $models = [];
@@ -70,6 +71,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
      * @var InterfaceType[]
      */
     private $interfaces = [];
+
+    /**
+     * @var UnionType[]
+     */
+    private $unions = [];
 
     /**
      * @var Enum[]
@@ -112,13 +118,18 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $queries = $schemaConfig[self::QUERIES] ?? [];
         $mutations = $schemaConfig[self::MUTATIONS] ?? [];
         $interfaces = $schemaConfig[self::INTERFACES] ?? [];
+        $unions = $schemaConfig[self::UNIONS] ?? [];
         $models = $schemaConfig[self::MODELS] ?? [];
         $enums = $schemaConfig[self::ENUMS] ?? [];
 
         static::assertValidConfig($types);
         foreach ($types as $typeName => $typeConfig) {
             static::assertValidName($typeName);
-            $type = Type::create($typeName, $typeConfig);
+            $input = $typeConfig['input'] ?? false;
+            unset($typeConfig['input']);
+            $type = $input
+                ? InputType::create($typeName, $typeConfig)
+                : Type::create($typeName, $typeConfig);
             $this->addType($type);
         }
 
@@ -138,7 +149,14 @@ class Schema implements ConfigurationApplier, SchemaValidator
         foreach ($interfaces as $interfaceName => $interfaceConfig) {
             static::assertValidName($interfaceName);
             $interface = InterfaceType::create($interfaceName, $interfaceConfig);
-            $this->interfaces[$interfaceName] = $interface;
+            $this->addInterface($interface);
+        }
+
+        static::assertValidConfig($unions);
+        foreach ($unions as $unionName => $unionConfig) {
+            static::assertValidName($unionName);
+            $union = UnionType::create($unionName, $unionConfig);
+            $this->addUnion($union);
         }
 
         static::assertValidConfig($models);
@@ -154,15 +172,12 @@ class Schema implements ConfigurationApplier, SchemaValidator
             Schema::invariant($values, 'No values passed to enum %s', $enumName);
             $description = $enumConfig['description'] ?? null;
             $enum = Enum::create($enumName, $enumConfig['values'], $description);
-            $this->enums[$enumName] = $enum;
+            $this->addEnum($enum);
         }
 
-        foreach ($this->modelDependencies as $modelClass) {
-            $this->addModel(ModelType::create($modelClass));
-        }
         Benchmark::start('schema-updates');
         $this->applySchemaUpdates($schemaConfig);
-        Benchmark::end('schema-updates', 'Schema updates took %s ms');
+        Benchmark::end('schema-updates');
 
         foreach ($this->models as $modelType) {
             $this->addType($modelType);
@@ -173,7 +188,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         ]);
         $this->types[self::QUERY_TYPE] = $queryType;
 
-        if (!empty($mutationFields)) {
+        if (!empty($this->mutationFields)) {
             $mutationType = Type::create(self::MUTATION_TYPE, [
                 'fields' => $this->mutationFields,
             ]);
@@ -204,17 +219,37 @@ class Schema implements ConfigurationApplier, SchemaValidator
         Benchmark::end('builders');
 
         // Create a map of all the lists we need to apply plugins to, and their
-        // required plugin interface
-        $allComponents = [
-            'types' => TypePlugin::class,
-            'models' => ModelTypePlugin::class,
-            'queryFields' => QueryPlugin::class,
-            'mutationFields' => MutationPlugin::class,
-        ];
+        // required plugin interface(s)
+        $allTypeFields = [];
+        $allModelFields = [];
+        foreach ($this->types as $type) {
+            $allTypeFields = array_merge($allTypeFields, $type->getFields());
+        }
+        foreach ($this->models as $model) {
+            $allModelFields = array_merge($allModelFields, $model->getFields());
+        }
 
+        // Create a list of everything in the schema that is pluggable, including fields added to types.
+        $allComponents = [
+            [ 'src' => $this->types, 'req' => [TypePlugin::class] ],
+            [ 'src' => $this->models, 'req' => [ModelTypePlugin::class] ],
+            [ 'src' => $this->queryFields, 'req' => [
+                FieldPlugin::class,
+                QueryPlugin::class,
+                ModelQueryPlugin::class
+            ]],
+            [ 'src' => $this->mutationFields, 'req' => [
+                FieldPlugin::class,
+                MutationPlugin::class,
+                ModelMutationPlugin::class
+            ]],
+            [ 'src' => $allTypeFields, 'req' => [FieldPlugin::class] ],
+            // At some point there may be a ModelFieldPlugin, so keep this separate
+            [ 'src' => $allModelFields, 'req' => [FieldPlugin::class] ],
+        ];
         $schemaUpdates = [];
-        foreach($allComponents as $propertyName => $pluginInterface) {
-            foreach ($this->$propertyName as $component) {
+        foreach($allComponents as $spec) {
+            foreach ($spec['src'] as $component) {
                 /* @var Type|Field $component */
                 foreach ($component->loadPlugins() as $data) {
                     list ($plugin) = $data;
@@ -231,20 +266,23 @@ class Schema implements ConfigurationApplier, SchemaValidator
         }
         Benchmark::end('plugin-schema-update');
 
-        foreach ($allComponents as $propertyName => $pluginInterface) {
-            Benchmark::start($propertyName . '-plugins');
-            foreach ($this->$propertyName as $component) {
+        Benchmark::start('plugin-components');
+        foreach ($allComponents as $spec) {
+            foreach ($spec['src'] as $component) {
                 /* @var Type|Field $component */
                 foreach ($component->loadPlugins() as $data) {
+                    /* @var QueryPlugin|MutationPlugin|TypePlugin|ModelTypePlugin $plugin */
                     list ($plugin, $config) = $data;
-                    /* @var QueryPlugin|MutationPlugin|TypePlugin|ModelType $plugin */
-                    if ($plugin instanceof $pluginInterface) {
-                        $plugin->apply($component, $this, $config);
+                    foreach ($spec['req'] as $pluginInterface) {
+                        if ($plugin instanceof $pluginInterface) {
+                            $plugin->apply($component, $this, $config);
+                            break;
+                        }
                     }
                 }
             }
-            Benchmark::end($propertyName . '-plugins');
         }
+        Benchmark::end('plugin-components');
     }
 
     /**
@@ -267,14 +305,13 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public function persistSchema(): void
     {
         $this->validate();
-        $schemaFileName = ASSETS_PATH . '/schema.php';
+        $schemaFileName = ASSETS_PATH . '/schema-' . $this->schemaKey . '.php';
         $data = new ArrayData([
             'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
             'Hash' => $this->getHash(),
             'Types' => ArrayList::create(array_values($this->types)),
-            'Queries' => ArrayList::create(array_values($this->queries)),
-            'Mutations' => ArrayList::create(array_values($this->mutationFields)),
             'Interfaces' => ArrayList::create(array_values($this->interfaces)),
+            'Unions' => ArrayList::create(array_values($this->unions)),
             'Enums' => ArrayList::create(array_values($this->enums)),
             'QueryType' => self::QUERY_TYPE,
             'MutationType' => self::MUTATION_TYPE,
@@ -289,7 +326,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
     public function getSchema(): GraphQLSchema
     {
-        $schemaFileName = ASSETS_PATH . '/schema.php';
+        $schemaFileName = ASSETS_PATH . '/schema-' . $this->schemaKey . '.php';
         require_once($schemaFileName);
         $hash = $this->getHash();
         $namespace = 'SilverStripe\\GraphQL\\Schema\\Generated\\Schema_' . $hash;
@@ -310,17 +347,45 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function validate(): void
     {
+        $allNames = array_merge(
+            array_keys($this->types),
+            array_keys($this->enums),
+            array_keys($this->interfaces),
+            array_keys($this->unions)
+        );
+        $dupes = [];
+        foreach(array_count_values($allNames) as $val => $count) {
+            if($count > 1) {
+                $dupes[] = $val;
+            }
+        }
+
+        static::invariant(
+            empty($dupes),
+            'Your schema has multiple types with the same name. See %s',
+            implode(', ', $dupes)
+        );
+
         $validators = array_merge(
             $this->types,
-            $this->queries,
+            $this->queryFields,
             $this->mutationFields,
             $this->enums,
-            $this->interfaces
+            $this->interfaces,
+            $this->unions
         );
         /* @var SchemaValidator $validator */
         foreach ($validators as $validator) {
             $validator->validate();
         }
+    }
+
+    /**
+     * @return string
+     */
+    public function getSchemaKey(): string
+    {
+        return $this->schemaKey;
     }
 
     /**
@@ -453,6 +518,14 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
+     * @return ModelType[]
+     */
+    public function getModels(): array
+    {
+        return $this->models;
+    }
+
+    /**
      * @param string $class
      * @return ModelType
      * @throws SchemaBuilderException
@@ -470,14 +543,74 @@ class Schema implements ConfigurationApplier, SchemaValidator
         return $this->getModel($name);
     }
 
+    /**
+     * @param InterfaceType $type
+     * @param callable|null $callback
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function addInterface(InterfaceType $type, ?callable $callback = null): self
+    {
+        $existing = $this->interfaces[$type->getName()] ?? null;
+        $typeObj = $existing ? $existing->mergeWith($type) : $type;
+        $this->interfaces[$type->getName()] = $typeObj;
+        if ($callback) {
+            $callback($typeObj);
+        }
+        return $this;
+
+    }
 
     /**
-     * @return ModelType[]
+     * @param string $name
+     * @return InterfaceType|null
      */
-    public function getModels(): array
+    public function getInterface(string $name): ?InterfaceType
     {
-        return $this->models;
+        return $this->interfaces[$name] ?? null;
     }
+
+    /**
+     * @return InterfaceType[]
+     */
+    public function getInterfaces(): array
+    {
+        return $this->interfaces;
+    }
+
+    /**
+     * @param UnionType $union
+     * @param callable|null $callback
+     * @return $this
+     */
+    public function addUnion(UnionType $union, ?callable $callback = null): self
+    {
+        $existing = $this->unions[$union->getName()] ?? null;
+        $typeObj = $existing ? $existing->mergeWith($union) : $union;
+        $this->unions[$union->getName()] = $typeObj;
+        if ($callback) {
+            $callback($typeObj);
+        }
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return UnionType|null
+     */
+    public function getUnion(string $name): ?UnionType
+    {
+        return $this->unions[$name] ?? null;
+    }
+
+    /**
+     * @return array
+     */
+    public function getUnions(): array
+    {
+        return $this->unions;
+    }
+
 
     private function getHash(): string
     {

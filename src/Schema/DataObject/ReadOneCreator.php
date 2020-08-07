@@ -30,14 +30,14 @@ class ReadOneCreator implements OperationCreator
      * @param SchemaModelInterface $model
      * @param string $typeName
      * @param array $config
-     * @return ModelOperation
+     * @return ModelOperation|null
      * @throws SchemaBuilderException
      */
     public function createOperation(
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): ModelOperation
+    ): ?ModelOperation
     {
         $defaultPlugins = $this->config()->get('default_plugins');
         $configPlugins = $config['plugins'] ?? [];
@@ -50,7 +50,7 @@ class ReadOneCreator implements OperationCreator
             ->setResolverContext([
                 'dataClass' => $model->getSourceClass()
             ])
-            ->addArg('ID', 'ID!');
+            ->addArg('id', 'ID!');
     }
 
     /**
@@ -60,7 +60,7 @@ class ReadOneCreator implements OperationCreator
     public static function resolve(array $resolverContext = []): Closure
     {
         $dataClass = $resolverContext['dataClass'] ?? null;
-        return static function ($obj, $args = []) use ($dataClass) {
+        return function ($obj, $args = []) use ($dataClass) {
             if (!$dataClass) {
                 return null;
             }

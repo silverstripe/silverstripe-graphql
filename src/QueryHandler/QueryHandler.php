@@ -71,7 +71,6 @@ class QueryHandler implements
     public function queryAndReturnResult(Schema $schema, string $query, ?array $params = [])
     {
         $context = $this->getContext();
-
         $last = function ($params) {
             $schema = $params['schema'];
             $query = $params['query'];

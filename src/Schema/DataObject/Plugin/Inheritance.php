@@ -15,7 +15,7 @@ use ReflectionException;
 
 class Inheritance implements PluginInterface, SchemaUpdater
 {
-    const IDENTIFIER = 'dataobjectInheritance';
+    const IDENTIFIER = 'inheritance';
 
     /**
      * @var array
