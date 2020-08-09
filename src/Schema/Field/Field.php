@@ -5,9 +5,8 @@ namespace SilverStripe\GraphQL\Schema\Field;
 
 use GraphQL\Language\Token;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
+use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\Interfaces\PluginValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
 use SilverStripe\GraphQL\Schema\Registry\ResolverRegistry;
@@ -19,6 +18,9 @@ use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ViewableData;
 
+/**
+ * An abstraction of a field that appears on a Type abstraction
+ */
 class Field extends ViewableData implements ConfigurationApplier, SchemaValidator
 {
     use PluginConsumer;
@@ -61,16 +63,21 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     private $defaultResolver;
 
     /**
+     * Key/value pairs to pass to the resolver. This is useful for creating a dynamic resolver
+     * from a static callable.
+     *
      * @var array
      */
     private $resolverContext = [];
 
     /**
+     * Functions to invoke before the resolver that mutate the object
      * @var EncodedResolver[]
      */
     private $resolverMiddlewares = [];
 
     /**
+     * Functions to invoke after the resolver that mutate the result
      * @var EncodedResolver[]
      */
     private $resolverAfterwares = [];
@@ -104,6 +111,12 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     }
 
     /**
+     * Negotiates a variety of syntax that can appear in a field name definition.
+     *
+     * fieldName
+     * fieldName(arg1: String!, arg2: Int)
+     * fieldName(arg1: String! = "foo")
+     *
      * @param string $def
      * @throws SchemaBuilderException
      * @return array
@@ -336,6 +349,8 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     }
 
     /**
+     * Gets the name of the type, ignoring any nonNull/listOf wrappers
+     *
      * @return string
      * @throws SchemaBuilderException
      */

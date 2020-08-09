@@ -10,6 +10,9 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ViewableData;
 
+/**
+ * A resolver function that can be expressed in generated PHP code
+ */
 class EncodedResolver extends ViewableData implements Encoder
 {
     const AFTERWARE = 'afterware';

@@ -9,6 +9,10 @@ use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataObject;
 
+/**
+ * Defines a permission checking plugin for queries. Subclasses just need to
+ * provide a resolver function
+ */
 abstract class AbstractCanViewPermission implements ModelQueryPlugin
 {
     /**

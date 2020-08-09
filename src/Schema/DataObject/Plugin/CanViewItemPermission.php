@@ -6,6 +6,9 @@ namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 
+/**
+ * A plugin that checks permission for a DataObject item
+ */
 class CanViewItemPermission extends AbstractCanViewPermission
 {
     const IDENTIFIER = 'canViewItem';

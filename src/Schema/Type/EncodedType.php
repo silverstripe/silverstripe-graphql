@@ -12,6 +12,9 @@ use SilverStripe\GraphQL\Schema\Interfaces\Encoder;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\View\ViewableData;
 
+/**
+ * A type that can be expressed as generated PHP code
+ */
 class EncodedType extends ViewableData implements Encoder
 {
     const TYPE_CLASS_NAME = 'Types';

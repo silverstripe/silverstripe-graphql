@@ -7,7 +7,7 @@ use GraphQL\Type\SchemaConfig;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Dev\Benchmark;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
+use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelMutation;
@@ -21,7 +21,6 @@ use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelTypePlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
-use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\TypePlugin;
@@ -36,6 +35,11 @@ use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
 
+/**
+ * The main Schema definition. A docking station for all type, model, interface, etc., abstractions.
+ * Applies plugins, validates, and persists to code.
+ *
+ */
 class Schema implements ConfigurationApplier, SchemaValidator
 {
     use Injectable;
@@ -302,6 +306,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
         return $this;
     }
 
+    /// Temporary hack until we figure out how and where we want this PHP code to be
+    /// stored
     public function persistSchema(): void
     {
         $this->validate();
@@ -341,6 +347,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
         }
         return new GraphQLSchema($schemaConfig);
     }
+
+    /// End hack
 
     /**
      * @throws SchemaBuilderException
@@ -611,7 +619,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         return $this->unions;
     }
 
-
+    // Probably don't need hashing since re-builds are not implicit
     private function getHash(): string
     {
         return md5('UncleCheese');

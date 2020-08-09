@@ -6,6 +6,9 @@ namespace SilverStripe\GraphQL\Schema\Field;
 
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 
+/**
+ * Used for a variety of classes that rely on SchemaModelInterface
+ */
 trait ModelAware
 {
     /**

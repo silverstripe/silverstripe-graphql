@@ -9,6 +9,9 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\PluginInterface;
 use SilverStripe\GraphQL\Schema\Schema;
 
+/**
+ * A central place for all the plugins to be registered and accessed by ID
+ */
 class PluginRegistry
 {
     use Injectable;

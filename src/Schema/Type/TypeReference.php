@@ -4,11 +4,13 @@
 namespace SilverStripe\GraphQL\Schema\Type;
 
 
-use GraphQL\Error\SyntaxError;
 use GraphQL\Language\AST\Node;
 use GraphQL\Language\Parser;
 use SilverStripe\Core\Injector\Injectable;
 
+/**
+ * Uniform way of referring to a type as a string. Accepts default value syntax
+ */
 class TypeReference
 {
     use Injectable;

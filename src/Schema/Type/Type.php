@@ -4,7 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\Type;
 
 
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
+use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
@@ -14,6 +14,9 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ViewableData;
 
+/**
+ * Abstraction for a generic type
+ */
 class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
 {
     use PluginConsumer;

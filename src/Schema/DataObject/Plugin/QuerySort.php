@@ -16,6 +16,9 @@ use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use Closure;
 
+/**
+ * Adds a sort parameter to a DataObject query
+ */
 class QuerySort extends AbstractQuerySortPlugin
 {
     const IDENTIFIER = 'sort';

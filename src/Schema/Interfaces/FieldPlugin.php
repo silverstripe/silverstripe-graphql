@@ -7,6 +7,9 @@ namespace SilverStripe\GraphQL\Schema\Interfaces;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Schema;
 
+/**
+ * A plugin that applies to a Field abstraction
+ */
 interface FieldPlugin extends PluginInterface
 {
     /**

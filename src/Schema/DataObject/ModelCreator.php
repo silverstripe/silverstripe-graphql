@@ -9,6 +9,9 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelCreatorInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\ORM\DataObject;
 
+/**
+ * Creates a model for a DataObject
+ */
 class ModelCreator implements SchemaModelCreatorInterface
 {
     use Injectable;

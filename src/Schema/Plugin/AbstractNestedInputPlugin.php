@@ -15,6 +15,15 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 
+/**
+ * This is an extremely complex class that is used to generate input types
+ * based on a nested set of fields. It is used in the filter and sort
+ * plugins to allow traversing relations.
+ *
+ * Fundamentally, it creates the input type, including all of its nested
+ * types, and provides a utility that exports dot.separtated.fieldNames
+ * that map to Dot.Separated.ObjectProperties
+ */
 abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
 {
     use Injectable;
@@ -113,6 +122,8 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
     }
 
     /**
+     * Given a list of fields, graph the type name for each field and its children
+     *
      * @param ModelType|null $modelType
      * @param array $fields
      * @return array
@@ -160,6 +171,9 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
     }
 
     /**
+     * Given a graph of field names with type and children, get all the types
+     * required for a monolithic nested input, including the top level input type.
+     *
      * @param string $typeName
      * @param array $filters
      * @param array $allTypes
@@ -195,6 +209,8 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
     }
 
     /**
+     * Provide the class that each field maps to
+     *
      * @param ModelType|null $modelType
      * @param array $fields
      * @return array
@@ -239,6 +255,9 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
 
 
     /**
+     * Given a relational graph where field names are mapped to classes,
+     * create all the possible dot.separated.paths
+     *
      * @param array $mapping
      * @param array $fieldOrigin
      * @param array $propOrigin
@@ -269,6 +288,9 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
     }
 
     /**
+     * To be overloaded by subclass to get access a property on an object given an
+     * input field
+     *
      * @param string $class
      * @param string $fieldName
      * @return string
@@ -279,6 +301,9 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
     }
 
     /**
+     * When the input reaches a leaf node, get the type, e.g. for a filter this could be
+     * "String" -> { eq: String }
+     *
      * @param string $internalType
      * @return string
      */
@@ -288,6 +313,10 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
     }
 
     /**
+     * Public API that can be used by a resolver to flatten the input argument into
+     * dot.separated.paths that can be normalised against the context provided by
+     * buildPathsFromFieldMapping()
+     *
      * @param array $argFilters
      * @param array $origin
      * @return array
@@ -308,6 +337,8 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
     }
 
     /**
+     * Allows certain fields to be excluded
+     *
      * @param ModelField $field
      * @param ModelType $modelType
      * @return bool

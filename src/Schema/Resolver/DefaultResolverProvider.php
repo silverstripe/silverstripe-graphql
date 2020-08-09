@@ -9,6 +9,10 @@ use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\ResolverProvider;
 
+/**
+ * A good starting point for a resolver discovery implementation.
+ * Can be subclassed with resolveMyTypeMyField() methods, etc.
+ */
 abstract class DefaultResolverProvider implements ResolverProvider
 {
     use Configurable;

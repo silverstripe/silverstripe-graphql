@@ -14,6 +14,9 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataList;
 use Closure;
 
+/**
+ * Creates a read operation for a DataObject
+ */
 class ReadCreator implements OperationCreator
 {
     use Injectable;

@@ -8,6 +8,9 @@ use SilverStripe\Core\ClassInfo;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\ORM\Filterable;
 
+/**
+ * A permission checking plugin for DataLists
+ */
 class CanViewListPermission extends AbstractCanViewPermission
 {
     const IDENTIFIER = 'canViewList';

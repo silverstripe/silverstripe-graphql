@@ -7,6 +7,9 @@ use SilverStripe\ORM\Limitable;
 use SilverStripe\GraphQL\Schema\Plugin\AbstractPaginationPlugin;
 use Closure;
 
+/**
+ * Adds pagination to a DataList query
+ */
 class Paginator extends AbstractPaginationPlugin
 {
     const IDENTIFIER = 'paginate';

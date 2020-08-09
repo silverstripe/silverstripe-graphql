@@ -11,10 +11,12 @@ use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
-use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataObject;
 use Closure;
 
+/**
+ * Creates a readOne (by id) query for a DataObject
+ */
 class ReadOneCreator implements OperationCreator
 {
     use Injectable;

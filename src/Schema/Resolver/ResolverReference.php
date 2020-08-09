@@ -8,6 +8,9 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
 
+/**
+ * A uniform way of referring to a resolver callable. Normalises the string/array variants
+ */
 class ResolverReference
 {
     use Injectable;

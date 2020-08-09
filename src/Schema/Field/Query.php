@@ -9,8 +9,10 @@ use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\PluginValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
-use Generator;
 
+/**
+ * Defines a generic query
+ */
 class Query extends Field implements PluginValidator
 {
     /**

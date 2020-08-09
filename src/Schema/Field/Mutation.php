@@ -4,13 +4,14 @@
 namespace SilverStripe\GraphQL\Schema\Field;
 
 
-use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\PluginValidator;
 use SilverStripe\GraphQL\Schema\Schema;
-use Generator;
 
+/**
+ * Defines a generic mutation
+ */
 class Mutation extends Field implements PluginValidator
 {
     public function validatePlugin(string $pluginName, $plugin): void

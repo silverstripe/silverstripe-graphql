@@ -6,6 +6,9 @@ namespace SilverStripe\GraphQL\Schema\Interfaces;
 
 use SilverStripe\GraphQL\Schema\Field\Field;
 
+/**
+ * Implementors of this class can discover resolver functions baseed on typename/fieldname
+ */
 interface ResolverProvider
 {
     /**

@@ -3,6 +3,10 @@
 
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
+/**
+ * Implementors of this class can create a model for a given classname,
+ * e.g. Blog -> DataObjectModel
+ */
 interface SchemaModelCreatorInterface
 {
     /**

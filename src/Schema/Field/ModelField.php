@@ -3,13 +3,15 @@
 
 namespace SilverStripe\GraphQL\Schema\Field;
 
-use ReflectionException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 
+/**
+ * A field that appears on model type
+ */
 class ModelField extends Field
 {
     use ModelAware;
@@ -122,6 +124,14 @@ class ModelField extends Field
     }
 
     /**
+     * For nested field definitions
+     * Blog:
+     *   fields:
+     *     Comments:
+     *       fields:
+     *         Author:
+     *           fields:
+     *             Name: String
      * @return ModelType|null
      * @throws SchemaBuilderException
      */

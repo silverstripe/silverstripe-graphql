@@ -8,26 +8,23 @@ use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Schema\DataObject\Plugin\Inheritance;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultPluginProvider;
-use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
-use SilverStripe\GraphQL\Schema\Interfaces\ModelDependencyProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationProvider;
-use SilverStripe\GraphQL\Schema\Interfaces\RequiredFieldsProvider;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
-use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\ORM\SS_List;
-use ReflectionException;
 
+/**
+ * Defines the model that generates types, queries, and mutations based on DataObjects
+ */
 class DataObjectModel implements
     SchemaModelInterface,
     OperationProvider,
@@ -155,8 +152,9 @@ class DataObjectModel implements
      */
     public function getDefaultFields(): array
     {
+        $idField = $this->getFieldAccessor()->formatField('ID');
         return [
-            'id' => 'ID',
+            $idField => 'ID',
         ];
     }
 
@@ -256,6 +254,10 @@ class DataObjectModel implements
     }
 
     /**
+     * Gets a field that resolves to another model, (e.g. an ObjectType from a has_one).
+     * This method can be used to determine *if* a field is another model, and also to
+     * get that field.
+     *
      * @param string $fieldName
      * @return ModelType|null
      */

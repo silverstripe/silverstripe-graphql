@@ -20,6 +20,9 @@ use Closure;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
 
+/**
+ * Creates a delete operation for a DataObject
+ */
 class DeleteCreator implements OperationCreator
 {
     use Injectable;

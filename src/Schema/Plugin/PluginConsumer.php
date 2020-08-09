@@ -14,6 +14,9 @@ use SilverStripe\GraphQL\Schema\Registry\PluginRegistry;
 use SilverStripe\GraphQL\Schema\Schema;
 use Generator;
 
+/**
+ * Allows adding, loading, and sorting of plugins
+ */
 trait PluginConsumer
 {
     /**
@@ -100,6 +103,8 @@ trait PluginConsumer
     }
 
     /**
+     * Translates all the ID and config settings to first class instances
+     *
      * @return Generator
      * @throws SchemaBuilderException
      * @throws CircularDependencyException
@@ -125,6 +130,8 @@ trait PluginConsumer
     }
 
     /**
+     * Sorts the before/after of plugins using topological sort
+     *
      * @return array
      * @throws CircularDependencyException
      * @throws ElementNotFoundException

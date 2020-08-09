@@ -6,7 +6,7 @@ namespace SilverStripe\GraphQL\Schema\Type;
 
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
+use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
@@ -14,6 +14,9 @@ use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\View\ViewableData;
 
+/**
+ * Abstraction of a union type
+ */
 class UnionType extends ViewableData implements SchemaValidator, ConfigurationApplier
 {
     use Injectable;

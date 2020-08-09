@@ -15,6 +15,10 @@ use SilverStripe\ORM\DataObject;
 use ReflectionException;
 use InvalidArgumentException;
 
+/**
+ * Utility class that abstracts away class ancestry computations and creates
+ * an inheritance "type" for a DataObject
+ */
 class InheritanceChain
 {
     use Injectable;
@@ -183,6 +187,7 @@ class InheritanceChain
     }
 
     /**
+     * Noop, because __extends is just structure
      * @param $obj
      * @return DataObject|null
      */

@@ -9,6 +9,9 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
 use Closure;
 
+/**
+ * Generic resolver for DataObjects
+ */
 class Resolver
 {
     /**
@@ -25,6 +28,9 @@ class Resolver
     }
 
     /**
+     * Property mapping allows custom property names for a DataObject field rather
+     * than relying on basic field formatting
+     *
      * @param array $resolverContext
      * @return Closure
      */

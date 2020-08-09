@@ -4,12 +4,14 @@
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
 
-use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 
+/**
+ * Generic plugin that can be used to add sort paramaters to a query
+ */
 abstract class AbstractQuerySortPlugin extends AbstractNestedInputPlugin implements SchemaUpdater
 {
     /**

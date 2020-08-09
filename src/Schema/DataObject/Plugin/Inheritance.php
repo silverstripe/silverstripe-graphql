@@ -13,6 +13,9 @@ use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\DataObject;
 use ReflectionException;
 
+/**
+ * Adds inheritance fields to a DataObject type, and exposes its ancestry
+ */
 class Inheritance implements PluginInterface, SchemaUpdater
 {
     const IDENTIFIER = 'inheritance';
@@ -37,7 +40,6 @@ class Inheritance implements PluginInterface, SchemaUpdater
      */
     public static function updateSchema(Schema $schema): void
     {
-        Benchmark::start('inheritance');
         foreach ($schema->getModels() as $modelType) {
             $class = $modelType->getModel()->getSourceClass();
             if (!is_subclass_of($class, DataObject::class)) {
@@ -50,7 +52,6 @@ class Inheritance implements PluginInterface, SchemaUpdater
             self::addInheritance($schema, $baseClass);
             self::touchNode($baseClass);
         }
-        Benchmark::end('inheritance');
     }
 
     /**

@@ -7,6 +7,9 @@ namespace SilverStripe\GraphQL\Schema\Interfaces;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 
+/**
+ * Implementors of this interface can be models that generate types and operations
+ */
 interface SchemaModelInterface
 {
     /**

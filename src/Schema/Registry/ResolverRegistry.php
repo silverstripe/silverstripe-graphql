@@ -12,6 +12,9 @@ use SilverStripe\GraphQL\Schema\Interfaces\ResolverProvider;
 use SilverStripe\GraphQL\Schema\Resolver\DefaultResolver;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 
+/**
+ * A central place for all classes that discover resolvers to live
+ */
 class ResolverRegistry
 {
     use Injectable;
@@ -52,7 +55,9 @@ class ResolverRegistry
                 return ResolverReference::create([get_class($provider), $resolver]);
             }
         }
+
         $default = $field->getDefaultResolver();
+
         return $default ?: ResolverReference::create(
             $this->config()->get('default_resolver')
         );

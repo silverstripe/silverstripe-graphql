@@ -3,22 +3,19 @@
 
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
-use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\QueryFilter\FieldFilterRegistry;
 use SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface;
 use SilverStripe\GraphQL\QueryFilter\ListFieldFilterInterface;
-use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\Field\ModelField;
-use SilverStripe\GraphQL\Schema\Field\ModelQuery;
-use SilverStripe\GraphQL\Schema\Field\Query;
-use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 
+/**
+ * Generic plugin that can be used for filter inputs
+ */
 abstract class AbstractQueryFilterPlugin extends AbstractNestedInputPlugin implements SchemaUpdater
 {
 

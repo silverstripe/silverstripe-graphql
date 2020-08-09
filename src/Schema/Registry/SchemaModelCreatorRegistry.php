@@ -7,6 +7,9 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelCreatorInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 
+/**
+ * A central place for all the classes that create models given a class name
+ */
 class SchemaModelCreatorRegistry
 {
     use Injectable;

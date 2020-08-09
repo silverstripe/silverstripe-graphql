@@ -8,6 +8,9 @@ use GraphQL\Type\Definition\ResolveInfo;
 use ArrayAccess;
 use Closure;
 
+/**
+ * Default field resolver for any type
+ */
 class DefaultResolver
 {
     /**

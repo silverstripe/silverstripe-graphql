@@ -11,8 +11,10 @@ use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Schema\Schema;
-use Generator;
 
+/**
+ * Defines a mutation created by a model
+ */
 class ModelMutation extends Query implements ModelOperation
 {
     use ModelAware;

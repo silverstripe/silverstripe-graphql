@@ -11,6 +11,9 @@ use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
 use SilverStripe\View\ViewableData;
 
+/**
+ * Abstraction for enum types
+ */
 class Enum extends ViewableData implements SchemaValidator
 {
     /**

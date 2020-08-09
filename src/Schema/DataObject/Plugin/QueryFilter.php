@@ -14,6 +14,9 @@ use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use Closure;
 
+/**
+ * Adds a filter parameter to a DataObject query
+ */
 class QueryFilter extends AbstractQueryFilterPlugin
 {
     const IDENTIFIER = 'filter';

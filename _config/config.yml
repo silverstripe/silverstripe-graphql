@@ -14,17 +14,6 @@ SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
     constructor:
       httpClient: '%$SilverStripe\GraphQL\PersistedQuery\GuzzleHTTPClient'
-  SilverStripe\GraphQL\Permission\QueryPermissionChecker.default:
-    class: SilverStripe\GraphQL\Permission\CanViewPermissionChecker
-  SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder:
-    properties:
-      permissionChecker: '%$SilverStripe\GraphQL\Permission\QueryPermissionChecker.default'
-  SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder:
-    properties:
-      permissionChecker: '%$SilverStripe\GraphQL\Permission\QueryPermissionChecker.default'
-  SilverStripe\GraphQL\Pagination\Connection:
-    properties:
-      permissionChecker: '%$SilverStripe\GraphQL\Permission\QueryPermissionChecker.default'
 
   # Set up a default endpoint that can be activated with a Director rule
   SilverStripe\GraphQL\Schema\Schema.default:
@@ -37,15 +26,6 @@ SilverStripe\Core\Injector\Injector:
       schema: '%$SilverStripe\GraphQL\Schema\Schema.default'
       queryHandler: '%$SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface'
 
-
-# Register the CRUD
-SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder:
-  operations:
-    create: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create
-    read: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read
-    readOne: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ReadOne
-    update: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update
-    delete: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete
 
 SilverStripe\GraphQL\Controller:
   extensions:

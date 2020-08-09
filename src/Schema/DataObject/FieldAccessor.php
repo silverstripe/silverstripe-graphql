@@ -16,6 +16,13 @@ use SilverStripe\ORM\SS_List;
 use LogicException;
 use SilverStripe\ORM\UnsavedRelationList;
 
+/**
+ * A utility class that handles an assortment of issues related to field access on DataObjects,
+ * particularly with case insensitivity.
+ *
+ * Note: This class does a lot of the things that CaseInSensitiveFieldAccessor used to do
+ * with a bit more flexibility and features
+ */
 class FieldAccessor
 {
     use Injectable;
@@ -28,6 +35,7 @@ class FieldAccessor
     private static $allowed_aggregates = ['min', 'max', 'avg', 'count'];
 
     /**
+     * A function that makes an object property a field name
      * @var callable
      * @config
      */
@@ -44,6 +52,7 @@ class FieldAccessor
     private static $__mappingCache = [];
 
     /**
+     * Get the field as it is defined on the DataObject for case-sensitive access
      * @param DataObject $dataObject
      * @param string $field
      * @return string|null
@@ -170,6 +179,14 @@ class FieldAccessor
     }
 
     /**
+     * Resolves complex dot syntax references.
+     *
+     * Image.URL (String)
+     * FeaturedProduct.Categories.Title ([String] ->column('Title'))
+     * FeaturedProduct.Categories.Count() (Int)
+     * FeaturedProduct.Categories.Products.Max(Price)
+     * Category.Products.Reviews ([Review])
+     *
      * @param DataObject|DataList|DBField $subject
      * @param array $path
      * @return string|int|bool|array|DataList

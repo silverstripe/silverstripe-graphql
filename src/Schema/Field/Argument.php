@@ -5,14 +5,16 @@ namespace SilverStripe\GraphQL\Schema\Field;
 
 
 use GraphQL\Error\SyntaxError;
-use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
+use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
-use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\View\ViewableData;
 
+/**
+ * An abstraction of a field argument
+ */
 class Argument extends ViewableData implements ConfigurationApplier
 {
     /**

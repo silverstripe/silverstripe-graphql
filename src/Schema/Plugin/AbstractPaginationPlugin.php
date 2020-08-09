@@ -9,11 +9,13 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
-use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\Type;
 
+/**
+ * Generic pagination functionality for a query that can be customised in subclasses
+ */
 abstract class AbstractPaginationPlugin implements FieldPlugin, SchemaUpdater
 {
     use Configurable;
@@ -90,6 +92,8 @@ abstract class AbstractPaginationPlugin implements FieldPlugin, SchemaUpdater
     }
 
     /**
+     * "node" is just structural and should use a noop
+     *
      * @param $obj
      * @return mixed
      */

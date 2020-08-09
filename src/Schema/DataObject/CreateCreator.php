@@ -14,14 +14,15 @@ use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
-use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Exception\PermissionsException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use Closure;
 use SilverStripe\ORM\DataObject;
 
-
+/**
+ * Creates a "create" mutation for a DataObject
+ */
 class CreateCreator implements OperationCreator, InputTypeProvider
 {
     use Configurable;
@@ -104,6 +105,12 @@ class CreateCreator implements OperationCreator, InputTypeProvider
         };
     }
 
+    /**
+     * @param SchemaModelInterface $model
+     * @param string $typeName
+     * @param array $config
+     * @return array
+     */
     public function provideInputTypes(SchemaModelInterface $model, string $typeName, array $config = []): array
     {
         $dataObject = Injector::inst()->get($model->getSourceClass());

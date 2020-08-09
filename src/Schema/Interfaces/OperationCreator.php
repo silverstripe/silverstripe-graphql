@@ -3,8 +3,9 @@
 
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
-use SilverStripe\GraphQL\Schema\Field\Field;
-
+/**
+ * Implementors of this interface can create queries an mutations dynamically
+ */
 interface OperationCreator
 {
     /**

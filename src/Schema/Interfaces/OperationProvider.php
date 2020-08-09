@@ -6,6 +6,9 @@ namespace SilverStripe\GraphQL\Schema\Interfaces;
 
 use SilverStripe\GraphQL\Schema\Field\Field;
 
+/**
+ * Implementors of this interface provide a lookup for operations by identifiers
+ */
 interface OperationProvider
 {
     /**

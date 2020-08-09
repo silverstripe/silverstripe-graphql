@@ -5,9 +5,15 @@ namespace SilverStripe\GraphQL\Schema\Resolver;
 
 use Closure;
 
+/**
+ * Given a stack of resolver middleware and afterware, compress it into one composed function,
+ * passing along the return value.
+ */
 class ComposedResolver
 {
     /**
+     * @todo This could probably just accept one [array $callables] parameter.
+     *
      * @param callable $resolver
      * @param array $before
      * @param array $after
