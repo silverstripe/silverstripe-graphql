@@ -392,10 +392,9 @@ class DataObjectQueryFilter implements ConfigurationApplier
             $filterIdentifier = array_pop($parts);
             // If the field segment contained __, that implies relationship (dot notation)
             $field = implode('.', $parts);
-            if (!isset($result[$field])) {
-                $result[$field] = [];
-            }
-            $filter = $this->getFieldFilterByIdentifier($field, $filterIdentifier);
+            // The Field key is written with self::SEPARATOR
+            $fieldName = implode(self::SEPARATOR, $parts);
+            $filter = $this->getFieldFilterByIdentifier($fieldName, $filterIdentifier);
             if (!$filter instanceof FieldFilterInterface) {
                 $filter = $this->getFilterRegistry()->getFilterByIdentifier($filterIdentifier);
             }
