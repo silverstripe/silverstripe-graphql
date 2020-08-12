@@ -554,10 +554,10 @@ You can then add filters to fields of the dataobject.
 
 ```php
 $this->queryFilter
-    ->addFilteredField('Title', 'contains')
-    ->addFilteredField('CommentCount', 'gt')
-    ->addFilteredField('Categories__Title', 'in')
-    ->addFilteredField('Hidden', 'eq');
+    ->addFieldFilterByIdentifier('Title', 'contains')
+    ->addFieldFilterByIdentifier('CommentCount', 'gt')
+    ->addFieldFilterByIdentifier('Categories__Title', 'in')
+    ->addFieldFilterByIdentifier('Hidden', 'eq');
 ``` 
 
 Don't worry about the filter keys (`contains`, `gt`, `eq`, etc) for now. That will be explained [further down](#the-filter-registry).
@@ -1007,9 +1007,9 @@ read:
 $scaffolder->type(MyDataObject::class)
   ->operation(SchemaScaffolder::READ)
     ->queryFilter()
-      ->addDefaultFields('MyField')
-      ->addFieldFilter('MyInt', 'gt')
-      ->addFieldFilter('MyInt', 'gte')
+      ->addDefaultFilters('MyField')
+      ->addFieldFilterByIdentifier('MyInt', 'gt')
+      ->addFieldFilterByIdentifier('MyInt', 'gte')
     ->end()
   ->end();
 ```
