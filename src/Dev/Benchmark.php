@@ -44,6 +44,9 @@ class Benchmark
 
         echo $result;
         echo Director::is_cli() ? PHP_EOL : "<br>";
+
+        unset(self::$benchmarks[$id]);
+
         return null;
     }
 }
