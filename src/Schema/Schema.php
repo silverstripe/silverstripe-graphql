@@ -325,21 +325,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
     public function getSchema(): GraphQLSchema
     {
-        $this->getStore()->loadRegistry($this);
-        $registry = $this->getStore()->getRegistryClassName($this->getSchemaKey());
-        $hasMutations = method_exists($registry, self::MUTATION_TYPE);
-        $schemaConfig = new SchemaConfig();
-        $callback = call_user_func([$registry, self::QUERY_TYPE]);
-        $schemaConfig->setQuery($callback);
-        $schemaConfig->setTypeLoader([
-            'SilverStripe\\GraphQL\\Schema\\Generated\\Schema\\' . EncodedType::TYPE_CLASS_NAME,
-            'get'
-        ]);
-        if ($hasMutations) {
-            $callback = call_user_func([$registry, self::MUTATION_TYPE]);
-            $schemaConfig->setMutation($callback);
-        }
-        return new GraphQLSchema($schemaConfig);
+        $this->getStore()->getSchema($this->getSchemaKey());
     }
 
     /**

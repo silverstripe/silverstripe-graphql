@@ -8,6 +8,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
+use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
 use SilverStripe\GraphQL\Schema\Registry\ResolverRegistry;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
@@ -21,7 +22,10 @@ use SilverStripe\View\ViewableData;
 /**
  * An abstraction of a field that appears on a Type abstraction
  */
-class Field extends ViewableData implements ConfigurationApplier, SchemaValidator
+class Field extends ViewableData implements
+    ConfigurationApplier,
+    SchemaValidator,
+    SignatureProvider
 {
     use PluginConsumer;
 
@@ -515,6 +519,30 @@ class Field extends ViewableData implements ConfigurationApplier, SchemaValidato
     public function addResolverAfterware($resolver, ?array $context = null): self
     {
         return $this->decorateResolver(EncodedResolver::AFTERWARE, $resolver, $context);
+    }
+
+    /**
+     * @return string
+     * @throws SchemaBuilderException
+     */
+    public function getSignature(): string
+    {
+        $args = $this->getArgs();
+        usort($args, function (Argument $a, Argument $z) {
+           return $a->getName() <=> $z->getName();
+        });
+
+        $components = [
+            $this->getName(),
+            $this->getEncodedType()->encode(),
+            $this->getEncodedResolver()->getExpression(),
+            $this->getDescription(),
+            array_map(function (Argument $arg) {
+                return $arg->getSignature();
+            }, $args),
+        ];
+
+        return json_encode($components);
     }
 
     /**

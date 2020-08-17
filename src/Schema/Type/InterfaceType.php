@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Schema\Type;
 
 
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -92,4 +93,25 @@ class InterfaceType extends Type
         return $this->renderWith('SilverStripe\\GraphQL\\Schema\\Interface');
     }
 
+    /**
+     * @return string
+     */
+    public function getSignature(): string
+    {
+        $fields = $this->getFields();
+        usort($fields, function (Field $a, Field $z) {
+            return $a->getName() <=> $z->getName();
+        });
+
+        $components = [
+            $this->getName(),
+            $this->typeResolver->toString(),
+            $this->getDescription(),
+            array_map(function (Field $field) {
+                return $field->getSignature();
+            }, $fields),
+        ];
+
+        return json_encode($components);
+    }
 }

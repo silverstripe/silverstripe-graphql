@@ -3,6 +3,9 @@
 namespace SilverStripe\GraphQL\Schema\Storage;
 
 use Exception;
+use GraphQL\Type\Schema as GraphQLSchema;
+use GraphQL\Type\SchemaConfig;
+use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Dev\Benchmark;
@@ -16,6 +19,9 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
+use Psr\SimpleCache\InvalidArgumentException;
 
 /**
  * Class FileSchemaStore
@@ -32,13 +38,27 @@ class FileSchemaStore implements SchemaStorageInterface
     private static $schemaFilename = '__graphql-schema.php';
 
     /**
+     * @var array
+     */
+    private static $dependencies = [
+        'Cache' => '%$' . CacheInterface::class . '.FileSchemaStore',
+    ];
+
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
+
+    /**
      * @param Schema $schema
      * @throws Exception
+     * @throws InvalidArgumentException
      */
     public function persistSchema(Schema $schema): void
     {
         Benchmark::start('render');
         $fs = new Filesystem();
+        $finder = new Finder();
         $dir = $this->getDirectory($schema->getSchemaKey());
         if (!$fs->exists($dir)) {
             $fs->mkdir($dir);
@@ -56,35 +76,100 @@ class FileSchemaStore implements SchemaStorageInterface
         $fs->dumpFile($schemaFile, $this->toCode($code));
 
         $fields = ['Types', 'Interfaces', 'Unions', 'Enums'];
+        $touched = [];
+        $built = [];
+        $total = 0;
         foreach ($fields as $field) {
             /* @var Type|InterfaceType|UnionType|Enum $type */
             foreach ($data->$field as $type) {
-                $file = Path::join($dir, $type->getName() . '.php');
+                $total++;
+                $name = $type->getName();
+                $sig = $type->getSignature();
+                if ($this->getCache()->has($name)) {
+                    $cached = $this->getCache()->get($name);
+                    if ($sig === $cached) {
+                        $touched[] = $name;
+                        continue;
+                    }
+                }
+                $file = Path::join($dir, $name . '.php');
                 $code = (string) $type->forTemplate();
                 $fs->dumpFile($file, $this->toCode($code));
+                $this->getCache()->set($name, $sig);
+                $touched[] = $name;
+                $built[] = $name;
             }
         }
+        $deleted = [];
+        // Reconcile the directory for deletions
+        $currentFiles = $finder
+            ->files()
+            ->in($dir)
+            ->name('*.php')
+            ->notName($this->config()->get('schemaFilename'));
+
+        /* @var SplFileInfo $file */
+        foreach ($currentFiles as $file) {
+            $type = $file->getBasename('.php');
+            if (!in_array($type, $touched)) {
+                $fs->remove($file->getPathname());
+                $this->getCache()->delete($type);
+                $deleted[] = $type;
+            }
+        }
+        echo "Total types: $total\n";
+        echo 'Types built: ' . count($built) . "\n";
+        echo '*' . implode("\n*", $built);
+        echo "\n\n";
+        echo 'Types deleted: ' . count($deleted) . "\n";
+        echo '*'. implode("\n*", $deleted);
+        echo "\n\n";
+
         Benchmark::end('render', 'Code generation took %s ms');
     }
 
     /**
-     * @param Schema $schema
+     * @param string $key
+     * @return GraphQLSchema
      */
-    public function loadRegistry(Schema $schema): void
+    public function getSchema(string $key): GraphQLSchema
     {
-        require_once($this->getSchemaFilename($schema->getSchemaKey()));
+        require_once($this->getSchemaFilename($key));
+
+        $namespace = 'SilverStripe\\GraphQL\\Schema\\Generated\\Schema';
+        $registryClass = $namespace . '\\' . EncodedType::TYPE_CLASS_NAME;
+
+        $hasMutations = method_exists($registryClass, Schema::MUTATION_TYPE);
+        $schemaConfig = new SchemaConfig();
+        $callback = call_user_func([$registryClass, Schema::QUERY_TYPE]);
+        $schemaConfig->setQuery($callback);
+        $schemaConfig->setTypeLoader([
+            'SilverStripe\\GraphQL\\Schema\\Generated\\Schema\\' . EncodedType::TYPE_CLASS_NAME,
+            'get'
+        ]);
+        if ($hasMutations) {
+            $callback = call_user_func([$registryClass, Schema::MUTATION_TYPE]);
+            $schemaConfig->setMutation($callback);
+        }
+        return new GraphQLSchema($schemaConfig);
     }
 
     /**
-     * @param string $key
-     * @return string
+     * @return CacheInterface
      */
-    public function getRegistryClassName(string $key): string
+    public function getCache(): CacheInterface
     {
+        return $this->cache;
+    }
 
-        $namespace = 'SilverStripe\\GraphQL\\Schema\\Generated\\Schema';
-
-        return $namespace . '\\' . EncodedType::TYPE_CLASS_NAME;
+    /**
+     * @param CacheInterface $cache
+     * @return FileSchemaStore
+     */
+    public function setCache(CacheInterface $cache): FileSchemaStore
+    {
+        $this->cache = $cache;
+        return $this;
     }
 
     /**

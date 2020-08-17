@@ -16,6 +16,11 @@ SilverStripe\Core\Injector\Injector:
       httpClient: '%$SilverStripe\GraphQL\PersistedQuery\GuzzleHTTPClient'
   SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface:
     class: 'SilverStripe\GraphQL\Schema\Storage\FileSchemaStore'
+  Psr\SimpleCache\CacheInterface.FileSchemaStore:
+    factory: SilverStripe\Core\Cache\CacheFactory
+    constructor:
+      namespace: "GraphQLSchema"
+
 
   # Set up a default endpoint that can be activated with a Director rule
   SilverStripe\GraphQL\Schema\Schema.default:

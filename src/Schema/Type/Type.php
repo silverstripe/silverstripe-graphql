@@ -8,6 +8,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
+use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -18,7 +19,7 @@ use SilverStripe\View\ViewableData;
 /**
  * Abstraction for a generic type
  */
-class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
+class Type extends ViewableData implements ConfigurationApplier, SchemaValidator, SignatureProvider
 {
     use PluginConsumer;
 
@@ -349,5 +350,32 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
         return $this->customise([
             'TypeClassName' => EncodedType::TYPE_CLASS_NAME,
         ])->renderWith('SilverStripe\\GraphQL\\Schema\\Type');
+    }
+
+    /**
+     * A deterministic representation of everything that gets encoded into the template.
+     * Used as a cache key. This method will need to be updated if new data is added
+     * to the generated code.
+     * @return string
+     */
+    public function getSignature(): string
+    {
+        $interfaces = $this->getInterfaces();
+        sort($interfaces);
+        $fields = $this->getFields();
+        usort($fields, function (Field $a, Field $z) {
+            return $a->getName() <=> $z->getName();
+        });
+        $components = [
+            $this->getName(),
+            (int) $this->getIsInput(),
+            $this->getDescription(),
+            $interfaces,
+            array_map(function (Field $field) {
+                return $field->getSignature();
+            }, $fields),
+        ];
+
+        return json_encode($components);
     }
 }

@@ -175,4 +175,19 @@ class Enum extends ViewableData implements SchemaValidator
     {
         return $this->renderWith('SilverStripe\\GraphQL\\Schema\\Enum');
     }
+
+    /**
+     * @return string
+     */
+    public function getSignature(): string
+    {
+        $components = [
+            $this->getName(),
+            $this->values,
+            $this->getDescription(),
+        ];
+
+        return json_encode($components);
+    }
+
 }

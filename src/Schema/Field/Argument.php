@@ -7,6 +7,7 @@ namespace SilverStripe\GraphQL\Schema\Field;
 use GraphQL\Error\SyntaxError;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
@@ -15,7 +16,7 @@ use SilverStripe\View\ViewableData;
 /**
  * An abstraction of a field argument
  */
-class Argument extends ViewableData implements ConfigurationApplier
+class Argument extends ViewableData implements ConfigurationApplier, SignatureProvider
 {
     /**
      * @var string
@@ -178,6 +179,22 @@ class Argument extends ViewableData implements ConfigurationApplier
     {
         $this->description = $description;
         return $this;
+    }
+
+    /**
+     * @return string
+     * @throws SchemaBuilderException
+     */
+    public function getSignature(): string
+    {
+        $components = [
+            $this->getName(),
+            $this->getEncodedType()->encode(),
+            $this->getDescription(),
+            $this->getDefaultValue(),
+        ];
+
+        return json_encode($components);
     }
 
 }

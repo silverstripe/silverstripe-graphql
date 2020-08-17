@@ -9,6 +9,7 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
+use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -18,8 +19,10 @@ use SilverStripe\View\ViewableData;
 /**
  * Abstraction of a union type
  */
-class UnionType extends ViewableData implements SchemaValidator, ConfigurationApplier
-{
+class UnionType extends ViewableData implements
+    SchemaValidator,
+    ConfigurationApplier,
+    SignatureProvider {
     use Injectable;
     use Configurable;
 
@@ -198,4 +201,20 @@ class UnionType extends ViewableData implements SchemaValidator, ConfigurationAp
         return $this->renderWith('SilverStripe\\GraphQL\\Schema\\Union');
     }
 
+    /**
+     * @return string
+     */
+    public function getSignature(): string
+    {
+        $types = $this->getTypes();
+        sort($types);
+        $components = [
+            $this->getName(),
+            $types,
+            $this->typeResolver->toString(),
+            $this->getDescription(),
+        ];
+
+        return json_encode($components);
+    }
 }
