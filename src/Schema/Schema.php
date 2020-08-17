@@ -6,6 +6,7 @@ use GraphQL\Type\Schema as GraphQLSchema;
 use GraphQL\Type\SchemaConfig;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -31,10 +32,8 @@ use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\UnionType;
-use SilverStripe\GraphQL\SchemaPersister;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\ORM\ArrayLib;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\View\ArrayData;
 
 /**
  * The main Schema definition. A docking station for all type, model, interface, etc., abstractions.
@@ -103,16 +102,9 @@ class Schema implements ConfigurationApplier, SchemaValidator
     private $modelDependencies = [];
 
     /**
-     * @var SchemaPersister
+     * @var SchemaStorageInterface
      */
-    private $persister;
-
-    /**
-     * @var array
-     */
-    private static $dependencies = [
-        'persister' => '%$' . SchemaPersister::class,
-    ];
+    private $schemaStore;
 
     /**
      * Schema constructor.
@@ -121,6 +113,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public function __construct(string $schemaKey)
     {
         $this->schemaKey = $schemaKey;
+        $this->schemaStore = Injector::inst()->get(SchemaStorageInterface::class);
     }
 
     /**
@@ -247,6 +240,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
         }
 
         // Create a list of everything in the schema that is pluggable, including fields added to types.
+        // "src": the list of things to test
+        // "req": the required interface(s)
         $allComponents = [
             [ 'src' => $this->types, 'req' => [TypePlugin::class] ],
             [ 'src' => $this->models, 'req' => [ModelTypePlugin::class] ],
@@ -319,38 +314,33 @@ class Schema implements ConfigurationApplier, SchemaValidator
         return $this;
     }
 
-    /// Temporary hack until we figure out how and where we want this PHP code to be
-    /// stored
+    /**
+     * @throws SchemaBuilderException
+     */
     public function persistSchema(): void
     {
         $this->validate();
-        $data = new ArrayData([
-            'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
-            'Types' => ArrayList::create(array_values($this->types)),
-            'Interfaces' => ArrayList::create(array_values($this->interfaces)),
-            'Unions' => ArrayList::create(array_values($this->unions)),
-            'Enums' => ArrayList::create(array_values($this->enums)),
-            'QueryType' => self::QUERY_TYPE,
-            'MutationType' => self::MUTATION_TYPE,
-        ]);
-        $this->getAdaptor()->persistSchema($data);
+        $this->getStore()->persistSchema($this);
     }
 
     public function getSchema(): GraphQLSchema
     {
-        $registry = $this->getAdaptor()->getRegistry();
+        $this->getStore()->loadRegistry($this);
+        $registry = $this->getStore()->getRegistryClassName($this->getSchemaKey());
         $hasMutations = method_exists($registry, self::MUTATION_TYPE);
         $schemaConfig = new SchemaConfig();
         $callback = call_user_func([$registry, self::QUERY_TYPE]);
-        $schemaConfig->setQuery($callback());
+        $schemaConfig->setQuery($callback);
+        $schemaConfig->setTypeLoader([
+            'SilverStripe\\GraphQL\\Schema\\Generated\\Schema\\' . EncodedType::TYPE_CLASS_NAME,
+            'get'
+        ]);
         if ($hasMutations) {
             $callback = call_user_func([$registry, self::MUTATION_TYPE]);
-            $schemaConfig->setMutation($callback());
+            $schemaConfig->setMutation($callback);
         }
         return new GraphQLSchema($schemaConfig);
     }
-
-    /// End hack
 
     /**
      * @throws SchemaBuilderException
@@ -365,7 +355,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         );
         $dupes = [];
         foreach(array_count_values($allNames) as $val => $count) {
-            if($count > 1) {
+            if ($count > 1) {
                 $dupes[] = $val;
             }
         }
@@ -707,20 +697,20 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @return SchemaPersister
+     * @return SchemaStorageInterface
      */
-    public function getPersister(): SchemaPersister
+    public function getStore(): SchemaStorageInterface
     {
-        return $this->persister;
+        return $this->schemaStore;
     }
 
     /**
-     * @param SchemaPersister $persister
-     * @return Schema
+     * @param SchemaStorageInterface $store
+     * @return $this
      */
-    public function setPersister(SchemaPersister $persister): Schema
+    public function setStore(SchemaStorageInterface $store): self
     {
-        $this->persister = $persister;
+        $this->schemaStore = $store;
 
         return $this;
     }

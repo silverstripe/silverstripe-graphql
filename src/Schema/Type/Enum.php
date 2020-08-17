@@ -8,6 +8,7 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\ArrayList;
+use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\View\ArrayData;
 use SilverStripe\View\ViewableData;
 
@@ -167,5 +168,11 @@ class Enum extends ViewableData implements SchemaValidator
         return $this;
     }
 
-
+    /**
+     * @return DBHTMLText
+     */
+    public function forTemplate(): DBHTMLText
+    {
+        return $this->renderWith('SilverStripe\\GraphQL\\Schema\\Enum');
+    }
 }

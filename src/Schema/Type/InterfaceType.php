@@ -8,6 +8,7 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\ORM\FieldType\DBHTMLText;
 
 /**
  * Defines a GraphQL interface. It may seem counter-intuitive that an abstraction would inherit
@@ -82,4 +83,13 @@ class InterfaceType extends Type
             $this->getName()
         );
     }
+
+    /**
+     * @return DBHTMLText
+     */
+    public function forTemplate(): DBHTMLText
+    {
+        return $this->renderWith('SilverStripe\\GraphQL\\Schema\\Interface');
+    }
+
 }

@@ -12,6 +12,7 @@ use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\ArrayList;
+use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\View\ViewableData;
 
 /**
@@ -338,5 +339,15 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
             $this->fieldResolver = null;
         }
         return $this;
+    }
+
+    /**
+     * @return DBHTMLText
+     */
+    public function forTemplate(): DBHTMLText
+    {
+        return $this->customise([
+            'TypeClassName' => EncodedType::TYPE_CLASS_NAME,
+        ])->renderWith('SilverStripe\\GraphQL\\Schema\\Type');
     }
 }

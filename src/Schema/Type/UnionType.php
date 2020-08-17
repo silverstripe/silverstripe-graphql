@@ -12,6 +12,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\View\ViewableData;
 
 /**
@@ -187,6 +188,14 @@ class UnionType extends ViewableData implements SchemaValidator, ConfigurationAp
             'Union %s has no types',
             $this->getName()
         );
+    }
+
+    /**
+     * @return DBHTMLText
+     */
+    public function forTemplate(): DBHTMLText
+    {
+        return $this->renderWith('SilverStripe\\GraphQL\\Schema\\Union');
     }
 
 }
