@@ -124,6 +124,11 @@ class Controller extends BaseController implements Flushable
             if (!$query) {
                 $this->httpError(400, 'This endpoint requires a "query" parameter');
             }
+            // test code -- delete
+            if ($query === 'die') {
+                die('die');
+            }
+            /////////////////////
             // Temporary, maybe useful by feature flag later..
             Benchmark::start('schema-perf');
             $schema = $this->getBuilder()->getSchema();
