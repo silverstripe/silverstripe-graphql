@@ -4,6 +4,9 @@ namespace SilverStripe\GraphQL\Dev;
 
 use SilverStripe\Control\Director;
 
+/**
+ * @internal
+ */
 class Benchmark
 {
     /**
@@ -26,7 +29,7 @@ class Benchmark
      * @return string|null
      * @throws \Exception
      */
-    public static function end(string $id, string $message = null, bool $return = false): ?string
+    public static function end(string $id, string $message = null, bool $return = true): ?string
     {
         $benchmark = self::$benchmarks[$id] ?? null;
         if (!$benchmark) {

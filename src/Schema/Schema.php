@@ -3,7 +3,7 @@
 namespace SilverStripe\GraphQL\Schema;
 
 use GraphQL\Type\Schema as GraphQLSchema;
-use GraphQL\Type\SchemaConfig;
+use Psr\Log\LoggerInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
@@ -25,7 +25,6 @@ use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\TypePlugin;
-use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
@@ -55,6 +54,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
     const QUERY_TYPE = 'Query';
     const MUTATION_TYPE = 'Mutation';
     const ALL = '*';
+
+    private static $dependencies = [
+      'Reporter' => '%$' . LoggerInterface::class . '.graphqlSchema',
+    ];
 
     /**
      * @var string
@@ -105,6 +108,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
      * @var SchemaStorageInterface
      */
     private $schemaStore;
+
+    /**
+     * @var LoggerInterface
+     */
+    private $reporter;
 
     /**
      * Schema constructor.
@@ -187,7 +195,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
         Benchmark::start('schema-updates');
         $this->applySchemaUpdates($schemaConfig);
-        Benchmark::end('schema-updates');
+        $this->getReporter()->info(Benchmark::end('schema-updates'));
 
         foreach ($this->models as $modelType) {
             $this->addType($modelType);
@@ -205,7 +213,9 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $this->types[self::MUTATION_TYPE] = $mutationType;
         }
 
-        Benchmark::end('schema-config', 'Schema config took %s ms');
+        $this->getReporter()->info(
+            Benchmark::end('schema-config', 'Schema config took %s ms')
+        );
         return $this;
     }
 
@@ -226,7 +236,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
             );
             $builderClass::updateSchema($this);
         }
-        Benchmark::end('builders');
+        $this->getReporter()->info(Benchmark::end('builders'));
 
         // Create a map of all the lists we need to apply plugins to, and their
         // required plugin interface(s)
@@ -276,7 +286,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         foreach ($schemaUpdates as $class) {
             $class::updateSchema($this);
         }
-        Benchmark::end('plugin-schema-update');
+        $this->getReporter()->info(Benchmark::end('plugin-schema-update'));
 
         Benchmark::start('plugin-components');
         foreach ($allComponents as $spec) {
@@ -294,7 +304,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 }
             }
         }
-        Benchmark::end('plugin-components');
+        $this->getReporter()->info(Benchmark::end('plugin-components'));
     }
 
     /**
@@ -698,6 +708,24 @@ class Schema implements ConfigurationApplier, SchemaValidator
     {
         $this->schemaStore = $store;
 
+        return $this;
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    public function getReporter(): LoggerInterface
+    {
+        return $this->reporter;
+    }
+
+    /**
+     * @param LoggerInterface $reporter
+     * @return Schema
+     */
+    public function setReporter(LoggerInterface $reporter): Schema
+    {
+        $this->reporter = $reporter;
         return $this;
     }
 

@@ -20,7 +20,9 @@ class BuildSchemaTask extends BuildTask
             $schema = Schema::create($key);
             $schema->loadFromConfig();
             $schema->persistSchema();
-            Benchmark::end('build-schema-' . $key, 'Built schema in %s ms.');
+            $schema->getReporter()->info(
+                Benchmark::end('build-schema-' . $key, 'Built schema in %s ms.')
+            );
 
         }
     }

@@ -3,23 +3,46 @@ Name: graphqlconfig
 ---
 # Define the type parsers
 SilverStripe\Core\Injector\Injector:
+
   SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface:
     class: SilverStripe\GraphQL\QueryHandler\QueryHandler
+
   SilverStripe\GraphQL\Middleware\QueryMiddleware.csrf:
     class: SilverStripe\GraphQL\Middleware\CSRFMiddleware
+
   SilverStripe\GraphQL\Middleware\QueryMiddleware.httpMethod:
     class: SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware
+
   SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
     class: SilverStripe\GraphQL\PersistedQuery\JSONStringProvider
+
   SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
     constructor:
       httpClient: '%$SilverStripe\GraphQL\PersistedQuery\GuzzleHTTPClient'
+
   SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface:
     class: 'SilverStripe\GraphQL\Schema\Storage\FileSchemaStore'
+
   Psr\SimpleCache\CacheInterface.FileSchemaStore:
     factory: SilverStripe\Core\Cache\CacheFactory
     constructor:
       namespace: "GraphQLSchema"
+
+  Monolog\Handler\HandlerInterface.graphqlSchema:
+    class: SilverStripe\Logging\HTTPOutputHandler
+    constructor:
+      0: "debug"
+    properties:
+      DefaultFormatter: '%$SilverStripe\GraphQL\Logging\Reporter'
+      StatusCode: 200
+
+  Psr\Log\LoggerInterface.graphqlSchema:
+    type: singleton
+    class: Monolog\Logger
+    constructor:
+      - "graphql-schema"
+    calls:
+      pushDisplayErrorHandler: [ pushHandler, [ '%$Monolog\Handler\HandlerInterface.graphqlSchema' ] ]
 
 
   # Set up a default endpoint that can be activated with a Director rule

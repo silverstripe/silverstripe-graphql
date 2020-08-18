@@ -117,15 +117,29 @@ class FileSchemaStore implements SchemaStorageInterface
                 $deleted[] = $type;
             }
         }
-        echo "Total types: $total\n";
-        echo 'Types built: ' . count($built) . "\n";
-        echo '*' . implode("\n*", $built);
-        echo "\n\n";
-        echo 'Types deleted: ' . count($deleted) . "\n";
-        echo '*'. implode("\n*", $deleted);
-        echo "\n\n";
+        $reporter = $schema->getReporter();
+        $reporter->info("Total types: $total");
+        $reporter->info(sprintf('Types built: %s', count($built)));
+        $snapshot = array_slice($built, 0, 10);
+        foreach ($snapshot as $type) {
+            $reporter->info('*' . $type);
+        }
+        $diff = count($built) - count($snapshot);
+        if ($diff > 0) {
+            $reporter->info(sprintf('(... and %s more)', $diff));
+        }
 
-        Benchmark::end('render', 'Code generation took %s ms');
+        $reporter->info(sprintf('Types deleted: %s', count($deleted)));
+        $snapshot = array_slice($deleted, 0, 10);
+        foreach ($snapshot as $type) {
+            $reporter->info('*' . $type);
+        }
+        $diff = count($deleted) - count($snapshot);
+        if ($diff > 0) {
+            $reporter->info(sprintf('(... and %s more)', $diff));
+        }
+
+        $reporter->info(Benchmark::end('render', 'Code generation took %s ms'));
     }
 
     /**
