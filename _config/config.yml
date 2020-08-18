@@ -20,8 +20,8 @@ SilverStripe\Core\Injector\Injector:
     constructor:
       httpClient: '%$SilverStripe\GraphQL\PersistedQuery\GuzzleHTTPClient'
 
-  SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface:
-    class: 'SilverStripe\GraphQL\Schema\Storage\FileSchemaStore'
+  SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator:
+    class: 'SilverStripe\GraphQL\Schema\Storage\CodeGenerationStoreCreator'
 
   Psr\SimpleCache\CacheInterface.FileSchemaStore:
     factory: SilverStripe\Core\Cache\CacheFactory

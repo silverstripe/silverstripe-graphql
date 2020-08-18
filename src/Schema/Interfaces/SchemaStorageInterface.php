@@ -4,20 +4,23 @@
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
 
-use SilverStripe\GraphQL\Schema\Schema;
 use GraphQL\Type\Schema as GraphQLSchema;
 
 interface SchemaStorageInterface
 {
 
     /**
-     * @param Schema $schema
+     * @return void
      */
-    public function persistSchema(Schema $schema): void;
+    public function persistSchema(): void;
 
     /**
-     * @param string $key
      * @return GraphQLSchema
      */
-    public function getSchema(string $key): GraphQLSchema;
+    public function getSchema(): GraphQLSchema;
+
+    /**
+     * @return void
+     */
+    public function clear(): void;
 }

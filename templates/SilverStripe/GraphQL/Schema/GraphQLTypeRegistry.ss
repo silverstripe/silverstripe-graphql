@@ -10,9 +10,7 @@ class $TypesClassName
 
     public static function get(string \$typename)
     {
-        return function() use (\$typename) {
-            return static::fromCache(\$typename);
-        };
+        return static::fromCache(\$typename);
     }
 
     private static function fromCache(string \$typename)
@@ -23,8 +21,9 @@ class $TypesClassName
             \$file = __DIR__ . '/' . \$typename . '.php';
             if (file_exists(\$file)) {
                 require_once(\$file);
-                if (class_exists(\$typename)) {
-                    \$type = new \$typename();
+                \$cls = __NAMESPACE__ . '\\\\' . \$typename;
+                if (class_exists(\$cls)) {
+                    \$type = new \$cls();
                 }
             }
             self::\$types[\$typename] = \$type;

@@ -22,6 +22,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelTypePlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\TypePlugin;
@@ -33,6 +34,7 @@ use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\UnionType;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\ORM\ArrayLib;
+use Exception;
 
 /**
  * The main Schema definition. A docking station for all type, model, interface, etc., abstractions.
@@ -121,7 +123,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public function __construct(string $schemaKey)
     {
         $this->schemaKey = $schemaKey;
-        $this->schemaStore = Injector::inst()->get(SchemaStorageInterface::class);
+        $store = Injector::inst()->get(SchemaStorageCreator::class)
+            ->createStore($this);
+
+        $this->setStore($store);
     }
 
     /**
@@ -222,6 +227,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
     /**
      * @param array $schemaConfig
      * @throws SchemaBuilderException
+     * @throws Exception
      */
     private function applySchemaUpdates(array $schemaConfig): void
     {
@@ -330,12 +336,12 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public function persistSchema(): void
     {
         $this->validate();
-        $this->getStore()->persistSchema($this);
+        $this->getStore()->persistSchema();
     }
 
     public function getSchema(): GraphQLSchema
     {
-        $this->getStore()->getSchema($this->getSchemaKey());
+        return $this->getStore()->getSchema();
     }
 
     /**

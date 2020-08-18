@@ -7,6 +7,7 @@ use GraphQL\Type\Schema as GraphQLSchema;
 use GraphQL\Type\SchemaConfig;
 use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -26,9 +27,9 @@ use Psr\SimpleCache\InvalidArgumentException;
 /**
  * Class FileSchemaStore
  */
-class FileSchemaStore implements SchemaStorageInterface
+class CodeGenerationStore implements SchemaStorageInterface
 {
-
+    use Injectable;
     use Configurable;
 
     /**
@@ -38,11 +39,9 @@ class FileSchemaStore implements SchemaStorageInterface
     private static $schemaFilename = '__graphql-schema.php';
 
     /**
-     * @var array
+     * @var Schema
      */
-    private static $dependencies = [
-        'Cache' => '%$' . CacheInterface::class . '.FileSchemaStore',
-    ];
+    private $schema;
 
     /**
      * @var CacheInterface
@@ -51,19 +50,28 @@ class FileSchemaStore implements SchemaStorageInterface
 
     /**
      * @param Schema $schema
+     * @param CacheInterface $cache
+     */
+    public function __construct(Schema $schema, CacheInterface $cache)
+    {
+        $this->schema = $schema;
+        $this->setCache($cache);
+    }
+
+    /**
      * @throws Exception
      * @throws InvalidArgumentException
      */
-    public function persistSchema(Schema $schema): void
+    public function persistSchema(): void
     {
         Benchmark::start('render');
         $fs = new Filesystem();
         $finder = new Finder();
-        $dir = $this->getDirectory($schema->getSchemaKey());
+        $dir = $this->getDirectory();
         if (!$fs->exists($dir)) {
             $fs->mkdir($dir);
         }
-
+        $schema = $this->schema;
         $data = ArrayData::create([
             'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
             'Types' => ArrayList::create(array_values($schema->getTypes())),
@@ -72,7 +80,7 @@ class FileSchemaStore implements SchemaStorageInterface
             'Enums' => ArrayList::create(array_values($schema->getEnums())),
         ]);
         $code = (string) $data->renderWith('SilverStripe\\GraphQL\\Schema\\GraphQLTypeRegistry');
-        $schemaFile = $this->getSchemaFilename($schema->getSchemaKey());
+        $schemaFile = $this->getSchemaFilename();
         $fs->dumpFile($schemaFile, $this->toCode($code));
 
         $fields = ['Types', 'Interfaces', 'Unions', 'Enums'];
@@ -143,12 +151,11 @@ class FileSchemaStore implements SchemaStorageInterface
     }
 
     /**
-     * @param string $key
      * @return GraphQLSchema
      */
-    public function getSchema(string $key): GraphQLSchema
+    public function getSchema(): GraphQLSchema
     {
-        require_once($this->getSchemaFilename($key));
+        require_once($this->getSchemaFilename());
 
         $namespace = 'SilverStripe\\GraphQL\\Schema\\Generated\\Schema';
         $registryClass = $namespace . '\\' . EncodedType::TYPE_CLASS_NAME;
@@ -168,6 +175,13 @@ class FileSchemaStore implements SchemaStorageInterface
         return new GraphQLSchema($schemaConfig);
     }
 
+    public function clear(): void
+    {
+        $fs = new Filesystem();
+        $fs->remove($this->getDirectory());
+        $this->getCache()->clear();
+    }
+
     /**
      * @return CacheInterface
      */
@@ -178,30 +192,31 @@ class FileSchemaStore implements SchemaStorageInterface
 
     /**
      * @param CacheInterface $cache
-     * @return FileSchemaStore
+     * @return CodeGenerationStore
      */
-    public function setCache(CacheInterface $cache): FileSchemaStore
+    public function setCache(CacheInterface $cache): CodeGenerationStore
     {
         $this->cache = $cache;
         return $this;
     }
 
     /**
-     * @param string $key
      * @return string
      */
-    private function getDirectory(string $key): string
+    private function getDirectory(): string
     {
-        return Path::join(ASSETS_PATH, 'graphql-schemas', $key);
+        return Path::join(ASSETS_PATH, 'graphql-schemas', $this->schema->getSchemaKey());
     }
 
     /**
-     * @param string $key
      * @return string
      */
-    private function getSchemaFilename(string $key): string
+    private function getSchemaFilename(): string
     {
-        return Path::join($this->getDirectory($key), $this->config()->get('schemaFilename'));
+        return Path::join(
+            $this->getDirectory(),
+            $this->config()->get('schemaFilename')
+        );
     }
 
     /**
