@@ -3,10 +3,15 @@
 namespace SilverStripe\GraphQL\Middleware;
 
 use Exception;
-use GraphQL\Type\Schema;
 
 class HTTPMethodMiddleware implements Middleware
 {
+    /**
+     * @param array $params
+     * @param callable $next
+     * @return mixed
+     * @throws Exception
+     */
     public function process(array $params, callable $next)
     {
         $context = $params['context'] ?? [];

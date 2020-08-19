@@ -8,16 +8,20 @@ use GraphQL\Error\Error;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\GraphQL;
 use GraphQL\Language\SourceLocation;
-use GraphQL\Type\Schema;
+use GraphQL\Type\Schema as GraphQLSchema;
+use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Middleware\Middleware;
 use SilverStripe\GraphQL\Middleware\MiddlewareConsumer;
 use SilverStripe\GraphQL\Permission\MemberAware;
 use SilverStripe\GraphQL\Permission\MemberContextProvider;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryProvider;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
+use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\ValidationException;
 use InvalidArgumentException;
 
@@ -30,9 +34,16 @@ class QueryHandler implements
     use MiddlewareConsumer;
     use Extensible;
     use Injectable;
+    use Configurable;
     use MemberAware;
 
     const CURRENT_USER = 'currentUser';
+
+    /**
+     * @var array
+     * @config
+     */
+    private static $default_middlewares = [];
 
     /**
      * @var array
@@ -44,14 +55,34 @@ class QueryHandler implements
      */
     private $errorFormatter = [self::class, 'formatError'];
 
+    /**
+     * Load the default middlewares
+     * @throws SchemaBuilderException
+     */
+    public function __construct()
+    {
+        $defaultMiddlewares = $this->config()->get('default_middlewares');
+        foreach ($defaultMiddlewares as $class) {
+            if ($class === false) {
+                continue;
+            }
+            Schema::invariant(
+                is_subclass_of($class, Middleware::class),
+                '%s is not an instance of %s',
+                $class,
+                Middleware::class
+            );
+            $this->addMiddleware(Injector::inst()->get($class));
+        }
+    }
 
     /**
-     * @param Schema $schema
+     * @param GraphQLSchema $schema
      * @param string $query
      * @param array|null $params
      * @return array
      */
-    public function query(Schema $schema, string $query, ?array $params = []): array
+    public function query(GraphQLSchema $schema, string $query, ?array $params = []): array
     {
         $executionResult = $this->queryAndReturnResult($schema, $query, $params);
 
@@ -63,12 +94,12 @@ class QueryHandler implements
     }
 
     /**
-     * @param Schema $schema
+     * @param GraphQLSchema $schema
      * @param string $query
      * @param array|null $params
      * @return array|ExecutionResult
      */
-    public function queryAndReturnResult(Schema $schema, string $query, ?array $params = [])
+    public function queryAndReturnResult(GraphQLSchema $schema, string $query, ?array $params = [])
     {
         $context = $this->getContext();
         $last = function ($params) {
@@ -174,14 +205,14 @@ class QueryHandler implements
     /**
      * Call middleware to evaluate a graphql query
      *
-     * @param Schema $schema
+     * @param GraphQLSchema $schema
      * @param string $query Query to invoke
      * @param array $context
      * @param array $variables Variables passed to this query
      * @param callable $last The callback to call after all middlewares
      * @return ExecutionResult|array
      */
-    protected function callMiddleware(Schema $schema, $query, $context, $variables, callable $last)
+    protected function callMiddleware(GraphQLSchema $schema, $query, $context, $variables, callable $last)
     {
         $this->extend('onBeforeCallMiddleware', $schema, $query, $context, $variables);
 

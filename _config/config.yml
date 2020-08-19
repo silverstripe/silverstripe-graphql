@@ -44,19 +44,6 @@ SilverStripe\Core\Injector\Injector:
     calls:
       pushDisplayErrorHandler: [ pushHandler, [ '%$Monolog\Handler\HandlerInterface.graphqlSchema' ] ]
 
-
-  # Set up a default endpoint that can be activated with a Director rule
-  SilverStripe\GraphQL\Schema\Schema.default:
-    class: SilverStripe\GraphQL\Schema\Schema
-    constructor:
-      schemaKey: default
-  SilverStripe\GraphQL\Controller.default:
-    class: SilverStripe\GraphQL\Controller
-    constructor:
-      schema: '%$SilverStripe\GraphQL\Schema\Schema.default'
-      queryHandler: '%$SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface'
-
-
 SilverStripe\GraphQL\Controller:
   extensions:
     - SilverStripe\GraphQL\Extensions\IntrospectionProvider

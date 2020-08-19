@@ -1,0 +1,7 @@
+---
+Name: 'graphql-middlewares'
+---
+SilverStripe\GraphQL\QueryHandler\QueryHandler:
+  default_middlewares:
+    csrf: 'SilverStripe\GraphQL\Middleware\CSRFMiddleware'
+    httpMethod: 'SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware'

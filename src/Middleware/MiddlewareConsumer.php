@@ -23,9 +23,13 @@ trait MiddlewareConsumer
      * @param Middleware[] $middlewares
      * @return $this
      */
-    public function setMiddlewares($middlewares)
+    public function setMiddlewares(array $middlewares)
     {
-        $this->middlewares = $middlewares;
+        foreach ($middlewares as $middleware) {
+            if ($middleware instanceof Middleware) {
+                $this->addMiddleware($middleware);
+            }
+        }
         return $this;
     }
 

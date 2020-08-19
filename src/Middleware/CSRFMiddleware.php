@@ -3,11 +3,10 @@
 namespace SilverStripe\GraphQL\Middleware;
 
 use Exception;
+use GraphQL\Error\SyntaxError;
 use GraphQL\Language\AST\NodeKind;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Source;
-use GraphQL\Type\Schema;
-use SilverStripe\GraphQL\Manager;
 use SilverStripe\Security\SecurityToken;
 
 class CSRFMiddleware implements Middleware
@@ -33,16 +32,17 @@ class CSRFMiddleware implements Middleware
     /**
      * @param string $query
      * @return bool
+     * @throws SyntaxError
      */
     protected function isMutation($query)
     {
         // Simple string matching as a first check to prevent unnecessary static analysis
-        if (stristr($query, Manager::MUTATION_ROOT) === false) {
+        if (stristr($query, 'mutation') === false) {
             return false;
         }
 
         // If "mutation" is the first expression in the query, then it's a mutation.
-        if (preg_match('/^\s*'.preg_quote(Manager::MUTATION_ROOT, '/').'/', $query)) {
+        if (preg_match('/^\s*'.preg_quote('mutation', '/').'/', $query)) {
             return true;
         }
 
@@ -57,7 +57,7 @@ class CSRFMiddleware implements Middleware
             if (!in_array($statement->kind, $options, true)) {
                 continue;
             }
-            if ($statement->operation === Manager::MUTATION_ROOT) {
+            if ($statement->operation === 'mutation') {
                 return true;
             }
         }
