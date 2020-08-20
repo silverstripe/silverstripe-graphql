@@ -348,7 +348,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
     public function forTemplate(): DBHTMLText
     {
         return $this->customise([
-            'TypeClassName' => EncodedType::TYPE_CLASS_NAME,
+            'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
         ])->renderWith('SilverStripe\\GraphQL\\Schema\\Type');
     }
 

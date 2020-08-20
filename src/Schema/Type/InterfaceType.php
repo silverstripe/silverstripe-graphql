@@ -90,7 +90,9 @@ class InterfaceType extends Type
      */
     public function forTemplate(): DBHTMLText
     {
-        return $this->renderWith('SilverStripe\\GraphQL\\Schema\\Interface');
+        return $this->customise([
+            'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
+        ])->renderWith('SilverStripe\\GraphQL\\Schema\\Interface');
     }
 
     /**

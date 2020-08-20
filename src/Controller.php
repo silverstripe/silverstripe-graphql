@@ -455,6 +455,10 @@ class Controller extends BaseController implements Flushable
      */
     public function introspectTypes()
     {
+        $handler = $this->getQueryHandler();
+        if ($handler instanceof ContextProvider) {
+            $this->applyContext($handler, $this->getRequest());
+        }
         $fragments = $this->getQueryHandler()->query(
             $this->getBuilder()->getSchema(),
             <<<GRAPHQL

@@ -198,7 +198,9 @@ class UnionType extends ViewableData implements
      */
     public function forTemplate(): DBHTMLText
     {
-        return $this->renderWith('SilverStripe\\GraphQL\\Schema\\Union');
+        return $this->customise([
+            'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
+        ])->renderWith('SilverStripe\\GraphQL\\Schema\\Union');
     }
 
     /**
