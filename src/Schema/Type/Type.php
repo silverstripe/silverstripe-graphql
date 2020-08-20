@@ -372,7 +372,9 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
             $this->getDescription(),
             $interfaces,
             array_map(function (Field $field) {
-                return $field->getSignature();
+                // The field resolver can change depending on what type it's on, so
+                // we need to augment the Field signature here to be type specific.
+                return $field->getSignature() . $field->getEncodedResolver($this->getName())->getExpression();
             }, $fields),
         ];
 
