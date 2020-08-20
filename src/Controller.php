@@ -69,7 +69,7 @@ class Controller extends BaseController implements Flushable
     /**
      * @var Schema
      */
-    private $builder;
+    private $schema;
 
     /**
      * @var QueryHandlerInterface
@@ -88,13 +88,13 @@ class Controller extends BaseController implements Flushable
     protected $corsConfig = [];
 
     /**
-     * @param Schema $builder
+     * @param Schema $schema
      * @param QueryHandlerInterface $queryHandler
      */
-    public function __construct(Schema $builder, QueryHandlerInterface $queryHandler)
+    public function __construct(Schema $schema, QueryHandlerInterface $queryHandler)
     {
         parent::__construct();
-        $this->setBuilder($builder);
+        $this->setSchema($schema);
         $this->setQueryHandler($queryHandler);
     }
 
@@ -127,7 +127,7 @@ class Controller extends BaseController implements Flushable
 
             // Temporary, maybe useful by feature flag later..
             Benchmark::start('schema-perf');
-            $schema = $this->getBuilder()->getSchema();
+            $schema = $this->getSchema()->load();
             $schemaPerf = Benchmark::end('schema-perf', '%sms', true);
             $handler = $this->getQueryHandler();
             if ($handler instanceof ContextProvider) {
@@ -460,7 +460,7 @@ class Controller extends BaseController implements Flushable
             $this->applyContext($handler, $this->getRequest());
         }
         $fragments = $this->getQueryHandler()->query(
-            $this->getBuilder()->getSchema(),
+            $this->getSchema()->load(),
             <<<GRAPHQL
 query IntrospectionQuery {
     __schema {
@@ -526,18 +526,18 @@ GRAPHQL
     /**
      * @return Schema
      */
-    public function getBuilder(): Schema
+    public function getSchema(): Schema
     {
-        return $this->builder;
+        return $this->schema;
     }
 
     /**
-     * @param Schema $builder
+     * @param Schema $schema
      * @return Controller
      */
-    public function setBuilder(Schema $builder): Controller
+    public function setSchema(Schema $schema): self
     {
-        $this->builder = $builder;
+        $this->schema = $schema;
         return $this;
     }
 

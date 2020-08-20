@@ -13,10 +13,10 @@ use SilverStripe\GraphQL\Schema\Schema;
 
 class CodeGenerationStoreCreator implements SchemaStorageCreator
 {
-    public function createStore(Schema $schema): SchemaStorageInterface
+    public function createStore(string $name): SchemaStorageInterface
     {
-        $factory = Injector::inst()->create(CacheFactory::class, [$schema->getSchemaKey()]);
+        $factory = Injector::inst()->create(CacheFactory::class, [$name]);
         $cache = $factory->create(CacheInterface::class);
-        return CodeGenerationStore::create($schema, $cache);
+        return CodeGenerationStore::create($name, $cache);
     }
 }

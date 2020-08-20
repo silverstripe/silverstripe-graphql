@@ -124,7 +124,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
     {
         $this->schemaKey = $schemaKey;
         $store = Injector::inst()->get(SchemaStorageCreator::class)
-            ->createStore($this);
+            ->createStore($schemaKey);
 
         $this->setStore($store);
     }
@@ -333,13 +333,13 @@ class Schema implements ConfigurationApplier, SchemaValidator
     /**
      * @throws SchemaBuilderException
      */
-    public function persistSchema(): void
+    public function save(): void
     {
         $this->validate();
-        $this->getStore()->persistSchema();
+        $this->getStore()->persistSchema($this);
     }
 
-    public function getSchema(): GraphQLSchema
+    public function load(): GraphQLSchema
     {
         return $this->getStore()->getSchema();
     }

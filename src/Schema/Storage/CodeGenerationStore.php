@@ -39,9 +39,9 @@ class CodeGenerationStore implements SchemaStorageInterface
     private static $schemaFilename = '__graphql-schema.php';
 
     /**
-     * @var Schema
+     * @var string
      */
-    private $schema;
+    private $name;
 
     /**
      * @var CacheInterface
@@ -49,20 +49,21 @@ class CodeGenerationStore implements SchemaStorageInterface
     private $cache;
 
     /**
-     * @param Schema $schema
+     * @param string $name
      * @param CacheInterface $cache
      */
-    public function __construct(Schema $schema, CacheInterface $cache)
+    public function __construct(string $name, CacheInterface $cache)
     {
-        $this->schema = $schema;
+        $this->name = $name;
         $this->setCache($cache);
     }
 
     /**
+     * @param Schema $schema
      * @throws Exception
      * @throws InvalidArgumentException
      */
-    public function persistSchema(): void
+    public function persistSchema(Schema $schema): void
     {
         Benchmark::start('render');
         $fs = new Filesystem();
@@ -71,7 +72,6 @@ class CodeGenerationStore implements SchemaStorageInterface
         if (!$fs->exists($dir)) {
             $fs->mkdir($dir);
         }
-        $schema = $this->schema;
         $data = ArrayData::create([
             'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
             'Types' => ArrayList::create(array_values($schema->getTypes())),
@@ -205,7 +205,9 @@ class CodeGenerationStore implements SchemaStorageInterface
      */
     private function getDirectory(): string
     {
-        return Path::join(ASSETS_PATH, 'graphql-schemas', $this->schema->getSchemaKey());
+        // TODO: temporary hack to ensure we have a writable directory.
+        // Need to figure out where this executable code can go, e.g. TEMP_FOLDER?
+        return Path::join(ASSETS_PATH, 'graphql-schemas', $this->name);
     }
 
     /**

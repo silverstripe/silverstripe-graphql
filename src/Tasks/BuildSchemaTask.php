@@ -30,7 +30,7 @@ class BuildSchemaTask extends BuildTask
             }
 
             $schema->loadFromConfig();
-            $schema->persistSchema();
+            $schema->save();
             $schema->getReporter()->info(
                 Benchmark::end('build-schema-' . $key, 'Built schema in %s ms.')
             );
