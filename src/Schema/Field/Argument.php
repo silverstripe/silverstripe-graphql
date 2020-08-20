@@ -194,7 +194,7 @@ class Argument extends ViewableData implements ConfigurationApplier, SignaturePr
             $this->getDefaultValue(),
         ];
 
-        return json_encode($components);
+        return md5(json_encode($components));
     }
 
 }

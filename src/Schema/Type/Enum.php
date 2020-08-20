@@ -187,7 +187,7 @@ class Enum extends ViewableData implements SchemaValidator
             $this->getDescription(),
         ];
 
-        return json_encode($components);
+        return md5(json_encode($components));
     }
 
 }

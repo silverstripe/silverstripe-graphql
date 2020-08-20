@@ -217,6 +217,6 @@ class UnionType extends ViewableData implements
             $this->getDescription(),
         ];
 
-        return json_encode($components);
+        return md5(json_encode($components));
     }
 }

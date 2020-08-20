@@ -542,7 +542,7 @@ class Field extends ViewableData implements
             }, $args),
         ];
 
-        return json_encode($components);
+        return md5(json_encode($components));
     }
 
     /**

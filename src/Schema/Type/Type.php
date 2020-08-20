@@ -376,6 +376,6 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
             }, $fields),
         ];
 
-        return json_encode($components);
+        return md5(json_encode($components));
     }
 }
