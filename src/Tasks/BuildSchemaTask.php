@@ -22,17 +22,19 @@ class BuildSchemaTask extends BuildTask
         $keys = $request->getVar('schema')
             ? [$request->getVar('schema')]
             : array_keys(Schema::config()->get('schemas'));
+        $keys = array_filter($keys, function ($key) {
+            return $key !== Schema::ALL;
+        });
         foreach ($keys as $key) {
             Benchmark::start('build-schema-' . $key);
-            $schema = Schema::create($key);
+            $schema = Schema::get($key);
+            $schema->getReporter()->info(sprintf('--- Building schema "%s" ---', $key));
             if ($clear) {
                 $schema->getStore()->clear();
             }
-
-            $schema->loadFromConfig();
             $schema->save();
             $schema->getReporter()->info(
-                Benchmark::end('build-schema-' . $key, 'Built schema in %s ms.')
+                Benchmark::end('build-schema-' . $key, 'Built schema in %sms.')
             );
 
         }

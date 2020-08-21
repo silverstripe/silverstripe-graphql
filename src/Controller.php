@@ -19,6 +19,7 @@ use SilverStripe\GraphQL\Dev\State\DisableTypeCacheState;
 use SilverStripe\GraphQL\Permission\MemberContextProvider;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\Connect\DatabaseException;
@@ -88,14 +89,16 @@ class Controller extends BaseController implements Flushable
     protected $corsConfig = [];
 
     /**
-     * @param Schema $schema
-     * @param QueryHandlerInterface $queryHandler
+     * @param string $schemaKey
+     * @throws SchemaBuilderException
      */
-    public function __construct(Schema $schema, QueryHandlerInterface $queryHandler)
+    public function __construct(string $schemaKey)
     {
         parent::__construct();
+        $schema = Schema::get($schemaKey);
         $this->setSchema($schema);
-        $this->setQueryHandler($queryHandler);
+        $handler = Injector::inst()->get(QueryHandlerInterface::class);
+        $this->setQueryHandler($handler);
     }
 
     /**

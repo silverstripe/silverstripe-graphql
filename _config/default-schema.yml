@@ -3,13 +3,8 @@ Name: 'graphql-default-schema'
 ---
 SilverStripe\Core\Injector\Injector:
   # Set up a default endpoint that can be activated with a Director rule
-  SilverStripe\GraphQL\Schema\Schema.default:
-    class: SilverStripe\GraphQL\Schema\Schema
-    constructor:
-      schemaKey: default
   SilverStripe\GraphQL\Controller.default:
     class: SilverStripe\GraphQL\Controller
     constructor:
-      schema: '%$SilverStripe\GraphQL\Schema\Schema.default'
-      queryHandler: '%$SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface'
+      schema: default
 

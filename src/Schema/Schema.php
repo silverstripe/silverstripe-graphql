@@ -7,7 +7,6 @@ use Psr\Log\LoggerInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
@@ -136,7 +135,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function applyConfig(array $schemaConfig): Schema
     {
-        Benchmark::start('schema-config');
         $types = $schemaConfig[self::TYPES] ?? [];
         $queries = $schemaConfig[self::QUERIES] ?? [];
         $mutations = $schemaConfig[self::MUTATIONS] ?? [];
@@ -198,9 +196,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $this->addEnum($enum);
         }
 
-        Benchmark::start('schema-updates');
         $this->applySchemaUpdates($schemaConfig);
-        $this->getReporter()->info(Benchmark::end('schema-updates'));
 
         foreach ($this->models as $modelType) {
             $this->addType($modelType);
@@ -218,9 +214,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $this->types[self::MUTATION_TYPE] = $mutationType;
         }
 
-        $this->getReporter()->info(
-            Benchmark::end('schema-config', 'Schema config took %s ms')
-        );
         return $this;
     }
 
@@ -231,7 +224,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     private function applySchemaUpdates(array $schemaConfig): void
     {
-        Benchmark::start('builders');
         $builders = $schemaConfig['builders'] ?? [];
         foreach ($builders as $builderClass) {
             static::invariant(
@@ -242,8 +234,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
             );
             $builderClass::updateSchema($this);
         }
-        $this->getReporter()->info(Benchmark::end('builders'));
-
         // Create a map of all the lists we need to apply plugins to, and their
         // required plugin interface(s)
         $allTypeFields = [];
@@ -287,14 +277,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 }
             }
         }
-        Benchmark::start('plugin-schema-update');
         /* @var SchemaUpdater $builder */
         foreach ($schemaUpdates as $class) {
             $class::updateSchema($this);
         }
-        $this->getReporter()->info(Benchmark::end('plugin-schema-update'));
-
-        Benchmark::start('plugin-components');
         foreach ($allComponents as $spec) {
             foreach ($spec['src'] as $component) {
                 /* @var Type|Field $component */
@@ -310,7 +296,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 }
             }
         }
-        $this->getReporter()->info(Benchmark::end('plugin-components'));
     }
 
     /**
@@ -342,6 +327,16 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public function load(): GraphQLSchema
     {
         return $this->getStore()->getSchema();
+    }
+
+    /**
+     * @param string $key
+     * @return Schema
+     * @throws SchemaBuilderException
+     */
+    public static function get(string $key): self
+    {
+        return static::create($key)->loadFromConfig();
     }
 
     /**

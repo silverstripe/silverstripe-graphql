@@ -147,7 +147,7 @@ class CodeGenerationStore implements SchemaStorageInterface
             $reporter->info(sprintf('(... and %s more)', $diff));
         }
 
-        $reporter->info(Benchmark::end('render', 'Code generation took %s ms'));
+        $reporter->info(Benchmark::end('render', 'Generated code in %sms'));
     }
 
     /**

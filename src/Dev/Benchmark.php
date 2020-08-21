@@ -40,6 +40,7 @@ class Benchmark
         $ms = $rounded * 1000;
 
         $result = $message ? sprintf($message, $ms) : sprintf('[%s]: %sms', $id, $ms);
+        unset(self::$benchmarks[$id]);
 
         if ($return) {
             return $result;
@@ -48,7 +49,6 @@ class Benchmark
         echo $result;
         echo Director::is_cli() ? PHP_EOL : "<br>";
 
-        unset(self::$benchmarks[$id]);
 
         return null;
     }
