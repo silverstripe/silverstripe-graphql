@@ -40,6 +40,12 @@ class CodeGenerationStore implements SchemaStorageInterface
 
     /**
      * @var string
+     * @config
+     */
+    private static $namespacePrefix = 'SSGraphQLSchema_';
+
+    /**
+     * @var string
      */
     private $name;
 
@@ -72,14 +78,18 @@ class CodeGenerationStore implements SchemaStorageInterface
         if (!$fs->exists($dir)) {
             $fs->mkdir($dir);
         }
-        $data = ArrayData::create([
+        $globals = [
             'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
+            'Namespace' => $this->getNamespace(),
+        ];
+        $data = ArrayData::create([
             'Types' => ArrayList::create(array_values($schema->getTypes())),
             'Interfaces' => ArrayList::create(array_values($schema->getInterfaces())),
             'Unions' => ArrayList::create(array_values($schema->getUnions())),
             'Enums' => ArrayList::create(array_values($schema->getEnums())),
         ]);
-        $code = (string) $data->renderWith('SilverStripe\\GraphQL\\Schema\\GraphQLTypeRegistry');
+        $code = (string) $data->customise($globals)
+            ->renderWith('SilverStripe\\GraphQL\\Schema\\GraphQLTypeRegistry');
         $schemaFile = $this->getSchemaFilename();
         $fs->dumpFile($schemaFile, $this->toCode($code));
 
@@ -101,7 +111,7 @@ class CodeGenerationStore implements SchemaStorageInterface
                     }
                 }
                 $file = Path::join($dir, $name . '.php');
-                $code = (string) $type->forTemplate();
+                $code = (string) $type->customise($globals)->forTemplate($globals);
                 $fs->dumpFile($file, $this->toCode($code));
                 $this->getCache()->set($name, $sig);
                 $touched[] = $name;
@@ -157,17 +167,13 @@ class CodeGenerationStore implements SchemaStorageInterface
     {
         require_once($this->getSchemaFilename());
 
-        $namespace = 'SilverStripe\\GraphQL\\Schema\\Generated\\Schema';
-        $registryClass = $namespace . '\\' . EncodedType::TYPE_CLASS_NAME;
+        $registryClass = $this->getClassName(EncodedType::TYPE_CLASS_NAME);
 
         $hasMutations = method_exists($registryClass, Schema::MUTATION_TYPE);
         $schemaConfig = new SchemaConfig();
         $callback = call_user_func([$registryClass, Schema::QUERY_TYPE]);
         $schemaConfig->setQuery($callback);
-        $schemaConfig->setTypeLoader([
-            'SilverStripe\\GraphQL\\Schema\\Generated\\Schema\\' . EncodedType::TYPE_CLASS_NAME,
-            'get'
-        ]);
+        $schemaConfig->setTypeLoader([$registryClass, 'get']);
         if ($hasMutations) {
             $callback = call_user_func([$registryClass, Schema::MUTATION_TYPE]);
             $schemaConfig->setMutation($callback);
@@ -208,6 +214,23 @@ class CodeGenerationStore implements SchemaStorageInterface
         // TODO: temporary hack to ensure we have a writable directory.
         // Need to figure out where this executable code can go, e.g. TEMP_FOLDER?
         return Path::join(ASSETS_PATH, 'graphql-schemas', $this->name);
+    }
+
+    /**
+     * @return string
+     */
+    private function getNamespace(): string
+    {
+        return $this->config()->get('namespacePrefix') . md5($this->name);
+    }
+
+    /**
+     * @param string $className
+     * @return string
+     */
+    private function getClassName(string $className): string
+    {
+        return $this->getNamespace() . '\\' . $className;
     }
 
     /**

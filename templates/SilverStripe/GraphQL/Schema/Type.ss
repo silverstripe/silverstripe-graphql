@@ -1,4 +1,4 @@
-namespace SilverStripe\\GraphQL\\Schema\\Generated\\Schema;
+namespace $Namespace;
 
 use GraphQL\\Type\\Definition\\ObjectType;
 use GraphQL\\Type\\Definition\\InputObjectType;
