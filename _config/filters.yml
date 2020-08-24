@@ -7,6 +7,7 @@ SilverStripe\Core\Injector\Injector:
     constructor:
       contains: '%$SilverStripe\GraphQL\QueryFilter\Filters\ContainsFilter'
       eq: '%$SilverStripe\GraphQL\QueryFilter\Filters\EqualToFilter'
+      ne: '%$SilverStripe\GraphQL\QueryFilter\Filters\EqualToFilter'
       gt: '%$SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanFilter'
       lt: '%$SilverStripe\GraphQL\QueryFilter\Filters\LessThanFilter'
       gte: '%$SilverStripe\GraphQL\QueryFilter\Filters\GreaterThanOrEqualFilter'

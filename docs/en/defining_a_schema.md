@@ -6,7 +6,8 @@ GraphQL is a strongly-typed API layer, so having a schema behind it is essential
 * **Types** consist of **[fields](https://graphql.org/learn/queries/#fields)**
 * **Fields** can have **[arguments](https://graphql.org/learn/queries/#arguments)**.
 * **Fields** need to **[resolve](https://graphql.org/learn/execution/#root-fields-resolvers)**
-* **Queries** are just **fields** on a type called "query". They can take arguments, and they
+
+**Queries** are just **fields** on a type called "query". They can take arguments, and they
 must resolve.
 
 There's a bit more to it than that, and if you want to learn more about GraphQL, you can read
@@ -32,35 +33,30 @@ SilverStripe\GraphQL\Schema\Schema:
   schemas:
     default:
       types:
-        # your types here
+        # your generic types here
+      models:
+        # your dataobjects here
       queries:
         # your queries here
       mutations:
         # your mutations here
 ```
 
-Let's get started by [defining some types](defining_types.md).
+## Defining a basic type
 
-
-## Defining types
-
-In this section, we'll define some generic types for our GraphQL schema.
-
-**NB**: this tutorial will not cover adding dataobjects to your schema. For dataobject types,
-see the section on [model-backed types](../models).
-
-### Types are just YAML structures
+Let's define a generic type for our GraphQL schema.
 
 ```yaml
 SilverStripe\GraphQL\Schema\Schema:
   schemas:
     default:
       types:
-        MyType:
+        Country:
           fields:
-            myField: String
-            myOtherField: Int
-            myList: '[String]'
+            name: String
+            code: String
+            population: Int
+            languages: '[String]'
 ```
 
 If you're familiar with [GraphQL type language](https://graphql.org/learn/schema/#type-language), this should look pretty familiar. There are only a handful of scalar types available in
@@ -79,7 +75,377 @@ Often times, you may want to do both: `[String!]!`
 
 > Look out for the footgun, here. Make sure your bracketed type is in quotes, otherwise it's valid YAML that will get parsed as an array!
 
-That's all there is to it!
+That's all there is to it! To learn how we can take this further, check out the
+[working with generic types](working_with_generic_types.md) documentation. Otherwise,
+let's get started on **adding some dataobjects**.
+
+## Adding DataObjects to the schema
+
+In Silverstripe CMS projects, our data tends to be contained in dataobjects almost exclusively,
+and the schema API is designed to make adding dataobject content fast and simple.
+
+### Using model types
+
+While it is possible to add dataobjects to your schema as generic types under the `types`
+section of the configuration, and their associated queries and mutations under `queries` and
+`mutations`, this will lead to a lot of boilerplate code and repetition. Unless you have some
+really custom needs, a much better approach is to embrace _convention over configuration_
+and use the `models` section of the config.
+
+**Model types** are types that rely on external classes to tell them who they are and what
+they can and cannot do. The model can define and resolve fields, auto-generate queries
+and mutations, and more.
+
+Naturally, this module comes bundled with a model type for subclasses of `DataObject`.
+
+Let's use the `models` config to expose some content.
+
+**app/_config/my-schema.yml**
+```
+SilverStripe\GraphQL\Schema\Schema:
+  schemas:
+    default:
+      models:
+        SilverStripe\CMS\Model\SiteTree:
+          fields: '*'
+          operations: '*'
+```
+
+The class `SilverStripe\CMS\Model\SiteTree` is a subclass of `DataObject`, so the bundled model
+type will kick in here and provide a lot of assistance in building out this part of our API.
+
+Case in point, by supplying a value of `*` for `fields` , we're saying that we want _all_ of the fields
+on site tree. This includes the first level of relationships, as well, as defined on `has_one`, `has_many`,
+or `many_many`. Fields on relationships will not inherit the `*` fields selector, and will only expose their ID
+by default.
+
+The `*` value on `operations` tells the schema to create all available queries and mutations
+ for the dataobject, including:
+
+* `read`
+* `readOne`
+* `create`
+* `update`
+* `delete`
+
+Now that we've changed our schema, we need to build it using the `build-schema` task:
+
+`$ vendor/bin/sake dev/tasks/build-schema schema=default`
+
+Now, we can access our schema on the default graphql endpoint, `/graphql`.
+
+Test it out!
+
+A query:
+```graphql
+query {
+  readSiteTrees {
+    nodes {
+      title
+    }
+}
+```
+
+A mutation (make sure you're authenticated first):
+```graphql
+mutation {
+  createSiteTree(input: {
+    title: "my page"
+  }) {
+    title
+    id
+  }
+}
+```
+
+### Going further
+
+Let's add some more dataobjects, but this time, we'll only add a subset of fields and operations.
+
+```yaml
+SilverStripe\GraphQL\Schema\Schema:
+  schemas:
+    default:
+      models:
+        SilverStripe\CMS\Model\SiteTree:
+          fields: '*'
+          operations: '*'
+        MyProject\Models\Product:
+          fields:
+            onSale: true
+            title: true
+            price: true
+          operations:
+            delete: true
+        MyProject\Models\ProductCategory:
+          fields:
+            title: true
+            featured: true
+```
+
+A couple things to note here:
+
+* By assigning a value of `true` to the field, we defer to the model to infer the type for the field. To override that, we can always add a `type` property:
+
+```yaml
+onSale:
+  type: Boolean
+```
+
+* The mapping of our field names to the DataObject property is case-insensitive. It is a
+convention in GraphQL APIs to use lowerCamelCase fields, so this is given by default.
+
+### DataObject plugins: pagination, filtering, sorting, and more
+
+This module has a [plugin system](plugins.md) that affords extensibility to queries, mutations,
+types, fields, and just about every other thread of the schema. Model types can define default
+plugins to include, and for DataObject queries, these include:
+
+* filter
+* sort
+* paginate
+* inheritance
+* canViewItem (readOne)
+* canViewList (read)
+
+Other modules, such as `silverstripe-versioned` may augment that list with even more.
+
+#### The pagination plugin
+
+The pagination plugin augments your queries in two main ways:
+
+* Adding `limit` and `offset` arguments
+* Wrapping the return type in a "connection" type with the following fields:
+  * `nodes: '[YourType]'`
+  * `edges: '[{ node: YourType }]'`
+  * `pageInfo: '{ hasNextPage: Boolean, hasPrevPage: Boolean: totalCount: Int }'`
+
+Let's test it out:
+
+```graphql
+query {
+  readSiteTrees(limit: 10, offset: 20) {
+    nodes {
+      title
+    }
+    edges {
+        node {
+            title
+        }
+    }
+    pageInfo {
+        totalCount
+        hasNextPage
+        hasPrevPage
+    }
+}
+```
+
+If you're not familiar with the jargon of `edges` and `node`, don't worry too much about it
+for now. It's just a pretty well-established convention for pagination in GraphQL, mostly owing
+to its frequent use with [cursor-based pagination](https://graphql.org/learn/pagination/), which
+isn't something we do in Silverstripe CMS.
+
+##### Disabling pagination
+
+Just set it to `false` in the configuration.
+
+```yaml
+SilverStripe\GraphQL\Schema\Schema:
+  schemas:
+    default:
+      models:
+        MyProject\Models\ProductCategory:
+          operations:
+            read:
+              plugins:
+                paginate: false
+```
+
+
+#### The filter plugin
+
+The filter plugin (`SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter`) adds a
+special `filter` argument to the `read` and `readOne` operations.
+
+```yaml
+query {
+  readSiteTrees(
+    filter: { title: { eq: "Blog" } }
+  ) {
+  nodes {
+    title
+    created
+  }
+}
+```
+
+In the above example, the `eq` is known as a *comparator*. There are several of these
+included with the the module, including:
+
+* eq (exact match)
+* ne (not equal)
+* contains (fuzzy match)
+* gt (greater than)
+* lt (less than)
+* gte (greater than or equal)
+* lte (less than or equal)
+* in (in a given list)
+* startswith (starts with)
+* endswith (ends with)
+
+Example:
+```yaml
+query {
+  readSiteTrees(
+    filter: {
+      title: { ne: "Home" },
+      created: { gt: "2020-06-01", lte: "2020-09-01" }
+    }
+  ) {
+  nodes {
+    title
+    created
+  }
+}
+```
+
+**NB**: While it is possible to filter using multiple comparators, segmenting them into
+disjunctive groups (e.g. "OR" and "AND" clauses) is not yet supported.
+
+Nested fields are supported by default:
+
+```yaml
+query {
+  readProductCategories(
+    filter: {
+      products: {
+        reviews: {
+          rating: { gt: 3 },
+          comment: { contains: "awesome" },
+          author: { ne: "Me" }
+        }
+      }
+    }
+  ) {
+  nodes {
+    title
+  }
+}
+```
+
+
+##### Customising the filter fields
+
+By default, all fields on the dataobject, including relationships, are included. To customise
+this, just add a `fields` config to the plugin definition:
+
+```yaml
+SilverStripe\GraphQL\Schema\Schema:
+  schemas:
+    default:
+      models:
+        MyProject\Models\ProductCategory:
+          fields:
+            title: true
+            featured: true
+          operations:
+            read:
+              plugins:
+                filter:
+                  fields:
+                    title: true
+```
+
+##### Disabling the filter plugin
+
+Just set it to `false` in the configuration.
+
+```yaml
+SilverStripe\GraphQL\Schema\Schema:
+  schemas:
+    default:
+      models:
+        MyProject\Models\ProductCategory:
+          operations:
+            read:
+              plugins:
+                filter: false
+```
+
+#### The sort plugin
+
+The sort plugin (`SilverStripe\GraphQL\Schema\DataObject\Plugin\QuerySort`) adds a
+special `sort` argument to the `read` and `readOne` operations.
+
+```yaml
+query {
+  readSiteTrees(
+    sort: { created: DESC }
+  ) {
+  nodes {
+    title
+    created
+  }
+}
+```
+
+Nested fields are supported by default, but only for linear relationships (e.g has_one):
+
+```yaml
+query {
+  readProducts(
+    sort: {
+      primaryCategory: {
+        lastEdited: DESC
+      }
+    }
+  ) {
+  nodes {
+    title
+  }
+}
+```
+
+
+##### Customising the sort fields
+
+By default, all fields on the dataobject, including `has_one` relationships, are included.
+To customise this, just add a `fields` config to the plugin definition:
+
+```yaml
+SilverStripe\GraphQL\Schema\Schema:
+  schemas:
+    default:
+      models:
+        MyProject\Models\ProductCategory:
+          fields:
+            title: true
+            featured: true
+          operations:
+            read:
+              plugins:
+                sort:
+                  fields:
+                    title: true
+```
+
+##### Disabling the sort plugin
+
+Just set it to `false` in the configuration.
+
+```yaml
+SilverStripe\GraphQL\Schema\Schema:
+  schemas:
+    default:
+      models:
+        MyProject\Models\ProductCategory:
+          operations:
+            read:
+              plugins:
+                sort: false
+```
+
 
 #### A more realistic example
 
@@ -129,8 +495,8 @@ Now we have a query that will return all the countries. In order to make this wo
 need a **resolver**. For this, we're going to have to break out of the configuration layer
 and write some code.
 
-*app/src/Resolvers/MyResolver.php**
-```
+**app/src/Resolvers/MyResolver.php**
+```php
 class MyResolver
 {
     public static function resolveCountries(): array
@@ -199,7 +565,7 @@ And the expected response:
         "name": "Åland Islands",
         "code": "ax"
       },
-      // ... etc
+      "... etc"
     ]
   }
 }
@@ -304,7 +670,7 @@ Re-run the schema build, with a flush, and let's go!
 
 A less magical approach to resolver discovery is defining a `fieldResolver` property on your
 types. This is a generic handler for all fields on a given type and can be a nice middle
-ground between the rigor of hard coding everything and the opacity of a discovery logic.
+ground between the rigor of hard coding everything and the opacity of discovery logic.
 
 ```yml
 SilverStripe\GraphQL\Schema\Schema:
@@ -392,6 +758,48 @@ SilverStripe\GraphQL\Schema\Schema:
 
 Rebuild the schema, and notice that the IDE is no longer yelling at you for a `limit` argument.
 
+## Adding descriptions
+
+One of the great features of a schema-backed API is that it is self-documenting. Many
+API developers choose to maximise the benefit of this by adding descriptions to some or
+all of the components of their schema.
+
+The trade-off for using descriptions is that the YAML configuration becomes a bit more verbose.
+
+Let's add some descriptions to our types and fields.
+
+```yaml
+SilverStripe\GraphQL\Schema\Schema:
+  schemas:
+    default:
+      types:
+        Country:
+          description: A record that describes one of the world's sovereign nations
+          fields:
+            code:
+              type: String!
+              description: The unique two-letter country code
+            name:
+              type: String!
+              description: The canonical name of the country, in English
+```
+
+We can also add descriptions to our query arguments. We'll have to remove the inline argument
+definition to do that.
+
+```yaml
+SilverStripe\GraphQL\Schema\Schema:
+  schemas:
+    default:
+      queries:
+        readCountries:
+          type: '[Country]'
+          description: Get all the countries in the world
+          args:
+            limit:
+              type: Int = 20
+              description: The limit that is applied to the result set
+```
 ## Enum types
 
 Enum types are simply a list of string values that are possible for a given field. They are

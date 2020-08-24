@@ -6,7 +6,7 @@ with a minimal amount of configuration.
 
 ## Configuration
 
-**app/_config/my-schema.yml
+**app/_config/my-schema.yml**
 ```
 SilverStripe\GraphQL\Schema\Schema:
   schemas:
