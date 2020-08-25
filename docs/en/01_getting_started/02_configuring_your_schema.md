@@ -78,8 +78,12 @@ To define a type as required (non-null), you add an exclamation mark: `String!`
 
 Often times, you may want to do both: `[String!]!`
 
-> Look out for the footgun, here. Make sure your bracketed type is in quotes, otherwise it's valid YAML that will get parsed as an array!
+[notice]
+Look out for the footgun, here. Make sure your bracketed type is in quotes, otherwise it's valid YAML that will get parsed as an array!
+[/notice]
 
 That's all there is to it! To learn how we can take this further, check out the
-[working with generic types](working_with_generic_types.md) documentation. Otherwise,
+[working with generic types](working_with_generic_types) documentation. Otherwise,
 let's get started on [**adding some dataobjects**](working_with_dataobjects).
+
+

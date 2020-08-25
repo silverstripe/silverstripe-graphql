@@ -12,8 +12,8 @@ For instance, just adding a subclass to a DataObject can force the return type t
 of types to a union of multiple types, and this would break frontend code.
 
 While more conventional, unions and interfaces introduce more complexity, and given how much we rely
-on inheritance in Silverstripe CMS, particularly with `SiteTree`, inheritance is handled in a less
-conventional but more ergonomic way.
+on inheritance in Silverstripe CMS, particularly with `SiteTree`, inheritance in GraphQL is handled in a less
+conventional but more ergonomic way using a plugin called `inheritance`.
 
 ## Introducing pseudo-unions
 
@@ -74,9 +74,22 @@ come from), but we also need to be mindful that queries for page will return des
 
 But these types are implicitly added to the schema, what are their fields?
 
-The answer is *only the fields you've already opted into*.
+The answer is *only the fields you've already opted into*. Parent classes will apply the fields exposed
+by their descendants, and descendant classes will only expose their ancestors' exposed fields.
 
-In our case, the `NewsPage` type would contain the following fields:
+In our case, we've exposed:
+
+* title (`SiteTree` field)
+* content (`SiteTree` field)
+* bannerImage (`Page` field)
+
+The `SiteTree` type will contain the following fields:
+
+* id (required for all DataObject types)
+* title
+* content
+
+And the `NewsPage` type would contain the following fields:
 
 * id (required for all DataObject types)
 * title
@@ -122,11 +135,10 @@ query readSiteTrees {
 }
 ```
 
-**But what about operations for the implicitly exposed `NewsPage`?**
-
+[info]
 Operations are not implicitly exposed. If you add a `read` operation to `SiteTree`, you will not get one for
 `NewsPage` and `ContactPage`, etc. You have to opt into those.
-
+[/info]
 
 ## A note about duplication
 

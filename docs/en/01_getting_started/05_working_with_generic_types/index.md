@@ -1,33 +1,23 @@
+---
+title: Working with generic types
+summary: Break away from the magic of DataObject model and build types and queries from scratch.
+---
+
+In this section of the documentation, we cover the fundamentals that are behind a lot of the magic that goes
+into making DataObject types work. We'll create some types that are not based on DataObjects at all, and we'll
+write some custom queries from the ground up.
+
+[info]
+Just because we won't be using DataObjects in this example doesn't mean you can't do it. You will lose a lot
+of the benefits of the DataObject model, but this lower level API may suit your needs for really specific use
+cases.
+[/info]
 
 
-
-
+[CHILDREN]
 
 #### A more realistic example
 
-Let's create a simple type that will work with the inbuilt features of Silverstripe CMS.
-We'll define some languages based on the `i18n` API.
-
-```yml
-SilverStripe\GraphQL\Schema\Schema:
-  schemas:
-    default:
-      types:
-        Country:
-          fields:
-            code: String!
-            name: String!
-```
-
-We've defined a type called `Country` that has two fields: `code` and `name`. An example record
-could be something like:
-
-```
-[
-    'code' => 'bt',
-    'name' => 'Bhutan'
-]
-```
 
 ## Defining queries
 
@@ -371,99 +361,4 @@ SilverStripe\GraphQL\Schema\Schema:
         SortDirection:
           DESC: Descending order
           ASC: Ascending order
-```
-
-## Unions and interfaces
-
-In more complex schemas, you may want to define types that aren't simply a list of fields, or
-"object types." These include unions and interfaces.
-
-### Interfaces
-
-An interface is a specification of fields that must be included on a type that implements it.
-For example, an interface `Person` could include `firstName: String`, `surname: String`, and
-`age: Int`. The types `Actor` and `Chef` would implement the `Person` interface. Actors and
-chefs must have names and ages.
-
-To define an interface, use the `interfaces` section of the config.
-
-```yaml
-SilverStripe\GraphQL\Schema\Schema:
-  schemas:
-    default:
-      interfaces:
-        Person:
-          fields:
-            firstName: String!
-            surname: String!
-            age: Int!
-          resolveType: [ 'MyProject\MyResolver', 'resolvePersonType' ]
-```
-
-Interfaces must define a `resolveType` resolver method to inform the interface
-which type it is applied to given a specific result. This method is non-discoverable and
-must be applied explicitly.
-
-```php
-    public static function resolvePersonType($object): string
-    {
-        if ($object instanceof Actor) {
-            return 'Actor';
-        }
-        if ($object instanceof Chef) {
-            return 'Chef';
-        }
-    }
-```
-
-### Union types
-
-A union type is used when a field can resolve to multiple types. For example, a query
-for "Articles" could return a list containing both "Blog" and "NewsStory" types.
-
-To add a union type, use the `unions` section of the configuration.
-
-```yaml
-SilverStripe\GraphQL\Schema\Schema:
-  schemas:
-    default:
-      unions:
-        Article:
-          types: [ 'Blog', 'NewsStory' ]
-          typeResolver: [ 'MyProject\MyResolver', 'resolveArticleUnion' ]
-```
-
-Like interfaces, unions need to know how to resolve their types. These methods are also
-non-discoverable and must be applied explicitly.
-
-```php
-    public static function resolveArticleUnion(Article $object): string
-    {
-        if ($object->category === 'blogs')
-            return 'Blog';
-        }
-        if ($object->category === 'news') {
-            return 'NewsStory';
-        }
-    }
-```
-
-
-## The global schema
-
-Developers of thirdparty modules that influence graphql schemas may want to take advantage
-of the _global schema_. This is a pseudo-schema that will merge itself with all other schemas
-that have been defined. A good use case is in the `silverstripe/versioned` module, where it
-is critical that all schemas can leverage its schema modifications.
-
-The global schema is named `*`.
-
-```yaml
-SilverStripe\GraphQL\Schema\Schema:
-  schemas:
-    '*':
-      enums:
-        VersionedStage:
-          DRAFT: DRAFT
-          LIVE: LIVE
 ```

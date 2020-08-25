@@ -70,7 +70,7 @@ query {
 }
 ```
 
-A mutation (make sure you're authenticated first):
+A mutation:
 ```graphql
 mutation {
   createSiteTree(input: {
@@ -82,7 +82,11 @@ mutation {
 }
 ```
 
-## Going further
+[info]
+Did you get a permissions error? Make sure you're authenticated as someone with appropriate access.
+[/info]
+
+## Adding more fields
 
 Let's add some more dataobjects, but this time, we'll only add a subset of fields and operations.
 
@@ -118,3 +122,72 @@ onSale:
 
 * The mapping of our field names to the DataObject property is case-insensitive. It is a
 convention in GraphQL APIs to use lowerCamelCase fields, so this is given by default.
+
+## Customising model fields
+
+You don't have to rely on the model to tell you how fields should resolve. Just like
+generic types, you can customise them with arguments and resolvers.
+
+```yaml
+SilverStripe\GraphQL\Schema\Schema:
+  schemas:
+    default:
+      models:
+        MyProject\Models\Product:
+          fields:
+            title:
+              type: String
+              resolver: [ 'MyProject\Resolver', 'resolveSpecialTitle' ]
+            'price(currency: String = "NZD")': true
+```
+
+For more information on custom arguments and resolvers, see the [adding arguments](../working_with_generic_types/adding_arguments) and [resolver discovery](../working_with_generic_types/resolver_discovery) documentation.
+
+## Customising the type name
+
+Most DataObject classes are namespaced, so converting them to a type name ends up
+being very verbose. As a default, the `DataObjectModel` class will use the "short name"
+of your DataObject as its typename (see: `ClassInfo::shortName()`). That is,
+`MyProject\Models\Product` becomes `Product`.
+
+Given the brevity of these type names, it's not inconceivable that you could run into naming
+collisions, particularly if you use feature-based namespacing. Fortunately, there are
+hooks you have available to help influence the typename.
+
+### The type formatter
+
+The `type_formatter` is a callable that can be set on the `DataObjectModel` config. It takes
+the `$className` as a parameter.
+
+Let's turn `MyProject\Models\Product` into the more specific `MyProjectProduct`
+
+```yaml
+SilverStripe\GraphQL\Schema\DataObject\DataObjectModel:
+  type_formatter: ['MyProject\Formatters', 'formatType' ]
+```
+
+And your function could look something like:
+
+```php
+public static function formatType(string $className): string
+{
+    $parts = explode('\\', $className);
+    if (count($parts) === 1) {
+        return $className;
+    }
+    $first = reset($parts);
+    $last = end($parts);
+
+    return $first . $last;
+}
+```
+
+### The type prefix
+
+You can also add prefixes to all your DataObject types. This can be a scalar value or a callable,
+using the same signature as `type_formatter`.
+
+```yaml
+SilverStripe\GraphQL\Schema\DataObject\DataObjectModel:
+  type_prefix: 'MyProject'
+```
