@@ -1,7 +1,20 @@
 ---
 Name: 'graphql-middlewares'
 ---
-SilverStripe\GraphQL\QueryHandler\QueryHandler:
-  default_middlewares:
-    csrf: 'SilverStripe\GraphQL\Middleware\CSRFMiddleware'
-    httpMethod: 'SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware'
+SilverStripe\Core\Injector\Injector:
+  # default implementation
+  SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface:
+    class: SilverStripe\GraphQL\QueryHandler\QueryHandler
+    properties:
+      Middlewares:
+        csrf: '%$SilverStripe\GraphQL\Middleware\CSRFMiddleware'
+        httpMethod: '%$SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware'
+
+  # duplicate implementation do that the default schema has its own instance to
+  # configure without affecting other schemas
+  SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface.default:
+    class: SilverStripe\GraphQL\QueryHandler\QueryHandler
+    properties:
+      Middlewares:
+        csrf: '%$SilverStripe\GraphQL\Middleware\CSRFMiddleware'
+        httpMethod: '%$SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware'

@@ -194,7 +194,7 @@ Looking good!
 But there's still one little gotcha. This is likely to be run after pagination has been executed, so our
 `$result` parameter is probably an array of `edges`, `nodes`, etc.
 
-**app/src/Resolvers\MyResolver.php**
+**app/src/Resolvers/MyResolver.php**
 ```php
 public static function applyRadius($result, array $args)
 {
@@ -215,8 +215,13 @@ public static function applyRadius($result, array $args)
 }
 ```
 
+If we added this plugin in middleware rather than afterware,
+we could filter the result set by a list of `IDs` early on, which would allow us to keep
+a `DataList` throughout the whole cycle, but this would force us to loop over an
+unlimited result set, and that's never a good idea.
+
 [notice]
-If you've picked up on the consistency that the `pageInfo` property is now inaccurate, this is a long-standing
+If you've picked up on the inconsistency that the `pageInfo` property is now inaccurate, this is a long-standing
 issue with doing post-query filters. Ideally, any middleware that filters a DataList should do it at the query level,
 but that's not always possible.
 [/notice]

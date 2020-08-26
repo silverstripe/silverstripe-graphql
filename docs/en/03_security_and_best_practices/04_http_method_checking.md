@@ -1,5 +1,5 @@
 ---
-title: Strict HTTP method checking (NEEDS UPDATING)
+title: Strict HTTP method checking
 summary: Ensure requests are GET or POST
 ---
 
@@ -10,10 +10,11 @@ to use either `GET` or `POST`. By default, this module enforces the `POST` reque
 
 To disable that requirement, you can remove the `HTTPMethodMiddleware` from your `Manager` implementation.
 
----------- todo: this doesn't work ----------
+
 ```yaml
-  SilverStripe\GraphQL\Manager:
+  SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface.default:
+    class: SilverStripe\GraphQL\QueryHandler\QueryHandler
     properties:
       Middlewares:
-        HTTPMethodMiddleware: false
+        httpMethod: false
 ```

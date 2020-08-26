@@ -90,14 +90,15 @@ class Controller extends BaseController implements Flushable
 
     /**
      * @param string $schemaKey
+     * @param QueryHandlerInterface|null $queryHandler
      * @throws SchemaBuilderException
      */
-    public function __construct(string $schemaKey)
+    public function __construct(string $schemaKey, ?QueryHandlerInterface $queryHandler = null)
     {
         parent::__construct();
         $schema = Schema::get($schemaKey);
         $this->setSchema($schema);
-        $handler = Injector::inst()->get(QueryHandlerInterface::class);
+        $handler = $queryHandler ?: Injector::inst()->get(QueryHandlerInterface::class);
         $this->setQueryHandler($handler);
     }
 
@@ -115,7 +116,6 @@ class Controller extends BaseController implements Flushable
             Versioned::set_stage($stage);
         }
         // Check for a possible CORS preflight request and handle if necessary
-        // Refer issue 66:  https://github.com/silverstripe/silverstripe-graphql/issues/66
         if ($request->httpMethod() === 'OPTIONS') {
             return $this->handleOptions($request);
         }

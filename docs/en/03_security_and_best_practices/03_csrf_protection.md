@@ -1,5 +1,5 @@
 ---
-title: CSRF protection (NEEDS UPDATING)
+title: CSRF protection
 summary: Protect destructive actions from cross-site request forgery
 ---
 
@@ -27,13 +27,11 @@ If you are using HTTP basic authentication or a token-based system like OAuth or
 you will want to remove the CSRF protection, as it just adds unnecessary overhead. You can do this by setting
 the middleware to `false`.
 
----------- todo: update this -----------
-we have no way of using a custom QueryHandlerInterface for a controller
 
 ```yaml
-SilverStripe\Core\Injector\Injector:
-  SilverStripe\GraphQL\Manager.default:
+  SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface.default:
+    class: SilverStripe\GraphQL\QueryHandler\QueryHandler
     properties:
       Middlewares:
-        CSRFMiddleware: false
+        csrf: false
 ```

@@ -41,12 +41,6 @@ class QueryHandler implements
 
     /**
      * @var array
-     * @config
-     */
-    private static $default_middlewares = [];
-
-    /**
-     * @var array
      */
     private $extraContext = [];
 
@@ -54,27 +48,6 @@ class QueryHandler implements
      * @var callable
      */
     private $errorFormatter = [self::class, 'formatError'];
-
-    /**
-     * Load the default middlewares
-     * @throws SchemaBuilderException
-     */
-    public function __construct()
-    {
-        $defaultMiddlewares = $this->config()->get('default_middlewares');
-        foreach ($defaultMiddlewares as $class) {
-            if ($class === false) {
-                continue;
-            }
-            Schema::invariant(
-                is_subclass_of($class, Middleware::class),
-                '%s is not an instance of %s',
-                $class,
-                Middleware::class
-            );
-            $this->addMiddleware(Injector::inst()->get($class));
-        }
-    }
 
     /**
      * @param GraphQLSchema $schema

@@ -7,4 +7,6 @@ SilverStripe\Core\Injector\Injector:
     class: SilverStripe\GraphQL\Controller
     constructor:
       schema: default
+      # use a custom handler so it's easy to override/add middlewares in the default schema
+      handler: '%$SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface.default'
 
