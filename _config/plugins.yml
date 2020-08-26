@@ -4,6 +4,7 @@ Name: graphql-plugins
 SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Schema\Registry\PluginRegistry:
     constructor:
+      paginator: '%$SilverStripe\GraphQL\Schema\Plugin\PaginationPlugin'
       dataobjectPaginator: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\Paginator'
       dataobjectQueryFilter: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter'
       dataobjectQuerySort: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QuerySort'
@@ -15,9 +16,9 @@ SilverStripe\GraphQL\Schema\DataObject\ReadCreator:
   default_plugins:
     filter: true
     sort: true
-    paginate: true
+    paginateList: true
     canViewPaginated:
-      after: paginate
+      after: paginateList
 SilverStripe\GraphQL\Schema\DataObject\ReadOneCreator:
   default_plugins:
     canViewItem: true

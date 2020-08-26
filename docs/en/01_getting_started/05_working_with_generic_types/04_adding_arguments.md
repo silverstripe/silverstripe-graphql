@@ -63,3 +63,5 @@ SilverStripe\GraphQL\Schema\Schema:
 ```
 
 Rebuild the schema, and notice that the IDE is no longer yelling at you for a `limit` argument.
+
+Let's take this a step further by turning this in to a proper [paginated result](adding_pagination).

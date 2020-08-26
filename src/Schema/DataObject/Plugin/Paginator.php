@@ -4,23 +4,17 @@ namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\ORM\Limitable;
-use SilverStripe\GraphQL\Schema\Plugin\AbstractPaginationPlugin;
+use SilverStripe\GraphQL\Schema\Plugin\PaginationPlugin;
 use Closure;
 
 /**
  * Adds pagination to a DataList query
  */
-class Paginator extends AbstractPaginationPlugin
+class Paginator extends PaginationPlugin
 {
-    const IDENTIFIER = 'paginate';
+    const IDENTIFIER = 'paginateList';
 
-    /**
-     * @return array
-     */
-    protected function getPaginationResolver()
-    {
-        return [static::class, 'paginate'];
-    }
+    private static $resolver = [__CLASS__, 'paginate'];
 
     /**
      * @return string
@@ -39,40 +33,22 @@ class Paginator extends AbstractPaginationPlugin
         $maxLimit = $context['maxLimit'];
 
         return function ($list, array $args, array $context, ResolveInfo $info) use ($maxLimit) {
-            // Default values
-            $count = $list->count();
-            $nextPage = false;
-            $previousPage = false;
-            // If list is limitable, apply pagination
-            /* @var Limitable $list */
-            if ($list instanceof Limitable) {
-                $offset = $args['offset'];
-                $limit = $args['limit'];
-                if ($limit > $maxLimit) {
-                    $limit = $maxLimit;
-                }
-
-                // Apply limit
-                $list = $list->limit($limit, $offset);
-
-                // Flag prev-next page
-                if ($limit && (($limit + $offset) < $count)) {
-                    $nextPage = true;
-                }
-                if ($offset > 0) {
-                    $previousPage = true;
-                }
+            if (!$list instanceof Limitable) {
+                return static::createPaginationResult($list, $list, $maxLimit, 0);
             }
 
-            return [
-                'edges' => $list,
-                'nodes' => $list,
-                'pageInfo' => [
-                    'totalCount' => $count,
-                    'hasNextPage' => $nextPage,
-                    'hasPreviousPage' => $previousPage
-                ]
-            ];
+            $offset = $args['offset'];
+            $limit = $args['limit'];
+            $total = $list->count();
+
+            if ($limit > $maxLimit) {
+                $limit = $maxLimit;
+            }
+
+            // Apply limit
+            /* @var Limitable $list */
+            $limitedList = $list->limit($limit, $offset);
+            return static::createPaginationResult($total, $limitedList, $limit, $offset);
         };
     }
 

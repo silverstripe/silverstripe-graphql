@@ -11,7 +11,7 @@ plugins to include, and for DataObject queries, these include:
 
 * filter
 * sort
-* paginate
+* paginateList
 * inheritance
 * canViewItem (readOne)
 * canViewList (read)
@@ -67,7 +67,7 @@ SilverStripe\GraphQL\Schema\Schema:
           operations:
             read:
               plugins:
-                paginate: false
+                paginateList: false
 ```
 
 

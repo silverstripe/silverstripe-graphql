@@ -7,18 +7,21 @@ namespace SilverStripe\GraphQL\Schema\Plugin;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
-use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
+use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\Type;
+use Countable;
 
 /**
  * Generic pagination functionality for a query that can be customised in subclasses
  */
-abstract class AbstractPaginationPlugin implements FieldPlugin, SchemaUpdater
+class PaginationPlugin implements FieldPlugin, SchemaUpdater
 {
     use Configurable;
+
+    const IDENTIFIER = 'paginate';
 
     /**
      * @var int
@@ -32,7 +35,36 @@ abstract class AbstractPaginationPlugin implements FieldPlugin, SchemaUpdater
      */
     private static $max_limit = 100;
 
-    abstract protected function getPaginationResolver();
+    /**
+     * @var array|null
+     * @config
+     */
+    private static $resolver;
+
+    /**
+     * @return string
+     */
+    public function getIdentifier(): string
+    {
+        return self::IDENTIFIER;
+    }
+
+    /**
+     * @return array
+     * @param array $config
+     * @throws SchemaBuilderException
+     */
+    protected function getPaginationResolver(array $config): array
+    {
+        $resolver = $config['resolver'] ?? $this->config()->get('resolver');
+        Schema::invariant(
+            $resolver,
+            '%s has no resolver defined',
+            __CLASS__
+        );
+
+        return ResolverReference::create($resolver)->toArray();
+    }
 
     /**
      * @param Schema $schema
@@ -52,7 +84,7 @@ abstract class AbstractPaginationPlugin implements FieldPlugin, SchemaUpdater
     }
 
     /**
-     * @param Query $field
+     * @param Field $field
      * @param Schema $schema
      * @param array|null $config
      * @throws SchemaBuilderException
@@ -65,7 +97,7 @@ abstract class AbstractPaginationPlugin implements FieldPlugin, SchemaUpdater
         $field->addArg('limit', "Int = $limit")
             ->addArg('offset', "Int = 0")
             ->addResolverAfterware(
-                $this->getPaginationResolver(),
+                $this->getPaginationResolver($config),
                 ['maxLimit' => $max]
             );
 
@@ -89,6 +121,40 @@ abstract class AbstractPaginationPlugin implements FieldPlugin, SchemaUpdater
             ->addField('pageInfo', 'PageInfo!');
 
         $schema->addType($connectionType);
+    }
+
+    /**
+     * @param int $total
+     * @param iterable $limitedResults
+     * @param int $limit
+     * @param int $offset
+     * @return array
+     */
+    public static function createPaginationResult(
+        int $total,
+        iterable $limitedResults,
+        int $limit,
+        int $offset
+    ): array {
+        $nextPage = false;
+        $previousPage = false;
+
+        // Flag prev-next page
+        if ($limit && (($limit + $offset) < $total)) {
+            $nextPage = true;
+        }
+        if ($offset > 0) {
+            $previousPage = true;
+        }
+        return [
+            'edges' => $limitedResults,
+            'nodes' => $limitedResults,
+            'pageInfo' => [
+                'totalCount' => $total,
+                'hasNextPage' => $nextPage,
+                'hasPreviousPage' => $previousPage
+            ]
+        ];
     }
 
     /**
