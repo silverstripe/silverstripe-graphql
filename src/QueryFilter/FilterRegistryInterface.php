@@ -3,6 +3,10 @@
 
 namespace SilverStripe\GraphQL\QueryFilter;
 
+/**
+ * Filters for queries are registered as services and retrieved by identifiers.
+ * Registries must implement this interface.
+ */
 interface FilterRegistryInterface
 {
     /**

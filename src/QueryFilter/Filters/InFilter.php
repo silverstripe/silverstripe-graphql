@@ -5,6 +5,9 @@ namespace SilverStripe\GraphQL\QueryFilter\Filters;
 
 use SilverStripe\GraphQL\QueryFilter\ListFieldFilterInterface;
 
+/**
+ * A query filter that filters records by the presence of a value in an array
+ */
 class InFilter implements ListFieldFilterInterface
 {
     /**

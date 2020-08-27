@@ -6,6 +6,9 @@ namespace SilverStripe\GraphQL\QueryFilter\Filters;
 
 use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
 
+/**
+ * A query filter that filters records by negating an exact match
+ */
 class NotEqualFilter implements FieldFilterInterface
 {
     /**

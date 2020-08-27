@@ -7,6 +7,9 @@ namespace SilverStripe\GraphQL\Permission;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 
+/**
+ * Allows any class to hold Member state
+ */
 trait MemberAware
 {
 

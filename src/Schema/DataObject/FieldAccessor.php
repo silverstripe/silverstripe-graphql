@@ -20,8 +20,8 @@ use SilverStripe\ORM\UnsavedRelationList;
  * A utility class that handles an assortment of issues related to field access on DataObjects,
  * particularly with case insensitivity.
  *
- * Note: This class does a lot of the things that CaseInSensitiveFieldAccessor used to do
- * with a bit more flexibility and features
+ * It can get all fields on DataObjects, parse dot syntax to traverse relationships, and
+ * format fields to their desired casing.
  */
 class FieldAccessor
 {

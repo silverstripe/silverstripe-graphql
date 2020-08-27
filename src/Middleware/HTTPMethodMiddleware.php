@@ -4,6 +4,9 @@ namespace SilverStripe\GraphQL\Middleware;
 
 use Exception;
 
+/**
+ * Ensures mutations use POST requests
+ */
 class HTTPMethodMiddleware implements Middleware
 {
     /**

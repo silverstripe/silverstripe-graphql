@@ -6,6 +6,9 @@ namespace SilverStripe\GraphQL\Permission;
 
 use SilverStripe\Security\Member;
 
+/**
+ * Implementors of this interface can hold Member state
+ */
 interface MemberContextProvider
 {
     /**

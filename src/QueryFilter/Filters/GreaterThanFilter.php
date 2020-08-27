@@ -5,6 +5,9 @@ namespace SilverStripe\GraphQL\QueryFilter\Filters;
 
 use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
 
+/**
+ * A query filter that filters records by greater than comparison
+ */
 class GreaterThanFilter implements FieldFilterInterface
 {
     /**

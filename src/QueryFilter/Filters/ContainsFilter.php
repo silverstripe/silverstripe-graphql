@@ -5,6 +5,9 @@ namespace SilverStripe\GraphQL\QueryFilter\Filters;
 
 use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
 
+/**
+ * A filter that selects records that partially match a keyword
+ */
 class ContainsFilter implements FieldFilterInterface
 {
     /**

@@ -25,6 +25,11 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\ValidationException;
 use InvalidArgumentException;
 
+/**
+ * This class is responsible for taking query information from a controller,
+ * processing it through middlewares, extracting the results from the GraphQL schema,
+ * and formatting it into a suitable JSON response.
+ */
 class QueryHandler implements
     QueryHandlerInterface,
     PersistedQueryProvider,
@@ -187,7 +192,6 @@ class QueryHandler implements
      */
     protected function callMiddleware(GraphQLSchema $schema, $query, $context, $variables, callable $last)
     {
-        $this->extend('onBeforeCallMiddleware', $schema, $query, $context, $variables);
 
         $params = [
             'schema' => $schema,
@@ -196,8 +200,6 @@ class QueryHandler implements
             'vars' => $variables,
         ];
         $result = $this->executeMiddleware($params, $last);
-
-        $this->extend('onAfterCallMiddleware', $schema, $query, $context, $variables, $result);
 
         return $result;
     }
@@ -212,6 +214,7 @@ class QueryHandler implements
     {
         $error = [
             'message' => $exception->getMessage(),
+            'file' => $exception->getFile()
         ];
 
         $locations = $exception->getLocations();

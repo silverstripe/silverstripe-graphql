@@ -9,8 +9,19 @@ use GraphQL\Language\Parser;
 use GraphQL\Language\Source;
 use SilverStripe\Security\SecurityToken;
 
+/**
+ * Adds functionality to that checks a request for a token before allowing a mutation
+ * to happen. Protects against CSRF attacks
+ *
+ */
 class CSRFMiddleware implements Middleware
 {
+    /**
+     * @param array $params
+     * @param callable $next
+     * @return mixed
+     * @throws SyntaxError
+     */
     public function process(array $params, callable $next)
     {
         $query = $params['query'] ?? null;

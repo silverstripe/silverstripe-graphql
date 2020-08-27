@@ -5,6 +5,9 @@ namespace SilverStripe\GraphQL\QueryFilter\Filters;
 
 use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
 
+/**
+ * A query filter that filters records by the end of a field's contents
+ */
 class EndsWithFilter implements FieldFilterInterface
 {
     /**
