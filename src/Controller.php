@@ -136,11 +136,12 @@ class Controller extends BaseController implements Flushable
             if ($handler instanceof ContextProvider) {
                 $this->applyContext($handler, $request);
             }
-            $this->extend('onBeforeHandleQuery', $schema, $query, $handler->getContext(), $variables);
+            $ctx = $handler->getContext();
+            $this->extend('onBeforeHandleQuery', $schema, $query, $ctx, $variables);
             Benchmark::start('query-perf');
             $result = $handler->query($schema, $query, $variables);
             $queryPerf = Benchmark::end('query-perf', '%sms', true);
-            $this->extend('onAfterHandleQuery', $schema, $query, $handler->getContext(), $variables);
+            $this->extend('onAfterHandleQuery', $schema, $query, $ctx, $variables, $result);
 
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
