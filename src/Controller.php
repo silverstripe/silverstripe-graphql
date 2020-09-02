@@ -559,7 +559,7 @@ GRAPHQL
      * @param QueryHandlerInterface $queryHandler
      * @return Controller
      */
-    public function setQueryHandler(QueryHandlerInterface $queryHandler): Controller
+    public function setQueryHandler(QueryHandlerInterface $queryHandler): self
     {
         $this->queryHandler = $queryHandler;
         return $this;
