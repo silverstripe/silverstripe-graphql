@@ -32,7 +32,7 @@ class FieldAccessor
      * @var array
      * @config
      */
-    private static $allowed_aggregates = ['min', 'max', 'avg', 'count'];
+    private static $allowed_aggregates = ['min', 'max', 'avg', 'count', 'sum'];
 
     /**
      * A function that makes an object property a field name
