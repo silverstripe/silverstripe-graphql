@@ -40,7 +40,7 @@ SilverStripe\GraphQL\Schema\Schema:
             author: true
             categories: true
         SilverStripe\Securty\Member:
-          fields
+          fields:
             firstName: true
             surname: true
             email: true
@@ -48,4 +48,3 @@ SilverStripe\GraphQL\Schema\Schema:
         MyProject\Models\BlogCategory:
           fields: '*'
 ```
-
