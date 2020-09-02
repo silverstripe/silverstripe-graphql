@@ -11,6 +11,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
 use SilverStripe\GraphQL\Schema\Registry\ResolverRegistry;
+use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -169,6 +170,7 @@ class Field extends ViewableData implements
     {
         Schema::assertValidConfig($config, [
             'type',
+            'model',
             'args',
             'description',
             'resolver',
@@ -178,6 +180,10 @@ class Field extends ViewableData implements
         ]);
 
         $type = $config['type'] ?? null;
+        $modelTypeDef = $config['model'] ?? null;
+        if ($modelTypeDef) {
+            $this->setTypeByModel($modelTypeDef);
+        }
         if ($type) {
             $this->setType($type);
         }
@@ -305,6 +311,33 @@ class Field extends ViewableData implements
     }
 
     /**
+     * @param string $modelTypeDef
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function setTypeByModel(string $modelTypeDef): self
+    {
+        $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
+        $encoded = $this->toEncodedType($safeModelTypeDef);
+        $safeNamedClass = $encoded->getNamedType();
+        $namedClass = str_replace('__', '\\', $safeNamedClass);
+        /* @var SchemaModelCreatorRegistry $registry */
+        $registry = Injector::inst()->get(SchemaModelCreatorRegistry::class);
+        $model = $registry->getModel($namedClass);
+        Schema::invariant(
+            $model,
+            'No model found for %s on %s',
+            $namedClass,
+            $this->getName()
+        );
+
+        $typeName = $model->getTypeName();
+        $wrappedTypeName = str_replace($namedClass, $typeName, $modelTypeDef);
+
+        return $this->setType($wrappedTypeName);
+    }
+
+    /**
      * @return string|null
      */
     public function getName(): ?string
@@ -360,7 +393,7 @@ class Field extends ViewableData implements
      */
     public function getNamedType(): string
     {
-        return $this->getEncodedType()->getTypeName()[0];
+        return $this->getEncodedType()->getNamedType();
     }
 
     /**

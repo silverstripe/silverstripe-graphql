@@ -98,6 +98,14 @@ class EncodedType extends ViewableData implements Encoder
 
     /**
      * @return string
+     */
+    public function getNamedType(): string
+    {
+        return $this->getTypeName()[0];
+    }
+
+    /**
+     * @return string
      * @throws SchemaBuilderException
      */
     public function encode(): string
