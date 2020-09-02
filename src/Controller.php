@@ -459,7 +459,7 @@ class Controller extends BaseController implements Flushable
      * @return array
      * @throws Exception
      */
-    public function introspectTypes()
+    public function introspectTypes(): array
     {
         $handler = $this->getQueryHandler();
         if ($handler instanceof ContextProvider) {
