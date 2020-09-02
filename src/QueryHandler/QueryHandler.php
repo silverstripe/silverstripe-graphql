@@ -144,7 +144,7 @@ class QueryHandler implements
      * @param ExecutionResult $executionResult
      * @return array
      */
-    public function serialiseResult($executionResult)
+    public function serialiseResult(ExecutionResult $executionResult): array
     {
         // Format object
         if (!empty($executionResult->errors)) {
