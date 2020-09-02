@@ -163,7 +163,7 @@ class QueryHandler implements
      * @param callable $errorFormatter
      * @return QueryHandler
      */
-    public function setErrorFormatter(callable $errorFormatter): QueryHandler
+    public function setErrorFormatter(callable $errorFormatter): self
     {
         $this->errorFormatter = $errorFormatter;
         return $this;
