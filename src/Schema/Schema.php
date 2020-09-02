@@ -688,7 +688,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public static function invariant($test, $message = '', ...$params): void
     {
         if (!$test) {
-            $message = call_user_func_array('sprintf', array_merge([$message], $params));
+            $message = sprintf($message, ...$params);
             throw new SchemaBuilderException($message);
         }
     }
