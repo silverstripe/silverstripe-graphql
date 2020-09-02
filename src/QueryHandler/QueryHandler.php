@@ -172,7 +172,7 @@ class QueryHandler implements
     /**
      * @return array
      */
-    protected function getContextDefaults()
+    protected function getContextDefaults(): array
     {
         return [
             self::CURRENT_USER => $this->getMemberContext(),
