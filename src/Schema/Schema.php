@@ -675,7 +675,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
         static::invariant(
           preg_match(' /[_A-Za-z][_0-9A-Za-z]*/', $name),
           'Invalid name: %s. Names must only use underscores and alphanumeric characters, and cannot
-          begin with a number.'
+          begin with a number.',
+          $name
         );
     }
 
