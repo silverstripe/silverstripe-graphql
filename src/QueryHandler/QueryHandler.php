@@ -210,7 +210,7 @@ class QueryHandler implements
      * @param Error $exception
      * @return array
      */
-    public static function formatError(Error $exception)
+    public static function formatError(Error $exception): array
     {
         $error = [
             'message' => $exception->getMessage(),
