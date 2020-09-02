@@ -143,7 +143,7 @@ class CreateCreator implements OperationCreator, InputTypeProvider
      * @param FieldAccessor $fieldAccessor
      * @return CreateCreator
      */
-    public function setFieldAccessor(FieldAccessor $fieldAccessor): CreateCreator
+    public function setFieldAccessor(FieldAccessor $fieldAccessor): self
     {
         $this->fieldAccessor = $fieldAccessor;
         return $this;
