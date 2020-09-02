@@ -10,7 +10,7 @@ use GraphQL\Language\Source;
 use SilverStripe\Security\SecurityToken;
 
 /**
- * Adds functionality to that checks a request for a token before allowing a mutation
+ * Adds functionality that checks a request for a token before allowing a mutation
  * to happen. Protects against CSRF attacks
  *
  */
