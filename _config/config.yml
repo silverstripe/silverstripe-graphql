@@ -28,22 +28,6 @@ SilverStripe\Core\Injector\Injector:
     constructor:
       namespace: "GraphQLSchema"
 
-  # A simple logger that allows the schema to send status messages, e.g. to the build task
-  Monolog\Handler\HandlerInterface.graphqlSchema:
-    class: SilverStripe\Logging\HTTPOutputHandler
-    constructor:
-      0: "debug"
-    properties:
-      DefaultFormatter: '%$SilverStripe\GraphQL\Logging\Reporter'
-      StatusCode: 200
-
-  Psr\Log\LoggerInterface.graphqlSchema:
-    type: singleton
-    class: Monolog\Logger
-    constructor:
-      - "graphql-schema"
-    calls:
-      pushDisplayErrorHandler: [ pushHandler, [ '%$Monolog\Handler\HandlerInterface.graphqlSchema' ] ]
 
 SilverStripe\GraphQL\Controller:
   extensions:

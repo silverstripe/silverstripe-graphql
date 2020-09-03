@@ -28,12 +28,12 @@ class BuildSchemaTask extends BuildTask
         foreach ($keys as $key) {
             Benchmark::start('build-schema-' . $key);
             $schema = Schema::get($key);
-            $schema->getReporter()->info(sprintf('--- Building schema "%s" ---', $key));
+            Schema::message(sprintf('--- Building schema "%s" ---', $key));
             if ($clear) {
                 $schema->getStore()->clear();
             }
             $schema->save();
-            $schema->getReporter()->info(
+            Schema::message(
                 Benchmark::end('build-schema-' . $key, 'Built schema in %sms.')
             );
 

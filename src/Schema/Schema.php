@@ -4,6 +4,7 @@ namespace SilverStripe\GraphQL\Schema;
 
 use GraphQL\Type\Schema as GraphQLSchema;
 use Psr\Log\LoggerInterface;
+use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
@@ -55,10 +56,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
     const QUERY_TYPE = 'Query';
     const MUTATION_TYPE = 'Mutation';
     const ALL = '*';
-
-    private static $dependencies = [
-      'Reporter' => '%$' . LoggerInterface::class . '.graphqlSchema',
-    ];
 
     /**
      * @var string
@@ -714,21 +711,12 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @return LoggerInterface
+     * Used for logging in tasks
+     * @param string $message
      */
-    public function getReporter(): LoggerInterface
+    public static function message(string $message): void
     {
-        return $this->reporter;
+        $break = Director::is_cli() ? PHP_EOL : "<br>";
+        fwrite(STDOUT, $message . $break);
     }
-
-    /**
-     * @param LoggerInterface $reporter
-     * @return Schema
-     */
-    public function setReporter(LoggerInterface $reporter): Schema
-    {
-        $this->reporter = $reporter;
-        return $this;
-    }
-
 }

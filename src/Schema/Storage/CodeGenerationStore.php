@@ -155,29 +155,29 @@ class CodeGenerationStore implements SchemaStorageInterface
                 $deleted[] = $type;
             }
         }
-        $reporter = $schema->getReporter();
-        $reporter->info("Total types: $total");
-        $reporter->info(sprintf('Types built: %s', count($built)));
+
+        Schema::message("Total types: $total");
+        Schema::message(sprintf('Types built: %s', count($built)));
         $snapshot = array_slice($built, 0, 10);
         foreach ($snapshot as $type) {
-            $reporter->info('*' . $type);
+            Schema::message('*' . $type);
         }
         $diff = count($built) - count($snapshot);
         if ($diff > 0) {
-            $reporter->info(sprintf('(... and %s more)', $diff));
+            Schema::message(sprintf('(... and %s more)', $diff));
         }
 
-        $reporter->info(sprintf('Types deleted: %s', count($deleted)));
+        Schema::message(sprintf('Types deleted: %s', count($deleted)));
         $snapshot = array_slice($deleted, 0, 10);
         foreach ($snapshot as $type) {
-            $reporter->info('*' . $type);
+            Schema::message('*' . $type);
         }
         $diff = count($deleted) - count($snapshot);
         if ($diff > 0) {
-            $reporter->info(sprintf('(... and %s more)', $diff));
+            Schema::message(sprintf('(... and %s more)', $diff));
         }
 
-        $reporter->info(Benchmark::end('render', 'Generated code in %sms'));
+        Schema::message(Benchmark::end('render', 'Generated code in %sms'));
     }
 
     /**
