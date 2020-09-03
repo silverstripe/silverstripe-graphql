@@ -34,7 +34,7 @@ class Resolver
      * @param array $resolverContext
      * @return Closure
      */
-    public static function resolveContext(array $resolverContext = [])
+    public static function resolveContext(array $resolverContext = []): Closure
     {
         $propertyMapping = $resolverContext['propertyMapping'];
         return function(
