@@ -1,7 +1,7 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\QueryFilter;
+namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter;
 
 /**
  * A special type of filter that accepts list values

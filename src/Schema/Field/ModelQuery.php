@@ -45,9 +45,11 @@ class ModelQuery extends Query implements ModelOperation
                 $plugin instanceof QueryPlugin ||
                 $plugin instanceof FieldPlugin
             ),
-            'Plugin %s not found or not an instance of %s',
+            'Plugin %s not found or not an instance of %s, %s, or %s',
             $pluginName,
-            ModelQueryPlugin::class
+            ModelQueryPlugin::class,
+            QueryPlugin::class,
+            FieldPlugin::class
         );
 
     }

@@ -1,13 +1,13 @@
 <?php
 
-namespace SilverStripe\GraphQL\QueryFilter;
+namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter;
 
 use InvalidArgumentException;
 
 class FieldFilterRegistry implements FilterRegistryInterface
 {
     /**
-     * @var array FilterInterface[]
+     * @var array FieldFilterInterface[]
      */
     protected $filters = [];
 
@@ -28,16 +28,8 @@ class FieldFilterRegistry implements FilterRegistryInterface
      * @return $this
      * @throws InvalidArgumentException
      */
-    public function addFilter(FieldFilterInterface $filter, $identifier = null): self
+    public function addFilter(FieldFilterInterface $filter, ?string $identifier = null): self
     {
-        if (!$filter instanceof FieldFilterInterface) {
-            throw new InvalidArgumentException(sprintf(
-                '%s filters must be implement the %s interface. See: %s',
-                __CLASS__,
-                FieldFilterInterface::class,
-                get_class($filter)
-            ));
-        }
         $id = $identifier ?: $filter->getIdentifier();
         if (!preg_match('/^[A-Za-z0-9_]+$/', $id)) {
             throw new InvalidArgumentException(sprintf(
@@ -52,10 +44,10 @@ class FieldFilterRegistry implements FilterRegistryInterface
     }
 
     /**
-     * @param $identifier
+     * @param string $identifier
      * @return FieldFilterInterface|null
      */
-    public function getFilterByIdentifier($identifier): ?FieldFilterInterface
+    public function getFilterByIdentifier(string $identifier): ?FieldFilterInterface
     {
         if (isset($this->filters[$identifier])) {
             return $this->filters[$identifier];

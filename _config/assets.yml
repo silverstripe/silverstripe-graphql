@@ -13,8 +13,6 @@ SilverStripe\GraphQL\Schema\Schema:
             hash: String
             variant: String
             url: String
-            width: Int
-            height: Int
 
 SilverStripe\Assets\Storage\DBFile:
   graphql_type: DBFile

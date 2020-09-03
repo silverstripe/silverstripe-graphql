@@ -45,9 +45,11 @@ class ModelMutation extends Query implements ModelOperation
                 $plugin instanceof MutationPlugin ||
                 $plugin instanceof FieldPlugin
             ),
-            'Plugin %s not found or not an instance of %s',
+            'Plugin %s not found or not an instance of %s, %s, or %s',
             $pluginName,
-            ModelMutationPlugin::class
+            ModelMutationPlugin::class,
+            MutationPlugin::class,
+            FieldPlugin::class
         );
     }
 }

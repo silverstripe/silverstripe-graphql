@@ -4,9 +4,9 @@
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\QueryFilter\FieldFilterRegistry;
-use SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface;
-use SilverStripe\GraphQL\QueryFilter\ListFieldFilterInterface;
+use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\FieldFilterRegistry;
+use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\FilterRegistryInterface;
+use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\ListFieldFilterInterface;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;

@@ -104,7 +104,6 @@ class Field extends ViewableData implements
             is_string($config) || is_array($config),
             'Config for field %s must be a string or array. Got %s',
             $name,
-            Field::class,
             gettype($config)
         );
         $appliedConfig = is_string($config) ? ['type' => $config] : $config;
@@ -424,6 +423,14 @@ class Field extends ViewableData implements
     public function getDescription(): ?string
     {
         return $this->description;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDescriptionEscaped(): ?string
+    {
+        return $this->getDescription() ? addslashes($this->getDescription()) : null;
     }
 
     /**

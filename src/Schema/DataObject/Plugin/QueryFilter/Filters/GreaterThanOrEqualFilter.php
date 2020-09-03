@@ -1,9 +1,10 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\QueryFilter\Filters;
+namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters;
 
-use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
+use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\FieldFilterInterface;
+use SilverStripe\ORM\Filterable;
 
 /**
  * A query filter that filters records by greater than or equal comparison
@@ -13,7 +14,7 @@ class GreaterThanOrEqualFilter implements FieldFilterInterface
     /**
      * @inheritdoc
      */
-    public function apply(iterable $list, string $fieldName, $value): iterable
+    public function apply(Filterable $list, string $fieldName, $value): iterable
     {
         return $list->filter($fieldName . ':GreaterThanOrEqual', $value);
     }

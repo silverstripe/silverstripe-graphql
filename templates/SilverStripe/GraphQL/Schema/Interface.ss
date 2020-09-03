@@ -14,7 +14,7 @@ class $Name extends InterfaceType
                 return call_user_func([__NAMESPACE__ . '\\{$Top.TypesClassName}', \$type]);
             },
             <% if $Description %>
-            'description' => '$Description',
+            'description' => '$DescriptionEscaped',
             <% end_if %>
             'fields' => function () {
                 return [
@@ -23,7 +23,7 @@ class $Name extends InterfaceType
                         'name' => '$Name',
                         'type' => $EncodedType,
                     <% if $Description %>
-                        'description' => '$Description',
+                        'description' => '$DescriptionEscaped',
                     <% end_if %>
                     <% if $ArgList %>
                         'args' => [

@@ -19,10 +19,12 @@ use SilverStripe\GraphQL\Schema\Type\UnionType;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
+use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Psr\SimpleCache\InvalidArgumentException;
+use RuntimeException;
 
 /**
  * Class FileSchemaStore
@@ -68,6 +70,7 @@ class CodeGenerationStore implements SchemaStorageInterface
      * @param Schema $schema
      * @throws Exception
      * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
     public function persistSchema(Schema $schema): void
     {
@@ -76,7 +79,15 @@ class CodeGenerationStore implements SchemaStorageInterface
         $finder = new Finder();
         $dir = $this->getDirectory();
         if (!$fs->exists($dir)) {
-            $fs->mkdir($dir);
+            try {
+                $fs->mkdir($dir);
+            } catch (IOException $e) {
+                throw new RuntimeException(sprintf(
+                    'Could not persist schema. Failed to create directory %s. Full message: %s',
+                    $this->getDirectory(),
+                    $e->getMessage()
+                ));
+            }
         }
         $globals = [
             'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
@@ -91,7 +102,16 @@ class CodeGenerationStore implements SchemaStorageInterface
         $code = (string) $data->customise($globals)
             ->renderWith('SilverStripe\\GraphQL\\Schema\\GraphQLTypeRegistry');
         $schemaFile = $this->getSchemaFilename();
-        $fs->dumpFile($schemaFile, $this->toCode($code));
+        try {
+            $fs->dumpFile($schemaFile, $this->toCode($code));
+        } catch (IOException $e) {
+            throw new RuntimeException(sprintf(
+                'Could not persist schema. Failed to write to file %s. Full message: %s',
+                $schemaFile,
+                $e->getMessage()
+            ));
+        }
+
 
         $fields = ['Types', 'Interfaces', 'Unions', 'Enums'];
         $touched = [];

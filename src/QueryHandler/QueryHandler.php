@@ -5,8 +5,12 @@ namespace SilverStripe\GraphQL\QueryHandler;
 
 
 use GraphQL\Error\Error;
+use GraphQL\Error\SyntaxError;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\GraphQL;
+use GraphQL\Language\AST\NodeKind;
+use GraphQL\Language\Parser;
+use GraphQL\Language\Source;
 use GraphQL\Language\SourceLocation;
 use GraphQL\Type\Schema as GraphQLSchema;
 use SilverStripe\Core\Config\Configurable;
@@ -42,6 +46,9 @@ class QueryHandler implements
     use Configurable;
     use MemberAware;
 
+    /**
+     * The context key that refers the the logged in user
+     */
     const CURRENT_USER = 'currentUser';
 
     /**
@@ -96,10 +103,10 @@ class QueryHandler implements
     /**
      * get query from persisted id, return null if not found
      *
-     * @param $id
+     * @param string $id
      * @return string|null
      */
-    public function getQueryFromPersistedID($id): ?string
+    public function getQueryFromPersistedID(string $id): ?string
     {
         /** @var PersistedQueryMappingProvider $provider */
         $provider = Injector::inst()->get(PersistedQueryMappingProvider::class);
@@ -127,11 +134,8 @@ class QueryHandler implements
      */
     public function addContext(string $key, $value): ContextProvider
     {
-        if (!is_string($key)) {
-            throw new InvalidArgumentException(sprintf(
-                'Context key must be a string. Got %s',
-                gettype($key)
-            ));
+        if (empty($key)) {
+            throw new InvalidArgumentException('Context key cannot be empty');
         }
         $this->extraContext[$key] = $value;
 
@@ -214,7 +218,7 @@ class QueryHandler implements
     {
         $error = [
             'message' => $exception->getMessage(),
-            'file' => $exception->getFile()
+            'file' => $exception->getFile(),
         ];
 
         $locations = $exception->getLocations();
@@ -226,10 +230,45 @@ class QueryHandler implements
 
         $previous = $exception->getPrevious();
         if ($previous && $previous instanceof ValidationException) {
-            $error['validation'] = $previous->getResult()->getMessages();
+            $errorx['validation'] = $previous->getResult()->getMessages();
         }
 
         return $error;
     }
 
+    /**
+     * @param string $query
+     * @return bool
+     * @throws SyntaxError
+     */
+    public static function isMutation(string $query): bool
+    {
+        // Simple string matching as a first check to prevent unnecessary static analysis
+        if (stristr($query, 'mutation') === false) {
+            return false;
+        }
+
+        // If "mutation" is the first expression in the query, then it's a mutation.
+        if (preg_match('/^\s*'.preg_quote('mutation', '/').'/', $query)) {
+            return true;
+        }
+
+        // Otherwise, bring in the big guns.
+        $document = Parser::parse(new Source($query ?: 'GraphQL'));
+        $defs = $document->definitions;
+        foreach ($defs as $statement) {
+            $options = [
+                NodeKind::OPERATION_DEFINITION,
+                NodeKind::OPERATION_TYPE_DEFINITION
+            ];
+            if (!in_array($statement->kind, $options, true)) {
+                continue;
+            }
+            if ($statement->operation === 'mutation') {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

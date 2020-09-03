@@ -209,6 +209,14 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
     }
 
     /**
+     * @return string|null
+     */
+    public function getDescriptionEscaped(): ?string
+    {
+        return $this->getDescription() ? addslashes($this->getDescription()) : null;
+    }
+
+    /**
      * @param Type $type
      * @return Type
      * @throws SchemaBuilderException

@@ -7,6 +7,9 @@ namespace SilverStripe\GraphQL\Schema\Interfaces;
 use GraphQL\Type\Schema as GraphQLSchema;
 use SilverStripe\GraphQL\Schema\Schema;
 
+/**
+ * Persists a graphql-php Schema object, and retrieves it
+ */
 interface SchemaStorageInterface
 {
 

@@ -1,9 +1,10 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\QueryFilter\Filters;
+namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters;
 
-use SilverStripe\GraphQL\QueryFilter\ListFieldFilterInterface;
+use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\ListFieldFilterInterface;
+use SilverStripe\ORM\Filterable;
 
 /**
  * A query filter that filters records by the presence of a value in an array
@@ -13,7 +14,7 @@ class InFilter implements ListFieldFilterInterface
     /**
      * @inheritDoc
      */
-    public function apply(iterable $list, string $fieldName, $value): iterable
+    public function apply(Filterable $list, string $fieldName, $value): iterable
     {
         return $list->filter($fieldName . ':ExactMatch', (array) $value);
     }

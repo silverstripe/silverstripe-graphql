@@ -10,6 +10,7 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultPluginProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
@@ -144,7 +145,7 @@ class DataObjectModel implements
 
         $type = DataObjectModel::create($class)->getTypeName();
 
-        return sprintf('[%s]', $type);
+        return $this->isList($result) ? sprintf('[%s]', $type) : $type;
     }
 
     /**
@@ -298,6 +299,15 @@ class DataObjectModel implements
         }
 
         return null;
+    }
+
+    /**
+     * @param $result
+     * @return bool
+     */
+    private function isList($result): bool
+    {
+        return $result instanceof SS_List;
     }
 
     /**

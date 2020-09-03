@@ -4,7 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\Type;
 
 /**
- * Abstraction for input types
+ * Abstraction that can express input types as code
  */
 class InputType extends Type
 {

@@ -1,10 +1,10 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\QueryFilter\Filters;
+namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters;
 
-
-use SilverStripe\GraphQL\QueryFilter\FieldFilterInterface;
+use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\FieldFilterInterface;
+use SilverStripe\ORM\Filterable;
 
 /**
  * A query filter that filters records by negating an exact match
@@ -14,7 +14,7 @@ class NotEqualFilter implements FieldFilterInterface
     /**
      * @inheritDoc
      */
-    public function apply(iterable $list, string $fieldName, $value): iterable
+    public function apply(Filterable $list, string $fieldName, $value): iterable
     {
         return $list->exclude($fieldName, $value);
     }

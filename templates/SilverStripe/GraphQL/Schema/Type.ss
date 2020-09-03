@@ -12,7 +12,7 @@ class $Name extends <% if $IsInput %>InputObjectType<% else %>ObjectType<% end_i
         parent::__construct([
             'name' => '$Name',
         <% if $Description %>
-            'description' => '$Description',
+            'description' => '$DescriptionEscaped',
         <% end_if %>
         <% if $Interfaces %>
             'interfaces' => function () {
@@ -29,7 +29,7 @@ class $Name extends <% if $IsInput %>InputObjectType<% else %>ObjectType<% end_i
                         'type' => $EncodedType,
                         'resolve' => $getEncodedResolver($Up.Name),
                     <% if $Description %>
-                        'description' => '$Description',
+                        'description' => '$DescriptionEscaped',
                     <% end_if %>
                     <% if $ArgList %>
                         'args' => [

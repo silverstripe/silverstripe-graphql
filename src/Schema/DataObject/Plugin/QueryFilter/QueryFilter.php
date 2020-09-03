@@ -1,10 +1,10 @@
 <?php
 
 
-namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
+namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter;
 
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface;
+use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\FilterRegistryInterface;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;

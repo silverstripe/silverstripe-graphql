@@ -8,6 +8,7 @@ use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Convert;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Type\Type;
@@ -54,17 +55,17 @@ class InheritanceChain
     /**
      * InheritanceChain constructor.
      * @param string $dataObjectClass
+     * @throws SchemaBuilderException
      */
     public function __construct(string $dataObjectClass)
     {
         $this->dataObjectClass = $dataObjectClass;
-        if (!is_subclass_of($this->dataObjectClass, DataObject::class)) {
-            throw new InvalidArgumentException(sprintf(
-                '%s only accepts %s subclasses',
-                __CLASS__,
-                DataObject::class
-            ));
-        }
+        Schema::invariant(
+            is_subclass_of($this->dataObjectClass, DataObject::class),
+            '%s only accepts %s subclasses',
+            __CLASS__,
+            DataObject::class
+        );
         $this->inst = DataObject::singleton($this->dataObjectClass);
     }
 

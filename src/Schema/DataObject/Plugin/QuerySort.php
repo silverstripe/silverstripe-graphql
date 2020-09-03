@@ -4,7 +4,6 @@
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
 
-use SilverStripe\GraphQL\QueryFilter\FilterRegistryInterface;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
@@ -52,7 +51,8 @@ class QuerySort extends AbstractQuerySortPlugin
                 $query->getModel()->getSourceClass(),
                 DataObject::class
             ),
-            'Cannot apply plugin %s to a query that is not based on a DataObject'
+            'Cannot apply plugin %s to a query that is not based on a DataObject',
+            $this->getIdentifier()
         );
         parent::apply($query, $schema, $config);
     }
@@ -105,7 +105,6 @@ class QuerySort extends AbstractQuerySortPlugin
 
         return function (DataList $list, array $args) use ($mapping, $fieldName) {
             $filterArgs = $args[$fieldName] ?? [];
-            /* @var FilterRegistryInterface $registry */
             $paths = static::buildPathsFromArgs($filterArgs);
             foreach ($paths as $path => $value) {
                 $normalised = $mapping[$path] ?? $path;
@@ -120,6 +119,7 @@ class QuerySort extends AbstractQuerySortPlugin
      * @param ModelField $field
      * @param ModelType $modelType
      * @return bool
+     * @throws SchemaBuilderException
      */
     protected function shouldAddField(ModelField $field, ModelType $modelType): bool
     {

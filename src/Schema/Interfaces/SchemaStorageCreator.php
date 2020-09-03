@@ -3,6 +3,9 @@
 
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
+/**
+ * Given a name, create a SchemaStorageInterface implementation
+ */
 interface SchemaStorageCreator
 {
     /**

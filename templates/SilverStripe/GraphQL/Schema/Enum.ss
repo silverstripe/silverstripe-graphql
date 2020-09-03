@@ -15,7 +15,7 @@ class $Name extends EnumType
             <% end_loop %>
             ],
             <% if $Description %>
-            'description' => '$Description'
+            'description' => '$DescriptionEscaped'
             <% end_if %>
         ]);
     }

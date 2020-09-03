@@ -166,6 +166,14 @@ class UnionType extends ViewableData implements
     }
 
     /**
+     * @return string|null
+     */
+    public function getDescriptionEscaped(): ?string
+    {
+        return $this->getDescription() ? addslashes($this->getDescription()) : null;
+    }
+
+    /**
      * @param string|null $description
      * @return UnionType
      */

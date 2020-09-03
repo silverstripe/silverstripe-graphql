@@ -119,7 +119,10 @@ class CreateCreator implements OperationCreator, InputTypeProvider
         $includedFields = array_diff($allFields, $excluded);
         $fieldMap = [];
         foreach ($includedFields as $fieldName) {
-            $fieldMap[$fieldName] = $model->getTypeForField($fieldName);
+            $type = $model->getTypeForField($fieldName);
+            if ($type) {
+                $fieldMap[$fieldName] = $type;
+            }
         }
         $inputType = InputType::create(
             self::inputTypeName($typeName),

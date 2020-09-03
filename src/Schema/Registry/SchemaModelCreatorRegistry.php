@@ -47,12 +47,12 @@ class SchemaModelCreatorRegistry
     }
 
     /**
-     * @param SchemaModelCreatorInterface $creator
+     * @param SchemaModelCreatorInterface $modelCreator
      * @return $this
      */
-    public function removeModelCreator(SchemaModelCreatorInterface $creator): self
+    public function removeModelCreator(SchemaModelCreatorInterface $modelCreator): self
     {
-        $class = get_class($creator);
+        $class = get_class($modelCreator);
         $this->modelCreators = array_filter($this->modelCreators, function ($creator) use ($class) {
             return !$creator instanceof $class;
         });

@@ -9,5 +9,9 @@ namespace SilverStripe\GraphQL\PersistedQuery;
  */
 interface PersistedQueryProvider
 {
-    public function getQueryFromPersistedID($id): ?string;
+    /**
+     * @param string $id
+     * @return string|null
+     */
+    public function getQueryFromPersistedID(string $id): ?string;
 }

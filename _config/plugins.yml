@@ -6,7 +6,7 @@ SilverStripe\Core\Injector\Injector:
     constructor:
       paginator: '%$SilverStripe\GraphQL\Schema\Plugin\PaginationPlugin'
       dataobjectPaginator: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\Paginator'
-      dataobjectQueryFilter: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter'
+      dataobjectQueryFilter: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\QueryFilter'
       dataobjectQuerySort: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QuerySort'
       dataobjectInheritance: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\Inheritance'
       canViewListPermission: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\CanViewListPermission'

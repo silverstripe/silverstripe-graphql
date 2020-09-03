@@ -39,7 +39,6 @@ abstract class DefaultResolverProvider implements ResolverProvider
      */
     public static function getResolverMethod(?string $typeName = null, ?Field $field = null): ?string
     {
-        /* @var ModelField $field */
         $fieldName = $field->getName();
         $candidates = array_filter([
 
@@ -52,6 +51,7 @@ abstract class DefaultResolverProvider implements ResolverProvider
             $typeName ? sprintf('resolve%s', ucfirst($typeName)) : null,
 
             // resolveDataObjectContent()
+            /* @var ModelField $field */
             $field instanceof ModelField ? sprintf(
                 'resolve%s%s',
                 ucfirst($field->getModel()->getIdentifier()),

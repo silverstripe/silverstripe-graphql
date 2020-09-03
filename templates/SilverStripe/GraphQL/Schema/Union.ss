@@ -19,7 +19,7 @@ class $Name extends UnionType
                 return call_user_func([__NAMESPACE__ . '\\{$Top.TypesClassName}', \$type]);
             },
             <% if $Description %>
-                'description' => '$Description',
+                'description' => '$DescriptionEscaped',
             <% end_if %>
         ]);
     }

@@ -15,7 +15,7 @@ use SilverStripe\View\ViewableData;
 /**
  * Abstraction for enum types
  */
-class Enum extends ViewableData implements SchemaValidator
+class Enum extends Type implements SchemaValidator
 {
     /**
      * @var string
@@ -41,9 +41,7 @@ class Enum extends ViewableData implements SchemaValidator
      */
     public function __construct(string $name, array $values, ?string $description = null)
     {
-        parent::__construct();
-        Schema::assertValidName($name);
-        $this->setName($name);
+        parent::__construct($name);
         $this->setValues($values);
         $this->setDescription($description);
     }
@@ -88,24 +86,6 @@ class Enum extends ViewableData implements SchemaValidator
     }
 
     /**
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    /**
-     * @param string $name
-     * @return Enum
-     */
-    public function setName(string $name): self
-    {
-        $this->name = $name;
-        return $this;
-    }
-
-    /**
      * @return array
      */
     public function getValues(): array
@@ -147,24 +127,6 @@ class Enum extends ViewableData implements SchemaValidator
     {
         unset($this->values[$key]);
 
-        return $this;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    /**
-     * @param string|null $description
-     * @return Enum
-     */
-    public function setDescription(?string $description): self
-    {
-        $this->description = $description;
         return $this;
     }
 
