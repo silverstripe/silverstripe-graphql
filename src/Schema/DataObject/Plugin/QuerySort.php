@@ -98,7 +98,7 @@ class QuerySort extends AbstractQuerySortPlugin
      * @param array $context
      * @return Closure
      */
-    public static function sort(array $context)
+    public static function sort(array $context): closure
     {
         $mapping = $context['fieldMapping'] ?? [];
         $fieldName = $context['fieldName'];
