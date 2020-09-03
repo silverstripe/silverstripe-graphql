@@ -4,7 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
 /**
- * Implementors of this interface can create queries an mutations dynamically
+ * Implementors of this interface can create queries and mutations dynamically
  */
 interface OperationCreator
 {
