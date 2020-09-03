@@ -41,9 +41,7 @@ class Paginator extends PaginationPlugin
             $limit = $args['limit'];
             $total = $list->count();
 
-            if ($limit > $maxLimit) {
-                $limit = $maxLimit;
-            }
+            $limit = min($limit, $maxLimit);
 
             // Apply limit
             /* @var Limitable $list */
