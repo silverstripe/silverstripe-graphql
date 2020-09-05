@@ -11,6 +11,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\NestedDefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
@@ -30,7 +31,8 @@ class DataObjectModel implements
     SchemaModelInterface,
     OperationProvider,
     DefaultFieldsProvider,
-    DefaultPluginProvider
+    DefaultPluginProvider,
+    NestedDefaultPluginProvider
 {
     use Injectable;
     use Configurable;
@@ -165,6 +167,14 @@ class DataObjectModel implements
     public function getDefaultPlugins(): array
     {
         return $this->config()->get('default_plugins');
+    }
+
+    /**
+     * @return array
+     */
+    public function getNestedDefaultPlugins(): array
+    {
+        return $this->config()->get('nested_query_default_plugins');
     }
 
     /**

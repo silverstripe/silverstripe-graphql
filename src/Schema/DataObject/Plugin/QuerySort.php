@@ -119,7 +119,6 @@ class QuerySort extends AbstractQuerySortPlugin
      * @param ModelField $field
      * @param ModelType $modelType
      * @return bool
-     * @throws SchemaBuilderException
      */
     protected function shouldAddField(ModelField $field, ModelType $modelType): bool
     {

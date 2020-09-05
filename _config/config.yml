@@ -28,6 +28,9 @@ SilverStripe\Core\Injector\Injector:
     constructor:
       namespace: "GraphQLSchema"
 
+  SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore:
+    properties:
+      rootDir: '`BASE_PATH`'
 
 SilverStripe\GraphQL\Controller:
   extensions:

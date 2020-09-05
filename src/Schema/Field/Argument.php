@@ -125,7 +125,6 @@ class Argument extends ViewableData implements ConfigurationApplier, SignaturePr
 
     /**
      * @return EncodedType
-     * @throws SchemaBuilderException
      */
     public function getEncodedType(): EncodedType
     {
@@ -135,14 +134,7 @@ class Argument extends ViewableData implements ConfigurationApplier, SignaturePr
 
         $ref = TypeReference::create($this->type);
 
-        try {
-            return EncodedType::create($ref->toAST());
-        } catch (SyntaxError $e) {
-            throw new SchemaBuilderException(sprintf(
-                'The type for argument "%s" is not properly formatted',
-                $this->getName()
-            ));
-        }
+        return EncodedType::create($ref);
     }
 
     /**

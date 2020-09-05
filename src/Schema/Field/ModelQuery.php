@@ -6,6 +6,7 @@ namespace SilverStripe\GraphQL\Schema\Field;
 
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelFieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
@@ -43,12 +44,14 @@ class ModelQuery extends Query implements ModelOperation
             $plugin && (
                 $plugin instanceof ModelQueryPlugin ||
                 $plugin instanceof QueryPlugin ||
+                $plugin instanceof ModelFieldPlugin ||
                 $plugin instanceof FieldPlugin
             ),
-            'Plugin %s not found or not an instance of %s, %s, or %s',
+            'Plugin %s not found or not an instance of %s, %s, %s, or %s',
             $pluginName,
             ModelQueryPlugin::class,
             QueryPlugin::class,
+            ModelFieldPlugin::class,
             FieldPlugin::class
         );
 

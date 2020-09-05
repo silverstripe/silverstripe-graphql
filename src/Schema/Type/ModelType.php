@@ -9,12 +9,14 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelAware;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
+use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
+use SilverStripe\GraphQL\Schema\Interfaces\NestedDefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
@@ -135,8 +137,9 @@ class ModelType extends Type implements ExtraTypeProvider
     public function addField(string $fieldName, $fieldConfig = true, ?callable $callback = null): Type
     {
         if (!$fieldConfig instanceof Field) {
+            $model = $this->getModel();
             $config = is_string($fieldConfig) ? ['type' => $fieldConfig] : $fieldConfig;
-            $fieldObj = ModelField::create($fieldName, $config, $this->getModel());
+            $fieldObj = ModelField::create($fieldName, $config, $model);
         } else {
             $fieldObj = $fieldConfig;
         }

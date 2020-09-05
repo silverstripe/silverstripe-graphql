@@ -1,64 +1,21 @@
 namespace $Namespace;
 
-use GraphQL\\Type\\Definition\\Type;
-use GraphQL\\Type\\Definition\\NonNull;
-use GraphQL\\Type\\Definition\\ListOfType;
+use SilverStripe\\GraphQL\\Schema\\Storage\\AbstractTypeRegistry;
 
-class $TypesClassName
+class $TypesClassName extends AbstractTypeRegistry
 {
-    private static \$types = [];
-
-    public static function get(string \$typename)
+    protected static function getSourceDirectory(): string
     {
-        return static::fromCache(\$typename);
+        return __DIR__;
     }
 
-    private static function fromCache(string \$typename)
+    protected static function getSourceNamespace(): string
     {
-        \$type = null;
-
-        if (!isset(self::\$types[\$typename])) {
-            \$file = __DIR__ . '/' . \$typename . '.php';
-            if (file_exists(\$file)) {
-                require_once(\$file);
-                \$cls = __NAMESPACE__ . '\\\\' . \$typename;
-                if (class_exists(\$cls)) {
-                    \$type = new \$cls();
-                }
-            }
-            self::\$types[\$typename] = \$type;
-        }
-
-
-        \$type = self::\$types[\$typename];
-
-        if (!\$type) {
-            throw new \\Exception("Unknown graphql type: " . \$typename);
-        }
-
-        return \$type;
+        return __NAMESPACE__;
     }
 
-    public static function ID() { return Type::id(); }
-    public static function String() { return Type::string(); }
-    public static function Boolean() { return Type::boolean(); }
-    public static function Float() { return Type::float(); }
-    public static function Int() { return Type::int(); }
-    public static function listOf(\$type) { return new ListOfType(\$type); }
-    public static function nonNull(\$type) { return new NonNull(\$type); }
-
-    <% loop $Types %>
+    <% loop $SchemaComponents %>
     public static function {$Name}() { return static::get('$Name'); }
     <% end_loop %>
-    <% loop $Enums %>
-    public static function {$Name}() { return static::get('$Name'); }
-    <% end_loop %>
-    <% loop $Interfaces %>
-    public static function {$Name}() { return static::get('$Name'); }
-    <% end_loop %>
-    <% loop $Unions %>
-    public static function {$Name}() { return static::get('$Name'); }
-    <% end_loop %>
-
 
 }

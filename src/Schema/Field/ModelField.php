@@ -16,8 +16,6 @@ class ModelField extends Field
 {
     use ModelAware;
 
-    const INTROSPECT_TYPE = '__INTROSPECT_TYPE__';
-
     /**
      * @var array|null
      */
@@ -49,12 +47,11 @@ class ModelField extends Field
                 to for type introspection from the model.',
             $name
         );
-        $this->setResolver($model->getDefaultResolver());
-
-        if ($config === true) {
-            $config = [
-                'type' => true,
-            ];
+        if (!is_array($config)) {
+            $config = [];
+        }
+        if (!isset($config['type'])) {
+            $config['type'] = true;
         }
 
         if (isset($config['property'])) {
@@ -66,20 +63,17 @@ class ModelField extends Field
 
     public function applyConfig(array $config)
     {
-        $type = $config['type'] ?? true;
-        Schema::invariant(
-            $type !== true || $this->getModel()->hasField($this->getPropertyName()),
-            'DataObject %s does not have a field "%s". Cannot introspect type.',
-            $this->getModel()->getSourceClass(),
-            $this->getPropertyName()
-        );
-
-        if ($type === true) {
-            $config['type'] = $this->getModel()->getTypeForField($this->getPropertyName());
+        $type = $config['type'] ?? null;
+        if ($type) {
+            $this->setType($type);
         }
         $resolver = $config['resolver'] ?? null;
-        if (!$resolver) {
-            $config['resolver'] = $this->getModel()->getDefaultResolver($this->getResolverContext());
+        if ($resolver) {
+            $this->setResolver($resolver);
+        }
+        $defaultResolver = $config['defaultResolver'] ?? null;
+        if (!$defaultResolver) {
+            $config['defaultResolver'] = $this->getModel()->getDefaultResolver($this->getResolverContext());
         }
 
         $this->modelTypeFields = $config['fields'] ?? null;
@@ -99,11 +93,18 @@ class ModelField extends Field
      */
     public function setType($type): Field
     {
-        $fieldType = $type === true
-            ? $this->getModel()->getTypeForField($this->getPropertyName())
-            : $type;
+        if ($type === true) {
+            Schema::invariant(
+                $this->getModel()->hasField($this->getPropertyName()),
+                'DataObject %s does not have a field "%s". Cannot introspect type.',
+                $this->getModel()->getSourceClass(),
+                $this->getPropertyName()
+            );
 
-        return parent::setType($fieldType);
+            return parent::setType($this->getModel()->getTypeForField($this->getPropertyName()));
+        }
+
+        return parent::setType($type);
     }
 
     /**

@@ -16,6 +16,7 @@ use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelFieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelMutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
@@ -35,6 +36,7 @@ use SilverStripe\GraphQL\Schema\Type\UnionType;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\ORM\ArrayLib;
 use Exception;
+use SilverStripe\ORM\ArrayList;
 
 /**
  * The main Schema definition. A docking station for all type, model, interface, etc., abstractions.
@@ -250,6 +252,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
             [ 'src' => $this->models, 'req' => [ModelTypePlugin::class] ],
             [ 'src' => $this->queryFields, 'req' => [
                 FieldPlugin::class,
+                ModelFieldPlugin::class,
                 QueryPlugin::class,
                 ModelQueryPlugin::class
             ]],
@@ -259,8 +262,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 ModelMutationPlugin::class
             ]],
             [ 'src' => $allTypeFields, 'req' => [FieldPlugin::class] ],
-            // At some point there may be a ModelFieldPlugin, so keep this separate
-            [ 'src' => $allModelFields, 'req' => [FieldPlugin::class] ],
+            [ 'src' => $allModelFields, 'req' => [
+                FieldPlugin::class,
+                ModelFieldPlugin::class,
+            ]],
         ];
         $schemaUpdates = [];
         foreach($allComponents as $spec) {

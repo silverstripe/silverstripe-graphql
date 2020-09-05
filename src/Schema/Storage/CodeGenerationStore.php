@@ -11,7 +11,6 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\Type;
@@ -34,6 +33,8 @@ class CodeGenerationStore implements SchemaStorageInterface
     use Injectable;
     use Configurable;
 
+    const TYPE_CLASS_NAME = 'Types';
+
     /**
      * @var string
      * @config
@@ -48,6 +49,12 @@ class CodeGenerationStore implements SchemaStorageInterface
 
     /**
      * @var string
+     * @config
+     */
+    private static $dirName = 'graphql-schemas';
+
+    /**
+     * @var string
      */
     private $name;
 
@@ -55,6 +62,12 @@ class CodeGenerationStore implements SchemaStorageInterface
      * @var CacheInterface
      */
     private $cache;
+
+    /**
+     * @var string
+     * @config
+     */
+    private $rootDir = BASE_PATH;
 
     /**
      * @param string $name
@@ -81,6 +94,13 @@ class CodeGenerationStore implements SchemaStorageInterface
         if (!$fs->exists($dir)) {
             try {
                 $fs->mkdir($dir);
+                // Ensure none of these files get loaded into the manifest
+                $fs->touch($dir . DIRECTORY_SEPARATOR . '_manifest_exclude');
+                $warningFile = $dir . DIRECTORY_SEPARATOR . '__DO_NOT_MODIFY';
+                $fs->dumpFile(
+                    $warningFile,
+                    '*** This directory contains generated code for the GraphQL schema. Do not modify. ***'
+                );
             } catch (IOException $e) {
                 throw new RuntimeException(sprintf(
                     'Could not persist schema. Failed to create directory %s. Full message: %s',
@@ -90,14 +110,17 @@ class CodeGenerationStore implements SchemaStorageInterface
             }
         }
         $globals = [
-            'TypesClassName' => EncodedType::TYPE_CLASS_NAME,
+            'TypesClassName' => self::TYPE_CLASS_NAME,
             'Namespace' => $this->getNamespace(),
         ];
+        $allComponents = array_merge(
+            $schema->getTypes(),
+            $schema->getEnums(),
+            $schema->getInterfaces(),
+            $schema->getUnions()
+        );
         $data = ArrayData::create([
-            'Types' => ArrayList::create(array_values($schema->getTypes())),
-            'Interfaces' => ArrayList::create(array_values($schema->getInterfaces())),
-            'Unions' => ArrayList::create(array_values($schema->getUnions())),
-            'Enums' => ArrayList::create(array_values($schema->getEnums())),
+            'SchemaComponents' => ArrayList::create($allComponents),
         ]);
         $code = (string) $data->customise($globals)
             ->renderWith('SilverStripe\\GraphQL\\Schema\\GraphQLTypeRegistry');
@@ -112,14 +135,14 @@ class CodeGenerationStore implements SchemaStorageInterface
             ));
         }
 
-
         $fields = ['Types', 'Interfaces', 'Unions', 'Enums'];
         $touched = [];
         $built = [];
         $total = 0;
         foreach ($fields as $field) {
+            $method = 'get' . $field;
             /* @var Type|InterfaceType|UnionType|Enum $type */
-            foreach ($data->$field as $type) {
+            foreach ($schema->$method() as $type) {
                 $total++;
                 $name = $type->getName();
                 $sig = $type->getSignature();
@@ -187,7 +210,7 @@ class CodeGenerationStore implements SchemaStorageInterface
     {
         require_once($this->getSchemaFilename());
 
-        $registryClass = $this->getClassName(EncodedType::TYPE_CLASS_NAME);
+        $registryClass = $this->getClassName(self::TYPE_CLASS_NAME);
 
         $hasMutations = method_exists($registryClass, Schema::MUTATION_TYPE);
         $schemaConfig = new SchemaConfig();
@@ -229,11 +252,31 @@ class CodeGenerationStore implements SchemaStorageInterface
     /**
      * @return string
      */
+    public function getRootDir(): string
+    {
+        return $this->rootDir;
+    }
+
+    /**
+     * @param string $rootDir
+     * @return CodeGenerationStore
+     */
+    public function setRootDir(string $rootDir): CodeGenerationStore
+    {
+        $this->rootDir = $rootDir;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
     private function getDirectory(): string
     {
-        // TODO: temporary hack to ensure we have a writable directory.
-        // Need to figure out where this executable code can go, e.g. TEMP_FOLDER?
-        return Path::join(ASSETS_PATH, 'graphql-schemas', $this->name);
+        return Path::join(
+            $this->getRootDir(),
+            $this->config()->get('dirName'),
+            $this->name
+        );
     }
 
     /**
@@ -271,6 +314,6 @@ class CodeGenerationStore implements SchemaStorageInterface
     private function toCode(string $rawCode): string
     {
         $code = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $rawCode);
-        return "<?php\n\n{$code}";
+        return "<?php\n\n /** GENERATED CODE -- DO NOT MODIFY **/\n\n{$code}";
     }
 }

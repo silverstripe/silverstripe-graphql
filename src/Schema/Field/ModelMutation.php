@@ -6,6 +6,7 @@ namespace SilverStripe\GraphQL\Schema\Field;
 
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelFieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelMutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
@@ -15,7 +16,7 @@ use SilverStripe\GraphQL\Schema\Schema;
 /**
  * Defines a mutation created by a model
  */
-class ModelMutation extends Query implements ModelOperation
+class ModelMutation extends Mutation implements ModelOperation
 {
     use ModelAware;
 

@@ -10,7 +10,7 @@ use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\FieldType\DBHTMLText;
-
+use Exception;
 /**
  * Defines a GraphQL interface. It may seem counter-intuitive that an abstraction would inherit
  * from the concretion, but since these are just value objects that end up getting rendered
@@ -95,6 +95,7 @@ class InterfaceType extends Type
 
     /**
      * @return string
+     * @throws Exception
      */
     public function getSignature(): string
     {
@@ -107,6 +108,7 @@ class InterfaceType extends Type
             $this->getName(),
             $this->typeResolver->toString(),
             $this->getDescription(),
+            $this->getSortedPlugins(),
             array_map(function (Field $field) {
                 return $field->getSignature();
             }, $fields),

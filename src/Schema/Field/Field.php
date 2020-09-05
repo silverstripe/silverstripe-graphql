@@ -19,6 +19,7 @@ use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ViewableData;
+use Exception;
 
 /**
  * An abstraction of a field that appears on a Type abstraction
@@ -256,20 +257,18 @@ class Field extends ViewableData implements
 
     /**
      * @return bool
-     * @throws SchemaBuilderException
      */
     public function isList(): bool
     {
-        return $this->getEncodedType()->isList();
+        return $this->getTypeRef()->isList();
     }
 
     /**
      * @return bool
-     * @throws SchemaBuilderException
      */
     public function isRequired(): bool
     {
-        return $this->getEncodedType()->isRequired();
+        return $this->getTypeRef()->isRequired();
     }
 
     /**
@@ -317,8 +316,7 @@ class Field extends ViewableData implements
     public function setTypeByModel(string $modelTypeDef): self
     {
         $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
-        $encoded = $this->toEncodedType($safeModelTypeDef);
-        $safeNamedClass = $encoded->getNamedType();
+        $safeNamedClass = TypeReference::create($safeModelTypeDef)->getNamedType();
         $namedClass = str_replace('__', '\\', $safeNamedClass);
         /* @var SchemaModelCreatorRegistry $registry */
         $registry = Injector::inst()->get(SchemaModelCreatorRegistry::class);
@@ -355,6 +353,14 @@ class Field extends ViewableData implements
     }
 
     /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    /**
      * @return Argument[]
      */
     public function getArgs(): array
@@ -381,18 +387,19 @@ class Field extends ViewableData implements
             'Field %s has no type defined.',
             $this->getName()
         );
-        return $this->type instanceof EncodedType ? $this->type : $this->toEncodedType($this->type);
+        return $this->type instanceof EncodedType
+            ? $this->type
+            : EncodedType::create($this->getTypeRef());
     }
 
     /**
      * Gets the name of the type, ignoring any nonNull/listOf wrappers
      *
      * @return string
-     * @throws SchemaBuilderException
      */
     public function getNamedType(): string
     {
-        return $this->getEncodedType()->getNamedType();
+        return $this->getTypeRef()->getNamedType();
     }
 
     /**
@@ -564,6 +571,7 @@ class Field extends ViewableData implements
     /**
      * @return string
      * @throws SchemaBuilderException
+     * @throws Exception
      */
     public function getSignature(): string
     {
@@ -577,6 +585,7 @@ class Field extends ViewableData implements
             $this->getEncodedType()->encode(),
             $this->getEncodedResolver()->getExpression(),
             $this->getDescription(),
+            $this->getSortedPlugins(),
             array_map(function (Argument $arg) {
                 return $arg->getSignature();
             }, $args),
@@ -608,15 +617,11 @@ class Field extends ViewableData implements
     }
 
     /**
-     * @param string $type
-     * @return EncodedType
+     * @return TypeReference
      */
-    private function toEncodedType(string $type): EncodedType
+    private function getTypeRef(): TypeReference
     {
-        $ref = TypeReference::create($type);
-        $ast = $ref->toAST();
-
-        return EncodedType::create($ast);
+        return TypeReference::create($this->type);
     }
 
 }

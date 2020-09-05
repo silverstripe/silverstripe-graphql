@@ -15,6 +15,7 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 use SilverStripe\View\ViewableData;
+use Exception;
 
 /**
  * Abstraction for a generic type
@@ -363,6 +364,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
      * Used as a cache key. This method will need to be updated if new data is added
      * to the generated code.
      * @return string
+     * @throws Exception
      */
     public function getSignature(): string
     {
@@ -376,6 +378,7 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
             $this->getName(),
             (int) $this->getIsInput(),
             $this->getDescription(),
+            $this->getSortedPlugins(),
             $interfaces,
             array_map(function (Field $field) {
                 // The field resolver can change depending on what type it's on, so
