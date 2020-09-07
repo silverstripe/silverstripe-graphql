@@ -291,8 +291,17 @@ class Schema implements ConfigurationApplier, SchemaValidator
                     list ($plugin, $config) = $data;
                     foreach ($spec['req'] as $pluginInterface) {
                         if ($plugin instanceof $pluginInterface) {
-                            $plugin->apply($component, $this, $config);
-                            break;
+                            try {
+                                $plugin->apply($component, $this, $config);
+                                break;
+                            } catch (SchemaBuilderException $e) {
+                                throw new SchemaBuilderException(sprintf(
+                                    'Failed to apply plugin %s to %s. Got error %s',
+                                    get_class($plugin),
+                                    $component->getName(),
+                                    $e->getMessage()
+                                ));
+                            }
                         }
                     }
                 }
