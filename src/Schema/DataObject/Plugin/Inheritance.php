@@ -78,7 +78,10 @@ class Inheritance implements PluginInterface, SchemaUpdater
         // Add the new __extends field
         $extendsType = $inheritance->getExtensionType();
         $schema->addType($extendsType);
-        $modelType->addField(InheritanceChain::getName(), $extendsType->getName());
+        $modelType->addField(InheritanceChain::getName(), [
+            'type' => $extendsType->getName(),
+            'resolver' => [InheritanceChain::class, 'resolveExtensionType']
+        ]);
         foreach ($inheritance->getDirectDescendants() as $descendantClass) {
             self::addInheritance($schema, $descendantClass, $modelType);
         }

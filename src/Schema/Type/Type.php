@@ -170,9 +170,9 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
             $fieldObj = $fieldConfig;
         }
 
-        $defaultResolver = $fieldObj->getDefaultResolver();
-        if (!$defaultResolver) {
-            $fieldObj->setDefaultResolver($this->getFieldResolver());
+        $defaultResolver = $this->getFieldResolver();
+        if ($defaultResolver) {
+            $fieldObj->setDefaultResolver($defaultResolver);
         }
         $this->fields[$fieldObj->getName()] = $fieldObj;
         if ($callback) {
