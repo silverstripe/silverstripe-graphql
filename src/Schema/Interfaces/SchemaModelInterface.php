@@ -55,7 +55,7 @@ interface SchemaModelInterface
      * @param string $fieldName
      * @return ModelType|null
      */
-    public function getModelField(string $fieldName): ?ModelType;
+    public function getModelTypeForField(string $fieldName): ?ModelType;
 
 
 }

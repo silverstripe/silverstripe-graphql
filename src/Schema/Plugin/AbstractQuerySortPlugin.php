@@ -7,6 +7,7 @@ namespace SilverStripe\GraphQL\Schema\Plugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\Enum;
+use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 
 /**
@@ -52,6 +53,15 @@ abstract class AbstractQuerySortPlugin extends AbstractNestedInputPlugin impleme
     {
         $modelTypeName = $modelType->getModel()->getTypeName();
         return $modelTypeName . 'SortFields';
+    }
+
+    /**
+     * @param InputType $inputType
+     * @return string
+     */
+    public static function getModelName(InputType $inputType): string
+    {
+        return preg_replace('/SortFields$/', '', $inputType->getName());
     }
 
     /**

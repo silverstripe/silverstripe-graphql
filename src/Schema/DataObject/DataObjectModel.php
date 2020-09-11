@@ -11,6 +11,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
 use SilverStripe\GraphQL\Schema\Interfaces\NestedDefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
@@ -32,7 +33,8 @@ class DataObjectModel implements
     OperationProvider,
     DefaultFieldsProvider,
     DefaultPluginProvider,
-    NestedDefaultPluginProvider
+    NestedDefaultPluginProvider,
+    ModelBlacklist
 {
     use Injectable;
     use Configurable;
@@ -163,6 +165,26 @@ class DataObjectModel implements
 
     /**
      * @return array
+     * @throws SchemaBuilderException
+     */
+    public function getBlacklistedFields(): array
+    {
+        $class = $this->getSourceClass();
+        $config = DataObject::singleton($class)->config()->get('graphql_blacklisted_fields') ?? [];
+        $blackList = [];
+        Schema::assertValidConfig($config);
+        foreach ($config as $fieldName => $bool) {
+            if ($bool === true && is_string($fieldName)) {
+                $blackList[] = $fieldName;
+            }
+        }
+        return array_map(function (string $field) {
+            return $this->getFieldAccessor()->formatField($field);
+        }, $blackList);
+    }
+
+    /**
+     * @return array
      */
     public function getDefaultPlugins(): array
     {
@@ -179,10 +201,14 @@ class DataObjectModel implements
 
     /**
      * @return array
+     * @throws SchemaBuilderException
      */
     public function getAllFields(): array
     {
-        return $this->getFieldAccessor()->getAllFields($this->dataObject);
+        $blackList = $this->getBlacklistedFields();
+        $allFields = $this->getFieldAccessor()->getAllFields($this->dataObject);
+
+        return array_diff($allFields, $blackList);
     }
 
     /**
@@ -272,7 +298,7 @@ class DataObjectModel implements
      * @param string $fieldName
      * @return ModelType|null
      */
-    public function getModelField(string $fieldName): ?ModelType
+    public function getModelTypeForField(string $fieldName): ?ModelType
     {
         $result = $this->getFieldAccessor()->accessField($this->dataObject, $fieldName);
         $class = $this->getModelClass($result);

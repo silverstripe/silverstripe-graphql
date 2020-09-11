@@ -96,7 +96,7 @@ class Controller extends BaseController implements Flushable
     public function __construct(string $schemaKey, ?QueryHandlerInterface $queryHandler = null)
     {
         parent::__construct();
-        $schema = Schema::get($schemaKey);
+        $schema = Schema::create($schemaKey);
         $this->setSchema($schema);
         $handler = $queryHandler ?: Injector::inst()->get(QueryHandlerInterface::class);
         $this->setQueryHandler($handler);

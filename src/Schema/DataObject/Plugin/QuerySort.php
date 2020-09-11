@@ -59,10 +59,12 @@ class QuerySort extends AbstractQuerySortPlugin
 
     /**
      * @param ModelType $modelType
+     * @param Schema $schema
+     * @param int $level
      * @return array
      * @throws SchemaBuilderException
      */
-    protected function buildAllFieldsConfig(ModelType $modelType): array
+    protected function buildAllFieldsConfig(ModelType $modelType, Schema $schema, int $level = 0): array
     {
         $filters = [];
         /* @var ModelField $fieldObj */
@@ -72,8 +74,13 @@ class QuerySort extends AbstractQuerySortPlugin
                 continue;
             }
             // Plural relationships are not sortable. No nested lists allowed.
-            if (!$fieldObj->isList() && $relatedModel = $fieldObj->getModelType()) {
-                $filters[$fieldObj->getPropertyName()] = $this->buildAllFieldsConfig($relatedModel);
+            if (!$fieldObj->isList() && $relatedModelType = $fieldObj->getModelType()) {
+                if ($level > $this->config()->get('max_nesting')) {
+                    continue;
+                }
+                if ($relatedModel = $schema->getModel($relatedModelType->getName())) {
+                    $filters[$fieldObj->getPropertyName()] = $this->buildAllFieldsConfig($relatedModel, $schema, $level + 1);
+                }
             } else {
                 $filters[$fieldObj->getName()] = true;
             }

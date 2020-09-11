@@ -138,7 +138,7 @@ class ModelField extends Field
      */
     public function getModelType(): ?ModelType
     {
-        $model = $this->getModel()->getModelField($this->getName());
+        $model = $this->getModel()->getModelTypeForField($this->getName());
         if ($model) {
             $config = [];
             if ($this->modelTypeFields) {

@@ -8,6 +8,7 @@ use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
@@ -238,10 +239,16 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $allTypeFields = [];
         $allModelFields = [];
         foreach ($this->types as $type) {
-            $allTypeFields = array_merge($allTypeFields, $type->getFields());
+            $pluggedFields = array_filter($type->getFields(), function (Field $field) {
+                return !empty($field->getPlugins());
+            });
+            $allTypeFields = array_merge($allTypeFields, $pluggedFields);
         }
         foreach ($this->models as $model) {
-            $allModelFields = array_merge($allModelFields, $model->getFields());
+            $pluggedFields = array_filter($model->getFields(), function (Field $field) {
+                return !empty($field->getPlugins());
+            });
+            $allModelFields = array_merge($allModelFields, $pluggedFields);
         }
 
         // Create a list of everything in the schema that is pluggable, including fields added to types.
@@ -292,7 +299,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
                     foreach ($spec['req'] as $pluginInterface) {
                         if ($plugin instanceof $pluginInterface) {
                             try {
+//                                $id = 'plugin-apply-'  . $plugin->getIdentifier() . '-' . $component->getName();
+//                                Benchmark::start($id);
                                 $plugin->apply($component, $this, $config);
+//                                echo Benchmark::end($id) . PHP_EOL;
                                 break;
                             } catch (SchemaBuilderException $e) {
                                 throw new SchemaBuilderException(sprintf(

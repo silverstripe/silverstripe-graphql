@@ -8,6 +8,7 @@ use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\FieldFilterRegistr
 use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\FilterRegistryInterface;
 use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\ListFieldFilterInterface;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\InputType;
@@ -70,6 +71,15 @@ abstract class AbstractQueryFilterPlugin extends AbstractNestedInputPlugin imple
     }
 
     /**
+     * @param InputType $inputType
+     * @return string
+     */
+    public static function getModelName(InputType $inputType): string
+    {
+        return preg_replace('/FilterFields$/', '', $inputType->getName());
+    }
+
+    /**
      * @param string $internalType
      * @return string
      */
@@ -77,5 +87,6 @@ abstract class AbstractQueryFilterPlugin extends AbstractNestedInputPlugin imple
     {
         return sprintf('QueryFilter%sComparator', $internalType);
     }
+
 
 }

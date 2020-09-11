@@ -4,12 +4,13 @@
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter;
 
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\FilterRegistryInterface;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Plugin\AbstractQueryFilterPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use Closure;
@@ -94,4 +95,17 @@ class QueryFilter extends AbstractQueryFilterPlugin
             return $list;
         };
     }
+
+    /**
+     * @param ModelField $field
+     * @param ModelType $modelType
+     * @return bool
+     */
+    protected function shouldAddField(ModelField $field, ModelType $modelType): bool
+    {
+        $fieldName = $field->getPropertyName();
+        return stristr($fieldName, '.') === false;
+    }
+
+
 }

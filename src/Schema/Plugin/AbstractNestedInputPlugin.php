@@ -6,8 +6,8 @@ namespace SilverStripe\GraphQL\Schema\Plugin;
 
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
@@ -28,6 +28,16 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
 {
     use Injectable;
     use Configurable;
+
+    const SELF_REFERENTIAL = 'self';
+
+    const SELF_REFERENTIAL_LIST = '[self]';
+
+    /**
+     * @var int
+     * @config
+     */
+    private static $max_nesting = 1;
 
     /**
      * @var InputType[]
@@ -61,18 +71,15 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
         $fieldName = $this->config()->get('field_name');
 
         if ($configFields === Schema::ALL) {
-            $configFields = $this->buildAllFieldsConfig($modelType);
+            $configFields = $this->buildAllFieldsConfig($modelType, $schema);
         }
-
         Schema::assertValidConfig($configFields);
-        $fields = $this->buildInputTypeFields($modelType, $configFields);
-        $allTypes = $this->extractTypes(
-            static::getTypeName($modelType),
-            $fields
-        );
+        $this->addInputTypesToSchema($modelType, $schema, $configFields);
+        $rootTypeName = static::getTypeName($modelType);
+        /* @var InputType $rootType */
+        $rootType = $schema->getType($rootTypeName);
+        $pathMapping = $this->buildPathsFromInputType($rootType, $schema);
 
-        $fieldGraph = $this->getRelationalModelGraph($modelType, $fields);
-        $pathMapping = $this->buildPathsFromFieldMapping($fieldGraph);
         $fieldMapping = [];
         foreach ($pathMapping as $fieldPath => $propPath) {
             if ($fieldPath !== $propPath) {
@@ -80,11 +87,8 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
             }
         }
 
-        $query->addArg($fieldName, static::getTypeName($modelType));
+        $query->addArg($fieldName, $rootType->getName());
 
-        foreach ($allTypes as $inputType) {
-            $schema->addType($inputType);
-        }
 
         $query->addResolverAfterware(
             $this->getResolver(),
@@ -96,23 +100,49 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
 
     }
 
-
     /**
      * @param ModelType $modelType
+     * @param Schema $schema
+     * @param int $level
      * @return array
      * @throws SchemaBuilderException
      */
-    protected function buildAllFieldsConfig(ModelType $modelType): array
+    protected function buildAllFieldsConfig(ModelType $modelType, Schema $schema, int $level = 1): array
     {
         $filters = [];
         /* @var ModelField $fieldObj */
         foreach ($modelType->getFields() as $fieldObj) {
+            if (!$this->shouldAddField($fieldObj, $modelType)) {
+                continue;
+            }
             $fieldName = $fieldObj->getPropertyName();
             if (!$modelType->getModel()->hasField($fieldName)) {
                 continue;
             }
-            if ($relatedModel = $fieldObj->getModelType()) {
-                $filters[$fieldObj->getPropertyName()] = $this->buildAllFieldsConfig($relatedModel);
+            if ($relatedModelType = $fieldObj->getModelType()) {
+                if ($level > $this->config()->get('max_nesting')) {
+                    continue;
+                }
+                $relatedModel = $schema->getModel($relatedModelType->getName());
+                Schema::invariant(
+                    $relatedModel,
+                    'Field %s on %s points to model %s which does not exist',
+                    $fieldObj->getName(),
+                    $modelType->getName(),
+                    $relatedModelType->getName()
+                );
+                // Prevent stupid recursion in self-referential relationships, e.g. Parent
+                if ($relatedModel->getName() === $modelType->getName()) {
+                    $filters[$fieldObj->getPropertyName()] = $fieldObj->isList()
+                        ? self::SELF_REFERENTIAL_LIST
+                        : self::SELF_REFERENTIAL;
+                } else {
+                    $filters[$fieldObj->getPropertyName()] = $this->buildAllFieldsConfig(
+                        $relatedModel,
+                        $schema,
+                        $level + 1
+                    );
+                }
             } else {
                 $filters[$fieldObj->getName()] = true;
             }
@@ -122,166 +152,121 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
     }
 
     /**
-     * Given a list of fields, graph the type name for each field and its children
-     *
-     * @param ModelType|null $modelType
+     * @param ModelType $parentModel
+     * @param Schema $schema
      * @param array $fields
      * @return array
      * @throws SchemaBuilderException
      */
-    protected function buildInputTypeFields(ModelType $modelType, array $fields): array
-    {
-        $filters = [];
+    protected function addInputTypesToSchema(
+        ModelType $parentModel,
+        Schema $schema,
+        array $fields
+    ): void {
+        $parentInputTypeName = static::getTypeName($parentModel);
+        $parentType = $schema->getType($parentInputTypeName);
+        if (!$parentType) {
+            $parentType = InputType::create($parentInputTypeName);
+            $schema->addType($parentType);
+        }
         foreach ($fields as $fieldName => $data) {
             if ($data === false) {
                 continue;
             }
+
             /* @var ModelField $fieldObj */
-            $fieldObj = $modelType->getFieldByName($fieldName);
-            $relatedModel = $fieldObj->getModelType();
-            if (!$this->shouldAddField($fieldObj, $modelType)) {
+            $fieldObj = $parentModel->getFieldByName($fieldName);
+            $modelType = $fieldObj->getModelType();
+            if (!$this->shouldAddField($fieldObj, $parentModel)) {
                 continue;
             }
-            if (is_array($data)) {
-                Schema::invariant(
-                    $relatedModel,
-                    'Filter for field %s is declared as an array, but the field is not a nested object type',
-                    $fieldName
-                );
-                $filters[$fieldName] = [
-                    'children' => $this->buildInputTypeFields($relatedModel, $data),
-                    'type' => static::getTypeName($relatedModel),
-                ];
-            } else if ($data === true) {
+
+            if ($data === self::SELF_REFERENTIAL) {
+                // Self-referential input type
+                $parentType->addField($fieldName, $parentType->getName());
+            } else if ($data === self::SELF_REFERENTIAL_LIST) {
+                $parentType->addField($fieldName, '[' . $parentType->getName() . ']');
+            } else if (!is_array($data)) {
+                // Regular field, e.g. scalar
                 $fieldType = $fieldObj->getNamedType();
                 Schema::invariant(
-                    !$relatedModel && in_array($fieldType, Schema::getInternalTypes()),
+                    !$modelType && in_array($fieldType, Schema::getInternalTypes()),
                     'Filter for field %s is declared as true, but the field is not a scalar type',
                     $fieldName
                 );
-                $filters[$fieldName] = [
-                    'type' => static::getLeafNodeType($fieldType),
-                    'children' => null
-                ];
-            }
-        }
-
-
-        return $filters;
-    }
-
-    /**
-     * Given a graph of field names with type and children, get all the types
-     * required for a monolithic nested input, including the top level input type.
-     *
-     * @param string $typeName
-     * @param array $filters
-     * @param array $allTypes
-     * @return array
-     * @throws SchemaBuilderException
-     */
-    protected function extractTypes(
-        string $typeName,
-        array $filters,
-        array $allTypes = []
-    ): array {
-        $fields = [];
-        foreach ($filters as $fieldName => $data) {
-            $children = $data['children'];
-            $childTypeName = $data['type'];
-            if ($children) {
-                $cumulativeTypes = $this->extractTypes(
-                    $childTypeName,
-                    $children,
-                    $allTypes
+                $parentType->addField(
+                    $fieldName,
+                    static::getLeafNodeType($fieldType)
                 );
-                $allTypes = array_merge($allTypes, $cumulativeTypes);
-                $fields[$fieldName] = $childTypeName;
             } else {
-                $fields[$fieldName] = $childTypeName;
-            }
-        }
-        $type = InputType::create($typeName)
-            ->setFields($fields);
-        $allTypes[$typeName] = $type;
-
-        return $allTypes;
-    }
-
-    /**
-     * Provide the class that each field maps to
-     *
-     * @param ModelType|null $modelType
-     * @param array $fields
-     * @return array
-     * @throws SchemaBuilderException
-     */
-    protected function getRelationalModelGraph(ModelType $modelType, array $fields): array
-    {
-        $mapping = [];
-        /* @var DataObjectModel $model */
-        foreach ($fields as $fieldName => $data) {
-            $children = $data['children'];
-            /* @var ModelField $fieldObj */
-            $fieldObj = $modelType->getFieldByName($fieldName);
-            Schema::invariant(
-                $fieldObj,
-                'Could not map field %s',
-                $fieldName
-            );
-            $isNested = is_array($children);
-            $class = $modelType->getModel()->getSourceClass();
-            if ($isNested) {
-                $relatedModel = $fieldObj->getModelType();
+                // Nested input. Recursion.
                 Schema::invariant(
-                    $relatedModel,
-                    'Cannot find related model type for field %s',
+                    $modelType,
+                    'Filter for field %s is declared as an array, but the field is not a nested object type',
                     $fieldName
                 );
-                $mapping[$fieldName] = [
-                    'class' => $class,
-                    'children' => $this->getRelationalModelGraph($relatedModel, $children)
-                ];
-            } else {
-                $mapping[$fieldName] = [
-                    'class' => $class,
-                    'children' => null
-                ];
+                $relatedModel = $schema->getModel($modelType->getName());
+                $nextInputTypeName = static::getTypeName($relatedModel);
+                $parentType->addField($fieldName, $nextInputTypeName);
+                $this->addInputTypesToSchema($relatedModel, $schema, $data);
             }
         }
-
-        return $mapping;
     }
 
-
     /**
-     * Given a relational graph where field names are mapped to classes,
-     * create all the possible dot.separated.paths
-     *
-     * @param array $mapping
+     * @param InputType $inputType
+     * @param Schema $schema
      * @param array $fieldOrigin
      * @param array $propOrigin
+     * @param int $level
      * @return array
+     * @throws SchemaBuilderException
      */
-    protected function buildPathsFromFieldMapping(
-        array $mapping,
+    protected function buildPathsFromInputType(
+        InputType $inputType,
+        Schema $schema,
         array $fieldOrigin = [],
-        array $propOrigin = []
+        array $propOrigin = [],
+        int $level = 0
     ): array {
         $allPaths = [];
-        foreach ($mapping as $fieldName => $config) {
+        /* @var Field $fieldObj */
+        foreach ($inputType->getFields() as $fieldObj) {
+            $fieldName = $fieldObj->getName();
             $fieldPath = array_merge($fieldOrigin, [$fieldName]);
-            $prop = static::getObjectProperty($config['class'], $fieldName);
+            $modelName = static::getModelName($inputType);
+            /* @var ModelType $model */
+            $model = $schema->getModel($modelName);
+            Schema::invariant(
+                $model,
+                'Field "%s" on input type "%s" does not point to a valid model "%s"',
+                $fieldName,
+                $inputType->getName(),
+                $model
+            );
+            $prop = static::getObjectProperty($model->getSourceClass(), $fieldName);
             $propPath = array_merge($propOrigin, [$prop]);
-            $children = $config['children'] ?? null;
-            if (is_array($children)) {
+
+            $modelFieldType = $model->getFieldByName($fieldName)->getType();
+            $fieldType = $fieldObj->getNamedType();
+            $leafType = static::getLeafNodeType($modelFieldType);
+            // This is the leaf node type. Stop here.
+            if ($fieldType === $leafType) {
+                $allPaths[implode('.', $fieldPath)] = implode('.', $propPath);
+                continue;
+            }
+            // If not, it's a nested input. Keep recursing.
+            $nestedType = $schema->getType($fieldType);
+            $isMax = $level > $this->config()->get('max_nesting');
+            if ($nestedType instanceof InputType && !$isMax) {
                 $allPaths = array_merge(
                     $allPaths,
-                    $this->buildPathsFromFieldMapping($children, $fieldPath, $propPath)
+                    $this->buildPathsFromInputType($nestedType, $schema, $fieldPath, $propPath, $level + 1)
                 );
             } else {
                 $allPaths[implode('.', $fieldPath)] = implode('.', $propPath);
             }
+
         }
 
         return $allPaths;
@@ -371,4 +356,10 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
      * @return string
      */
     abstract public static function getTypeName(ModelType $modelType): string;
+
+    /**
+     * @param InputType $inputType
+     * @return string
+     */
+    abstract public static function getModelName(InputType $inputType): string;
 }

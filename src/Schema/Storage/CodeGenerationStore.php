@@ -51,7 +51,7 @@ class CodeGenerationStore implements SchemaStorageInterface
      * @var string
      * @config
      */
-    private static $dirName = 'graphql-schemas';
+    private static $dirName = '.graphql';
 
     /**
      * @var string
