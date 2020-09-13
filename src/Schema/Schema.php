@@ -3,11 +3,13 @@
 namespace SilverStripe\GraphQL\Schema;
 
 use GraphQL\Type\Schema as GraphQLSchema;
+use M1\Env\Exception\ParseException;
 use Psr\Log\LoggerInterface;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -38,6 +40,9 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\ORM\ArrayLib;
 use Exception;
 use SilverStripe\ORM\ArrayList;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * The main Schema definition. A docking station for all type, model, interface, etc., abstractions.
@@ -329,11 +334,74 @@ class Schema implements ConfigurationApplier, SchemaValidator
         static::invariant($schemas, 'There are no schemas defined in the config');
         $schema = $schemas[$this->schemaKey] ?? null;
         static::invariant($schema, 'Schema "%s" is not configured', $this->schemaKey);
+        $configSrc = $schema['src'] ?? null;
+        if ($configSrc) {
+            $sourcedConfig = $this->loadConfigFromSource($configSrc);
+            $schema = array_merge_recursive($schema, $sourcedConfig);
+        }
         $globals = $schemas[self::ALL] ?? [];
         $allConfig = array_merge_recursive($globals, $schema);
         $this->applyConfig($allConfig);
 
         return $this;
+    }
+
+    /**
+     * @param string $dir
+     * @return array
+     * @throws SchemaBuilderException
+     */
+    public function loadConfigFromSource(string $dir): array
+    {
+        $absConfigSrc = Path::join(BASE_PATH, $dir);
+        static::invariant(
+            is_dir($absConfigSrc),
+            'Source config directory %s does not exist on schema %s',
+            $absConfigSrc,
+            $this->schemaKey
+        );
+
+        $config = [
+            self::TYPES => [],
+            self::MODELS => [],
+            self::QUERIES => [],
+            self::MUTATIONS => [],
+            self::ENUMS => [],
+            self::INTERFACES => [],
+            self::UNIONS => [],
+        ];
+
+        $finder = new Finder();
+        $yamlFiles = $finder->files()->in($absConfigSrc)->name('*.yml');
+
+        /* @var SplFileInfo $yamlFile */
+        foreach ($yamlFiles as $yamlFile) {
+            try {
+                $yaml = Yaml::parseFile($yamlFile->getPathname());
+            } catch (ParseException $e) {
+                throw new SchemaBuilderException(sprintf(
+                    'Could not parse YAML config for schema %s on file %s. Got error: %s',
+                    $this->schemaKey,
+                    $yamlFile->getPathname(),
+                    $e->getMessage()
+                ));
+            }
+            // Friendly check to see if the config was accidentally keyed to a schema
+            Schema::invariant(
+                !isset($yaml[$this->schemaKey]),
+                'Sourced config file %s does not need a schema key. It is implicit.',
+                $yamlFile->getPathname()
+            );
+            $namespace = basename($yamlFile->getPath());
+            // if the yaml file was in a namespace directory, e.g. "models/" or "types/", the key is implied.
+            if (isset($config[$namespace])) {
+                $config[$namespace] = array_merge_recursive($config[$namespace], $yaml);
+            } else {
+                $config = array_merge_recursive($config, $yaml);
+            }
+        }
+
+        return $config;
     }
 
     /**
