@@ -334,8 +334,15 @@ class Schema implements ConfigurationApplier, SchemaValidator
         static::invariant($schemas, 'There are no schemas defined in the config');
         $schema = $schemas[$this->schemaKey] ?? null;
         static::invariant($schema, 'Schema "%s" is not configured', $this->schemaKey);
-        $configSrc = $schema['src'] ?? null;
-        if ($configSrc) {
+        $configSrcs = $schema['src'] ?? [];
+        if (is_string($configSrcs)) {
+            $configSrcs = [$configSrcs => true];
+        }
+        Schema::assertValidConfig($configSrcs);
+        foreach ($configSrcs as $configSrc => $data) {
+            if ($data === false) {
+                continue;
+            }
             $sourcedConfig = $this->loadConfigFromSource($configSrc);
             $schema = array_merge_recursive($schema, $sourcedConfig);
         }
@@ -389,10 +396,19 @@ class Schema implements ConfigurationApplier, SchemaValidator
             // Friendly check to see if the config was accidentally keyed to a schema
             Schema::invariant(
                 !isset($yaml[$this->schemaKey]),
-                'Sourced config file %s does not need a schema key. It is implicit.',
-                $yamlFile->getPathname()
+                'Sourced config file %s does not need a schema key. It is implicitly "%s".',
+                $yamlFile->getPathname(),
+                $this->schemaKey
             );
-            $namespace = basename($yamlFile->getPath());
+            // If the file is in the root src dir, e.g. _graphql/models.yml,
+            // then allow the filename to be the namespace.
+            if ($yamlFile->getPath() === $absConfigSrc) {
+                $namespace = $yamlFile->getBasename('.yml');
+            } else {
+                // Otherwise, the directory name is the namespace, e.g _graphql/models/myfile.yml
+                $namespace = basename($yamlFile->getPath());
+            }
+
             // if the yaml file was in a namespace directory, e.g. "models/" or "types/", the key is implied.
             if (isset($config[$namespace])) {
                 $config[$namespace] = array_merge_recursive($config[$namespace], $yaml);
