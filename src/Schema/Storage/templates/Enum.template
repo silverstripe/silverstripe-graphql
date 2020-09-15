@@ -1,0 +1,32 @@
+<?php
+/* @var object $scope */
+/* @var \SilverStripe\GraphQL\Schema\Type\Enum $enum */
+/* @var array $globals */
+?>
+<?php $enum = $scope; ?>
+namespace <?php echo $globals['namespace']; ?>;
+
+use GraphQL\Type\Definition\EnumType;
+
+class <?php echo $enum->getName(); ?> extends EnumType
+{
+    public function __construct()
+    {
+        parent::__construct([
+            'name' => '<?php echo $enum->getName(); ?>',
+            'values' => [
+        <?php foreach ($enum->getValueList() as $valueItem): ?>
+                '<?php echo $valueItem['Key']; ?>' => [
+                    'value' => '<?php echo addslashes($valueItem['Value']); ?>',
+                <?php if (!empty($valueItem['Description'])): ?>
+                    'description' => '<?php echo addslashes($valueItem['Description']); ?>',
+                <?php endif; ?>
+                ],
+        <?php endforeach; ?>
+            ],
+        <?php if (!empty($enum->getDescription())): ?>
+            'description' => '<?php echo addslashes($enum->getDescription()); ?>',
+        <?php endif; ?>
+        ]);
+    }
+}

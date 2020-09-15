@@ -4,19 +4,24 @@
 namespace SilverStripe\GraphQL\Schema\Resolver;
 
 
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\Interfaces\Encoder;
+use SilverStripe\GraphQL\Schema\Interfaces\Encoder as EncoderInterface;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\Storage\Encoder;
 use SilverStripe\ORM\ArrayList;
-use SilverStripe\View\ViewableData;
 
 /**
  * A resolver function that can be expressed in generated PHP code
  */
-class EncodedResolver extends ViewableData implements Encoder
+class EncodedResolver implements EncoderInterface
 {
     const AFTERWARE = 'afterware';
     const MIDDLEWARE = 'middleware';
+
+    use Injectable;
+    use Configurable;
 
     /**
      * @var ResolverReference
@@ -45,7 +50,6 @@ class EncodedResolver extends ViewableData implements Encoder
      */
     public function __construct(ResolverReference $resolver, ?array $context = [])
     {
-        parent::__construct();
         $this->resolverRef = $resolver;
         $this->context = $context;
     }
@@ -55,7 +59,8 @@ class EncodedResolver extends ViewableData implements Encoder
      */
     public function encode(): string
     {
-        return $this->renderWith(__NAMESPACE__ . '\\Resolver');
+        return Encoder::create(__DIR__ . '/templates/Resolver.template', $this)
+            ->encode();
     }
 
     /**
@@ -85,14 +90,6 @@ class EncodedResolver extends ViewableData implements Encoder
     public function getContextArgs(): ?string
     {
         return !empty($this->getContext()) ? var_export($this->getContext(), true) : null;
-    }
-
-    /**
-     * @return string
-     */
-    public function forTemplate(): string
-    {
-        return $this->encode();
     }
 
     /**
@@ -144,11 +141,11 @@ class EncodedResolver extends ViewableData implements Encoder
     }
 
     /**
-     * @return ArrayList
+     * @return array
      */
-    public function getResolverMiddlewares(): ArrayList
+    public function getResolverMiddlewares(): array
     {
-        return ArrayList::create($this->middleware);
+        return $this->middleware;
     }
 
     /**
@@ -163,11 +160,11 @@ class EncodedResolver extends ViewableData implements Encoder
     }
 
     /**
-     * @return ArrayList
+     * @return array
      */
-    public function getResolverAfterwares(): ArrayList
+    public function getResolverAfterwares(): array
     {
-        return ArrayList::create($this->afterware);
+        return $this->afterware;
     }
 
 }

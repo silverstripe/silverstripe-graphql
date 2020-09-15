@@ -109,4 +109,12 @@ class TypeReference
         return $this->getTypeName()[0];
     }
 
+    /**
+     * @return string
+     */
+    public function getRawType(): string
+    {
+        return $this->typeStr;
+    }
+
 }

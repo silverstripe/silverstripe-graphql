@@ -4,6 +4,8 @@
 namespace SilverStripe\GraphQL\Schema\Type;
 
 
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
@@ -12,16 +14,15 @@ use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\ORM\FieldType\DBHTMLText;
-use SilverStripe\View\ViewableData;
 use Exception;
 
 /**
  * Abstraction for a generic type
  */
-class Type extends ViewableData implements ConfigurationApplier, SchemaValidator, SignatureProvider
+class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider
 {
+    use Configurable;
+    use Injectable;
     use PluginConsumer;
 
     /**
@@ -62,7 +63,6 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
      */
     public function __construct(string $name, ?array $config = null)
     {
-        parent::__construct();
         $this->setName($name);
         if ($config) {
             $this->applyConfig($config);
@@ -127,14 +127,6 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
     public function getFields(): array
     {
         return $this->fields;
-    }
-
-    /**
-     * @return ArrayList
-     */
-    public function getFieldList(): ArrayList
-    {
-        return ArrayList::create(array_values($this->getFields()));
     }
 
     /**
@@ -250,16 +242,16 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
      * @throws SchemaBuilderException
      */
     public function validate(): void
+
     {
         Schema::invariant(
-            $this->getFieldList()->exists(),
+            !empty($this->getFields()),
             'Fields cannot be empty for type %s', $this->getName()
         );
         foreach ($this->getFields() as $field) {
             $field->validate();
         }
     }
-
     /**
      * @param mixed $description
      * @return Type
@@ -349,14 +341,6 @@ class Type extends ViewableData implements ConfigurationApplier, SchemaValidator
             $this->fieldResolver = null;
         }
         return $this;
-    }
-
-    /**
-     * @return DBHTMLText
-     */
-    public function forTemplate(): DBHTMLText
-    {
-        return $this->renderWith('SilverStripe\\GraphQL\\Schema\\Type');
     }
 
     /**

@@ -341,7 +341,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $globals = $schemas[self::ALL] ?? [];
         $globalSrcs = $globals['src'] ?? [];
         if (is_string($globalSrcs)) {
-            $globalSrcs = [$globalSrcs => true];
+            $globalSrcs = [Schema::ALL => $globalSrcs];
         }
         Schema::assertValidConfig($globalSrcs);
         foreach ($globalSrcs as $configSrc => $data) {
@@ -353,6 +353,9 @@ class Schema implements ConfigurationApplier, SchemaValidator
         }
 
         $configSrcs = $schema['src'] ?? [];
+        if (is_string($configSrcs)) {
+            $configSrcs = [$this->schemaKey => $configSrcs];
+        }
         Schema::assertValidConfig($configSrcs);
         foreach ($configSrcs as $configSrc => $data) {
             if ($data === false) {

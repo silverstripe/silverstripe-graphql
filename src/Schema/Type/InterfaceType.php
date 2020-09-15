@@ -86,14 +86,6 @@ class InterfaceType extends Type
     }
 
     /**
-     * @return DBHTMLText
-     */
-    public function forTemplate(): DBHTMLText
-    {
-        return $this->renderWith('SilverStripe\\GraphQL\\Schema\\Interface');
-    }
-
-    /**
      * @return string
      * @throws Exception
      */

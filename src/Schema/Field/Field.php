@@ -4,6 +4,8 @@ namespace SilverStripe\GraphQL\Schema\Field;
 
 
 use GraphQL\Language\Token;
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -18,17 +20,18 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\ORM\ArrayList;
-use SilverStripe\View\ViewableData;
 use Exception;
 
 /**
  * An abstraction of a field that appears on a Type abstraction
  */
-class Field extends ViewableData implements
+class Field implements
     ConfigurationApplier,
     SchemaValidator,
     SignatureProvider
 {
+    use Injectable;
+    use Configurable;
     use PluginConsumer;
 
     const DEFAULT_TYPE = 'String';
@@ -96,7 +99,6 @@ class Field extends ViewableData implements
      */
     public function __construct(string $name, $config)
     {
-        parent::__construct();
         $this->setResolverRegistry(Injector::inst()->get(ResolverRegistry::class));
         list ($name, $args) = static::parseName($name);
         $this->setName($name);
@@ -366,14 +368,6 @@ class Field extends ViewableData implements
     public function getArgs(): array
     {
         return $this->args;
-    }
-
-    /**
-     * @return ArrayList
-     */
-    public function getArgList(): ArrayList
-    {
-        return ArrayList::create(array_values($this->args));
     }
 
     /**

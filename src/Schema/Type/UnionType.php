@@ -13,16 +13,15 @@ use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\ORM\FieldType\DBHTMLText;
-use SilverStripe\View\ViewableData;
 
 /**
  * Abstraction of a union type
  */
-class UnionType extends ViewableData implements
+class UnionType implements
     SchemaValidator,
     ConfigurationApplier,
     SignatureProvider {
+
     use Injectable;
     use Configurable;
 
@@ -54,7 +53,6 @@ class UnionType extends ViewableData implements
      */
     public function __construct(string $name, ?array $config = null)
     {
-        parent::__construct();
         $this->setName($name);
         if ($config) {
             $this->applyConfig($config);
@@ -199,14 +197,6 @@ class UnionType extends ViewableData implements
             'Union %s has no types',
             $this->getName()
         );
-    }
-
-    /**
-     * @return DBHTMLText
-     */
-    public function forTemplate(): DBHTMLText
-    {
-        return $this->renderWith('SilverStripe\\GraphQL\\Schema\\Union');
     }
 
     /**

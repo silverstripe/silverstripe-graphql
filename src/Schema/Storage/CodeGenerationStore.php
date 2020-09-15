@@ -109,9 +109,10 @@ class CodeGenerationStore implements SchemaStorageInterface
                 ));
             }
         }
+        $templateDir = static::getTemplateDir();
         $globals = [
-            'TypesClassName' => self::TYPE_CLASS_NAME,
-            'Namespace' => $this->getNamespace(),
+            'typeClassName' => self::TYPE_CLASS_NAME,
+            'namespace' => $this->getNamespace(),
         ];
         $allComponents = array_merge(
             $schema->getTypes(),
@@ -119,11 +120,8 @@ class CodeGenerationStore implements SchemaStorageInterface
             $schema->getInterfaces(),
             $schema->getUnions()
         );
-        $data = ArrayData::create([
-            'SchemaComponents' => ArrayList::create($allComponents),
-        ]);
-        $code = (string) $data->customise($globals)
-            ->renderWith('SilverStripe\\GraphQL\\Schema\\GraphQLTypeRegistry');
+        $encoder = Encoder::create(Path::join($templateDir, 'Registry.template'), $allComponents, $globals);
+        $code = $encoder->encode();
         $schemaFile = $this->getSchemaFilename();
         try {
             $fs->dumpFile($schemaFile, $this->toCode($code));
@@ -135,11 +133,16 @@ class CodeGenerationStore implements SchemaStorageInterface
             ));
         }
 
-        $fields = ['Types', 'Interfaces', 'Unions', 'Enums'];
+        $fields = [
+            'Types' => 'Type.template',
+            'Interfaces' => 'Interface.template',
+            'Unions' => 'Union.template',
+            'Enums' => 'Enum.template',
+        ];
         $touched = [];
         $built = [];
         $total = 0;
-        foreach ($fields as $field) {
+        foreach ($fields as $field => $template) {
             $method = 'get' . $field;
             /* @var Type|InterfaceType|UnionType|Enum $type */
             foreach ($schema->$method() as $type) {
@@ -154,7 +157,8 @@ class CodeGenerationStore implements SchemaStorageInterface
                     }
                 }
                 $file = Path::join($dir, $name . '.php');
-                $code = (string) $type->customise($globals)->forTemplate($globals);
+                $encoder = Encoder::create(Path::join($templateDir, $template), $type, $globals);
+                $code = $encoder->encode();
                 $fs->dumpFile($file, $this->toCode($code));
                 $this->getCache()->set($name, $sig);
                 $touched[] = $name;
@@ -265,6 +269,14 @@ class CodeGenerationStore implements SchemaStorageInterface
     {
         $this->rootDir = $rootDir;
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public static function getTemplateDir(): string
+    {
+        return Path::join(__DIR__, 'templates');
     }
 
     /**

@@ -7,10 +7,6 @@ namespace SilverStripe\GraphQL\Schema\Type;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\ORM\FieldType\DBHTMLText;
-use SilverStripe\View\ArrayData;
-use SilverStripe\View\ViewableData;
 
 /**
  * Abstraction for enum types
@@ -47,12 +43,12 @@ class Enum extends Type implements SchemaValidator
     }
 
     /**
-     * @return ArrayList
+     * @return array
      * @throws SchemaBuilderException
      */
-    public function getValueList(): ArrayList
+    public function getValueList(): array
     {
-        $list = ArrayList::create();
+        $list = [];
         foreach ($this->getValues() as $key => $val) {
             $value = null;
             $description = null;
@@ -63,11 +59,11 @@ class Enum extends Type implements SchemaValidator
             } else {
                 $value = $val;
             }
-            $list->push(ArrayData::create([
+            $list[] = [
                 'Key' => $key,
                 'Value' => $value,
                 'Description' => $description,
-            ]));
+            ];
         }
 
         return $list;
@@ -79,7 +75,7 @@ class Enum extends Type implements SchemaValidator
     public function validate(): void
     {
         Schema::invariant(
-            $this->getValueList()->exists(),
+            !empty($this->getValueList()),
             'Enum type %s has no values defined',
             $this->getName()
         );
@@ -128,14 +124,6 @@ class Enum extends Type implements SchemaValidator
         unset($this->values[$key]);
 
         return $this;
-    }
-
-    /**
-     * @return DBHTMLText
-     */
-    public function forTemplate(): DBHTMLText
-    {
-        return $this->renderWith('SilverStripe\\GraphQL\\Schema\\Enum');
     }
 
     /**

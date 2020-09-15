@@ -5,6 +5,8 @@ namespace SilverStripe\GraphQL\Schema\Field;
 
 
 use GraphQL\Error\SyntaxError;
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
@@ -16,8 +18,11 @@ use SilverStripe\View\ViewableData;
 /**
  * An abstraction of a field argument
  */
-class Argument extends ViewableData implements ConfigurationApplier, SignatureProvider
+class Argument implements ConfigurationApplier, SignatureProvider
 {
+    use Injectable;
+    use Configurable;
+
     /**
      * @var string
      */
@@ -41,13 +46,11 @@ class Argument extends ViewableData implements ConfigurationApplier, SignaturePr
     /**
      * Argument constructor.
      * @param string $name
-     * @param $type
      * @param array $config
      * @throws SchemaBuilderException
      */
     public function __construct(string $name, $config)
     {
-        parent::__construct();
         Schema::assertValidName($name);
         $this->name = $name;
         Schema::invariant(
