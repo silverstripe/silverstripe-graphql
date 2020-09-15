@@ -9,6 +9,7 @@ use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
@@ -140,6 +141,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function applyConfig(array $schemaConfig): Schema
     {
+        Benchmark::start('apply-config');
         $types = $schemaConfig[self::TYPES] ?? [];
         $queries = $schemaConfig[self::QUERIES] ?? [];
         $mutations = $schemaConfig[self::MUTATIONS] ?? [];
@@ -200,9 +202,9 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $enum = Enum::create($enumName, $enumConfig['values'], $description);
             $this->addEnum($enum);
         }
-
+        Benchmark::start('schema-updates');
         $this->applySchemaUpdates($schemaConfig);
-
+        echo Benchmark::end('schema-updates') . PHP_EOL;
         foreach ($this->models as $modelType) {
             $this->addType($modelType);
         }
@@ -218,7 +220,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
             ]);
             $this->types[self::MUTATION_TYPE] = $mutationType;
         }
-
+        echo Benchmark::end('apply-config') . PHP_EOL;
         return $this;
     }
 
@@ -334,21 +336,33 @@ class Schema implements ConfigurationApplier, SchemaValidator
         static::invariant($schemas, 'There are no schemas defined in the config');
         $schema = $schemas[$this->schemaKey] ?? null;
         static::invariant($schema, 'Schema "%s" is not configured', $this->schemaKey);
-        $configSrcs = $schema['src'] ?? [];
-        if (is_string($configSrcs)) {
-            $configSrcs = [$configSrcs => true];
+
+        // Gather all the global config first
+        $globals = $schemas[self::ALL] ?? [];
+        $globalSrcs = $globals['src'] ?? [];
+        if (is_string($globalSrcs)) {
+            $globalSrcs = [$globalSrcs => true];
         }
+        Schema::assertValidConfig($globalSrcs);
+        foreach ($globalSrcs as $configSrc => $data) {
+            if ($data === false) {
+                continue;
+            }
+            $sourcedConfig = $this->loadConfigFromSource($data);
+            $schema = array_merge_recursive($schema, $sourcedConfig);
+        }
+
+        $configSrcs = $schema['src'] ?? [];
         Schema::assertValidConfig($configSrcs);
         foreach ($configSrcs as $configSrc => $data) {
             if ($data === false) {
                 continue;
             }
-            $sourcedConfig = $this->loadConfigFromSource($configSrc);
+            $sourcedConfig = $this->loadConfigFromSource($data);
             $schema = array_merge_recursive($schema, $sourcedConfig);
         }
-        $globals = $schemas[self::ALL] ?? [];
-        $allConfig = array_merge_recursive($globals, $schema);
-        $this->applyConfig($allConfig);
+
+        $this->applyConfig($schema);
 
         return $this;
     }
@@ -360,7 +374,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function loadConfigFromSource(string $dir): array
     {
-        $absConfigSrc = Path::join(BASE_PATH, $dir);
+        $resolvedDir = ModuleResourceLoader::singleton()->resolvePath($dir);
+        $absConfigSrc = Path::join(BASE_PATH, $resolvedDir);
         static::invariant(
             is_dir($absConfigSrc),
             'Source config directory %s does not exist on schema %s',

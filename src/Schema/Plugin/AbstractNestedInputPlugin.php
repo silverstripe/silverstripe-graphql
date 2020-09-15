@@ -50,6 +50,11 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
     protected $fieldMapping = [];
 
     /**
+     * @var array
+     */
+    private $_allConfigCache = [];
+
+    /**
      * @param ModelQuery $query
      * @param Schema $schema
      * @param array $config
@@ -69,13 +74,14 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
             $typeName
         );
         $fieldName = $this->config()->get('field_name');
-
+        $prefix = $query->getName();
         if ($configFields === Schema::ALL) {
             $configFields = $this->buildAllFieldsConfig($modelType, $schema);
+            $prefix = '';
         }
         Schema::assertValidConfig($configFields);
-        $this->addInputTypesToSchema($modelType, $schema, $configFields);
-        $rootTypeName = static::getTypeName($modelType);
+        $this->addInputTypesToSchema($modelType, $schema, $configFields, $prefix);
+        $rootTypeName = $prefix . static::getTypeName($modelType);
         /* @var InputType $rootType */
         $rootType = $schema->getType($rootTypeName);
         $pathMapping = $this->buildPathsFromInputType($rootType, $schema);
@@ -109,6 +115,10 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
      */
     protected function buildAllFieldsConfig(ModelType $modelType, Schema $schema, int $level = 1): array
     {
+        $existing = $this->_allConfigCache[$modelType->getName()] ?? null;
+        if ($existing) {
+            return $existing;
+        }
         $filters = [];
         /* @var ModelField $fieldObj */
         foreach ($modelType->getFields() as $fieldObj) {
@@ -147,6 +157,7 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
                 $filters[$fieldObj->getName()] = true;
             }
         }
+        $this->_allConfigCache[$modelType->getName()] = $filters;
 
         return $filters;
     }
@@ -155,15 +166,16 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
      * @param ModelType $parentModel
      * @param Schema $schema
      * @param array $fields
-     * @return array
+     * @param string $prefix
      * @throws SchemaBuilderException
      */
     protected function addInputTypesToSchema(
         ModelType $parentModel,
         Schema $schema,
-        array $fields
+        array $fields,
+        string $prefix = ''
     ): void {
-        $parentInputTypeName = static::getTypeName($parentModel);
+        $parentInputTypeName = $prefix . static::getTypeName($parentModel);
         $parentType = $schema->getType($parentInputTypeName);
         if (!$parentType) {
             $parentType = InputType::create($parentInputTypeName);
@@ -206,9 +218,9 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
                     $fieldName
                 );
                 $relatedModel = $schema->getModel($modelType->getName());
-                $nextInputTypeName = static::getTypeName($relatedModel);
+                $nextInputTypeName = $prefix . static::getTypeName($relatedModel);
                 $parentType->addField($fieldName, $nextInputTypeName);
-                $this->addInputTypesToSchema($relatedModel, $schema, $data);
+                $this->addInputTypesToSchema($relatedModel, $schema, $data, $prefix);
             }
         }
     }
