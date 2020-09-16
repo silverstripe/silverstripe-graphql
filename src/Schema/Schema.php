@@ -842,7 +842,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public static function message(string $message): void
     {
-        $break = Director::is_cli() ? PHP_EOL : "<br>";
-        fwrite(STDOUT, $message . $break);
+        if (Director::is_cli()) {
+            fwrite(STDOUT, $message . PHP_EOL);
+        } else {
+            echo $message . "<br>";
+        }
     }
 }
