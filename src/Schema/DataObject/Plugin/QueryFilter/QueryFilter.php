@@ -7,7 +7,6 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
-use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Plugin\AbstractQueryFilterPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
@@ -39,12 +38,12 @@ class QueryFilter extends AbstractQueryFilterPlugin
     }
 
     /**
-     * @param ModelQuery $query
+     * @param ModelField $query
      * @param Schema $schema
      * @param array $config
      * @throws SchemaBuilderException
      */
-    public function apply(ModelQuery $query, Schema $schema, array $config = []): void
+    public function apply(ModelField $query, Schema $schema, array $config = []): void
     {
         Schema::invariant(
             is_subclass_of(

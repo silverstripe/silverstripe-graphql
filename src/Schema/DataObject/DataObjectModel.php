@@ -8,6 +8,8 @@ use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Schema\Field\ModelField;
+use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
@@ -44,6 +46,12 @@ class DataObjectModel implements
      * @config
      */
     private static $default_plugins = [];
+
+    /**
+     * @var array
+     * @config
+     */
+    private static $nested_query_default_plugins = [];
 
     /**
      * @var callable
@@ -127,17 +135,21 @@ class DataObjectModel implements
 
     /**
      * @param string $fieldName
-     * @return string|null
+     * @return ModelField|null
      * @throws SchemaBuilderException
      */
-    public function getTypeForField(string $fieldName): ?string
+    public function getField(string $fieldName): ?ModelField
     {
         $result = $this->getFieldAccessor()->accessField($this->dataObject, $fieldName);
         if (!$result) {
             return null;
         }
         if ($result instanceof DBField) {
-            return $result->config()->get('graphql_type');
+            return ModelField::create(
+                $fieldName,
+                $result->config()->get('graphql_type'),
+                $this
+            );
         }
         $class = $this->getModelClass($result);
         Schema::invariant(
@@ -148,8 +160,14 @@ class DataObjectModel implements
         );
 
         $type = DataObjectModel::create($class)->getTypeName();
-
-        return $this->isList($result) ? sprintf('[%s]', $type) : $type;
+        if ($this->isList($result)) {
+            $queryConfig = [
+                'plugins' => $this->getNestedDefaultPlugins(),
+                'type' => sprintf('[%s]', $type),
+            ];
+            return ModelQuery::create($this, $fieldName, $queryConfig);
+        }
+        return ModelField::create($fieldName, $type, $this);
     }
 
     /**

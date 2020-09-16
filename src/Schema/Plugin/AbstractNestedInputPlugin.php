@@ -10,10 +10,12 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelFieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
+use SilverStripe\GraphQL\Schema\Type\TypeReference;
 
 /**
  * This is an extremely complex class that is used to generate input types
@@ -24,7 +26,7 @@ use SilverStripe\GraphQL\Schema\Type\ModelType;
  * types, and provides a utility that exports dot.separtated.fieldNames
  * that map to Dot.Separated.ObjectProperties
  */
-abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
+abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
 {
     use Injectable;
     use Configurable;
@@ -37,7 +39,7 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
      * @var int
      * @config
      */
-    private static $max_nesting = 1;
+    private static $max_nesting = 2;
 
     /**
      * @var InputType[]
@@ -55,15 +57,14 @@ abstract class AbstractNestedInputPlugin implements ModelQueryPlugin
     private $_allConfigCache = [];
 
     /**
-     * @param ModelQuery $query
+     * @param ModelField $query
      * @param Schema $schema
      * @param array $config
      * @throws SchemaBuilderException
      */
-    public function apply(ModelQuery $query, Schema $schema, array $config = []): void
+    public function apply(ModelField $query, Schema $schema, array $config = []): void
     {
-        $model = $query->getModel();
-        $typeName = $model->getTypeName();
+        $typeName = TypeReference::create($query->getType())->getNamedType();
 
         $configFields = $config['fields'] ?? Schema::ALL;
 

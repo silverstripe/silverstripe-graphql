@@ -37,7 +37,7 @@ class ModelField extends Field
      * @param $config
      * @param SchemaModelInterface $model
      * @throws SchemaBuilderException
-\     */
+     */
     public function __construct(string $name, $config, SchemaModelInterface $model)
     {
         $this->setModel($model);
@@ -47,13 +47,12 @@ class ModelField extends Field
                 to for type introspection from the model.',
             $name
         );
+        if (is_string($config)) {
+            $config = ['type' => $config];
+        }
         if (!is_array($config)) {
             $config = [];
         }
-        if (!isset($config['type'])) {
-            $config['type'] = true;
-        }
-
         if (isset($config['property'])) {
             $this->setProperty($config['property']);
         }
@@ -84,27 +83,6 @@ class ModelField extends Field
         unset($config['property']);
 
         parent::applyConfig($config);
-    }
-
-    /**
-     * @param EncodedType|string $type
-     * @return Field
-     * @throws SchemaBuilderException
-     */
-    public function setType($type): Field
-    {
-        if ($type === true) {
-            Schema::invariant(
-                $this->getModel()->hasField($this->getPropertyName()),
-                'DataObject %s does not have a field "%s". Cannot introspect type.',
-                $this->getModel()->getSourceClass(),
-                $this->getPropertyName()
-            );
-
-            return parent::setType($this->getModel()->getTypeForField($this->getPropertyName()));
-        }
-
-        return parent::setType($type);
     }
 
     /**

@@ -3,10 +3,9 @@
 
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
-
+use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
-use SilverStripe\GraphQL\Schema\Type\Type;
 
 /**
  * Implementors of this interface can be models that generate types and operations
@@ -26,9 +25,9 @@ interface SchemaModelInterface
 
     /**
      * @param string $fieldName
-     * @return string|null
+     * @return ModelField|null
      */
-    public function getTypeForField(string $fieldName): ?string;
+    public function getField(string $fieldName): ?ModelField;
 
     /**
      * @return string

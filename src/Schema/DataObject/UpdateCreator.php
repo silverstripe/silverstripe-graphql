@@ -121,7 +121,7 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
         $includedFields = array_diff($allFields, $excluded);
         $fieldMap = [];
         foreach ($includedFields as $fieldName) {
-            $fieldMap[$fieldName] = $model->getTypeForField($fieldName);
+            $fieldMap[$fieldName] = $model->getField($fieldName)->getType();
         }
         $inputType = InputType::create(
             self::inputTypeName($typeName),

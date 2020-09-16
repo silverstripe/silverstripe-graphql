@@ -39,12 +39,12 @@ class QuerySort extends AbstractQuerySortPlugin
     }
 
     /**
-     * @param ModelQuery $query
+     * @param ModelField $query
      * @param Schema $schema
      * @param array $config
      * @throws SchemaBuilderException
      */
-    public function apply(ModelQuery $query, Schema $schema, array $config = []): void
+    public function apply(ModelField $query, Schema $schema, array $config = []): void
     {
         Schema::invariant(
             is_subclass_of(

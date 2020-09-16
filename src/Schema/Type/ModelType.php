@@ -136,13 +136,30 @@ class ModelType extends Type implements ExtraTypeProvider
      */
     public function addField(string $fieldName, $fieldConfig = true, ?callable $callback = null): Type
     {
-        if (!$fieldConfig instanceof Field) {
-            $model = $this->getModel();
-            $config = is_string($fieldConfig) ? ['type' => $fieldConfig] : $fieldConfig;
-            $fieldObj = ModelField::create($fieldName, $config, $model);
-        } else {
+        $fieldObj = null;
+        if ($fieldConfig instanceof ModelField) {
             $fieldObj = $fieldConfig;
+        } else {
+            $field = ModelField::create($fieldName, $fieldConfig, $this->getModel());
+            $modelFallback = $this->getModel()->getField($field->getPropertyName());
+            $fieldObj = $modelFallback;
+            if (is_array($fieldConfig) || is_string($fieldConfig)) {
+                if ($modelFallback) {
+                    $fieldObj = $modelFallback;
+                    if (is_array($fieldConfig)) {
+                        $fieldObj->applyConfig($fieldConfig);
+                    }
+                } else {
+                    $fieldObj = ModelField::create($fieldName, $fieldConfig, $this->getModel());
+                }
+            }
         }
+        Schema::invariant(
+            $fieldObj,
+            'Could not get field "%s" on "%s"',
+            $fieldName,
+            $this->getName()
+        );
 
         Schema::invariant(
             !in_array(strtolower($fieldObj->getName()), $this->blacklistedFields),
@@ -192,7 +209,7 @@ class ModelType extends Type implements ExtraTypeProvider
         }
         $allFields = $this->getModel()->getAllFields();
         foreach ($allFields as $fieldName) {
-            $this->addField($fieldName, $this->getModel()->getTypeForField($fieldName));
+            $this->addField($fieldName, $this->getModel()->getField($fieldName));
         }
         return $this;
     }
