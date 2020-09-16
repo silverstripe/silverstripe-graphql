@@ -120,7 +120,7 @@ class CodeGenerationStore implements SchemaStorageInterface
             $schema->getInterfaces(),
             $schema->getUnions()
         );
-        $encoder = Encoder::create(Path::join($templateDir, 'Registry.template'), $allComponents, $globals);
+        $encoder = Encoder::create(Path::join($templateDir, 'registry.inc.php'), $allComponents, $globals);
         $code = $encoder->encode();
         $schemaFile = $this->getSchemaFilename();
         try {
@@ -134,10 +134,10 @@ class CodeGenerationStore implements SchemaStorageInterface
         }
 
         $fields = [
-            'Types' => 'Type.template',
-            'Interfaces' => 'Interface.template',
-            'Unions' => 'Union.template',
-            'Enums' => 'Enum.template',
+            'Types' => 'type.inc.php',
+            'Interfaces' => 'interface.inc.php',
+            'Unions' => 'union.inc.php',
+            'Enums' => 'enum.inc.php',
         ];
         $touched = [];
         $built = [];

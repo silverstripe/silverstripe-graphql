@@ -144,11 +144,11 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
                 );
                 // Prevent stupid recursion in self-referential relationships, e.g. Parent
                 if ($relatedModel->getName() === $modelType->getName()) {
-                    $filters[$fieldObj->getPropertyName()] = $fieldObj->isList()
+                    $filters[$fieldObj->getName()] = $fieldObj->isList()
                         ? self::SELF_REFERENTIAL_LIST
                         : self::SELF_REFERENTIAL;
                 } else {
-                    $filters[$fieldObj->getPropertyName()] = $this->buildAllFieldsConfig(
+                    $filters[$fieldObj->getName()] = $this->buildAllFieldsConfig(
                         $relatedModel,
                         $schema,
                         $level + 1
@@ -178,10 +178,13 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
     ): void {
         $parentInputTypeName = $prefix . static::getTypeName($parentModel);
         $parentType = $schema->getType($parentInputTypeName);
-        if (!$parentType) {
-            $parentType = InputType::create($parentInputTypeName);
-            $schema->addType($parentType);
+        if ($parentType) {
+            return;
         }
+
+        $parentType = InputType::create($parentInputTypeName);
+        $schema->addType($parentType);
+
         foreach ($fields as $fieldName => $data) {
             if ($data === false) {
                 continue;

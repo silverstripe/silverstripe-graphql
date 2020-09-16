@@ -4,47 +4,47 @@
 /* @var array $globals */
 ?>
 <?php $type = $scope; ?>
-namespace <?php echo $globals['namespace'] ?>;
+namespace <?=$globals['namespace'] ?>;
 
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\GraphQL\Schema\Resolver\ComposedResolver;
 
 
-class <?php echo $type->getName() ?> extends <?php if($type->getIsInput()): ?>InputObjectType<?php else: ?>ObjectType<?php endif; ?>
+class <?=$type->getName() ?> extends <?php if($type->getIsInput()): ?>InputObjectType<?php else: ?>ObjectType<?php endif; ?>
 {
     public function __construct()
     {
         parent::__construct([
-            'name' => '<?php echo $type->getName() ?>',
+            'name' => '<?=$type->getName() ?>',
         <?php if(!empty($type->getDescription())): ?>
-            'description' => '<?php echo addslashes($type->getDescription()); ?>',
+            'description' => '<?=addslashes($type->getDescription()); ?>',
         <?php endif; ?>
         <?php if (!empty($type->getInterfaces())): ?>
             'interfaces' => function () {
                 return array_map(function ($interface) {
-                    return call_user_func([__NAMESPACE__ . '\\<?php echo $globals['typeClassName']; ?>, $interface]);
-                }, <?php echo $type->getEncodedInterfaces(); ?>);
+                    return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName']; ?>, $interface]);
+                }, <?=$type->getEncodedInterfaces(); ?>);
             },
         <?php endif; ?>
 'fields' => function () {
                 return [
                 <?php foreach($type->getFields() as $field): ?>
                     [
-                        'name' => '<?php echo $field->getName(); ?>',
-                        'type' => <?php echo $field->getEncodedType()->encode() ?>,
-                        'resolve' => <?php echo $field->getEncodedResolver($type->getName())->encode(); ?>,
+                        'name' => '<?=$field->getName(); ?>',
+                        'type' => <?=$field->getEncodedType()->encode() ?>,
+                        'resolve' => <?=$field->getEncodedResolver($type->getName())->encode(); ?>,
                     <?php if (!empty($field->getDescription())): ?>
-                        'description' => '<?php echo addslashes($field->getDescription()); ?>',
+                        'description' => '<?=addslashes($field->getDescription()); ?>',
                     <?php endif; ?>
                     <?php if (!empty($field->getArgs())): ?>
                         'args' => [
                         <?php foreach ($field->getArgs() as $arg): ?>
                             [
-                                'name' => '<?php echo $arg->getName(); ?>',
-                                'type' => <?php echo $arg->getEncodedType()->encode(); ?>,
+                                'name' => '<?=$arg->getName(); ?>',
+                                'type' => <?=$arg->getEncodedType()->encode(); ?>,
                             <?php if ($arg->getDefaultValue() !== null): ?>
-                                'defaultValue' => <?php echo $arg->getDefaultValue(); ?>,
+                                'defaultValue' => <?=$arg->getDefaultValue(); ?>,
                             <?php endif; ?>
                             ],
                         <?php endforeach; ?>

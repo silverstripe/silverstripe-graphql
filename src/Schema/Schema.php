@@ -306,10 +306,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
                     foreach ($spec['req'] as $pluginInterface) {
                         if ($plugin instanceof $pluginInterface) {
                             try {
-//                                $id = 'plugin-apply-'  . $plugin->getIdentifier() . '-' . $component->getName();
-//                                Benchmark::start($id);
+                                $id = 'plugin-apply-'  . $plugin->getIdentifier() . '-' . $component->getName();
+                                Benchmark::start($id);
                                 $plugin->apply($component, $this, $config);
-//                                echo Benchmark::end($id) . PHP_EOL;
+                                echo Benchmark::end($id) . PHP_EOL;
                                 break;
                             } catch (SchemaBuilderException $e) {
                                 throw new SchemaBuilderException(sprintf(

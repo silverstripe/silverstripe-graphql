@@ -53,9 +53,6 @@ class ModelField extends Field
         if (!is_array($config)) {
             $config = [];
         }
-        if (isset($config['property'])) {
-            $this->setProperty($config['property']);
-        }
 
         parent::__construct($name, $config);
     }
@@ -66,6 +63,11 @@ class ModelField extends Field
         if ($type) {
             $this->setType($type);
         }
+
+        if (isset($config['property'])) {
+            $this->setProperty($config['property']);
+        }
+
         $resolver = $config['resolver'] ?? null;
         if ($resolver) {
             $this->setResolver($resolver);

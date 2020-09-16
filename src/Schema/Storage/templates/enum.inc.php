@@ -4,28 +4,28 @@
 /* @var array $globals */
 ?>
 <?php $enum = $scope; ?>
-namespace <?php echo $globals['namespace']; ?>;
+namespace <?=$globals['namespace']; ?>;
 
 use GraphQL\Type\Definition\EnumType;
 
-class <?php echo $enum->getName(); ?> extends EnumType
+class <?=$enum->getName(); ?> extends EnumType
 {
     public function __construct()
     {
         parent::__construct([
-            'name' => '<?php echo $enum->getName(); ?>',
+            'name' => '<?=$enum->getName(); ?>',
             'values' => [
         <?php foreach ($enum->getValueList() as $valueItem): ?>
-                '<?php echo $valueItem['Key']; ?>' => [
-                    'value' => '<?php echo addslashes($valueItem['Value']); ?>',
+                '<?=$valueItem['Key']; ?>' => [
+                    'value' => '<?=addslashes($valueItem['Value']); ?>',
                 <?php if (!empty($valueItem['Description'])): ?>
-                    'description' => '<?php echo addslashes($valueItem['Description']); ?>',
+                    'description' => '<?=addslashes($valueItem['Description']); ?>',
                 <?php endif; ?>
                 ],
         <?php endforeach; ?>
             ],
         <?php if (!empty($enum->getDescription())): ?>
-            'description' => '<?php echo addslashes($enum->getDescription()); ?>',
+            'description' => '<?=addslashes($enum->getDescription()); ?>',
         <?php endif; ?>
         ]);
     }

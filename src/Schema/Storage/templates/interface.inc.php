@@ -4,40 +4,40 @@
 /* @var array $globals */
 ?>
 <?php $interface = $scope; ?>
-namespace <?php echo $globals['namespace'] ?>;
+namespace <?=$globals['namespace'] ?>;
 
 use GraphQL\Type\Definition\InterfaceType;
 
-class <?php echo $interface->getName(); ?> extends InterfaceType
+class <?=$interface->getName(); ?> extends InterfaceType
 {
     public function __construct()
     {
         parent::__construct([
-            'name' => '<?php echo $interface->getName(); ?>',
+            'name' => '<?=$interface->getName(); ?>',
             'resolveType' => function ($obj) {
-                $type = call_user_func_array(<?php echo $interface->getEncodedResolver()->encode(); ?>, [$obj]);
-                return call_user_func([__NAMESPACE__ . '\\<?php echo $globals['typeClassName']; ?>', $type]);
+                $type = call_user_func_array(<?=$interface->getEncodedResolver()->encode(); ?>, [$obj]);
+                return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName']; ?>', $type]);
             },
         <?php if (!empty($interface->getDescription())): ?>
-            'description' => '<?php echo addslashes($interface->getDescription()); ?>',
+            'description' => '<?=addslashes($interface->getDescription()); ?>',
         <?php endif; ?>
             'fields' => function () {
                 return [
                 <?php foreach($interface->getFields() as $field): ?>
                     [
-                        'name' => '<?php echo $field->getName(); ?>',
-                        'type' => <?php echo $field->getEncodedType()->encode() ?>,
+                        'name' => '<?=$field->getName(); ?>',
+                        'type' => <?=$field->getEncodedType()->encode() ?>,
                     <?php if (!empty($field->getDescription())): ?>
-                        'description' => '<?php echo addslashes($field->getDescription()); ?>',
+                        'description' => '<?=addslashes($field->getDescription()); ?>',
                     <?php endif; ?>
                     <?php if (!empty($field->getArgs())): ?>
                         'args' => [
                         <?php foreach ($field->getArgs() as $arg): ?>
                             [
-                                'name' => '<?php echo $arg->getName(); ?>',
-                                'type' => <?php echo $arg->getEncodedType()->encode(); ?>,
+                                'name' => '<?=$arg->getName(); ?>',
+                                'type' => <?=$arg->getEncodedType()->encode(); ?>,
                             <?php if ($arg->getDefaultValue() !== null): ?>
-                                'defaultValue' => <?php echo $arg->getDefaultValue(); ?>,
+                                'defaultValue' => <?=$arg->getDefaultValue(); ?>,
                             <?php endif; ?>
                             ],
                         <?php endforeach; ?>

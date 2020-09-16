@@ -3,11 +3,11 @@
 /* @var array $globals */
 ?>
 <?php $components = $scope; ?>
-namespace <?php echo $globals['namespace'] ?>;
+namespace <?=$globals['namespace'] ?>;
 
 use SilverStripe\GraphQL\Schema\Storage\AbstractTypeRegistry;
 
-class <?php echo $globals['typeClassName']; ?> extends AbstractTypeRegistry
+class <?=$globals['typeClassName']; ?> extends AbstractTypeRegistry
 {
     protected static function getSourceDirectory(): string
     {
@@ -20,7 +20,7 @@ class <?php echo $globals['typeClassName']; ?> extends AbstractTypeRegistry
     }
 
     <?php foreach ($components as $component): ?>
-public static function <?php echo $component->getName(); ?>() { return static::get('<?php echo $component->getName(); ?>'); }
+public static function <?=$component->getName(); ?>() { return static::get('<?=$component->getName(); ?>'); }
     <?php endforeach; ?>
 
 }

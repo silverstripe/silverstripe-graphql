@@ -141,17 +141,14 @@ class ModelType extends Type implements ExtraTypeProvider
             $fieldObj = $fieldConfig;
         } else {
             $field = ModelField::create($fieldName, $fieldConfig, $this->getModel());
-            $modelFallback = $this->getModel()->getField($field->getPropertyName());
-            $fieldObj = $modelFallback;
-            if (is_array($fieldConfig) || is_string($fieldConfig)) {
-                if ($modelFallback) {
-                    $fieldObj = $modelFallback;
-                    if (is_array($fieldConfig)) {
-                        $fieldObj->applyConfig($fieldConfig);
-                    }
-                } else {
-                    $fieldObj = ModelField::create($fieldName, $fieldConfig, $this->getModel());
+            $fieldObj = $this->getModel()->getField($field->getPropertyName());
+            if ($fieldObj) {
+                $fieldObj->setName($fieldName);
+                if (is_array($fieldConfig)) {
+                    $fieldObj->applyConfig($fieldConfig);
                 }
+            } else {
+                $fieldObj = ModelField::create($fieldName, $fieldConfig, $this->getModel());
             }
         }
         Schema::invariant(
