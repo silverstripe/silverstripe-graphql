@@ -16,7 +16,7 @@ class InFilter implements ListFieldFilterInterface
      */
     public function apply(Filterable $list, string $fieldName, $value): iterable
     {
-        return $list->filter($fieldName . ':ExactMatch', (array) $value);
+        return $list->filter($fieldName, (array) $value);
     }
 
     /**
