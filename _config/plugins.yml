@@ -10,6 +10,7 @@ SilverStripe\Core\Injector\Injector:
       dataobjectQuerySort: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QuerySort'
       dataobjectInheritance: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\Inheritance'
       canViewPermission: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\CanViewPermission'
+      firstResult: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\FirstResult'
 SilverStripe\GraphQL\Schema\DataObject\ReadCreator:
   default_plugins:
     filter:
@@ -22,6 +23,10 @@ SilverStripe\GraphQL\Schema\DataObject\ReadCreator:
 SilverStripe\GraphQL\Schema\DataObject\ReadOneCreator:
   default_plugins:
     canView: true
+    filter: true
+    sort: true
+    firstResult:
+      after: '*'
 SilverStripe\GraphQL\Schema\DataObject\DataObjectModel:
   default_plugins:
     inheritance: true

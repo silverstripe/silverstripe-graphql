@@ -48,27 +48,10 @@ class ReadOneCreator implements OperationCreator
         return ModelQuery::create($model, 'readOne' . ucfirst($typeName))
             ->setType($typeName)
             ->setPlugins($plugins)
-            ->setDefaultResolver([static::class, 'resolve'])
+            ->setDefaultResolver([ReadCreator::class, 'resolve'])
             ->setResolverContext([
                 'dataClass' => $model->getSourceClass()
-            ])
-            ->addArg('id', 'ID!');
-    }
-
-    /**
-     * @param array $resolverContext
-     * @return Closure
-     */
-    public static function resolve(array $resolverContext = []): Closure
-    {
-        $dataClass = $resolverContext['dataClass'] ?? null;
-        return function ($obj, $args = []) use ($dataClass) {
-            if (!$dataClass) {
-                return null;
-            }
-            $idField = FieldAccessor::singleton()->formatField('ID');
-            return DataObject::get_by_id($dataClass, $args[$idField]);
-        };
+            ]);
     }
 
 }
