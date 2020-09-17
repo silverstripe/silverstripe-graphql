@@ -109,6 +109,14 @@ class Argument implements ConfigurationApplier, SignatureProvider
     }
 
     /**
+     * @return string|null
+     */
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    /**
      * @return string
      */
     public function getName(): string

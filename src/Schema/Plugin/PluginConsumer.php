@@ -95,6 +95,17 @@ trait PluginConsumer
     }
 
     /**
+     * @param string $identifier
+     * @return bool
+     */
+    public function hasPlugin(string $identifier): bool
+    {
+        $ids = array_keys($this->getPlugins());
+
+        return in_array($identifier, $ids);
+    }
+
+    /**
      * @return PluginRegistry
      */
     public function getPluginRegistry(): PluginRegistry
@@ -146,7 +157,7 @@ trait PluginConsumer
         foreach ($allPlugins as $pluginName => $pluginConfig) {
             $before = $pluginConfig['before'] ?? [];
             if ($before === Schema::ALL) {
-                $beforeAll[] = $before;
+                $beforeAll[] = $pluginName;
                 continue;
             }
             $before = !is_array($before) ? [$before] : $before;
@@ -154,7 +165,7 @@ trait PluginConsumer
 
             $after = $pluginConfig['after'] ?? [];
             if ($after === Schema::ALL) {
-                $afterAll[] = $before;
+                $afterAll[] = $pluginName;
                 continue;
             }
             $after = !is_array($after) ? [$after] : $after;

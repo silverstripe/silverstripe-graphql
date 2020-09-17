@@ -25,7 +25,6 @@ SilverStripe\GraphQL\Schema\DataObject\ReadOneCreator:
 SilverStripe\GraphQL\Schema\DataObject\DataObjectModel:
   default_plugins:
     inheritance: true
-  # tood: doesn't work yet
   nested_query_default_plugins:
     filter:
       before: paginateList

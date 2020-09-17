@@ -163,7 +163,8 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
      * @param $obj
      * @return mixed
      */
-    public static function noop ($obj) {
+    public static function noop ($obj)
+    {
         return $obj;
     }
 }
