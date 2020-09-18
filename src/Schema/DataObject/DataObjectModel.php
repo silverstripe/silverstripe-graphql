@@ -12,7 +12,6 @@ use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultPluginProvider;
-use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
 use SilverStripe\GraphQL\Schema\Interfaces\NestedDefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;

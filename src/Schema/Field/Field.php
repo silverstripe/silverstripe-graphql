@@ -19,7 +19,6 @@ use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
-use SilverStripe\ORM\ArrayList;
 use Exception;
 
 /**

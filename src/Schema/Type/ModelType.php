@@ -143,7 +143,7 @@ class ModelType extends Type implements ExtraTypeProvider
             $field = ModelField::create($fieldName, $fieldConfig, $this->getModel());
             $fieldObj = $this->getModel()->getField($field->getPropertyName());
             if ($fieldObj) {
-                $fieldObj->setName($fieldName);
+                $fieldObj->setName($field->getName());
                 if (is_array($fieldConfig)) {
                     $fieldObj->applyConfig($fieldConfig);
                 }

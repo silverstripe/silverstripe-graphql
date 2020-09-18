@@ -60,7 +60,7 @@ class Enum extends Type implements SchemaValidator
                 $value = $val;
             }
             $list[] = [
-                'Key' => $key,
+                'Key' => static::sanitise($key),
                 'Value' => $value,
                 'Description' => $description,
             ];
@@ -138,6 +138,14 @@ class Enum extends Type implements SchemaValidator
         ];
 
         return md5(json_encode($components));
+    }
+
+    public static function sanitise(string $str): string
+    {
+        $str = preg_replace('/\s+/', '_', $str);
+        $str = preg_replace('/[^A-Za-z0-9_]/', '', $str);
+
+        return $str;
     }
 
 }

@@ -91,7 +91,6 @@ class Controller extends BaseController implements Flushable
     /**
      * @param string $schemaKey
      * @param QueryHandlerInterface|null $queryHandler
-     * @throws SchemaBuilderException
      */
     public function __construct(string $schemaKey, ?QueryHandlerInterface $queryHandler = null)
     {
