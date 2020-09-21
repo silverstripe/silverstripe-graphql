@@ -22,11 +22,6 @@ class ModelField extends Field
     private $modelTypeFields = null;
 
     /**
-     * @var array|null
-     */
-    private $modelTypeOperations = null;
-
-    /**
      * @var string
      */
     private $property;
@@ -78,7 +73,6 @@ class ModelField extends Field
         }
 
         $this->modelTypeFields = $config['fields'] ?? null;
-        $this->modelTypeOperations = $config['operations'] ?? null;
 
         unset($config['fields']);
         unset($config['operations']);
@@ -123,9 +117,6 @@ class ModelField extends Field
             $config = [];
             if ($this->modelTypeFields) {
                 $config['fields'] = $this->modelTypeFields;
-            }
-            if ($this->modelTypeOperations) {
-                $config['operations'] = $this->modelTypeOperations;
             }
             $model->applyConfig($config);
         }
