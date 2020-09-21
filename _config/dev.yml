@@ -1,0 +1,13 @@
+---
+Name: graphql-dev
+---
+SilverStripe\Dev\DevelopmentAdmin:
+  registered_controllers:
+    graphql:
+      controller: SilverStripe\GraphQL\Dev\DevelopmentAdmin
+      links:
+        build: 'Build/rebuild the GraphQL schema'
+SilverStripe\GraphQL\Dev\DevelopmentAdmin:
+  registered_controllers:
+    build:
+      controller: SilverStripe\GraphQL\Dev\Build
