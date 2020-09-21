@@ -82,7 +82,7 @@ class ModelType extends Type implements ExtraTypeProvider
 
         if ($model instanceof DefaultPluginProvider) {
             $plugins = $config['plugins'] ?? [];
-            $config['plugins'] = array_merge($plugins, $model->getDefaultPlugins());
+            $config['plugins'] = array_merge($model->getDefaultPlugins(), $plugins);
         }
 
         parent::__construct($type);
