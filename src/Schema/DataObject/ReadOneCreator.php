@@ -15,7 +15,7 @@ use SilverStripe\ORM\DataObject;
 use Closure;
 
 /**
- * Creates a readOne (by id) query for a DataObject
+ * Creates a readOne query for a DataObject
  */
 class ReadOneCreator implements OperationCreator
 {

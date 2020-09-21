@@ -158,6 +158,9 @@ trait PluginConsumer
             $before = $pluginConfig['before'] ?? [];
             if ($before === Schema::ALL) {
                 $beforeAll[] = $pluginName;
+                $allPluginNames = array_filter($allPluginNames, function ($name) use ($pluginName) {
+                    return $name !== $pluginName;
+                });
                 continue;
             }
             $before = !is_array($before) ? [$before] : $before;
@@ -166,6 +169,9 @@ trait PluginConsumer
             $after = $pluginConfig['after'] ?? [];
             if ($after === Schema::ALL) {
                 $afterAll[] = $pluginName;
+                $allPluginNames = array_filter($allPluginNames, function ($name) use ($pluginName) {
+                    return $name !== $pluginName;
+                });
                 continue;
             }
             $after = !is_array($after) ? [$after] : $after;

@@ -15,7 +15,7 @@ class <?=$interface->getName(); ?> extends InterfaceType
         parent::__construct([
             'name' => '<?=$interface->getName(); ?>',
             'resolveType' => function ($obj) {
-                $type = call_user_func_array(<?=$interface->getEncodedResolver()->encode(); ?>, [$obj]);
+                $type = call_user_func_array(<?=$interface->getEncodedTypeResolver()->encode(); ?>, [$obj]);
                 return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName']; ?>', $type]);
             },
         <?php if (!empty($interface->getDescription())): ?>
@@ -37,7 +37,7 @@ class <?=$interface->getName(); ?> extends InterfaceType
                                 'name' => '<?=$arg->getName(); ?>',
                                 'type' => <?=$arg->getEncodedType()->encode(); ?>,
                             <?php if ($arg->getDefaultValue() !== null): ?>
-                                'defaultValue' => <?=$arg->getDefaultValue(); ?>,
+                                'defaultValue' => <?=var_export($arg->getDefaultValue(), true); ?>,
                             <?php endif; ?>
                             ],
                         <?php endforeach; ?>

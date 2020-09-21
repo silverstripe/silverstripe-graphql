@@ -118,7 +118,8 @@ class CodeGenerationStore implements SchemaStorageInterface
             $schema->getTypes(),
             $schema->getEnums(),
             $schema->getInterfaces(),
-            $schema->getUnions()
+            $schema->getUnions(),
+            $schema->getScalars()
         );
         $encoder = Encoder::create(Path::join($templateDir, 'registry.inc.php'), $allComponents, $globals);
         $code = $encoder->encode();
@@ -138,6 +139,7 @@ class CodeGenerationStore implements SchemaStorageInterface
             'Interfaces' => 'interface.inc.php',
             'Unions' => 'union.inc.php',
             'Enums' => 'enum.inc.php',
+            'Scalars' => 'scalar.inc.php',
         ];
         $touched = [];
         $built = [];

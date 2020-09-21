@@ -205,15 +205,12 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
             } else if (!is_array($data)) {
                 // Regular field, e.g. scalar
                 $fieldType = $fieldObj->getNamedType();
-                Schema::invariant(
-                    !$modelType && in_array($fieldType, Schema::getInternalTypes()),
-                    'Filter for field %s is declared as true, but the field is not a scalar type',
-                    $fieldName
-                );
-                $parentType->addField(
-                    $fieldName,
-                    static::getLeafNodeType($fieldType)
-                );
+                if (!$modelType && in_array($fieldType, Schema::getInternalTypes())) {
+                    $parentType->addField(
+                        $fieldName,
+                        static::getLeafNodeType($fieldType)
+                    );
+                }
             } else {
                 // Nested input. Recursion.
                 Schema::invariant(

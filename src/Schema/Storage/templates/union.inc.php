@@ -8,7 +8,7 @@ namespace <?=$globals['namespace'] ?>;
 
 use GraphQL\Type\Definition\UnionType;
 
-class $Name extends UnionType
+class <?=$union->getName() ?> extends UnionType
 {
     public function __construct()
     {

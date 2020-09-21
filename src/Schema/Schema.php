@@ -35,6 +35,7 @@ use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
+use SilverStripe\GraphQL\Schema\Type\Scalar;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\UnionType;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
@@ -62,6 +63,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
     const INTERFACES = 'interfaces';
     const UNIONS = 'unions';
     const ENUMS = 'enums';
+    const SCALARS = 'scalars';
     const QUERY_TYPE = 'Query';
     const MUTATION_TYPE = 'Mutation';
     const ALL = '*';
@@ -97,6 +99,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
     private $enums = [];
 
     /**
+     * @var Scalar[]
+     */
+    private $scalars = [];
+
+    /**
      * @var Query[]
      */
     private $queryFields = [];
@@ -107,19 +114,9 @@ class Schema implements ConfigurationApplier, SchemaValidator
     private $mutationFields = [];
 
     /**
-     * @var array
-     */
-    private $modelDependencies = [];
-
-    /**
      * @var SchemaStorageInterface
      */
     private $schemaStore;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $reporter;
 
     /**
      * Schema constructor.
@@ -149,6 +146,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $unions = $schemaConfig[self::UNIONS] ?? [];
         $models = $schemaConfig[self::MODELS] ?? [];
         $enums = $schemaConfig[self::ENUMS] ?? [];
+        $scalars = $schemaConfig[self::SCALARS] ?? [];
 
         static::assertValidConfig($types);
         foreach ($types as $typeName => $typeConfig) {
@@ -202,6 +200,13 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $enum = Enum::create($enumName, $enumConfig['values'], $description);
             $this->addEnum($enum);
         }
+
+        static::assertValidConfig($scalars);
+        foreach ($scalars as $scalarName => $scalarConfig) {
+            $scalar = Scalar::create($scalarName, $scalarConfig);
+            $this->addScalar($scalar);
+        }
+
         Benchmark::start('schema-updates');
         $this->applySchemaUpdates($schemaConfig);
         echo Benchmark::end('schema-updates') . PHP_EOL;
@@ -349,7 +354,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 continue;
             }
             $sourcedConfig = $this->loadConfigFromSource($data);
-            $schema = array_merge_recursive($schema, $sourcedConfig);
+            $schema = array_replace_recursive($schema, $sourcedConfig);
         }
 
         $configSrcs = $schema['src'] ?? [];
@@ -362,7 +367,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 continue;
             }
             $sourcedConfig = $this->loadConfigFromSource($data);
-            $schema = array_merge_recursive($schema, $sourcedConfig);
+            $schema = array_replace_recursive($schema, $sourcedConfig);
         }
 
         $this->applyConfig($schema);
@@ -394,6 +399,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
             self::ENUMS => [],
             self::INTERFACES => [],
             self::UNIONS => [],
+            self::SCALARS => [],
         ];
 
         $finder = new Finder();
@@ -471,7 +477,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
             array_keys($this->types),
             array_keys($this->enums),
             array_keys($this->interfaces),
-            array_keys($this->unions)
+            array_keys($this->unions),
+            array_keys($this->scalars)
         );
         $dupes = [];
         foreach(array_count_values($allNames) as $val => $count) {
@@ -492,7 +499,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $this->mutationFields,
             $this->enums,
             $this->interfaces,
-            $this->unions
+            $this->unions,
+            $this->scalars
         );
         /* @var SchemaValidator $validator */
         foreach ($validators as $validator) {
@@ -581,9 +589,37 @@ class Schema implements ConfigurationApplier, SchemaValidator
      * @param $name
      * @return Enum|null
      */
-    public function getEnum($name): ?Enum
+    public function getEnum(string $name): ?Enum
     {
         return $this->enums[$name] ?? null;
+    }
+
+    /**
+     * @return array
+     */
+    public function getScalars(): array
+    {
+        return $this->scalars;
+    }
+
+    /**
+     * @param string $name
+     * @return Scalar|null
+     */
+    public function getScalar(string $name): ?Scalar
+    {
+        return $this->scalars[$name] ?? null;
+    }
+
+    /**
+     * @param Scalar $scalar
+     * @return $this
+     */
+    public function addScalar(Scalar $scalar): self
+    {
+        $this->scalars[$scalar->getName()] = $scalar;
+
+        return $this;
     }
 
     /**

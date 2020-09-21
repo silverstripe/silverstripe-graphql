@@ -65,6 +65,12 @@ class DataObjectModel implements
 
     /**
      * @var array
+     * @config
+     */
+    private static $type_mapping = [];
+
+    /**
+     * @var array
      */
     private static $dependencies = [
         'FieldAccessor' => '%$' . FieldAccessor::class,
@@ -117,6 +123,12 @@ class DataObjectModel implements
     public function getTypeName(): string
     {
         $class = get_class($this->dataObject);
+        $mapping = $this->config()->get('type_mapping');
+        $custom = $mapping[$class] ?? null;
+        if ($custom) {
+            return $custom;
+        }
+
         $typeName = $this->formatClass($class);
         $prefix = $this->getPrefix($class);
 

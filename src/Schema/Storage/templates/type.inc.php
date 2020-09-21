@@ -23,7 +23,7 @@ class <?=$type->getName() ?> extends <?php if($type->getIsInput()): ?>InputObjec
         <?php if (!empty($type->getInterfaces())): ?>
             'interfaces' => function () {
                 return array_map(function ($interface) {
-                    return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName']; ?>, $interface]);
+                    return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName']; ?>', $interface]);
                 }, <?=$type->getEncodedInterfaces(); ?>);
             },
         <?php endif; ?>
@@ -44,7 +44,7 @@ class <?=$type->getName() ?> extends <?php if($type->getIsInput()): ?>InputObjec
                                 'name' => '<?=$arg->getName(); ?>',
                                 'type' => <?=$arg->getEncodedType()->encode(); ?>,
                             <?php if ($arg->getDefaultValue() !== null): ?>
-                                'defaultValue' => <?=$arg->getDefaultValue(); ?>,
+                                'defaultValue' => <?=var_export($arg->getDefaultValue(), true); ?>,
                             <?php endif; ?>
                             ],
                         <?php endforeach; ?>

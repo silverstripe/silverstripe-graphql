@@ -13,6 +13,7 @@ use GraphQL\Language\Parser;
 use GraphQL\Language\Source;
 use GraphQL\Language\SourceLocation;
 use GraphQL\Type\Schema as GraphQLSchema;
+use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injectable;
@@ -218,8 +219,15 @@ class QueryHandler implements
     {
         $error = [
             'message' => $exception->getMessage(),
-            'file' => $exception->getFile(),
         ];
+
+        if (Director::isDev()) {
+            $error['code'] = $exception->getCode();
+            $error['file'] = $exception->getFile();
+            $error['line'] = $exception->getLine();
+            $error['trace'] = $exception->getTraceAsString();
+        }
+
 
         $locations = $exception->getLocations();
         if (!empty($locations)) {
