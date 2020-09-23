@@ -60,7 +60,10 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
         $defaultPlugins = $this->config()->get('default_plugins');
         $configPlugins = $config['plugins'] ?? [];
         $plugins = array_merge($defaultPlugins, $configPlugins);
-        $mutationName = 'update' . ucfirst($typeName);
+        $mutationName = $config['name'] ?? null;
+        if (!$mutationName) {
+            $mutationName = 'update' . ucfirst($typeName);
+        }
         $inputTypeName = self::inputTypeName($typeName);
 
         return ModelMutation::create($model, $mutationName)

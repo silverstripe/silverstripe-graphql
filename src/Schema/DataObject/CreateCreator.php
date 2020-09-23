@@ -59,7 +59,10 @@ class CreateCreator implements OperationCreator, InputTypeProvider
         $defaultPlugins = $this->config()->get('default_plugins');
         $configPlugins = $config['plugins'] ?? [];
         $plugins = array_merge($defaultPlugins, $configPlugins);
-        $mutationName = 'create' . ucfirst($typeName);
+        $mutationName = $config['name'] ?? null;
+        if (!$mutationName) {
+            $mutationName = 'create' . ucfirst($typeName);
+        }
         $inputTypeName = self::inputTypeName($typeName);
 
         return ModelMutation::create($model, $mutationName)

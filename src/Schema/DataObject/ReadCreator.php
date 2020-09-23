@@ -44,7 +44,10 @@ class ReadCreator implements OperationCreator
         $defaultPlugins = $this->config()->get('default_plugins');
         $configPlugins = $config['plugins'] ?? [];
         $plugins = array_merge($defaultPlugins, $configPlugins);
-        $queryName = 'read' . ucfirst(Schema::pluralise($typeName));
+        $queryName = $config['name'] ?? null;
+        if (!$queryName) {
+            $queryName = 'read' . ucfirst(Schema::pluralise($typeName));
+        }
 
         return ModelQuery::create($model, $queryName)
             ->setType("[$typeName]")

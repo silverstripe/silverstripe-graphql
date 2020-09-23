@@ -50,7 +50,10 @@ class DeleteCreator implements OperationCreator
         $defaultPlugins = $this->config()->get('default_plugins');
         $configPlugins = $config['plugins'] ?? [];
         $plugins = array_merge($defaultPlugins, $configPlugins);
-        $mutationName = 'delete' . ucfirst(Schema::pluralise($typeName));
+        $mutationName = $config['name'] ?? null;
+        if (!$mutationName) {
+            $mutationName = 'delete' . ucfirst(Schema::pluralise($typeName));
+        }
 
         return ModelMutation::create($model, $mutationName)
             ->setType('[ID]')

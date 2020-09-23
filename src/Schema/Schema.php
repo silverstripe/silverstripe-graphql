@@ -69,6 +69,12 @@ class Schema implements ConfigurationApplier, SchemaValidator
     const ALL = '*';
 
     /**
+     * @var callable
+     * @config
+     */
+    private static $pluraliser = [self::class, 'pluraliser'];
+
+    /**
      * @var string
      */
     private $schemaKey;
@@ -124,7 +130,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function __construct(string $schemaKey)
     {
-        $this->schemaKey = $schemaKey;
+        $this->setSchemaKey($schemaKey);
         $store = Injector::inst()->get(SchemaStorageCreator::class)
             ->createStore($schemaKey);
 
@@ -517,6 +523,17 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
+     * @param string $key
+     * @return $this
+     */
+    public function setSchemaKey(string $key): self
+    {
+        $this->schemaKey = $key;
+
+        return $this;
+    }
+
+    /**
      * @param Type $type
      * @param callable|null $callback
      * @return Schema
@@ -780,8 +797,24 @@ class Schema implements ConfigurationApplier, SchemaValidator
      *
      * @param string $typeName
      * @return string
+     * @throws SchemaBuilderException
      */
     public static function pluralise($typeName): string
+    {
+        $callable = static::config()->get('pluraliser');
+        Schema::invariant(
+            is_callable($callable),
+            'Schema does not have a valid callable "pluraliser" property set in its config'
+        );
+
+        return call_user_func_array($callable, [$typeName]);
+    }
+
+    /**
+     * @param string $typeName
+     * @return string
+     */
+    public static function pluraliser(string $typeName): string
     {
         // Ported from DataObject::plural_name()
         if (preg_match('/[^aeiou]y$/i', $typeName)) {
@@ -852,6 +885,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
             throw new SchemaBuilderException($message);
         }
     }
+
 
     /**
      * @return SchemaStorageInterface
