@@ -29,12 +29,6 @@ class DeleteCreator implements OperationCreator
     use Configurable;
 
     /**
-     * @var array
-     * @config
-     */
-    private static $default_plugins = [];
-
-    /**
      * @param SchemaModelInterface $model
      * @param string $typeName
      * @param array $config
@@ -47,9 +41,7 @@ class DeleteCreator implements OperationCreator
         array $config = []
     ): ?ModelOperation
     {
-        $defaultPlugins = $this->config()->get('default_plugins');
-        $configPlugins = $config['plugins'] ?? [];
-        $plugins = array_merge($defaultPlugins, $configPlugins);
+        $plugins = $config['plugins'] ?? [];
         $mutationName = $config['name'] ?? null;
         if (!$mutationName) {
             $mutationName = 'delete' . ucfirst(Schema::pluralise($typeName));

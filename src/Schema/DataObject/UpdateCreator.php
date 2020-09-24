@@ -34,12 +34,6 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
     ];
 
     /**
-     * @var array
-     * @config
-     */
-    private static $default_plugins = [];
-
-    /**
      * @var FieldAccessor
      */
     private $fieldAccessor;
@@ -57,9 +51,7 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
         array $config = []
     ): ?ModelOperation
     {
-        $defaultPlugins = $this->config()->get('default_plugins');
-        $configPlugins = $config['plugins'] ?? [];
-        $plugins = array_merge($defaultPlugins, $configPlugins);
+        $plugins = $config['plugins'] ?? [];
         $mutationName = $config['name'] ?? null;
         if (!$mutationName) {
             $mutationName = 'update' . ucfirst($typeName);

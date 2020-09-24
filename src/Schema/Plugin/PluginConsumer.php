@@ -25,6 +25,11 @@ trait PluginConsumer
     private $plugins = [];
 
     /**
+     * @var array
+     */
+    private $defaultPlugins = [];
+
+    /**
      * @param string $pluginName
      * @param $config
      * @return $this
@@ -87,12 +92,32 @@ trait PluginConsumer
     }
 
     /**
+     * @param array $plugins
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function setDefaultPlugins(array $plugins): self
+    {
+        Schema::assertValidConfig($plugins);
+        foreach ($plugins as $pluginName => $config) {
+            if ($config === false) {
+                continue;
+            }
+            $pluginConfig = $config === true ? [] : $config;
+            $this->defaultPlugins[$pluginName] = $pluginConfig;
+        }
+
+        return $this;
+    }
+
+    /**
      * @return array
      */
-    public function getPlugins()
+    public function getPlugins(): array
     {
-        return $this->plugins;
+        return array_replace_recursive($this->defaultPlugins, $this->plugins);
     }
+
 
     /**
      * @param string $identifier

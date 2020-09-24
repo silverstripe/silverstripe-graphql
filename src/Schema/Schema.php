@@ -56,6 +56,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
     use Injectable;
     use Configurable;
 
+    const DEFAULTS = 'defaults';
     const TYPES = 'types';
     const QUERIES = 'queries';
     const MUTATIONS = 'mutations';
@@ -78,6 +79,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
      * @var string
      */
     private $schemaKey;
+
+    /**
+     * @var array
+     */
+    private $defaults = [];
 
     /**
      * @var Type[]
@@ -145,6 +151,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public function applyConfig(array $schemaConfig): Schema
     {
         Benchmark::start('apply-config');
+        $defaults = $schemaConfig[self::DEFAULTS] ?? [];
         $types = $schemaConfig[self::TYPES] ?? [];
         $queries = $schemaConfig[self::QUERIES] ?? [];
         $mutations = $schemaConfig[self::MUTATIONS] ?? [];
@@ -153,6 +160,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $models = $schemaConfig[self::MODELS] ?? [];
         $enums = $schemaConfig[self::ENUMS] ?? [];
         $scalars = $schemaConfig[self::SCALARS] ?? [];
+
+        $this->defaults = $defaults;
 
         static::assertValidConfig($types);
         foreach ($types as $typeName => $typeConfig) {
@@ -398,6 +407,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         );
 
         $config = [
+            self::DEFAULTS => [],
             self::TYPES => [],
             self::MODELS => [],
             self::QUERIES => [],
@@ -414,6 +424,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
         /* @var SplFileInfo $yamlFile */
         foreach ($yamlFiles as $yamlFile) {
             try {
+                $contents = $yamlFile->getContents();
+                // fail gracefully on empty files
+                if (empty($contents)) {
+                    continue;
+                }
                 $yaml = Yaml::parseFile($yamlFile->getPathname());
             } catch (ParseException $e) {
                 throw new SchemaBuilderException(sprintf(
@@ -534,6 +549,29 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
+     * Return a default by dot.separated.syntax
+     * @param string|array $path
+     * @return array|string|bool|null
+     * @throws SchemaBuilderException
+     */
+    public function getDefault($path)
+    {
+        Schema::invariant(
+            is_array($path) || is_string($path),
+            'getDefaults() must be passed an array or string'
+        );
+        $parts = is_string($path) ? explode('.', $path) : $path;
+        $scope = $this->defaults;
+        foreach ($parts as $part) {
+            $scope = $scope[$part] ?? null;
+            if (!is_array($scope)) {
+                break;
+            }
+        }
+
+        return $scope;
+    }
+    /**
      * @param Type $type
      * @param callable|null $callback
      * @return Schema
@@ -653,6 +691,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
             : $modelType;
         $this->models[$modelType->getName()] = $typeObj;
 
+        // Apply default plugins
+        $id = $modelType->getModel()->getIdentifier();
+        $defaultPlugins = $this->getDefault(['models', $id, 'plugins']) ?: [];
+        $modelType->setDefaultPlugins($defaultPlugins);
         foreach ($modelType->getExtraTypes() as $type) {
             if ($type instanceof ModelType) {
                 $this->addModel($type);
@@ -661,13 +703,17 @@ class Schema implements ConfigurationApplier, SchemaValidator
             }
         }
 
-        foreach ($modelType->getOperations() as $operationType) {
+        foreach ($modelType->getOperations() as $operationName => $operationType) {
             Schema::invariant(
                 $operationType instanceof ModelOperation,
                 'Invalid operation defined on %s. Must implement %s',
                 $modelType->getName(),
                 ModelOperation::class
             );
+            $defaultPlugins = $this->getDefault(['operations', $operationName, 'plugins']) ?: [];
+            /* @var ModelQuery|ModelMutation $operationType */
+            $operationType->setDefaultPlugins($defaultPlugins);
+
             if ($operationType instanceof ModelQuery) {
                 $this->queryFields[$operationType->getName()] = $operationType;
             } else if ($operationType instanceof ModelMutation) {

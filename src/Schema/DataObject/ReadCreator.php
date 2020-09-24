@@ -23,12 +23,6 @@ class ReadCreator implements OperationCreator
     use Configurable;
 
     /**
-     * @var array
-     * @config
-     */
-    private static $default_plugins = [];
-
-    /**
      * @param SchemaModelInterface $model
      * @param string $typeName
      * @param array $config
@@ -41,9 +35,7 @@ class ReadCreator implements OperationCreator
         array $config = []
     ): ?ModelOperation
     {
-        $defaultPlugins = $this->config()->get('default_plugins');
-        $configPlugins = $config['plugins'] ?? [];
-        $plugins = array_merge($defaultPlugins, $configPlugins);
+        $plugins = $config['plugins'] ?? [];
         $queryName = $config['name'] ?? null;
         if (!$queryName) {
             $queryName = 'read' . ucfirst(Schema::pluralise($typeName));

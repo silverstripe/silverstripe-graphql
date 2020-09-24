@@ -23,12 +23,6 @@ class ReadOneCreator implements OperationCreator
     use Configurable;
 
     /**
-     * @var array
-     * @config
-     */
-    private static $default_plugins = [];
-
-    /**
      * @param SchemaModelInterface $model
      * @param string $typeName
      * @param array $config
@@ -41,11 +35,12 @@ class ReadOneCreator implements OperationCreator
         array $config = []
     ): ?ModelOperation
     {
-        $defaultPlugins = $this->config()->get('default_plugins');
-        $configPlugins = $config['plugins'] ?? [];
-        $plugins = array_merge($defaultPlugins, $configPlugins);
-
-        return ModelQuery::create($model, 'readOne' . ucfirst($typeName))
+        $plugins = $config['plugins'] ?? [];
+        $queryName = $config['name'] ?? null;
+        if (!$queryName) {
+            $queryName = 'readOne' . ucfirst($typeName);
+        }
+        return ModelQuery::create($model, $queryName)
             ->setType($typeName)
             ->setPlugins($plugins)
             ->setDefaultResolver([ReadCreator::class, 'resolve'])

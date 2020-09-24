@@ -9,14 +9,11 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelAware;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
-use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
-use SilverStripe\GraphQL\Schema\Interfaces\DefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
-use SilverStripe\GraphQL\Schema\Interfaces\NestedDefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
@@ -79,11 +76,6 @@ class ModelType extends Type implements ExtraTypeProvider
         $this->blacklistedFields = $model instanceof ModelBlacklist ?
             array_map('strtolower', $model->getBlacklistedFields()) :
             [];
-
-        if ($model instanceof DefaultPluginProvider) {
-            $plugins = $config['plugins'] ?? [];
-            $config['plugins'] = array_merge($model->getDefaultPlugins(), $plugins);
-        }
 
         parent::__construct($type);
 
@@ -334,23 +326,17 @@ class ModelType extends Type implements ExtraTypeProvider
         $operations = [];
         foreach ($this->operationCreators as $operationName => $config) {
             $operationCreator = $this->getOperationCreator($operationName);
-            $operations[] = $operationCreator->createOperation(
+            $operation = $operationCreator->createOperation(
                 $this->getModel(),
                 $this->getName(),
                 $config
             );
-        }
-        foreach ($this->getFields() as $field) {
-            if (!$field instanceof ModelField) {
-                continue;
-            }
-            if ($modelType = $field->getModelType()) {
-                $operations = array_merge($operations, $modelType->getOperations());
+            if ($operation) {
+                $operations[$operationName] = $operation;
             }
         }
 
-
-        return array_filter($operations);
+        return $operations;
     }
 
     /**

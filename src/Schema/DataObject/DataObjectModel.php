@@ -11,9 +11,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
-use SilverStripe\GraphQL\Schema\Interfaces\DefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
-use SilverStripe\GraphQL\Schema\Interfaces\NestedDefaultPluginProvider;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
@@ -33,24 +31,10 @@ class DataObjectModel implements
     SchemaModelInterface,
     OperationProvider,
     DefaultFieldsProvider,
-    DefaultPluginProvider,
-    NestedDefaultPluginProvider,
     ModelBlacklist
 {
     use Injectable;
     use Configurable;
-
-    /**
-     * @var array
-     * @config
-     */
-    private static $default_plugins = [];
-
-    /**
-     * @var array
-     * @config
-     */
-    private static $nested_query_default_plugins = [];
 
     /**
      * @var callable
@@ -173,7 +157,7 @@ class DataObjectModel implements
         $type = DataObjectModel::create($class)->getTypeName();
         if ($this->isList($result)) {
             $queryConfig = [
-                'plugins' => $this->getNestedDefaultPlugins(),
+                'plugins' => [],//$this->getNestedDefaultPlugins(),
                 'type' => sprintf('[%s]', $type),
             ];
             return ModelQuery::create($this, $fieldName, $queryConfig);
@@ -210,22 +194,6 @@ class DataObjectModel implements
         return array_map(function (string $field) {
             return $this->getFieldAccessor()->formatField($field);
         }, $blackList);
-    }
-
-    /**
-     * @return array
-     */
-    public function getDefaultPlugins(): array
-    {
-        return $this->config()->get('default_plugins');
-    }
-
-    /**
-     * @return array
-     */
-    public function getNestedDefaultPlugins(): array
-    {
-        return $this->config()->get('nested_query_default_plugins');
     }
 
     /**
@@ -281,11 +249,10 @@ class DataObjectModel implements
 
     /**
      * @param string $id
-     * @param array|null $config
      * @return OperationCreator|null
      * @throws SchemaBuilderException
      */
-    public function getOperationCreatorByIdentifier(string $id, ?array $config = null): ?OperationCreator
+    public function getOperationCreatorByIdentifier(string $id): ?OperationCreator
     {
         $registeredOperations = $this->config()->get('operations') ?? [];
         $creator = $registeredOperations[$id] ?? null;
