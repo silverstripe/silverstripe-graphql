@@ -29,7 +29,7 @@ class Build extends Controller
             echo $renderer->renderInfo("GraphQL Schema Builder", Director::absoluteBaseURL());
             echo "<div class=\"build\">";
         }
-        $clear = $request->getVar('clear') ?: false;
+        $clear = true; //$request->getVar('clear') ?: false;
         $keys = $request->getVar('schema')
             ? [$request->getVar('schema')]
             : array_keys(Schema::config()->get('schemas'));

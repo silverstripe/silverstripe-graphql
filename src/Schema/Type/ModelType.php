@@ -9,6 +9,8 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelAware;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
+use SilverStripe\GraphQL\Schema\Field\ModelMutation;
+use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
@@ -47,6 +49,11 @@ class ModelType extends Type implements ExtraTypeProvider
      * @var array
      */
     private $blacklistedFields = [];
+
+    /**
+     * @var ModelQuery|ModelMutation
+     */
+    private $operations = [];
 
 
     /**
@@ -318,10 +325,9 @@ class ModelType extends Type implements ExtraTypeProvider
     }
 
     /**
-     * @return ModelOperation[]
      * @throws SchemaBuilderException
      */
-    public function getOperations(): array
+    public function buildOperations(): void
     {
         $operations = [];
         foreach ($this->operationCreators as $operationName => $config) {
@@ -336,7 +342,15 @@ class ModelType extends Type implements ExtraTypeProvider
             }
         }
 
-        return $operations;
+        $this->operations = $operations;
+    }
+
+    /**
+     * @return array
+     */
+    public function getOperations(): array
+    {
+        return $this->operations;
     }
 
     /**

@@ -103,7 +103,7 @@ class InheritanceChain
      */
     public function hasAncestors(): bool
     {
-        return count($this->getAncestralModels()) > 1;
+        return count($this->getAncestralModels()) > 0;
     }
 
     /**

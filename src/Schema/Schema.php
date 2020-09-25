@@ -221,6 +221,9 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $scalar = Scalar::create($scalarName, $scalarConfig);
             $this->addScalar($scalar);
         }
+        Benchmark::start('process-models');
+        $this->processModels();
+        Benchmark::end('process-models');
 
         Benchmark::start('schema-updates');
         $this->applySchemaUpdates($schemaConfig);
@@ -244,6 +247,41 @@ class Schema implements ConfigurationApplier, SchemaValidator
         return $this;
     }
 
+    /**
+     * @throws SchemaBuilderException
+     */
+    private function processModels(): void
+    {
+        foreach ($this->getModels() as $modelType) {
+            // Apply default plugins
+            $id = $modelType->getModel()->getIdentifier();
+            $defaultPlugins = $this->getDefault(['models', $id, 'plugins']) ?: [];
+            $modelType->setDefaultPlugins($defaultPlugins);
+
+            $modelType->buildOperations();
+
+            foreach ($modelType->getOperations() as $operationName => $operationType) {
+                Schema::invariant(
+                    $operationType instanceof ModelOperation,
+                    'Invalid operation defined on %s. Must implement %s',
+                    $modelType->getName(),
+                    ModelOperation::class
+                );
+                $defaultPlugins = $this->getDefault(['operations', $operationName, 'plugins']) ?: [];
+                /* @var ModelQuery|ModelMutation $operationType */
+                $operationType->setDefaultPlugins($defaultPlugins);
+
+                if ($operationType instanceof ModelQuery) {
+                    $this->queryFields[$operationType->getName()] = $operationType;
+                } else {
+                    if ($operationType instanceof ModelMutation) {
+                        $this->mutationFields[$operationType->getName()] = $operationType;
+                    }
+                }
+            }
+        }
+
+    }
     /**
      * @param array $schemaConfig
      * @throws SchemaBuilderException
@@ -690,34 +728,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
             ? $existing->mergeWith($modelType)
             : $modelType;
         $this->models[$modelType->getName()] = $typeObj;
-
-        // Apply default plugins
-        $id = $modelType->getModel()->getIdentifier();
-        $defaultPlugins = $this->getDefault(['models', $id, 'plugins']) ?: [];
-        $modelType->setDefaultPlugins($defaultPlugins);
         foreach ($modelType->getExtraTypes() as $type) {
             if ($type instanceof ModelType) {
                 $this->addModel($type);
             } else {
                 $this->addType($type);
-            }
-        }
-
-        foreach ($modelType->getOperations() as $operationName => $operationType) {
-            Schema::invariant(
-                $operationType instanceof ModelOperation,
-                'Invalid operation defined on %s. Must implement %s',
-                $modelType->getName(),
-                ModelOperation::class
-            );
-            $defaultPlugins = $this->getDefault(['operations', $operationName, 'plugins']) ?: [];
-            /* @var ModelQuery|ModelMutation $operationType */
-            $operationType->setDefaultPlugins($defaultPlugins);
-
-            if ($operationType instanceof ModelQuery) {
-                $this->queryFields[$operationType->getName()] = $operationType;
-            } else if ($operationType instanceof ModelMutation) {
-                $this->mutationFields[$operationType->getName()] = $operationType;
             }
         }
         if ($callback) {

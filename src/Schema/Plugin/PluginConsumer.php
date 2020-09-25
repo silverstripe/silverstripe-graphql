@@ -30,6 +30,12 @@ trait PluginConsumer
     private $defaultPlugins = [];
 
     /**
+     * @var array
+     */
+    private $excludedPlugins = [];
+
+
+    /**
      * @param string $pluginName
      * @param $config
      * @return $this
@@ -82,6 +88,7 @@ trait PluginConsumer
         Schema::assertValidConfig($plugins);
         foreach ($plugins as $pluginName => $config) {
             if ($config === false) {
+                $this->excludedPlugins[$pluginName] = true;
                 continue;
             }
             $pluginConfig = $config === true ? [] : $config;
@@ -111,13 +118,29 @@ trait PluginConsumer
     }
 
     /**
+     * @param bool $inheritDefaults
      * @return array
      */
-    public function getPlugins(): array
+    public function getPlugins(bool $inheritDefaults = true): array
     {
-        return array_replace_recursive($this->defaultPlugins, $this->plugins);
+        $plugins = $inheritDefaults
+            ? array_replace_recursive($this->defaultPlugins, $this->plugins)
+            : $this->plugins;
+        $excluded = array_keys($this->excludedPlugins);
+        foreach ($excluded as $pluginName) {
+            unset($plugins[$pluginName]);
+        }
+
+        return $plugins;
     }
 
+    /**
+     * @return array
+     */
+    public function getDefaultPlugins(): array
+    {
+        return $this->defaultPlugins;
+    }
 
     /**
      * @param string $identifier
