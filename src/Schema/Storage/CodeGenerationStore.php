@@ -90,13 +90,18 @@ class CodeGenerationStore implements SchemaStorageInterface
         Benchmark::start('render');
         $fs = new Filesystem();
         $finder = new Finder();
-        $dir = $this->getDirectory();
-        if (!$fs->exists($dir)) {
+        $temp = $this->getTempDirectory();
+        $dest = $this->getDirectory();
+        if ($fs->exists($dest)) {
+            Schema::message('Moving current schema to temp folder');
+            $fs->copy($dest, $temp);
+        } else {
+            Schema::message('Creating new schema');
             try {
-                $fs->mkdir($dir);
+                $fs->mkdir($temp);
                 // Ensure none of these files get loaded into the manifest
-                $fs->touch($dir . DIRECTORY_SEPARATOR . '_manifest_exclude');
-                $warningFile = $dir . DIRECTORY_SEPARATOR . '__DO_NOT_MODIFY';
+                $fs->touch($temp . DIRECTORY_SEPARATOR . '_manifest_exclude');
+                $warningFile = $temp . DIRECTORY_SEPARATOR . '__DO_NOT_MODIFY';
                 $fs->dumpFile(
                     $warningFile,
                     '*** This directory contains generated code for the GraphQL schema. Do not modify. ***'
@@ -104,11 +109,12 @@ class CodeGenerationStore implements SchemaStorageInterface
             } catch (IOException $e) {
                 throw new RuntimeException(sprintf(
                     'Could not persist schema. Failed to create directory %s. Full message: %s',
-                    $this->getDirectory(),
+                    $temp,
                     $e->getMessage()
                 ));
             }
         }
+
         $templateDir = static::getTemplateDir();
         $globals = [
             'typeClassName' => self::TYPE_CLASS_NAME,
@@ -123,7 +129,7 @@ class CodeGenerationStore implements SchemaStorageInterface
         );
         $encoder = Encoder::create(Path::join($templateDir, 'registry.inc.php'), $allComponents, $globals);
         $code = $encoder->encode();
-        $schemaFile = $this->getSchemaFilename();
+        $schemaFile = $this->getTempSchemaFilename();
         try {
             $fs->dumpFile($schemaFile, $this->toCode($code));
         } catch (IOException $e) {
@@ -158,7 +164,7 @@ class CodeGenerationStore implements SchemaStorageInterface
                         continue;
                     }
                 }
-                $file = Path::join($dir, $name . '.php');
+                $file = Path::join($temp, $name . '.php');
                 $encoder = Encoder::create(Path::join($templateDir, $template), $type, $globals);
                 $code = $encoder->encode();
                 $fs->dumpFile($file, $this->toCode($code));
@@ -171,7 +177,7 @@ class CodeGenerationStore implements SchemaStorageInterface
         // Reconcile the directory for deletions
         $currentFiles = $finder
             ->files()
-            ->in($dir)
+            ->in($temp)
             ->name('*.php')
             ->notName($this->config()->get('schemaFilename'));
 
@@ -184,6 +190,17 @@ class CodeGenerationStore implements SchemaStorageInterface
                 $deleted[] = $type;
             }
         }
+
+        // Move the new schema into the proper destination
+        if ($fs->exists($dest)) {
+            Schema::message('Deleting current schema');
+            $fs->remove($dest);
+        }
+
+        Schema::message('Migrating new schema');
+        $fs->mirror($temp, $dest);
+        Schema::message('Deleting temp schema');
+        $fs->remove($temp);
 
         Schema::message("Total types: $total");
         Schema::message(sprintf('Types built: %s', count($built)));
@@ -207,6 +224,7 @@ class CodeGenerationStore implements SchemaStorageInterface
         }
 
         Schema::message(Benchmark::end('render', 'Generated code in %sms'));
+
     }
 
     /**
@@ -296,6 +314,18 @@ class CodeGenerationStore implements SchemaStorageInterface
     /**
      * @return string
      */
+    private function getTempDirectory(): string
+    {
+        return Path::join(
+            TEMP_FOLDER,
+            $this->config()->get('dirName'),
+            $this->name
+        );
+    }
+
+    /**
+     * @return string
+     */
     private function getNamespace(): string
     {
         return $this->config()->get('namespacePrefix') . md5($this->name);
@@ -317,6 +347,17 @@ class CodeGenerationStore implements SchemaStorageInterface
     {
         return Path::join(
             $this->getDirectory(),
+            $this->config()->get('schemaFilename')
+        );
+    }
+
+    /**
+     * @return string
+     */
+    private function getTempSchemaFilename(): string
+    {
+        return Path::join(
+            $this->getTempDirectory(),
             $this->config()->get('schemaFilename')
         );
     }
