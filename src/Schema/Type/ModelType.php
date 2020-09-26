@@ -106,9 +106,15 @@ class ModelType extends Type implements ExtraTypeProvider
 
             foreach ($fields as $fieldName => $data) {
                 if ($data === false) {
+                    unset($this->fields[$fieldName]);
                     continue;
                 }
-                $this->addField($fieldName, $data);
+                // Allow * as a field, so you can override a subset of fields
+                if ($fieldName === Schema::ALL) {
+                    $this->addAllFields();
+                } else {
+                    $this->addField($fieldName, $data);
+                }
             }
         }
 
@@ -142,12 +148,7 @@ class ModelType extends Type implements ExtraTypeProvider
             $field = ModelField::create($fieldName, $fieldConfig, $this->getModel());
             $fieldObj = $this->getModel()->getField($field->getPropertyName());
             if ($fieldObj) {
-                $fieldObj->setName($field->getName());
-                if (is_array($fieldConfig)) {
-                    $fieldObj->applyConfig($fieldConfig);
-                } else if (is_string($fieldConfig)) {
-                    $fieldObj->setType($fieldConfig);
-                }
+                $fieldObj->mergeWith($field);
             } else {
                 $fieldObj = ModelField::create($fieldName, $fieldConfig, $this->getModel());
             }
@@ -247,9 +248,14 @@ class ModelType extends Type implements ExtraTypeProvider
         Schema::assertValidConfig($operations);
         foreach ($operations as $operationName => $data) {
             if ($data === false) {
+                unset($this->operationCreators[$operationName]);
                 continue;
             }
-
+            // Allow * as an operation so individual operations can be overridden
+            if ($operationName === Schema::ALL) {
+                $this->addAllOperations();
+                continue;
+            }
             Schema::invariant(
                 is_array($data) || $data === true,
                 'Operation data for %s must be a map of config or true for a generic implementation',
