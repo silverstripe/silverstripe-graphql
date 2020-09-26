@@ -111,9 +111,9 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
     public function provideInputTypes(SchemaModelInterface $model, string $typeName, array $config = []): array
     {
         $dataObject = Injector::inst()->get($model->getSourceClass());
-        $allFields = $this->getFieldAccessor()->getAllFields($dataObject, false);
+        $fields = $config['fields'] ?? $this->getFieldAccessor()->getAllFields($dataObject, false);
         $excluded = $config['exclude'] ?? [];
-        $includedFields = array_diff($allFields, $excluded);
+        $includedFields = array_diff($fields, $excluded);
         $fieldMap = [];
         foreach ($includedFields as $fieldName) {
             $fieldMap[$fieldName] = $model->getField($fieldName)->getType();
