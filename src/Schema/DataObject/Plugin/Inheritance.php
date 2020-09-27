@@ -64,24 +64,36 @@ class Inheritance implements PluginInterface, SchemaUpdater
     private static function addInheritance(Schema $schema, string $class, ?ModelType $parentModel = null)
     {
         $inheritance = InheritanceChain::create($class);
-        $modelType = $schema->findOrMakeModel($class);
-
-        if ($parentModel) {
-            // Children should get at least their parents' exposed fields
-            $modelType->mergeWith($parentModel);
+        $prototype = ModelType::create($class);
+        $modelType = $schema->getModel($prototype->getName());
+        if (!$modelType) {
+            $schema->addModel($prototype);
+            $modelType = $prototype;
+            // If the model is being added implicitly, merge it with the parent model
+            if ($parentModel) {
+                $modelType->mergeWith($parentModel);
+            }
         }
 
         if (!$inheritance->hasDescendants()) {
             return;
         }
 
-        // Add the new __extends field
-        $extendsType = $inheritance->getExtensionType();
-        $schema->addType($extendsType);
-        $modelType->addField(InheritanceChain::getName(), [
-            'type' => $extendsType->getName(),
-            'resolver' => [InheritanceChain::class, 'resolveExtensionType']
-        ]);
+        // Add the new __extends field to the base class only
+        if (!$parentModel) {
+            $result = $inheritance->getExtensionType();
+            if ($result) {
+                list($extendsType, $subtypes) = $result;
+                $schema->addType($extendsType);
+                $modelType->addField(InheritanceChain::getName(), [
+                    'type' => $extendsType->getName(),
+                    'resolver' => [InheritanceChain::class, 'resolveExtensionType']
+                ]);
+                foreach ($subtypes as $subtype) {
+                    $schema->addModel($subtype);
+                }
+            }
+        }
         foreach ($inheritance->getDirectDescendants() as $descendantClass) {
             self::addInheritance($schema, $descendantClass, $modelType);
         }

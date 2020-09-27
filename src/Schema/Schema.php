@@ -409,6 +409,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $sourcedConfig = $this->loadConfigFromSource($data);
             $schema = array_replace_recursive($schema, $sourcedConfig);
         }
+        $schema = array_replace_recursive($globals, $schema);
 
         $configSrcs = $schema['src'] ?? [];
         if (is_string($configSrcs)) {

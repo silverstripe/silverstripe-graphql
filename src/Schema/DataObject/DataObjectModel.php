@@ -209,6 +209,18 @@ class DataObjectModel implements
     }
 
     /**
+     * @return array
+     * @throws SchemaBuilderException
+     */
+    public function getUninheritedFields(): array
+    {
+        $blackList = $this->getBlacklistedFields();
+        $allFields = $this->getFieldAccessor()->getAllFields($this->dataObject, true, false);
+
+        return array_diff($allFields, $blackList);
+    }
+
+    /**
      * @param array|null $context
      * @return ResolverReference
      */

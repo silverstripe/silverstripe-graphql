@@ -5,11 +5,13 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 
 
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Config\Config_ForClass;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Convert;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\ORM\RelationList;
 use SilverStripe\ORM\SS_List;
@@ -127,35 +129,42 @@ class FieldAccessor
     /**
      * @param DataObject $dataObject
      * @param bool $includeRelations
+     * @param bool $includeInherited
      * @return array
      */
-    public function getAllFields(DataObject $dataObject, $includeRelations = true): array
+    public function getAllFields(DataObject $dataObject, $includeRelations = true, $includeInherited = true): array
     {
         return array_map(
             $this->config()->get('field_formatter'),
-            array_values($this->getCaseInsensitiveMapping($dataObject, $includeRelations))
+            array_values($this->getCaseInsensitiveMapping($dataObject, $includeRelations, $includeInherited))
         );
     }
 
     /**
      * @param DataObject $dataObject
      * @param bool $includeRelations
+     * @param bool $includeInherited
      * @return array
      */
-    private function getAccessibleFields(DataObject $dataObject, $includeRelations = true): array
-    {
+    private function getAccessibleFields(
+        DataObject $dataObject,
+        $includeRelations = true,
+        $includeInherited = true
+    ): array {
         $class = get_class($dataObject);
         $schema = $dataObject->getSchema();
-
-        $db = array_keys($schema->fieldSpecs(get_class($dataObject)));
+        $configFlag = $includeInherited ? 0 : Config::UNINHERITED;
+        $schemaFlag = $includeInherited ? 0 : DataObjectSchema::UNINHERITED;
+        $db = array_keys($schema->fieldSpecs(get_class($dataObject), $schemaFlag));
         if (!$includeRelations) {
             return $db;
         }
-
-        $hasOnes = array_keys(Config::forClass($class)->get('has_one'));
-        $belongsTo = array_keys(Config::forClass($class)->get('belongs_to'));
-        $hasMany = array_keys(Config::forClass($class)->get('has_many'));
-        $manyMany = array_keys(Config::forClass($class)->get('many_many'));
+        /* @var Config_ForClass $config */
+        $config = $class::config();
+        $hasOnes = array_keys((array) $config->get('has_one', $configFlag));
+        $belongsTo = array_keys((array) $config->get('belongs_to', $configFlag));
+        $hasMany = array_keys((array) $config->get('has_many', $configFlag));
+        $manyMany = array_keys((array) $config->get('many_many', $configFlag));
 
         return array_merge($db, $hasOnes, $belongsTo, $hasMany, $manyMany);
     }
@@ -163,14 +172,22 @@ class FieldAccessor
     /**
      * @param DataObject $dataObject
      * @param bool $includeRelations
+     * @param bool $includeInherirted
      * @return array
      */
-    private function getCaseInsensitiveMapping(DataObject $dataObject, $includeRelations = true): array
-    {
-        $cacheKey = get_class($dataObject) . ($includeRelations ? '_relations' : '');
+    private function getCaseInsensitiveMapping(
+        DataObject $dataObject,
+        $includeRelations = true,
+        $includeInherirted = true
+    ): array {
+        $cacheKey = md5(json_encode([
+            get_class($dataObject),
+            ($includeRelations ? '_relations' : ''),
+            ($includeInherirted ? '_inherited' : '')
+        ]));
         $cached = self::$__mappingCache[$cacheKey] ?? null;
         if (!$cached) {
-            $normalFields = $this->getAccessibleFields($dataObject, $includeRelations);
+            $normalFields = $this->getAccessibleFields($dataObject, $includeRelations, $includeInherirted);
             $lowercaseFields = array_map('strtolower', $normalFields);
             $lookup = array_combine($lowercaseFields, $normalFields);
             self::$__mappingCache[$cacheKey] = $lookup;

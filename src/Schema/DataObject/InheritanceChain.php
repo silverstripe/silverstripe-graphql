@@ -48,9 +48,15 @@ class InheritanceChain
     private static $descendant_typename_creator = [ self::class, 'createDescendantTypename' ];
 
     /**
-     * @var Type
+     * @var callable
+     * @config
      */
-    private $descendantType;
+    private static $subtype_name_creator = [ self::class, 'createSubtypeName' ];
+
+    /**
+     * @var array
+     */
+    private $descendantTypeResult;
 
     /**
      * InheritanceChain constructor.
@@ -147,13 +153,14 @@ class InheritanceChain
     }
 
     /**
-     * @return Type|null
+     * @return array|null
      * @throws ReflectionException
+     * @throws SchemaBuilderException
      */
-    public function getExtensionType(): ?Type
+    public function getExtensionType(): ?array
     {
-        if ($this->descendantType) {
-            return $this->descendantType;
+        if ($this->descendantTypeResult) {
+            return $this->descendantTypeResult;
         }
         if (empty($this->getDescendantModels())) {
             return null;
@@ -162,19 +169,44 @@ class InheritanceChain
             $this->config()->get('descendant_typename_creator'),
             [$this->inst]
         );
+
+        $nameCreator = $this->config()->get('subtype_name_creator');
+
         $fields = [];
+        $subtypes = [];
         foreach ($this->getDescendantModels() as $className) {
             $modelType = ModelType::create($className);
-            $fieldName = Convert::upperCamelToLowerCamel($modelType->getName());
-            $fields[$fieldName] = $modelType->getName();
+            /* @var DataObjectModel $model */
+            $model = $modelType->getModel();
+
+            // Extension types only show their own fields
+            $nativeFields = $model->getUninheritedFields();
+            if (empty($nativeFields)) {
+                continue;
+            }
+            foreach ($nativeFields as $fieldName) {
+                $modelType->addField($fieldName);
+            }
+            $originalName = $modelType->getName();
+            $newName = call_user_func_array($nameCreator, [$originalName]);
+            $modelType->setName($newName);
+            $subtypes[] = $modelType;
+            $fieldName = Convert::upperCamelToLowerCamel($originalName);
+            $fields[$fieldName] = $newName;
         }
 
-        $this->descendantType = Type::create($typeName, [
+        if (empty($fields)) {
+            return null;
+        }
+
+        $descendantType = Type::create($typeName, [
             'fields' => $fields,
             'fieldResolver' => [static::class, 'resolveExtensionType'],
         ]);
 
-        return $this->descendantType;
+        $this->descendantTypeResult = [$descendantType, $subtypes];
+
+        return $this->descendantTypeResult;
     }
 
     /**
@@ -185,6 +217,15 @@ class InheritanceChain
     public static function createDescendantTypename(DataObject $dataObject): string
     {
         return DataObjectModel::create($dataObject)->getTypeName() . 'Descendants';
+    }
+
+    /**
+     * @param string $modelTypeName
+     * @return string
+     */
+    public static function createSubtypeName(string $modelTypeName): string
+    {
+        return $modelTypeName . 'ExtensionType';
     }
 
     /**
