@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL;
 
 use Exception;
+use InvalidArgumentException;
 use LogicException;
 use SilverStripe\Assets\Storage\GeneratedAssetHandler;
 use SilverStripe\Control\Controller as BaseController;
@@ -18,6 +19,7 @@ use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Dev\Build;
 use SilverStripe\GraphQL\Dev\State\DisableTypeCacheState;
 use SilverStripe\GraphQL\Permission\MemberContextProvider;
+use SilverStripe\GraphQL\PersistedQuery\RequestProcessor;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
@@ -26,7 +28,6 @@ use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
-use InvalidArgumentException;
 
 /**
  * Top level controller for handling graphql requests.
@@ -423,16 +424,9 @@ class Controller extends BaseController implements Flushable
             $id = isset($data['id']) ? $data['id'] : null;
             $variables = isset($data['variables']) ? (array)$data['variables'] : null;
         } else {
-            $query = $request->requestVar('query');
-            $id = $request->requestVar('id');
-            $variables = json_decode($request->requestVar('variables'), true);
-        }
-
-        if ($id) {
-            if ($query) {
-                throw new LogicException('Cannot pass a query when an ID has been specified.');
-            }
-            $query = $this->manager->getQueryFromPersistedID($id);
+            /** @var RequestProcessor $persistedProcessor  */
+            $persistedProcessor = Injector::inst()->get(RequestProcessor::class);
+            list($query, $variables) = $persistedProcessor->getRequestQueryVariables($request);
         }
 
         return [$query, $variables];
