@@ -397,10 +397,15 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
         // Gather all the global config first
         $globals = $schemas[self::ALL] ?? [];
+        // Standard config global
+        $schema = array_replace_recursive($globals, $schema);
+
+        // Flushless sources
         $globalSrcs = $globals['src'] ?? [];
         if (is_string($globalSrcs)) {
             $globalSrcs = [Schema::ALL => $globalSrcs];
         }
+
         Schema::assertValidConfig($globalSrcs);
         foreach ($globalSrcs as $configSrc => $data) {
             if ($data === false) {
@@ -409,7 +414,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $sourcedConfig = $this->loadConfigFromSource($data);
             $schema = array_replace_recursive($schema, $sourcedConfig);
         }
-        $schema = array_replace_recursive($globals, $schema);
 
         $configSrcs = $schema['src'] ?? [];
         if (is_string($configSrcs)) {
