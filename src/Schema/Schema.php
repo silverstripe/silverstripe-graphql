@@ -396,12 +396,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
         static::invariant($schema, 'Schema "%s" is not configured', $this->schemaKey);
 
         // Gather all the global config first
-        $globals = $schemas[self::ALL] ?? [];
-        // Standard config global
-        $schema = array_replace_recursive($globals, $schema);
+        $mergedSchema = $schemas[self::ALL] ?? [];
 
-        // Flushless sources
-        $globalSrcs = $globals['src'] ?? [];
+        // Flushless global sources
+        $globalSrcs = $mergedSchema['src'] ?? [];
         if (is_string($globalSrcs)) {
             $globalSrcs = [Schema::ALL => $globalSrcs];
         }
@@ -412,9 +410,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 continue;
             }
             $sourcedConfig = $this->loadConfigFromSource($data);
-            $schema = array_replace_recursive($schema, $sourcedConfig);
+            $mergedSchema = array_replace_recursive($mergedSchema, $sourcedConfig);
         }
 
+        // Schema-specific flushless sources
         $configSrcs = $schema['src'] ?? [];
         if (is_string($configSrcs)) {
             $configSrcs = [$this->schemaKey => $configSrcs];
@@ -425,10 +424,13 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 continue;
             }
             $sourcedConfig = $this->loadConfigFromSource($data);
-            $schema = array_replace_recursive($schema, $sourcedConfig);
+            $mergedSchema = array_replace_recursive($mergedSchema, $sourcedConfig);
         }
 
-        $this->applyConfig($schema);
+        // Finally, apply the standard _config schema
+        $mergedSchema = array_replace_recursive($mergedSchema, $schema);
+
+        $this->applyConfig($mergedSchema);
 
         return $this;
     }
