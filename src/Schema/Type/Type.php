@@ -202,14 +202,6 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider
     }
 
     /**
-     * @return string|null
-     */
-    public function getDescriptionEscaped(): ?string
-    {
-        return $this->getDescription() ? addslashes($this->getDescription()) : null;
-    }
-
-    /**
      * @param Type $type
      * @return Type
      * @throws SchemaBuilderException

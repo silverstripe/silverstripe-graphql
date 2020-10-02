@@ -12,12 +12,3 @@ SilverStripe\Core\Injector\Injector:
       canViewPermission: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\CanViewPermission'
       firstResult: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\FirstResult'
       inheritedPlugins: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\InheritedPlugins'
-#SilverStripe\GraphQL\Schema\DataObject\DataObjectModel:
-#  nested_query_default_plugins:
-#    filter:
-#      before: paginateList
-#    sort:
-#      before: paginateList
-#    paginateList: true
-#    canView:
-#      after: paginateList

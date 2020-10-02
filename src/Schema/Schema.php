@@ -30,7 +30,9 @@ use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
+use SilverStripe\GraphQL\Schema\Interfaces\SettingsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\TypePlugin;
+use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
@@ -57,6 +59,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
     use Configurable;
 
     const DEFAULTS = 'defaults';
+    const MODEL_CONFIG = 'modelConfig';
     const TYPES = 'types';
     const QUERIES = 'queries';
     const MUTATIONS = 'mutations';
@@ -160,8 +163,13 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $models = $schemaConfig[self::MODELS] ?? [];
         $enums = $schemaConfig[self::ENUMS] ?? [];
         $scalars = $schemaConfig[self::SCALARS] ?? [];
+        $modelConfig = $schemaConfig[self::MODEL_CONFIG];
 
         $this->defaults = $defaults;
+
+        // Configure the models
+        SchemaModelCreatorRegistry::singleton()
+            ->setConfigurations($modelConfig);
 
         static::assertValidConfig($types);
         foreach ($types as $typeName => $typeConfig) {
@@ -254,10 +262,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
     {
         foreach ($this->getModels() as $modelType) {
             // Apply default plugins
-            $id = $modelType->getModel()->getIdentifier();
-            $defaultPlugins = $this->getDefault(['models', $id, 'plugins']) ?: [];
-            $modelType->setDefaultPlugins($defaultPlugins);
-
+            $model = $modelType->getModel();
+            if ($model instanceof SettingsProvider) {
+                $plugins = $model->getSetting('plugins', []);
+                $modelType->setDefaultPlugins($plugins);
+            }
             $modelType->buildOperations();
 
             foreach ($modelType->getOperations() as $operationName => $operationType) {
@@ -267,9 +276,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
                     $modelType->getName(),
                     ModelOperation::class
                 );
-                $defaultPlugins = $this->getDefault(['operations', $operationName, 'plugins']) ?: [];
-                /* @var ModelQuery|ModelMutation $operationType */
-                $operationType->setDefaultPlugins($defaultPlugins);
 
                 if ($operationType instanceof ModelQuery) {
                     $this->queryFields[$operationType->getName()] = $operationType;
@@ -453,6 +459,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
         $config = [
             self::DEFAULTS => [],
+            self::MODEL_CONFIG => [],
             self::TYPES => [],
             self::MODELS => [],
             self::QUERIES => [],
@@ -596,10 +603,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
     /**
      * Return a default by dot.separated.syntax
      * @param string|array $path
+     * @param mixed $default
      * @return array|string|bool|null
      * @throws SchemaBuilderException
      */
-    public function getDefault($path)
+    public function getDefault($path, $default = null)
     {
         Schema::invariant(
             is_array($path) || is_string($path),
@@ -608,7 +616,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $parts = is_string($path) ? explode('.', $path) : $path;
         $scope = $this->defaults;
         foreach ($parts as $part) {
-            $scope = $scope[$part] ?? null;
+            $scope = $scope[$part] ?? $default;
             if (!is_array($scope)) {
                 break;
             }
@@ -756,6 +764,19 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public function getModel(string $name): ?ModelType
     {
         return $this->models[$name] ?? null;
+    }
+
+    /**
+     * @param string $class
+     * @return ModelType|null
+     */
+    public function getModelByClassName(string $class): ?ModelType
+    {
+        foreach ($this->getModels() as $modelType) {
+            if ($modelType->getModel()->getSourceClass() === $class) {
+                return $modelType;
+            }
+        }
     }
 
     /**

@@ -93,12 +93,23 @@ class QuerySort extends AbstractQuerySortPlugin
     /**
      * @param string $class
      * @param string $fieldName
+     * @param Schema $schema
      * @return string
      */
-    protected static function getObjectProperty(string $class, string $fieldName): string
+    protected static function getObjectProperty(string $class, string $fieldName, Schema $schema): string
     {
-        $sng = DataObject::singleton($class);
-        return FieldAccessor::singleton()->normaliseField($sng, $fieldName) ?: $fieldName;
+        $modelType = $schema->getModelByClassName($class);
+        if ($modelType) {
+            /* @var ModelField $field */
+            $field = $modelType->getFieldByName($fieldName);
+            if ($field) {
+                $prop = $field->getPropertyName();
+                $sng = DataObject::singleton($class);
+                return FieldAccessor::singleton()->normaliseField($sng, $prop) ?: $fieldName;
+            }
+        }
+
+        return $fieldName;
     }
 
     /**

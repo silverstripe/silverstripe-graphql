@@ -21,7 +21,7 @@ class Resolver
      * @param ResolveInfo $info
      * @return string|bool|int|float|null
      */
-    public static function resolve(DataObject $obj, array $args, array $context, ResolveInfo $info)
+    public static function resolve($obj, array $args = [], array $context =[], ?ResolveInfo $info = null)
     {
         $fieldName = $info->fieldName;
         return static::resolveField($obj, $fieldName);

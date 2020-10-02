@@ -59,7 +59,7 @@ class EncodedResolver implements EncoderInterface
      */
     public function encode(): string
     {
-        return Encoder::create(__DIR__ . '/templates/Resolver.template', $this)
+        return Encoder::create(__DIR__ . '/templates/resolver.inc.php', $this)
             ->encode();
     }
 

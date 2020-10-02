@@ -6,7 +6,6 @@ namespace SilverStripe\GraphQL\Schema\Field;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 
 /**

@@ -25,9 +25,10 @@ interface SchemaModelInterface
 
     /**
      * @param string $fieldName
+     * @param array $config
      * @return ModelField|null
      */
-    public function getField(string $fieldName): ?ModelField;
+    public function getField(string $fieldName, array $config = []): ?ModelField;
 
     /**
      * @return string

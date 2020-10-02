@@ -52,8 +52,7 @@ class InheritedPlugins implements ModelTypePlugin
         /* @var ModelType[] $ancestorModels */
         $ancestorModels = [];
         foreach ($ancestors as $ancestor) {
-            $typeName = DataObjectModel::create($ancestor)->getTypeName();
-            $modelType = $schema->getModel($typeName);
+            $modelType = $schema->getModelByClassName($ancestor);
             if (!$modelType) {
                 continue;
             }

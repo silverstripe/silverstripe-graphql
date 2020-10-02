@@ -257,7 +257,11 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
                 $inputType->getName(),
                 $model
             );
-            $prop = static::getObjectProperty($model->getSourceClass(), $fieldName);
+            $prop = static::getObjectProperty(
+                $model->getSourceClass(),
+                $fieldObj->getName(),
+                $schema
+            );
             $propPath = array_merge($propOrigin, [$prop]);
 
             $modelFieldType = $model->getFieldByName($fieldName)->getType();
@@ -291,9 +295,10 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
      *
      * @param string $class
      * @param string $fieldName
+     * @param Schema $schema
      * @return string
      */
-    protected static function getObjectProperty(string $class, string $fieldName): string
+    protected static function getObjectProperty(string $class, string $fieldName, Schema $schema): string
     {
         return $fieldName;
     }

@@ -15,10 +15,10 @@ use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
-use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
+use SilverStripe\GraphQL\Schema\Interfaces\SettingsProvider;
 use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\ArrayLib;
@@ -51,7 +51,7 @@ class ModelType extends Type implements ExtraTypeProvider
     private $blacklistedFields = [];
 
     /**
-     * @var ModelQuery|ModelMutation
+     * @var array
      */
     private $operations = [];
 
@@ -148,7 +148,10 @@ class ModelType extends Type implements ExtraTypeProvider
             $field = ModelField::create($fieldName, $fieldConfig, $this->getModel());
             $fieldObj = $this->getModel()->getField($field->getPropertyName());
             if ($fieldObj) {
-                $fieldObj->mergeWith($field);
+                $fieldObj->setName($field->getName());
+                if (is_array($fieldConfig)) {
+                    $fieldObj->applyConfig($fieldConfig);
+                }
             } else {
                 $fieldObj = ModelField::create($fieldName, $fieldConfig, $this->getModel());
             }
@@ -285,6 +288,22 @@ class ModelType extends Type implements ExtraTypeProvider
     }
 
     /**
+     * @param Type $type
+     * @return Type
+     * @throws SchemaBuilderException
+     */
+    public function mergeWith(Type $type): Type
+    {
+        if ($type instanceof ModelType) {
+            foreach ($type->getOperationCreators() as $name => $config) {
+                $this->addOperation($name, $config);
+            }
+        }
+
+        return parent::mergeWith($type);
+    }
+
+    /**
      * @param string $operationName
      * @param array $config
      * @return ModelType
@@ -344,6 +363,11 @@ class ModelType extends Type implements ExtraTypeProvider
                 $config
             );
             if ($operation) {
+                if ($this->getModel() instanceof SettingsProvider && $operation instanceof Field) {
+                    $operationsConfig = $this->getModel()->getSetting('operations', []);
+                    $defaultPlugins = $operationsConfig[$operationName]['plugins'] ?? [];
+                    $operation->setDefaultPlugins($defaultPlugins);
+                }
                 $operations[$operationName] = $operation;
             }
         }
@@ -357,6 +381,14 @@ class ModelType extends Type implements ExtraTypeProvider
     public function getOperations(): array
     {
         return $this->operations;
+    }
+
+    /**
+     * @return array
+     */
+    public function getOperationCreators(): array
+    {
+        return $this->operationCreators;
     }
 
     /**

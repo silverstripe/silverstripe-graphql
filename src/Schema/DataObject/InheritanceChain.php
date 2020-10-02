@@ -8,6 +8,7 @@ use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Convert;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -193,11 +194,11 @@ class InheritanceChain
     /**
      * @param DataObject $dataObject
      * @return string
-     * @throws SchemaBuilderException
      */
     public static function createDescendantTypename(DataObject $dataObject): string
     {
-        return DataObjectModel::create($dataObject)->getTypeName() . 'Descendants';
+        $model = SchemaModelCreatorRegistry::singleton()->getModel($dataObject);
+        return $model->getTypeName() . 'Descendants';
     }
 
     /**
