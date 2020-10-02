@@ -13,4 +13,6 @@ SilverStripe\ORM\DataObject:
     ClassName: true
     LinkTracking: true
     FileTracking: true
+  extensions:
+    - SilverStripe\GraphQL\Extensions\DevBuildExtension
 
