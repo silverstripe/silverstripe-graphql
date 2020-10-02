@@ -73,10 +73,10 @@ class Inheritance implements PluginInterface, SchemaUpdater
         if (!$modelType) {
             $schema->addModel($prototype);
             $modelType = $prototype;
-            // If the model is being added implicitly, merge it with the parent model
-            if ($parentModel) {
-                $modelType->mergeWith($parentModel);
-            }
+        }
+        // Merge with the parent model for inherited fields
+        if ($parentModel) {
+            $modelType->mergeWith($parentModel);
         }
 
         if (!$inheritance->hasDescendants()) {
