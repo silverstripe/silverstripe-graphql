@@ -4,7 +4,6 @@ namespace SilverStripe\GraphQL\Schema;
 
 use GraphQL\Type\Schema as GraphQLSchema;
 use M1\Env\Exception\ParseException;
-use Psr\Log\LoggerInterface;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
@@ -19,14 +18,12 @@ use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
-use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
-use SilverStripe\GraphQL\Schema\Interfaces\ModelFieldPlugin;
-use SilverStripe\GraphQL\Schema\Interfaces\ModelMutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
-use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelTypePlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
+use SilverStripe\GraphQL\Schema\Interfaces\PluginInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaComponent;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
@@ -43,10 +40,10 @@ use SilverStripe\GraphQL\Schema\Type\UnionType;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\ORM\ArrayLib;
 use Exception;
-use SilverStripe\ORM\ArrayList;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
+use TypeError;
 
 /**
  * The main Schema definition. A docking station for all type, model, interface, etc., abstractions.
@@ -322,33 +319,18 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $allModelFields = array_merge($allModelFields, $pluggedFields);
         }
 
-        // Create a list of everything in the schema that is pluggable, including fields added to types.
-        // "src": the list of things to test
-        // "req": the required interface(s)
         $allComponents = [
-            [ 'src' => $this->types, 'req' => [TypePlugin::class] ],
-            [ 'src' => $this->models, 'req' => [ModelTypePlugin::class] ],
-            [ 'src' => $this->queryFields, 'req' => [
-                FieldPlugin::class,
-                ModelFieldPlugin::class,
-                QueryPlugin::class,
-                ModelQueryPlugin::class
-            ]],
-            [ 'src' => $this->mutationFields, 'req' => [
-                FieldPlugin::class,
-                MutationPlugin::class,
-                ModelMutationPlugin::class
-            ]],
-            [ 'src' => $allTypeFields, 'req' => [FieldPlugin::class] ],
-            [ 'src' => $allModelFields, 'req' => [
-                FieldPlugin::class,
-                ModelFieldPlugin::class,
-            ]],
+            'types' => $this->types,
+            'models' => $this->models,
+            'queries' => $this->queryFields,
+            'mutations' => $this->mutationFields,
+            'fields' => $allTypeFields,
+            'model fields' => $allModelFields,
         ];
         $schemaUpdates = [];
-        foreach($allComponents as $spec) {
-            foreach ($spec['src'] as $component) {
-                /* @var Type|Field $component */
+        foreach($allComponents as $components) {
+            /* @var SchemaComponent $component */
+            foreach ($components as $component) {
                 foreach ($component->loadPlugins() as $data) {
                     list ($plugin) = $data;
                     if ($plugin instanceof SchemaUpdater) {
@@ -361,26 +343,37 @@ class Schema implements ConfigurationApplier, SchemaValidator
         foreach ($schemaUpdates as $class) {
             $class::updateSchema($this);
         }
-        foreach ($allComponents as $spec) {
-            foreach ($spec['src'] as $component) {
-                /* @var Type|Field $component */
+        foreach ($allComponents as $name => $components) {
+            /* @var SchemaComponent $component */
+            foreach ($components as $component) {
                 foreach ($component->loadPlugins() as $data) {
                     /* @var QueryPlugin|MutationPlugin|TypePlugin|ModelTypePlugin $plugin */
                     list ($plugin, $config) = $data;
-                    foreach ($spec['req'] as $pluginInterface) {
-                        if ($plugin instanceof $pluginInterface) {
-                            try {
-                                $plugin->apply($component, $this, $config);
-                                break;
-                            } catch (SchemaBuilderException $e) {
-                                throw new SchemaBuilderException(sprintf(
-                                    'Failed to apply plugin %s to %s. Got error %s',
-                                    get_class($plugin),
-                                    $component->getName(),
-                                    $e->getMessage()
-                                ));
-                            }
-                        }
+
+                    // Duck programming here just because there is such an exhaustive list of possible
+                    // interfaces, and they can't have a common ancestor until PHP 7.4 allows it.
+                    // https://wiki.php.net/rfc/covariant-returns-and-contravariant-parameters
+                    if (!method_exists($plugin, 'apply')) {
+                        continue;
+                    }
+
+                    try {
+                        $plugin->apply($component, $this, $config);
+                        break;
+                    } catch (SchemaBuilderException $e) {
+                        throw new SchemaBuilderException(sprintf(
+                            'Failed to apply plugin %s to %s. Got error %s',
+                            get_class($plugin),
+                            $component->getName(),
+                            $e->getMessage()
+                        ));
+                    } catch (TypeError $e) {
+                        throw new SchemaBuilderException(sprintf(
+                            'Plugin %s does not apply to component "%s" (category: %s)',
+                            $plugin->getIdentifier(),
+                            $component->getName(),
+                            $name
+                        ));
                     }
                 }
             }

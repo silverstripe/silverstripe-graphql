@@ -9,8 +9,6 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelAware;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
-use SilverStripe\GraphQL\Schema\Field\ModelMutation;
-use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;

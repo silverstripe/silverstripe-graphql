@@ -46,7 +46,7 @@ class ModelMutation extends Mutation implements ModelOperation
                 $plugin instanceof MutationPlugin ||
                 $plugin instanceof FieldPlugin
             ),
-            'Plugin %s not found or not an instance of %s, %s, or %s',
+            'Plugin %s not found or does not apply to model mutation "%s"',
             $pluginName,
             ModelMutationPlugin::class,
             MutationPlugin::class,

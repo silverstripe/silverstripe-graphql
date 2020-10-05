@@ -4,7 +4,6 @@
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
 use SilverStripe\Core\Convert;
-use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceChain;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -68,11 +67,9 @@ class Inheritance implements PluginInterface, SchemaUpdater
     private static function addInheritance(Schema $schema, string $class, ?ModelType $parentModel = null)
     {
         $inheritance = InheritanceChain::create($class);
-        $prototype = ModelType::create($class);
-        $modelType = $schema->getModel($prototype->getName());
+        $modelType = $schema->getModelByClassName($class);
         if (!$modelType) {
-            $schema->addModel($prototype);
-            $modelType = $prototype;
+            $modelType = $schema->findOrMakeModel($class);
         }
         // Merge with the parent model for inherited fields
         if ($parentModel) {

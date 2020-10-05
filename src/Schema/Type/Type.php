@@ -9,6 +9,7 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaComponent;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
@@ -19,7 +20,7 @@ use Exception;
 /**
  * Abstraction for a generic type
  */
-class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider
+class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, SchemaComponent
 {
     use Configurable;
     use Injectable;
@@ -104,9 +105,9 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }

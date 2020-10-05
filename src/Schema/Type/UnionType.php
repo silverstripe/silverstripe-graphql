@@ -8,6 +8,7 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaComponent;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
@@ -20,7 +21,8 @@ use SilverStripe\GraphQL\Schema\Schema;
 class UnionType implements
     SchemaValidator,
     ConfigurationApplier,
-    SignatureProvider {
+    SignatureProvider,
+    SchemaComponent {
 
     use Injectable;
     use Configurable;
@@ -78,9 +80,9 @@ class UnionType implements
     }
 
     /**
-     * @return mixed
+     * @return mixed|null
      */
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }

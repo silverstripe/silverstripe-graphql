@@ -24,10 +24,9 @@ class Query extends Field implements PluginValidator
     {
         Schema::invariant(
             $plugin && ($plugin instanceof QueryPlugin || $plugin instanceof FieldPlugin),
-            'Plugin %s not found or not an instance of %s or %s',
+            'Plugin %s not found or does not apply to query "%s"',
             $pluginName,
-            QueryPlugin::class,
-            FieldPlugin::class
+            $this->getName()
         );
     }
 }

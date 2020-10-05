@@ -4,6 +4,8 @@
 namespace SilverStripe\GraphQL\Schema\Field;
 
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelFieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
@@ -150,5 +152,18 @@ class ModelField extends Field
         return $this->getProperty() ?: $this->getName();
     }
 
-
+    /**
+     * @param string $pluginName
+     * @param $plugin
+     * @throws SchemaBuilderException
+     */
+    public function validatePlugin(string $pluginName, $plugin): void
+    {
+        Schema::invariant(
+            $plugin && ($plugin instanceof ModelFieldPlugin || $plugin instanceof FieldPlugin),
+            'Plugin %s not found or does not apply to field "%s"',
+            $pluginName,
+            $this->getName()
+        );
+    }
 }

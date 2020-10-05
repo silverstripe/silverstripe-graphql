@@ -12,15 +12,15 @@ use SilverStripe\GraphQL\Schema\Schema;
 /**
  * Defines a generic mutation
  */
-class Mutation extends Field implements PluginValidator
+class Mutation extends Field
 {
     public function validatePlugin(string $pluginName, $plugin): void
     {
         Schema::invariant(
             $plugin && ($plugin instanceof MutationPlugin || $plugin instanceof FieldPlugin),
-            'Plugin %s not found or not an instance of %s',
+            'Plugin %s not found or does not apply to mutation "%s"',
             $pluginName,
-            MutationPlugin::class
+            $this->getName()
         );
     }
 }

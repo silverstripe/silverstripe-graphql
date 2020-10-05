@@ -9,6 +9,9 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
+use SilverStripe\GraphQL\Schema\Interfaces\PluginValidator;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaComponent;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
@@ -27,7 +30,9 @@ use Exception;
 class Field implements
     ConfigurationApplier,
     SchemaValidator,
-    SignatureProvider
+    SignatureProvider,
+    SchemaComponent,
+    PluginValidator
 {
     use Injectable;
     use Configurable;
@@ -577,6 +582,21 @@ class Field implements
         ];
 
         return md5(json_encode($components));
+    }
+
+    /**
+     * @param string $pluginName
+     * @param $plugin
+     * @throws SchemaBuilderException
+     */
+    public function validatePlugin(string $pluginName, $plugin): void
+    {
+        Schema::invariant(
+            $plugin instanceof FieldPlugin,
+            'Plugin %s does not apply to field "%s"',
+            $pluginName,
+            $this->getName()
+        );
     }
 
     /**
