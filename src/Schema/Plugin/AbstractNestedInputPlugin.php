@@ -116,7 +116,8 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
      */
     protected function buildAllFieldsConfig(ModelType $modelType, Schema $schema, int $level = 1): array
     {
-        $existing = $this->_allConfigCache[$modelType->getName()] ?? null;
+        $key = md5($schema->getSchemaKey() . $modelType->getName());
+        $existing = $this->_allConfigCache[$key] ?? null;
         if ($existing) {
             return $existing;
         }

@@ -21,7 +21,6 @@ use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelTypePlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
-use SilverStripe\GraphQL\Schema\Interfaces\PluginInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaComponent;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
@@ -226,12 +225,17 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $scalar = Scalar::create($scalarName, $scalarConfig);
             $this->addScalar($scalar);
         }
+
+        Benchmark::start('procedural-updates');
+        $this->applyProceduralUpdates($schemaConfig['builders'] ?? []);
+        Benchmark::end('procedural-updates');
+
         Benchmark::start('process-models');
         $this->processModels();
         Benchmark::end('process-models');
 
         Benchmark::start('schema-updates');
-        $this->applySchemaUpdates($schemaConfig);
+        $this->applySchemaUpdates();
         echo Benchmark::end('schema-updates') . PHP_EOL;
         foreach ($this->models as $modelType) {
             $this->addType($modelType);
@@ -285,14 +289,13 @@ class Schema implements ConfigurationApplier, SchemaValidator
         }
 
     }
+
     /**
-     * @param array $schemaConfig
+     * @param array $builders
      * @throws SchemaBuilderException
-     * @throws Exception
      */
-    private function applySchemaUpdates(array $schemaConfig): void
+    private function applyProceduralUpdates(array $builders): void
     {
-        $builders = $schemaConfig['builders'] ?? [];
         foreach ($builders as $builderClass) {
             static::invariant(
                 is_subclass_of($builderClass, SchemaUpdater::class),
@@ -302,6 +305,14 @@ class Schema implements ConfigurationApplier, SchemaValidator
             );
             $builderClass::updateSchema($this);
         }
+    }
+
+    /**
+     * @throws SchemaBuilderException
+     * @throws Exception
+     */
+    private function applySchemaUpdates(): void
+    {
         // Create a map of all the lists we need to apply plugins to, and their
         // required plugin interface(s)
         $allTypeFields = [];

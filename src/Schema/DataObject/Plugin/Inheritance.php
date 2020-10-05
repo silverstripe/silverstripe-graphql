@@ -49,11 +49,11 @@ class Inheritance implements PluginInterface, SchemaUpdater
                 continue;
             }
             $baseClass = InheritanceChain::create($class)->getBaseClass();
-            if (self::isTouched($baseClass)) {
+            if (self::isTouched($schema, $baseClass)) {
                 continue;
             }
             self::addInheritance($schema, $baseClass);
-            self::touchNode($baseClass);
+            self::touchNode($schema, $baseClass);
         }
     }
 
@@ -145,20 +145,24 @@ class Inheritance implements PluginInterface, SchemaUpdater
     }
 
     /**
+     * @param Schema $schema
      * @param string $baseClass
      */
-    private static function touchNode(string $baseClass): void
+    private static function touchNode(Schema $schema, string $baseClass): void
     {
-        self::$touchedNodes[$baseClass] = true;
+        $key = md5($schema->getSchemaKey() . $baseClass);
+        self::$touchedNodes[$key] = true;
     }
 
     /**
+     * @param Schema $schema
      * @param string $baseClass
      * @return bool
      */
-    private static function isTouched(string $baseClass): bool
+    private static function isTouched(Schema $schema, string $baseClass): bool
     {
-        return isset(self::$touchedNodes[$baseClass]);
+        $key = md5($schema->getSchemaKey() . $baseClass);
+        return isset(self::$touchedNodes[$key]);
     }
 
 }
