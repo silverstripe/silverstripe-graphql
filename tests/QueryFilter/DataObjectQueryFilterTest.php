@@ -56,6 +56,16 @@ class DataObjectQueryFilterTest extends SapphireTest
         $filters = $filter->getFilterIdentifiersForField('MyField');
         $this->assertEquals(sort($defaults), sort($filters));
 
+        $defaults = DataObjectFake::singleton()->relObject('Author.FirstName')->config()->get('graphql_default_filters');
+        $filter->addDefaultFilters('Author__FirstName');
+        $filters = $filter->getFilterIdentifiersForField('Author__FirstName');
+        $this->assertEquals(sort($defaults), sort($filters));
+
+        $defaults = DataObjectFake::singleton()->relObject('Author.Groups.Title')->config()->get('graphql_default_filters');
+        $filter->addDefaultFilters('Author__Groups__Title');
+        $filters = $filter->getFilterIdentifiersForField('Author__Groups__Title');
+        $this->assertEquals(sort($defaults), sort($filters));
+
         $this->expectException('InvalidArgumentException');
         $filter->addDefaultFilters('Fail');
     }
