@@ -28,7 +28,7 @@ matrix:
   fast_finish: true
   include:
     - php: 7.1
-      env: DB=PGSQL PHPUNIT_TEST=1 PHPCS_TEST=1
+      env: DB=PGSQL PHPUNIT_TEST=1 PHPCS_TEST=1 COMPOSER_ARG=--prefer-lowest
     - php: 7.2
       env: DB=MYSQL PHPUNIT_TEST=1
     - php: 7.3
@@ -39,6 +39,8 @@ matrix:
       env: DB=MYSQL BEHAT_TEST=1
     - php: 7.3
       env: DB=MYSQL ASSETADMIN_TEST=1
+    - php: nightly
+      env: DB=MYSQL PHPUNIT_TEST=1 COMPOSER_ARG=--ignore-platform-reqs
 
 before_script:
 # Extra $PATH
@@ -47,7 +49,7 @@ before_script:
 # Init PHP
   - composer self-update || true
   - phpenv rehash
-  - phpenv config-rm xdebug.ini
+  - phpenv config-rm xdebug.ini || true
 
 # Install composer dependencies
   - composer validate
@@ -55,7 +57,7 @@ before_script:
   - if [[ $DB == PGSQL ]]; then composer require silverstripe/postgresql:2.x-dev --prefer-dist --no-update; fi
   - if [[ $ASSETADMIN_TEST ]]; then composer require silverstripe/recipe-cms $RECIPE_CMS_VERSION --prefer-source --no-update ; fi
   - if [[ $BEHAT_TEST ]]; then composer require silverstripe/recipe-testing:^1 silverstripe/recipe-cms $RECIPE_CMS_VERSION silverstripe/frameworktest:^0.1.0 --prefer-source --no-update ; fi
-  - composer update
+  - composer update $COMPOSER_ARG
 
   - if [[ $BEHAT_TEST ]]; then mkdir artifacts; fi
   - if [[ $BEHAT_TEST ]]; then cp composer.lock artifacts/; fi
