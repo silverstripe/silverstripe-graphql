@@ -3,14 +3,26 @@
 namespace SilverStripe\GraphQL\Middleware;
 
 use Exception;
-use GraphQL\Type\Schema;
 
-class HTTPMethodMiddleware implements QueryMiddleware
+/**
+ * Ensures mutations use POST requests
+ */
+class HTTPMethodMiddleware implements Middleware
 {
-    public function process(Schema $schema, $query, $context, $params, callable $next)
+    /**
+     * @param array $params
+     * @param callable $next
+     * @return mixed
+     * @throws Exception
+     */
+    public function process(array $params, callable $next)
     {
+        $context = $params['context'] ?? [];
+        $query = $params['query'] ?? null;
+
         $isGET = false;
         $isPOST = false;
+
         if (isset($context['httpMethod'])) {
             $isGET = $context['httpMethod'] === 'GET';
             $isPOST = $context['httpMethod'] === 'POST';
@@ -26,6 +38,6 @@ class HTTPMethodMiddleware implements QueryMiddleware
             }
         }
 
-        return $next($schema, $query, $context, $params);
+        return $next($params);
     }
 }

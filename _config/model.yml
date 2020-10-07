@@ -1,0 +1,16 @@
+---
+Name: silverstripe-graphql-model
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry:
+    constructor:
+      dataobject: '%$SilverStripe\GraphQL\Schema\DataObject\ModelCreator'
+SilverStripe\GraphQL\Schema\Schema:
+  schemas:
+    '*':
+      modelConfig:
+        DataObject:
+          type_formatter: [ 'SilverStripe\Core\ClassInfo', 'shortName' ]
+          type_prefix: ''
+          type_mapping: []
+          nested_query_plugins: []

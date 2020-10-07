@@ -3,18 +3,31 @@
 namespace SilverStripe\GraphQL\Middleware;
 
 use Exception;
+use GraphQL\Error\SyntaxError;
 use GraphQL\Language\AST\NodeKind;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Source;
-use GraphQL\Type\Schema;
-use SilverStripe\GraphQL\Manager;
+use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\Security\SecurityToken;
 
-class CSRFMiddleware implements QueryMiddleware
+/**
+ * Adds functionality that checks a request for a token before allowing a mutation
+ * to happen. Protects against CSRF attacks
+ *
+ */
+class CSRFMiddleware implements Middleware
 {
-    public function process(Schema $schema, $query, $context, $params, callable $next)
+    /**
+     * @param array $params
+     * @param callable $next
+     * @return mixed
+     * @throws SyntaxError
+     */
+    public function process(array $params, callable $next)
     {
-        if ($this->isMutation($query)) {
+        $query = $params['query'] ?? null;
+        $context = $params['context'] ?? [];
+        if ($query && QueryHandler::isMutation($query)) {
             if (empty($context['token'])) {
                 throw new Exception('Mutations must provide a CSRF token in the X-CSRF-TOKEN header');
             }
@@ -25,41 +38,8 @@ class CSRFMiddleware implements QueryMiddleware
             }
         }
 
-        return $next($schema, $query, $context, $params);
+        return $next($params);
     }
 
-    /**
-     * @param string $query
-     * @return bool
-     */
-    protected function isMutation($query)
-    {
-        // Simple string matching as a first check to prevent unnecessary static analysis
-        if (stristr($query, Manager::MUTATION_ROOT) === false) {
-            return false;
-        }
 
-        // If "mutation" is the first expression in the query, then it's a mutation.
-        if (preg_match('/^\s*'.preg_quote(Manager::MUTATION_ROOT, '/').'/', $query)) {
-            return true;
-        }
-
-        // Otherwise, bring in the big guns.
-        $document = Parser::parse(new Source($query ?: 'GraphQL'));
-        $defs = $document->definitions;
-        foreach ($defs as $statement) {
-            $options = [
-                NodeKind::OPERATION_DEFINITION,
-                NodeKind::OPERATION_TYPE_DEFINITION
-            ];
-            if (!in_array($statement->kind, $options, true)) {
-                continue;
-            }
-            if ($statement->operation === Manager::MUTATION_ROOT) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

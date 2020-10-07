@@ -3,74 +3,39 @@ Name: graphqlconfig
 ---
 # Define the type parsers
 SilverStripe\Core\Injector\Injector:
-  SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.string:
-    class: SilverStripe\GraphQL\Scaffolding\Util\StringTypeParser
-  SilverStripe\GraphQL\Scaffolding\Interfaces\TypeParserInterface.array:
-    class: SilverStripe\GraphQL\Scaffolding\Util\ArrayTypeParser
+
+  SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface:
+    class: SilverStripe\GraphQL\QueryHandler\QueryHandler
+
   SilverStripe\GraphQL\Middleware\QueryMiddleware.csrf:
     class: SilverStripe\GraphQL\Middleware\CSRFMiddleware
+
   SilverStripe\GraphQL\Middleware\QueryMiddleware.httpMethod:
     class: SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware
+
   SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
     class: SilverStripe\GraphQL\PersistedQuery\JSONStringProvider
+
   SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
     constructor:
       httpClient: '%$SilverStripe\GraphQL\PersistedQuery\GuzzleHTTPClient'
-  SilverStripe\GraphQL\Permission\QueryPermissionChecker.default:
-    class: SilverStripe\GraphQL\Permission\CanViewPermissionChecker
-  SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder:
-    properties:
-      permissionChecker: '%$SilverStripe\GraphQL\Permission\QueryPermissionChecker.default'
-  SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder:
-    properties:
-      permissionChecker: '%$SilverStripe\GraphQL\Permission\QueryPermissionChecker.default'
-  SilverStripe\GraphQL\Pagination\Connection:
-    properties:
-      permissionChecker: '%$SilverStripe\GraphQL\Permission\QueryPermissionChecker.default'
 
-  # Set up a default endpoint that can be activated with a Director rule
-  SilverStripe\GraphQL\Manager.default:
-    class: SilverStripe\GraphQL\Manager
+  SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator:
+    class: 'SilverStripe\GraphQL\Schema\Storage\CodeGenerationStoreCreator'
+
+  Psr\SimpleCache\CacheInterface.FileSchemaStore:
+    factory: SilverStripe\Core\Cache\CacheFactory
     constructor:
-      schemaKey: default
+      namespace: "GraphQLSchema"
+
+  SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore:
     properties:
-      Middlewares:
-        CSRFMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.csrf'
-        HTTPMethodMiddleware: '%$SilverStripe\GraphQL\Middleware\QueryMiddleware.httpMethod'
-  SilverStripe\GraphQL\Controller.default:
-    class: SilverStripe\GraphQL\Controller
-    constructor:
-      manager: '%$SilverStripe\GraphQL\Manager.default'
-
-# Assign each DBField subclass with an associated internal type
-SilverStripe\ORM\FieldType\DBField:
-  extensions:
-    - SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension
-  graphql_type: String
-SilverStripe\ORM\FieldType\DBInt:
-  graphql_type: Int
-SilverStripe\ORM\FieldType\DBBoolean:
-  graphql_type: Boolean
-SilverStripe\ORM\FieldType\DBFloat:
-  graphql_type: Float
-SilverStripe\ORM\FieldType\DBPrimaryKey:
-  graphql_type: ID
-SilverStripe\ORM\FieldType\DBForeignKey:
-  graphql_type: ID
-
-# Register the CRUD
-SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder:
-  operations:
-    create: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create
-    read: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read
-    readOne: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ReadOne
-    update: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Update
-    delete: SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete
+      rootDir: '`BASE_PATH`'
 
 SilverStripe\GraphQL\Controller:
   extensions:
     - SilverStripe\GraphQL\Extensions\IntrospectionProvider
-SilverStripe\GraphQL\Manager:
+SilverStripe\GraphQL\Schema\Schema:
   schemas: []
 ---
 Only:

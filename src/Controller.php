@@ -14,16 +14,22 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Flushable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Auth\Handler;
+use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Dev\State\DisableTypeCacheState;
+use SilverStripe\GraphQL\Permission\MemberContextProvider;
+use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
+use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
+use InvalidArgumentException;
 
 /**
  * Top level controller for handling graphql requests.
- * @todo CSRF protection (or token-based auth)
  * @skipUpgrade
  */
 class Controller extends BaseController implements Flushable
@@ -62,9 +68,14 @@ class Controller extends BaseController implements Flushable
     private static $cache_on_flush = true;
 
     /**
-     * @var Manager
+     * @var Schema
      */
-    protected $manager;
+    private $schema;
+
+    /**
+     * @var QueryHandlerInterface
+     */
+    private $queryHandler;
 
     /**
      * @var GeneratedAssetHandler
@@ -78,20 +89,16 @@ class Controller extends BaseController implements Flushable
     protected $corsConfig = [];
 
     /**
-     * @param Manager $manager
+     * @param string $schemaKey
+     * @param QueryHandlerInterface|null $queryHandler
      */
-    public function __construct(Manager $manager = null)
+    public function __construct(string $schemaKey, ?QueryHandlerInterface $queryHandler = null)
     {
         parent::__construct();
-        $this->manager = $manager;
-
-        if ($this->manager && $this->manager->getSchemaKey()) {
-            // Side effect. This isn't ideal, but having multiple instances of StaticSchema
-            // is a massive architectural change.
-            StaticSchema::reset();
-
-            $this->manager->configure();
-        }
+        $schema = Schema::create($schemaKey);
+        $this->setSchema($schema);
+        $handler = $queryHandler ?: Injector::inst()->get(QueryHandlerInterface::class);
+        $this->setQueryHandler($handler);
     }
 
     /**
@@ -99,27 +106,42 @@ class Controller extends BaseController implements Flushable
      *
      * @param HTTPRequest $request
      * @return HTTPResponse
+     * @throws InvalidArgumentException
      */
     public function index(HTTPRequest $request)
     {
         $stage = $request->param('Stage');
-        if ($stage && in_array($stage, [Versioned::DRAFT, Versioned::LIVE])) {
+        if ($stage) {
             Versioned::set_stage($stage);
         }
         // Check for a possible CORS preflight request and handle if necessary
-        // Refer issue 66:  https://github.com/silverstripe/silverstripe-graphql/issues/66
         if ($request->httpMethod() === 'OPTIONS') {
             return $this->handleOptions($request);
         }
-
+        $queryPerf = '';
+        $schemaPerf = '';
         // Main query handling
         try {
-            $manager = $this->getManager($request);
-            // Parse input
             list($query, $variables) = $this->getRequestQueryVariables($request);
+            if (!$query) {
+                $this->httpError(400, 'This endpoint requires a "query" parameter');
+            }
 
-            // Run query
-            $result = $manager->query($query, $variables);
+            // Temporary, maybe useful by feature flag later..
+            Benchmark::start('schema-perf');
+            $schema = $this->getSchema()->build();
+            $schemaPerf = Benchmark::end('schema-perf', '%sms', true);
+            $handler = $this->getQueryHandler();
+            if ($handler instanceof ContextProvider) {
+                $this->applyContext($handler, $request);
+            }
+            $ctx = $handler->getContext();
+            $this->extend('onBeforeHandleQuery', $schema, $query, $ctx, $variables);
+            Benchmark::start('query-perf');
+            $result = $handler->query($schema, $query, $variables);
+            $queryPerf = Benchmark::end('query-perf', '%sms', true);
+            $this->extend('onAfterHandleQuery', $schema, $query, $ctx, $variables, $result);
+
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
 
@@ -136,41 +158,9 @@ class Controller extends BaseController implements Flushable
         }
 
         $response = $this->addCorsHeaders($request, new HTTPResponse(json_encode($result)));
-        return $response->addHeader('Content-Type', 'application/json');
-    }
-
-    /**
-     * @param HTTPRequest $request
-     * @return Manager
-     */
-    public function getManager($request = null)
-    {
-        $manager = null;
-        if (!$request) {
-            $request = $this->getRequest();
-        }
-        if ($this->manager) {
-            $manager = $this->manager;
-        } else {
-            // Get a service rather than an instance (to allow procedural configuration)
-            $config = Config::inst()->get(static::class, 'schema');
-            $manager = Manager::createFromConfig($config);
-        }
-        $this->applyManagerContext($manager, $request);
-        $this->setManager($manager);
-
-        return $manager;
-    }
-
-    /**
-     * @param Manager $manager
-     * @return $this
-     */
-    public function setManager($manager)
-    {
-        $this->manager = $manager;
-
-        return $this;
+        return $response->addHeader('Content-Type', 'application/json')
+            ->addHeader('X-QueryPerf', $queryPerf)
+            ->addHeader('X-SchemaPerf', $schemaPerf);
     }
 
     /**
@@ -302,26 +292,28 @@ class Controller extends BaseController implements Flushable
     }
 
     /**
-     * @param Manager $manager
+     * @param ContextProvider $provider
      * @param HTTPRequest $request
      * @throws Exception
      */
-    protected function applyManagerContext(Manager $manager, HTTPRequest $request)
+    protected function applyContext(ContextProvider $provider, HTTPRequest $request)
     {
-        // Add request context to Manager
-        $manager->addContext('token', $this->getToken());
+        $provider->addContext('token', $this->getToken());
         $method = null;
         if ($request->isGET()) {
             $method = 'GET';
         } elseif ($request->isPOST()) {
             $method = 'POST';
         }
-        $manager->addContext('httpMethod', $method);
+        $provider->addContext('httpMethod', $method);
 
-        // Check and validate user for this request
-        $member = $this->getRequestUser($request);
-        if ($member) {
-            $manager->setMember($member);
+        if ($provider instanceof MemberContextProvider) {
+            // Check and validate user for this request
+            /* @var MemberContextProvider $provider */
+            $member = $this->getRequestUser($request);
+            if ($member) {
+                $provider->setMemberContext($member);
+            }
         }
     }
 
@@ -450,14 +442,8 @@ class Controller extends BaseController implements Flushable
      */
     public function writeSchemaToFilesystem()
     {
-        if (Injector::inst()->has(HTTPRequest::class)) {
-            $request = Injector::inst()->get(HTTPRequest::class);
-        } else {
-            $request = new NullHTTPRequest();
-        }
-        $manager = $this->getManager($request);
         try {
-            $types = StaticSchema::inst()->introspectTypes($manager);
+            $types = $this->introspectTypes();
         } catch (Exception $e) {
             throw new Exception(sprintf(
                 'There was an error caching the GraphQL types: %s',
@@ -467,6 +453,48 @@ class Controller extends BaseController implements Flushable
 
         $this->writeTypes(json_encode($types));
     }
+
+    /**
+     * @return array
+     * @throws Exception
+     */
+    public function introspectTypes(): array
+    {
+        $handler = $this->getQueryHandler();
+        if ($handler instanceof ContextProvider) {
+            $this->applyContext($handler, $this->getRequest());
+        }
+        $fragments = $this->getQueryHandler()->query(
+            $this->getSchema()->build(),
+            <<<GRAPHQL
+query IntrospectionQuery {
+    __schema {
+      types {
+        kind
+        name
+        possibleTypes {
+          name
+        }
+      }
+    }
+}
+GRAPHQL
+        );
+
+        if (isset($fragments['errors'])) {
+            $messages = array_map(function ($error) {
+                return $error['message'];
+            }, $fragments['errors']);
+
+            throw new Exception(sprintf(
+                'There were some errors with the introspection query: %s',
+                implode(PHP_EOL, $messages)
+            ));
+        }
+
+        return $fragments;
+    }
+
 
     public function removeSchemaFromFilesystem()
     {
@@ -499,6 +527,44 @@ class Controller extends BaseController implements Flushable
             $this->removeSchemaFromFilesystem();
         }
     }
+
+    /**
+     * @return Schema
+     */
+    public function getSchema(): Schema
+    {
+        return $this->schema;
+    }
+
+    /**
+     * @param Schema $schema
+     * @return Controller
+     */
+    public function setSchema(Schema $schema): self
+    {
+        $this->schema = $schema;
+        return $this;
+    }
+
+    /**
+     * @return QueryHandlerInterface
+     */
+    public function getQueryHandler(): QueryHandlerInterface
+    {
+        return $this->queryHandler;
+    }
+
+    /**
+     * @param QueryHandlerInterface $queryHandler
+     * @return Controller
+     */
+    public function setQueryHandler(QueryHandlerInterface $queryHandler): self
+    {
+        $this->queryHandler = $queryHandler;
+        return $this;
+    }
+
+
 
     public static function flush()
     {
@@ -540,6 +606,6 @@ class Controller extends BaseController implements Flushable
      */
     protected function generateCacheFilename()
     {
-        return $this->getManager()->getSchemaKey() . '.' . self::CACHE_FILENAME;
+        return $this->getBuilder()->getSchemaKey() . '.' . self::CACHE_FILENAME;
     }
 }

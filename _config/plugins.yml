@@ -1,0 +1,14 @@
+---
+Name: graphql-plugins
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Schema\Registry\PluginRegistry:
+    constructor:
+      paginator: '%$SilverStripe\GraphQL\Schema\Plugin\PaginationPlugin'
+      dataobjectPaginator: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\Paginator'
+      dataobjectQueryFilter: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\QueryFilter'
+      dataobjectQuerySort: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QuerySort'
+      dataobjectInheritance: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\Inheritance'
+      canViewPermission: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\CanViewPermission'
+      firstResult: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\FirstResult'
+      inheritedPlugins: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\InheritedPlugins'
