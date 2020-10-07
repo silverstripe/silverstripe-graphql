@@ -146,6 +146,9 @@ class DataObjectQueryFilterTest extends SapphireTest
 
         $filter->addFieldFilterByIdentifier('MyField', 'eq');
         $filter->addFieldFilterByIdentifier('MyInt', 'gt');
+        $filter->addFieldFilterByIdentifier('Author__FirstName', 'eq');
+        $filter->addFieldFilterByIdentifier('Author__Surname', 'eq');
+        $filter->addDefaultFilters('Author__Groups__Title');
         $params = [
             'Filter' => [
                 'MyField__eq' => 'match',
@@ -168,6 +171,29 @@ class DataObjectQueryFilterTest extends SapphireTest
         $this->assertEquals('match', $list->filterValue);
         $this->assertEquals('MyInt:GreaterThan', $list->excludeField);
         $this->assertEquals(10, $list->excludeValue);
+
+        $params = [
+            'Filter' => [
+                'Author__FirstName__eq' => 'match',
+            ],
+            'Exclude' => [
+                'Author__Surname__eq' => 'exclude'
+            ],
+        ];
+        $list = $filter->applyArgsToList(new FilterDataList(DataObjectFake::class), $params);
+        $this->assertEquals('Author.FirstName:ExactMatch', $list->filterField);
+        $this->assertEquals('match', $list->filterValue);
+        $this->assertEquals('Author.Surname:ExactMatch', $list->excludeField);
+        $this->assertEquals('exclude', $list->excludeValue);
+
+        $params = [
+            'Filter' => [
+                'Author__Groups__Title__eq' => 'match',
+            ],
+        ];
+        $list = $filter->applyArgsToList(new FilterDataList(DataObjectFake::class), $params);
+        $this->assertEquals('Author.Groups.Title:ExactMatch', $list->filterField);
+        $this->assertEquals('match', $list->filterValue);
 
         $params = [
             'Filter' => [
