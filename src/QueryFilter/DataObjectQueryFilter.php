@@ -418,7 +418,6 @@ class DataObjectQueryFilter implements ConfigurationApplier
     {
         $dbField = null;
         if (stristr($field, self::SEPARATOR) !== false) {
-
             $relationNames = explode(self::SEPARATOR, $field);
             $relationField = array_pop($relationNames);
 
