@@ -418,13 +418,24 @@ class DataObjectQueryFilter implements ConfigurationApplier
     {
         $dbField = null;
         if (stristr($field, self::SEPARATOR) !== false) {
-            list ($relationName, $relationField) = explode(self::SEPARATOR, $field);
+
+            $relationNames = explode(self::SEPARATOR, $field);
+            $relationField = array_pop($relationNames);
+
+            $relationName = array_shift($relationNames);
             $class = $this->getDataObjectInstance()->getRelationClass($relationName);
+            while ($class && count($relationNames) > 0) {
+                $relationName = array_shift($relationNames);
+                $lastClass = $class;
+                $class = Injector::inst()->get($class)->getRelationClass($relationName);
+            }
+
             if (!$class) {
                 throw new InvalidArgumentException(sprintf(
-                    'Could not find relation %s on %s',
+                    'Could not find relation %s on %s for the filter %s',
                     $relationName,
-                    $this->getDataObjectClass()
+                    $lastClass,
+                    $field
                 ));
             }
             return Injector::inst()->get($class)->dbObject($relationField);
