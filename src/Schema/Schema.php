@@ -18,6 +18,7 @@ use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelTypePlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
@@ -130,6 +131,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
     private $schemaStore;
 
     /**
+     * @var array|null
+     */
+    private $_cachedConfig = null;
+
+    /**
      * Schema constructor.
      * @param string $schemaKey
      */
@@ -159,7 +165,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $models = $schemaConfig[self::MODELS] ?? [];
         $enums = $schemaConfig[self::ENUMS] ?? [];
         $scalars = $schemaConfig[self::SCALARS] ?? [];
-        $modelConfig = $schemaConfig[self::MODEL_CONFIG];
+        $modelConfig = $schemaConfig[self::MODEL_CONFIG] ?? [];
 
         $this->defaults = $defaults;
 
@@ -264,8 +270,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
         foreach ($this->getModels() as $modelType) {
             // Apply default plugins
             $model = $modelType->getModel();
-            if ($model instanceof SettingsProvider) {
-                $plugins = $model->getSetting('plugins', []);
+            if ($model instanceof ModelConfigurationProvider) {
+                $plugins = $model->getModelConfig()->get('plugins', []);
                 $modelType->setDefaultPlugins($plugins);
             }
             $modelType->buildOperations();
@@ -370,7 +376,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
                     try {
                         $plugin->apply($component, $this, $config);
-                        break;
                     } catch (SchemaBuilderException $e) {
                         throw new SchemaBuilderException(sprintf(
                             'Failed to apply plugin %s to %s. Got error %s',
@@ -392,11 +397,17 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @return Schema
+     * Builds the configuration graph from all the different sources
+     *
+     * @param bool $cached
+     * @return array
      * @throws SchemaBuilderException
      */
-    public function loadFromConfig(): Schema
+    public function getSchemaConfiguration($cached = true): array
     {
+        if ($cached && $this->_cachedConfig) {
+            return $this->_cachedConfig;
+        }
         $schemas = $this->config()->get('schemas');
         static::invariant($schemas, 'There are no schemas defined in the config');
         $schema = $schemas[$this->schemaKey] ?? null;
@@ -436,8 +447,31 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
         // Finally, apply the standard _config schema
         $mergedSchema = array_replace_recursive($mergedSchema, $schema);
+        $this->_cachedConfig = $mergedSchema;
 
-        $this->applyConfig($mergedSchema);
+        return $this->_cachedConfig;
+    }
+
+    /**
+     * @param bool $cache
+     * @return array
+     * @throws SchemaBuilderException
+     */
+    public function getModelConfiguration($cache = true): array
+    {
+        $config = $this->getSchemaConfiguration($cache);
+
+        return $config[self::MODEL_CONFIG] ?? [];
+    }
+
+    /**
+     * @return Schema
+     * @throws SchemaBuilderException
+     */
+    public function loadFromConfig(): Schema
+    {
+        $config = $this->getSchemaConfiguration();
+        $this->applyConfig($config);
 
         return $this;
     }
@@ -525,9 +559,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
     {
         $this->validate();
         $this->getStore()->persistSchema($this);
+        $this->getStore()->persistModelConfiguration($this->getModelConfiguration());
+
     }
 
-    public function load(): GraphQLSchema
+    public function build(): GraphQLSchema
     {
         return $this->getStore()->getSchema();
     }
@@ -537,9 +573,30 @@ class Schema implements ConfigurationApplier, SchemaValidator
      * @return Schema
      * @throws SchemaBuilderException
      */
-    public static function get(string $key): self
+    public static function fetch(string $key): self
     {
         return static::create($key)->loadFromConfig();
+    }
+
+    /**
+     * @param string $key
+     * @return Schema
+     * @throws SchemaBuilderException
+     */
+    public static function inspect(string $key): self
+    {
+        $schema = static::create($key);
+        $modelConfig = $schema->getStore()->getModelConfiguration();
+        if (!$modelConfig) {
+            $config = $schema->getSchemaConfiguration();
+            $modelConfig = $config[self::MODEL_CONFIG] ?? [];
+            $schema->getStore()->persistModelConfiguration($modelConfig);
+        }
+
+        SchemaModelCreatorRegistry::singleton()
+            ->setConfigurations($modelConfig);
+
+        return $schema;
     }
 
     /**
@@ -601,30 +658,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
         return $this;
     }
 
-    /**
-     * Return a default by dot.separated.syntax
-     * @param string|array $path
-     * @param mixed $default
-     * @return array|string|bool|null
-     * @throws SchemaBuilderException
-     */
-    public function getDefault($path, $default = null)
-    {
-        Schema::invariant(
-            is_array($path) || is_string($path),
-            'getDefaults() must be passed an array or string'
-        );
-        $parts = is_string($path) ? explode('.', $path) : $path;
-        $scope = $this->defaults;
-        foreach ($parts as $part) {
-            $scope = $scope[$part] ?? $default;
-            if (!is_array($scope)) {
-                break;
-            }
-        }
-
-        return $scope;
-    }
     /**
      * @param Type $type
      * @param callable|null $callback
@@ -1010,4 +1043,5 @@ class Schema implements ConfigurationApplier, SchemaValidator
             echo $message . "<br>";
         }
     }
+
 }

@@ -28,6 +28,7 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
 {
     use Configurable;
     use Injectable;
+    use FieldReconciler;
 
     private static $dependencies = [
         'FieldAccessor' => '%$' . FieldAccessor::class,
@@ -108,12 +109,18 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
         };
     }
 
+    /**
+     * @param SchemaModelInterface $model
+     * @param string $typeName
+     * @param array $config
+     * @return array
+     * @throws SchemaBuilderException
+     */
     public function provideInputTypes(SchemaModelInterface $model, string $typeName, array $config = []): array
     {
         $dataObject = Injector::inst()->get($model->getSourceClass());
-        $fields = $config['fields'] ?? $this->getFieldAccessor()->getAllFields($dataObject, false);
-        $excluded = $config['exclude'] ?? [];
-        $includedFields = array_diff($fields, $excluded);
+        $includedFields = $this->reconcileFields($config, $dataObject, $this->getFieldAccessor());
+
         $fieldMap = [];
         foreach ($includedFields as $fieldName) {
             $fieldMap[$fieldName] = $model->getField($fieldName)->getType();

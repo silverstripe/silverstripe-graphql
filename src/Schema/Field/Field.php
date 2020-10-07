@@ -325,7 +325,7 @@ class Field implements
         $safeNamedClass = TypeReference::create($safeModelTypeDef)->getNamedType();
         $namedClass = str_replace('__', '\\', $safeNamedClass);
         /* @var SchemaModelCreatorRegistry $registry */
-        $registry = Injector::inst()->get(SchemaModelCreatorRegistry::class);
+        $registry = SchemaModelCreatorRegistry::singleton();
         $model = $registry->getModel($namedClass);
         Schema::invariant(
             $model,

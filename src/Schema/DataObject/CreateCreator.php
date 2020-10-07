@@ -12,6 +12,7 @@ use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
+use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
@@ -27,6 +28,7 @@ class CreateCreator implements OperationCreator, InputTypeProvider
 {
     use Configurable;
     use Injectable;
+    use FieldReconciler;
 
     private static $dependencies = [
         'FieldAccessor' => '%$' . FieldAccessor::class,
@@ -105,13 +107,12 @@ class CreateCreator implements OperationCreator, InputTypeProvider
      * @param string $typeName
      * @param array $config
      * @return array
+     * @throws SchemaBuilderException
      */
     public function provideInputTypes(SchemaModelInterface $model, string $typeName, array $config = []): array
     {
         $dataObject = Injector::inst()->get($model->getSourceClass());
-        $fields = $config['fields'] ?? $this->getFieldAccessor()->getAllFields($dataObject, false);
-        $excluded = $config['exclude'] ?? [];
-        $includedFields = array_diff($fields, $excluded);
+        $includedFields = $this->reconcileFields($config, $dataObject, $this->getFieldAccessor());
         $fieldMap = [];
         foreach ($includedFields as $fieldName) {
             $type = $model->getField($fieldName)->getType();

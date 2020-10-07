@@ -7,12 +7,12 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Config\ModelConfiguration;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
-use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
-use SilverStripe\GraphQL\Schema\Interfaces\SettingsProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
@@ -34,16 +34,15 @@ class DataObjectModel implements
     OperationProvider,
     DefaultFieldsProvider,
     ModelBlacklist,
-    SettingsProvider,
-    ConfigurationApplier
+    ModelConfigurationProvider
 {
     use Injectable;
     use Configurable;
 
     /**
-     * @var array
+     * @var ModelConfiguration
      */
-    private $settings = [];
+    private $configuration;
 
     /**
      * @var array
@@ -79,10 +78,10 @@ class DataObjectModel implements
     /**
      * DataObjectModel constructor.
      * @param string $class
-     * @param array $config
+     * @param ModelConfiguration|null $config
      * @throws SchemaBuilderException
      */
-    public function __construct(string $class, $config = [])
+    public function __construct(string $class, ?ModelConfiguration $config = null)
     {
         Schema::invariant(
             is_subclass_of($class, DataObject::class),
@@ -91,26 +90,7 @@ class DataObjectModel implements
             DataObject::class
         );
         $this->dataObject = Injector::inst()->get($class);
-        $this->applyConfig($config);
-    }
-
-    /**
-     * @return string
-     * @throws SchemaBuilderException
-     */
-    public function getTypeName(): string
-    {
-        $class = get_class($this->dataObject);
-        $mapping = $this->getSetting('type_mapping', []);
-        $custom = $mapping[$class] ?? null;
-        if ($custom) {
-            return $custom;
-        }
-
-        $typeName = $this->formatClass($class);
-        $prefix = $this->getPrefix($class);
-
-        return $prefix . $typeName;
+        $this->configuration = $config;
     }
 
     /**
@@ -150,13 +130,13 @@ class DataObjectModel implements
             get_class($this->dataObject)
         );
 
-        $type = DataObjectModel::create($class, $this->settings)->getTypeName();
+        $type = DataObjectModel::create($class, $this->configuration)->getTypeName();
         if ($this->isList($result)) {
             $queryConfig = array_merge([
                 'type' => sprintf('[%s]', $type),
             ], $config);
             $query = ModelQuery::create($this, $fieldName, $queryConfig);
-            $query->setDefaultPlugins($this->getSetting('nested_query_plugins'));
+            $query->setDefaultPlugins($this->getModelConfig()->getNestedQueryPlugins());
             return $query;
         }
         return ModelField::create($fieldName, $type, $this);
@@ -327,23 +307,30 @@ class DataObjectModel implements
     }
 
     /**
-     * @param array $config
-     * @return mixed|void
+     * @return string
+     * @throws SchemaBuilderException
      */
-    public function applyConfig(array $config)
+    public function getTypeName(): string
     {
-        $this->settings = $config;
+        return $this->getModelConfig()->getTypeName(get_class($this->dataObject));
     }
 
     /**
-     * @param string $key
-     * @param mixed|null $default
-     * @return array|mixed
+     * @return ModelConfiguration
      */
-    public function getSetting(string $key, $default = null)
+    public function getModelConfig(): ModelConfiguration
     {
-        return $this->settings[$key] ?? $default;
+        return $this->configuration;
     }
+
+    /**
+     * @param ModelConfiguration $configuration
+     */
+    public function applyModelConfig(ModelConfiguration $configuration): void
+    {
+        $this->configuration = $configuration;
+    }
+
 
     /**
      * @param $result
@@ -370,42 +357,5 @@ class DataObjectModel implements
         return $result instanceof SS_List || $result instanceof UnsavedRelationList;
     }
 
-    /**
-     * @param string $class
-     * @return string
-     * @throws SchemaBuilderException
-     */
-    private function formatClass(string $class): string
-    {
-        $formatter = $this->getSetting('type_formatter');
-        Schema::invariant(
-            is_callable($formatter, false),
-            'type_formatter property for %s is not callable',
-            __CLASS__
-        );
-
-        return call_user_func_array($formatter, [$class]);
-    }
-
-    /**
-     * @param string $class
-     * @return string
-     * @throws SchemaBuilderException
-     */
-    private function getPrefix(string $class): string
-    {
-        $prefix = $this->getSetting('type_prefix');
-        if (is_callable($prefix, false)) {
-            return call_user_func_array($prefix, [$class]);
-        }
-
-        Schema::invariant(
-            is_string($prefix),
-            'type_prefix on %s must be a string',
-            __CLASS__
-        );
-
-        return $prefix;
-    }
 
 }

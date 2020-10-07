@@ -16,8 +16,6 @@ use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\UnionType;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\View\ArrayData;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -34,6 +32,8 @@ class CodeGenerationStore implements SchemaStorageInterface
     use Configurable;
 
     const TYPE_CLASS_NAME = 'Types';
+
+    const MODEL_CONFIG = '__model-config__';
 
     /**
      * @var string
@@ -224,7 +224,6 @@ class CodeGenerationStore implements SchemaStorageInterface
         }
 
         Schema::message(Benchmark::end('render', 'Generated code in %sms'));
-
     }
 
     /**
@@ -289,6 +288,24 @@ class CodeGenerationStore implements SchemaStorageInterface
     {
         $this->rootDir = $rootDir;
         return $this;
+    }
+
+    /**
+     * @return array
+     * @throws InvalidArgumentException
+     */
+    public function getModelConfiguration(): array
+    {
+        return $this->getCache()->get(self::MODEL_CONFIG, []);
+    }
+
+    /**
+     * @param array $config
+     * @throws InvalidArgumentException
+     */
+    public function persistModelConfiguration(array $config): void
+    {
+        $this->getCache()->set(self::MODEL_CONFIG, $config);
     }
 
     /**

@@ -13,6 +13,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
@@ -149,6 +150,8 @@ class ModelType extends Type implements ExtraTypeProvider
                 $fieldObj->setName($field->getName());
                 if (is_array($fieldConfig)) {
                     $fieldObj->applyConfig($fieldConfig);
+                } else if (is_string($fieldConfig)) {
+                    $fieldObj->setType($fieldConfig);
                 }
             } else {
                 $fieldObj = ModelField::create($fieldName, $fieldConfig, $this->getModel());
@@ -361,9 +364,9 @@ class ModelType extends Type implements ExtraTypeProvider
                 $config
             );
             if ($operation) {
-                if ($this->getModel() instanceof SettingsProvider && $operation instanceof Field) {
-                    $operationsConfig = $this->getModel()->getSetting('operations', []);
-                    $defaultPlugins = $operationsConfig[$operationName]['plugins'] ?? [];
+                if ($operation instanceof Field && $this->getModel() instanceof ModelConfigurationProvider) {
+                    $operationsConfig = $this->getModel()->getModelConfig()->getOperationConfig($operationName);
+                    $defaultPlugins = $operationsConfig['plugins'] ?? [];
                     $operation->setDefaultPlugins($defaultPlugins);
                 }
                 $operations[$operationName] = $operation;

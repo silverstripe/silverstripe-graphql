@@ -129,7 +129,7 @@ class Controller extends BaseController implements Flushable
 
             // Temporary, maybe useful by feature flag later..
             Benchmark::start('schema-perf');
-            $schema = $this->getSchema()->load();
+            $schema = $this->getSchema()->build();
             $schemaPerf = Benchmark::end('schema-perf', '%sms', true);
             $handler = $this->getQueryHandler();
             if ($handler instanceof ContextProvider) {
@@ -465,7 +465,7 @@ class Controller extends BaseController implements Flushable
             $this->applyContext($handler, $this->getRequest());
         }
         $fragments = $this->getQueryHandler()->query(
-            $this->getSchema()->load(),
+            $this->getSchema()->build(),
             <<<GRAPHQL
 query IntrospectionQuery {
     __schema {

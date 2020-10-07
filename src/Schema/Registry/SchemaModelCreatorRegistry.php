@@ -4,7 +4,9 @@
 namespace SilverStripe\GraphQL\Schema\Registry;
 
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\Config\ModelConfiguration;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelCreatorInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 
@@ -79,10 +81,10 @@ class SchemaModelCreatorRegistry
         foreach ($this->modelCreators as $creator) {
             if ($creator->appliesTo($class)) {
                 $model = $creator->createModel($class);
-                if ($model && $model instanceof ConfigurationApplier) {
+                if ($model && $model instanceof ModelConfigurationProvider) {
                     $id = $model::getIdentifier();
                     $config = $this->configurations[$id] ?? [];
-                    $model->applyConfig($config);
+                    $model->applyModelConfig($config);
                 }
                 static::$__cache[$class] = $model;
 
@@ -99,16 +101,20 @@ class SchemaModelCreatorRegistry
      */
     public function setConfigurations(array $config)
     {
-        $this->configurations = $config;
+        $configurations = [];
+        foreach ($config as $id => $data) {
+            $configurations[$id] = ModelConfiguration::create($data);
+        }
+        $this->configurations = $configurations;
 
         return $this;
     }
 
     /**
      * @param string $identifier
-     * @return array|null
+     * @return ModelConfiguration|null
      */
-    public function getModelConfiguration(string $identifier): ?array
+    public function getModelConfiguration(string $identifier): ?ModelConfiguration
     {
         return $this->configurations[$identifier] ?? null;
     }

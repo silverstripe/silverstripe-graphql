@@ -25,6 +25,16 @@ interface SchemaStorageInterface
     public function getSchema(): GraphQLSchema;
 
     /**
+     * @return array
+     */
+    public function getModelConfiguration(): array;
+
+    /**
+     * @param array $config
+     */
+    public function persistModelConfiguration(array $config): void;
+
+    /**
      * @return void
      */
     public function clear(): void;

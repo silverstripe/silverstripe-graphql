@@ -7,6 +7,7 @@ namespace SilverStripe\GraphQL\Dev;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Dev\DebugView;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DatabaseAdmin;
 
@@ -38,7 +39,10 @@ class Build extends Controller
         }
     }
 
-
+    /**
+     * @param null $key
+     * @throws SchemaBuilderException
+     */
     public function buildSchema($key = null): void
     {
         $keys = $key ? [$key] : array_keys(Schema::config()->get('schemas'));
@@ -48,7 +52,7 @@ class Build extends Controller
         foreach ($keys as $key) {
             Benchmark::start('build-schema-' . $key);
             Schema::message(sprintf('--- Building schema "%s" ---', $key));
-            $schema = Schema::get($key);
+            $schema = Schema::fetch($key);
 
             //if ($clear) { todo: caching isn't great
             $schema->getStore()->clear();
