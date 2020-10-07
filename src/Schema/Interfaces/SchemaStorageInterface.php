@@ -27,12 +27,7 @@ interface SchemaStorageInterface
     /**
      * @return array
      */
-    public function getModelConfiguration(): array;
-
-    /**
-     * @param array $config
-     */
-    public function persistModelConfiguration(array $config): void;
+    public function getTypeMapping(): array;
 
     /**
      * @return void

@@ -33,13 +33,17 @@ class CodeGenerationStore implements SchemaStorageInterface
 
     const TYPE_CLASS_NAME = 'Types';
 
-    const MODEL_CONFIG = '__model-config__';
-
     /**
      * @var string
      * @config
      */
     private static $schemaFilename = '__graphql-schema.php';
+
+    /**
+     * @var string
+     * @config
+     */
+    private static $typeMappingFilename = '__type-mapping.php';
 
     /**
      * @var string
@@ -120,6 +124,26 @@ class CodeGenerationStore implements SchemaStorageInterface
             'typeClassName' => self::TYPE_CLASS_NAME,
             'namespace' => $this->getNamespace(),
         ];
+
+        $typeMapping = $schema->mapTypeNames();
+        $typeMappingFile = $this->getTempTypeMappingFilename();
+
+        try {
+            $fs->dumpFile($typeMappingFile,
+                '<?php ' .
+                PHP_EOL .
+                'return ' .
+                var_export($typeMapping, true) .
+                ';'
+            );
+        } catch (IOException $e) {
+            throw new RuntimeException(sprintf(
+                'Could not persist type mapping. Failed to write to file %s. Full message: %s',
+                $typeMappingFile,
+                $e->getMessage()
+            ));
+        }
+
         $allComponents = array_merge(
             $schema->getTypes(),
             $schema->getEnums(),
@@ -179,7 +203,8 @@ class CodeGenerationStore implements SchemaStorageInterface
             ->files()
             ->in($temp)
             ->name('*.php')
-            ->notName($this->config()->get('schemaFilename'));
+            ->notName($this->config()->get('schemaFilename'))
+            ->notName($this->config()->get('typeMappingFilename'));
 
         /* @var SplFileInfo $file */
         foreach ($currentFiles as $file) {
@@ -247,6 +272,20 @@ class CodeGenerationStore implements SchemaStorageInterface
         return new GraphQLSchema($schemaConfig);
     }
 
+    /**
+     * @return array
+     */
+    public function getTypeMapping(): array
+    {
+        if (file_exists($this->getTypeMappingFilename())) {
+            $mapping = require($this->getTypeMappingFilename());
+
+            return $mapping;
+        }
+
+        return [];
+    }
+
     public function clear(): void
     {
         $fs = new Filesystem();
@@ -288,24 +327,6 @@ class CodeGenerationStore implements SchemaStorageInterface
     {
         $this->rootDir = $rootDir;
         return $this;
-    }
-
-    /**
-     * @return array
-     * @throws InvalidArgumentException
-     */
-    public function getModelConfiguration(): array
-    {
-        return $this->getCache()->get(self::MODEL_CONFIG, []);
-    }
-
-    /**
-     * @param array $config
-     * @throws InvalidArgumentException
-     */
-    public function persistModelConfiguration(array $config): void
-    {
-        $this->getCache()->set(self::MODEL_CONFIG, $config);
     }
 
     /**
@@ -371,11 +392,33 @@ class CodeGenerationStore implements SchemaStorageInterface
     /**
      * @return string
      */
+    private function getTypeMappingFilename(): string
+    {
+        return Path::join(
+            $this->getDirectory(),
+            $this->config()->get('typeMappingFilename')
+        );
+    }
+
+    /**
+     * @return string
+     */
     private function getTempSchemaFilename(): string
     {
         return Path::join(
             $this->getTempDirectory(),
             $this->config()->get('schemaFilename')
+        );
+    }
+
+    /**
+     * @return string
+     */
+    private function getTempTypeMappingFilename(): string
+    {
+        return Path::join(
+            $this->getTempDirectory(),
+            $this->config()->get('typeMappingFilename')
         );
     }
 

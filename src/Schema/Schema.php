@@ -559,10 +559,36 @@ class Schema implements ConfigurationApplier, SchemaValidator
     {
         $this->validate();
         $this->getStore()->persistSchema($this);
-        $this->getStore()->persistModelConfiguration($this->getModelConfiguration());
-
     }
 
+    /**
+     * @return array
+     */
+    public function mapTypeNames(): array
+    {
+        $typeMapping = [];
+        foreach ($this->getModels() as $modelType) {
+            $typeMapping[$modelType->getSourceClass()] = $modelType->getName();
+        }
+
+        return $typeMapping;
+    }
+
+    /**
+     * @param string $class
+     * @return string|null
+     */
+    public function getTypeNameForClass(string $class): ?string
+    {
+        $mapping = $this->getStore()->getTypeMapping();
+        $typeName = $mapping[$class] ?? null;
+
+        return $typeName;
+    }
+
+    /**
+     * @return GraphQLSchema
+     */
     public function build(): GraphQLSchema
     {
         return $this->getStore()->getSchema();
@@ -576,27 +602,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public static function fetch(string $key): self
     {
         return static::create($key)->loadFromConfig();
-    }
-
-    /**
-     * @param string $key
-     * @return Schema
-     * @throws SchemaBuilderException
-     */
-    public static function inspect(string $key): self
-    {
-        $schema = static::create($key);
-        $modelConfig = $schema->getStore()->getModelConfiguration();
-        if (!$modelConfig) {
-            $config = $schema->getSchemaConfiguration();
-            $modelConfig = $config[self::MODEL_CONFIG] ?? [];
-            $schema->getStore()->persistModelConfiguration($modelConfig);
-        }
-
-        SchemaModelCreatorRegistry::singleton()
-            ->setConfigurations($modelConfig);
-
-        return $schema;
     }
 
     /**

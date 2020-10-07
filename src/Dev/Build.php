@@ -6,6 +6,7 @@ namespace SilverStripe\GraphQL\Dev;
 
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
+use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Dev\DebugView;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -21,7 +22,16 @@ class Build extends Controller
         'build'
     ];
 
-    public function build($request)
+    /**
+     * @var Schema|null
+     */
+    private static $activeBuild;
+
+    /**
+     * @param HTTPRequest $request
+     * @throws SchemaBuilderException
+     */
+    public function build(HTTPRequest $request)
     {
         $isBrowser = !Director::is_cli();
         if ($isBrowser) {
@@ -52,7 +62,9 @@ class Build extends Controller
         foreach ($keys as $key) {
             Benchmark::start('build-schema-' . $key);
             Schema::message(sprintf('--- Building schema "%s" ---', $key));
-            $schema = Schema::fetch($key);
+            $schema = Schema::create($key);
+            self::$activeBuild = $schema;
+            $schema->loadFromConfig();
 
             //if ($clear) { todo: caching isn't great
             $schema->getStore()->clear();
@@ -64,6 +76,14 @@ class Build extends Controller
             );
         }
 
+        self::$activeBuild = null;
     }
 
+    /**
+     * @return Schema|null
+     */
+    public static function getActiveBuild(): ?Schema
+    {
+        return self::$activeBuild;
+    }
 }
