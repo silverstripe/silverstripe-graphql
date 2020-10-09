@@ -55,14 +55,6 @@ abstract class AbstractQuerySortPlugin extends AbstractNestedInputPlugin impleme
         return $modelTypeName . 'SortFields';
     }
 
-    /**
-     * @param InputType $inputType
-     * @return string
-     */
-    public static function getModelName(InputType $inputType): string
-    {
-        return preg_replace('/SortFields$/', '', $inputType->getName());
-    }
 
     /**
      * @param string $internalType

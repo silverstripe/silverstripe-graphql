@@ -70,15 +70,6 @@ abstract class AbstractQueryFilterPlugin extends AbstractNestedInputPlugin imple
     }
 
     /**
-     * @param InputType $inputType
-     * @return string
-     */
-    public static function getModelName(InputType $inputType): string
-    {
-        return preg_replace('/FilterFields$/', '', $inputType->getName());
-    }
-
-    /**
      * @param string $internalType
      * @return string
      */

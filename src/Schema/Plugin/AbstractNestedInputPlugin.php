@@ -413,10 +413,4 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
      * @return string
      */
     abstract public static function getTypeName(ModelType $modelType): string;
-
-    /**
-     * @param InputType $inputType
-     * @return string
-     */
-    abstract public static function getModelName(InputType $inputType): string;
 }
