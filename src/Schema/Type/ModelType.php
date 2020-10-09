@@ -327,6 +327,7 @@ class ModelType extends Type implements ExtraTypeProvider
         return $this;
     }
 
+
     /**
      * @param string $operationName
      * @param array $config

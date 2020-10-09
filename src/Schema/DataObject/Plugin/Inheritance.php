@@ -6,8 +6,10 @@ namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 use SilverStripe\Core\Convert;
 use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceChain;
+use SilverStripe\GraphQL\Schema\DataObject\ReadCreator;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
+use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\PluginInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -43,18 +45,25 @@ class Inheritance implements PluginInterface, SchemaUpdater
      */
     public static function updateSchema(Schema $schema): void
     {
+        $baseModels = [];
         foreach ($schema->getModels() as $modelType) {
             $class = $modelType->getModel()->getSourceClass();
             if (!is_subclass_of($class, DataObject::class)) {
                 continue;
             }
-            $baseClass = InheritanceChain::create($class)->getBaseClass();
+            if (self::isBaseModel($class, $schema)) {
+                $baseModels[] = $class;
+            }
+        }
+
+        foreach ($baseModels as $baseClass) {
             if (self::isTouched($schema, $baseClass)) {
                 continue;
             }
             self::addInheritance($schema, $baseClass);
             self::touchNode($schema, $baseClass);
         }
+
     }
 
     /**
@@ -100,7 +109,7 @@ class Inheritance implements PluginInterface, SchemaUpdater
                     $model = $subtype->getModel();
 
                     // If the type is exposed, but has no native fields, skip over it. Nothing to show.
-                    $nativeFields = $model->getUninheritedFields();
+                    $nativeFields = array_map('strtolower', $model->getUninheritedFields());
                     if (empty($nativeFields)) {
                         continue;
                     }
@@ -108,7 +117,7 @@ class Inheritance implements PluginInterface, SchemaUpdater
                     /* @var ModelField $fieldObj */
                     foreach ($existingType->getFields() as $fieldObj) {
                         // Add the field if it's explicitly added and native
-                        $isNative = in_array($fieldObj->getName(), $nativeFields);
+                        $isNative = in_array(strtolower($fieldObj->getName()), $nativeFields);
                         // If it's a custom property, e.g. Comments.Count(), throw it in, too
                         $isCustom = $fieldObj->getProperty() !== null;
 
@@ -142,6 +151,39 @@ class Inheritance implements PluginInterface, SchemaUpdater
         foreach ($inheritance->getDirectDescendants() as $descendantClass) {
             self::addInheritance($schema, $descendantClass, $modelType);
         }
+    }
+
+    /**
+     * A "base model" is one that either has no ancestors or is one that has no ancestors
+     * that are queryable.
+     *
+     * @param string $class
+     * @param Schema $schema
+     * @return bool
+     */
+    private static function isBaseModel(string $class, Schema $schema): bool
+    {
+        $chain = InheritanceChain::create($class);
+        if ($chain->getBaseClass() === $class) {
+            return true;
+        }
+
+        // Check if any ancestors are queryable.
+        $ancestors = $chain->getAncestralModels();
+        $hasReadableAncestor = false;
+        foreach ($ancestors as $ancestor) {
+            $existing = $schema->getModelByClassName($ancestor);
+            if ($existing) {
+                foreach ($existing->getOperations() as $operation) {
+                    if ($operation instanceof ModelQuery) {
+                        $hasReadableAncestor = true;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        return !$hasReadableAncestor;
     }
 
     /**

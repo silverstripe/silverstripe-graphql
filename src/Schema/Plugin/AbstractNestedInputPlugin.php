@@ -75,17 +75,18 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
             $typeName
         );
         $fieldName = $this->config()->get('field_name');
-        $prefix = $query->getName();
+        $prefix = ucfirst($query->getName());
         if ($configFields === Schema::ALL) {
             $configFields = $this->buildAllFieldsConfig($modelType, $schema);
             $prefix = '';
         }
         Schema::assertValidConfig($configFields);
-        $this->addInputTypesToSchema($modelType, $schema, $configFields, $prefix);
-        $rootTypeName = $prefix . static::getTypeName($modelType);
+        $mapping = $this->addInputTypesToSchema($modelType, $schema, $configFields, $prefix);
+        $rootTypeName = array_search($modelType->getName(), $mapping);
+
         /* @var InputType $rootType */
         $rootType = $schema->getType($rootTypeName);
-        $pathMapping = $this->buildPathsFromInputType($rootType, $schema);
+        $pathMapping = $this->buildPathsFromInputType($rootType, $schema, $mapping);
 
         $fieldMapping = [];
         foreach ($pathMapping as $fieldPath => $propPath) {
@@ -169,22 +170,26 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
      * @param Schema $schema
      * @param array $fields
      * @param string $prefix
+     * @param array $mapping
+     * @return array
      * @throws SchemaBuilderException
      */
     protected function addInputTypesToSchema(
         ModelType $parentModel,
         Schema $schema,
         array $fields,
-        string $prefix = ''
-    ): void {
+        string $prefix = '',
+        array $mapping = []
+    ): array {
         $parentInputTypeName = $prefix . static::getTypeName($parentModel);
         $parentType = $schema->getType($parentInputTypeName);
         if ($parentType) {
-            return;
+            return $mapping;
         }
 
         $parentType = InputType::create($parentInputTypeName);
         $schema->addType($parentType);
+        $mapping[$parentInputTypeName] = $parentModel->getName();
 
         foreach ($fields as $fieldName => $data) {
             if ($data === false) {
@@ -192,8 +197,19 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
             }
 
             /* @var ModelField $fieldObj */
-            $fieldObj = $parentModel->getFieldByName($fieldName);
+            $fieldObj = $parentModel->getFieldByName($fieldName)
+                ?: $parentModel->getModel()->getField($fieldName);
+
+            Schema::invariant(
+                $fieldObj,
+                'Could not find field "%s" on type "%s" in plugin "%s"',
+                $fieldName,
+                $parentModel->getName(),
+                $this->getIdentifier()
+            );
+
             $modelType = $fieldObj->getModelType();
+
             if (!$this->shouldAddField($fieldObj, $parentModel)) {
                 continue;
             }
@@ -222,9 +238,14 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
                 $relatedModel = $schema->getModel($modelType->getName());
                 $nextInputTypeName = $prefix . static::getTypeName($relatedModel);
                 $parentType->addField($fieldName, $nextInputTypeName);
-                $this->addInputTypesToSchema($relatedModel, $schema, $data, $prefix);
+                $mapping = array_merge(
+                    $mapping,
+                    $this->addInputTypesToSchema($relatedModel, $schema, $data, $prefix, $mapping)
+                );
             }
         }
+
+        return $mapping;
     }
 
     /**
@@ -239,6 +260,7 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
     protected function buildPathsFromInputType(
         InputType $inputType,
         Schema $schema,
+        array $mapping,
         array $fieldOrigin = [],
         array $propOrigin = [],
         int $level = 0
@@ -246,9 +268,16 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
         $allPaths = [];
         /* @var Field $fieldObj */
         foreach ($inputType->getFields() as $fieldObj) {
+            $modelName = $mapping[$inputType->getName()] ?? null;
+            Schema::invariant(
+                $modelName,
+                'Input "%s" is not mapped to a model name',
+                $inputType->getName()
+            );
+
             $fieldName = $fieldObj->getName();
             $fieldPath = array_merge($fieldOrigin, [$fieldName]);
-            $modelName = static::getModelName($inputType);
+
             /* @var ModelType $model */
             $model = $schema->getModel($modelName);
             Schema::invariant(
@@ -265,7 +294,16 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
             );
             $propPath = array_merge($propOrigin, [$prop]);
 
-            $modelFieldType = $model->getFieldByName($fieldName)->getType();
+            $fieldObj = $model->getFieldByName($fieldName)
+                ?: $model->getModel()->getField($fieldName);
+            Schema::invariant(
+                $fieldObj,
+                'Field "%s" could not be found on model "%s"',
+                $fieldName,
+                $model->getName()
+            );
+
+            $modelFieldType = $fieldObj->getType();
             $fieldType = $fieldObj->getNamedType();
             $leafType = static::getLeafNodeType($modelFieldType);
             // This is the leaf node type. Stop here.
@@ -279,7 +317,7 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
             if ($nestedType instanceof InputType && !$isMax) {
                 $allPaths = array_merge(
                     $allPaths,
-                    $this->buildPathsFromInputType($nestedType, $schema, $fieldPath, $propPath, $level + 1)
+                    $this->buildPathsFromInputType($nestedType, $schema, $mapping, $fieldPath, $propPath, $level + 1)
                 );
             } else {
                 $allPaths[implode('.', $fieldPath)] = implode('.', $propPath);
