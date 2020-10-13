@@ -516,7 +516,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 if (empty($contents)) {
                     continue;
                 }
-                $yaml = Yaml::parseFile($yamlFile->getPathname());
+                $yaml = Yaml::parse($contents);
             } catch (ParseException $e) {
                 throw new SchemaBuilderException(sprintf(
                     'Could not parse YAML config for schema %s on file %s. Got error: %s',
