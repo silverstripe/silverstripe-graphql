@@ -78,7 +78,6 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
         $prefix = ucfirst($query->getName());
         if ($configFields === Schema::ALL) {
             $configFields = $this->buildAllFieldsConfig($modelType, $schema);
-            $prefix = '';
         }
         Schema::assertValidConfig($configFields);
         $mapping = $this->addInputTypesToSchema($modelType, $schema, $configFields, $prefix);
@@ -99,7 +98,7 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
 
 
         $query->addResolverAfterware(
-            $this->getResolver(),
+            $this->getResolver($config),
             [
                 'fieldMapping' => $fieldMapping,
                 'fieldName' => $this->getFieldName(),
@@ -404,9 +403,10 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
     abstract protected function getFieldName(): string;
 
     /**
+     * @param array $config
      * @return array
      */
-    abstract protected function getResolver(): array;
+    abstract protected function getResolver(array $config): array;
 
     /**
      * @param ModelType $modelType

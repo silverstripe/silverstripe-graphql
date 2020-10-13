@@ -40,7 +40,7 @@ class InheritanceChain
      * @var string
      * @config
      */
-    private static $field_name = '__extend';
+    private static $field_name = '_extend';
 
     /**
      * @var callable

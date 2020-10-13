@@ -14,6 +14,7 @@ use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use Closure;
+use SilverStripe\ORM\Sortable;
 
 /**
  * Adds a sort parameter to a DataObject query
@@ -33,7 +34,7 @@ class QuerySort extends AbstractQuerySortPlugin
     /**
      * @return array
      */
-    protected function getResolver(): array
+    protected function getResolver(array $config): array
     {
         return [static::class, 'sort'];
     }
@@ -121,7 +122,7 @@ class QuerySort extends AbstractQuerySortPlugin
         $mapping = $context['fieldMapping'] ?? [];
         $fieldName = $context['fieldName'];
 
-        return function (DataList $list, array $args) use ($mapping, $fieldName) {
+        return function (Sortable $list, array $args) use ($mapping, $fieldName) {
             $filterArgs = $args[$fieldName] ?? [];
             $paths = static::buildPathsFromArgs($filterArgs);
             foreach ($paths as $path => $value) {

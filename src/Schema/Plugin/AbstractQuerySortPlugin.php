@@ -4,10 +4,11 @@
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
 
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
+use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\Enum;
-use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 
 /**
@@ -28,7 +29,6 @@ abstract class AbstractQuerySortPlugin extends AbstractNestedInputPlugin impleme
     {
         return $this->config()->get('field_name');
     }
-
 
     /**
      * @param Schema $schema

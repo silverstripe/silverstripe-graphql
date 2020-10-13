@@ -17,7 +17,7 @@ class <?=$enum->getName(); ?> extends EnumType
             'values' => [
         <?php foreach ($enum->getValueList() as $valueItem): ?>
                 '<?=$valueItem['Key']; ?>' => [
-                    'value' => '<?=addslashes($valueItem['Value']); ?>',
+                    'value' => <?=var_export($valueItem['Value'], true) ?>,
                 <?php if (!empty($valueItem['Description'])): ?>
                     'description' => '<?=addslashes($valueItem['Description']); ?>',
                 <?php endif; ?>

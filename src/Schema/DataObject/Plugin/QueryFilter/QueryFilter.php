@@ -32,7 +32,7 @@ class QueryFilter extends AbstractQueryFilterPlugin
     /**
      * @return array
      */
-    protected function getResolver(): array
+    protected function getResolver(array $config): array
     {
         return [static::class, 'filter'];
     }

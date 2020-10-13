@@ -11,3 +11,5 @@ SilverStripe\GraphQL\Dev\DevelopmentAdmin:
   registered_controllers:
     build:
       controller: SilverStripe\GraphQL\Dev\Build
+      links:
+        build: Build the GraphQL schema

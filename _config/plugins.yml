@@ -12,3 +12,4 @@ SilverStripe\Core\Injector\Injector:
       canViewPermission: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\CanViewPermission'
       firstResult: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\FirstResult'
       inheritedPlugins: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\InheritedPlugins'
+      sorter: '%$SilverStripe\GraphQL\Schema\Plugin\SortPlugin'
