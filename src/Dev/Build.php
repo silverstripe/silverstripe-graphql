@@ -86,4 +86,19 @@ class Build extends Controller
     {
         return self::$activeBuild;
     }
+
+    /**
+     * @return Schema
+     * @throws SchemaBuilderException
+     */
+    public static function requireActiveBuild(): Schema
+    {
+        $schema = static::getActiveBuild();
+        Schema::invariant(
+            $schema,
+            'Attempted to access schema building tools when no build was active'
+        );
+
+        return $schema;
+    }
 }

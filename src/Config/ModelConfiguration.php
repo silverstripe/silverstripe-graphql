@@ -21,7 +21,7 @@ class ModelConfiguration
      * ModelConfiguration constructor.
      * @param array $settings
      */
-    public function __construct(array $settings)
+    public function __construct(array $settings = [])
     {
         $this->settings = $settings;
     }

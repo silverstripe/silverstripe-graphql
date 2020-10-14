@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Schema\Type;
 
 
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Dev\Build;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelAware;
@@ -63,9 +64,7 @@ class ModelType extends Type implements ExtraTypeProvider
      */
     public function __construct(string $class, array $config = [])
     {
-        /* @var SchemaModelCreatorRegistry $registry */
-        $registry = Injector::inst()->get(SchemaModelCreatorRegistry::class);
-        $model = $registry->getModel($class);
+        $model = Build::requireActiveBuild()->getModelCreator()->getModel($class);
         Schema::invariant($model, 'No model found for class %s', $class);
 
         $this->setModel($model);

@@ -131,6 +131,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
     private $schemaStore;
 
     /**
+     * @var SchemaModelCreatorRegistry
+     */
+    private $modelCreator;
+
+    /**
      * @var array|null
      */
     private $_cachedConfig = null;
@@ -146,6 +151,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
             ->createStore($schemaKey);
 
         $this->setStore($store);
+
+        $modelCreator = SchemaModelCreatorRegistry::create()
+            ->setConfigurations($this->getModelConfiguration());
+        $this->setModelCreator($modelCreator);
     }
 
     /**
@@ -582,8 +591,16 @@ class Schema implements ConfigurationApplier, SchemaValidator
     {
         $mapping = $this->getStore()->getTypeMapping();
         $typeName = $mapping[$class] ?? null;
+        if ($typeName) {
+            return $typeName;
+        }
 
-        return $typeName;
+        $model = $this->getModelCreator()->getModel($class);
+        if ($model) {
+            return $model->getTypeName();
+        }
+
+        return null;
     }
 
     /**
@@ -1033,6 +1050,24 @@ class Schema implements ConfigurationApplier, SchemaValidator
     {
         $this->schemaStore = $store;
 
+        return $this;
+    }
+
+    /**
+     * @return SchemaModelCreatorRegistry
+     */
+    public function getModelCreator(): SchemaModelCreatorRegistry
+    {
+        return $this->modelCreator;
+    }
+
+    /**
+     * @param SchemaModelCreatorRegistry $modelCreator
+     * @return Schema
+     */
+    public function setModelCreator(SchemaModelCreatorRegistry $modelCreator): Schema
+    {
+        $this->modelCreator = $modelCreator;
         return $this;
     }
 

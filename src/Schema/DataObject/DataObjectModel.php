@@ -8,6 +8,7 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Config\ModelConfiguration;
+use SilverStripe\GraphQL\Dev\Build;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
@@ -282,6 +283,7 @@ class DataObjectModel implements
      *
      * @param string $fieldName
      * @return ModelType|null
+     * @throws SchemaBuilderException
      */
     public function getModelTypeForField(string $fieldName): ?ModelType
     {
@@ -290,7 +292,7 @@ class DataObjectModel implements
         if (!$class) {
             return null;
         }
-        $model = SchemaModelCreatorRegistry::singleton()->getModel($class);
+        $model = Build::requireActiveBuild()->getModelCreator()->getModel($class);
         if (!$model) {
             return null;
         }

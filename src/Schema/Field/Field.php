@@ -7,6 +7,7 @@ use GraphQL\Language\Token;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Dev\Build;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
@@ -324,9 +325,7 @@ class Field implements
         $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
         $safeNamedClass = TypeReference::create($safeModelTypeDef)->getNamedType();
         $namedClass = str_replace('__', '\\', $safeNamedClass);
-        /* @var SchemaModelCreatorRegistry $registry */
-        $registry = SchemaModelCreatorRegistry::singleton();
-        $model = $registry->getModel($namedClass);
+        $model = Build::requireActiveBuild()->getModelCreator()->getModel($namedClass);
         Schema::invariant(
             $model,
             'No model found for %s on %s',

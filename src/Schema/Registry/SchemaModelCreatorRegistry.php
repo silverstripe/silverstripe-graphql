@@ -83,7 +83,7 @@ class SchemaModelCreatorRegistry
                 $model = $creator->createModel($class);
                 if ($model && $model instanceof ModelConfigurationProvider) {
                     $id = $model::getIdentifier();
-                    $config = $this->configurations[$id] ?? [];
+                    $config = $this->configurations[$id] ?? new ModelConfiguration();
                     $model->applyModelConfig($config);
                 }
                 static::$__cache[$class] = $model;
@@ -101,6 +101,7 @@ class SchemaModelCreatorRegistry
      */
     public function setConfigurations(array $config)
     {
+        static::$__cache = [];
         $configurations = [];
         foreach ($config as $id => $data) {
             $configurations[$id] = ModelConfiguration::create($data);
