@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Schema\Interfaces;
 
 
 use GraphQL\Type\Schema as GraphQLSchema;
+use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Schema;
 
 /**
@@ -21,6 +22,7 @@ interface SchemaStorageInterface
 
     /**
      * @return GraphQLSchema
+     * @throws SchemaNotFoundException
      */
     public function getSchema(): GraphQLSchema;
 

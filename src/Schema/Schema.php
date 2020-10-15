@@ -11,6 +11,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Dev\Benchmark;
+use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
@@ -74,6 +75,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
      * @config
      */
     private static $pluraliser = [self::class, 'pluraliser'];
+
+    /**
+     * @var bool
+     */
+    private static $verbose = true;
 
     /**
      * @var string
@@ -251,7 +257,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
         Benchmark::start('schema-updates');
         $this->applySchemaUpdates();
-        echo Benchmark::end('schema-updates') . PHP_EOL;
+        Benchmark::end('schema-updates') . PHP_EOL;
         foreach ($this->models as $modelType) {
             $this->addType($modelType);
         }
@@ -267,7 +273,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
             ]);
             $this->types[self::MUTATION_TYPE] = $mutationType;
         }
-        echo Benchmark::end('apply-config') . PHP_EOL;
+        Benchmark::end('apply-config');
         return $this;
     }
 
@@ -605,8 +611,9 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
     /**
      * @return GraphQLSchema
+     * @throws SchemaNotFoundException
      */
-    public function build(): GraphQLSchema
+    public function fetch(): GraphQLSchema
     {
         return $this->getStore()->getSchema();
     }
@@ -616,7 +623,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
      * @return Schema
      * @throws SchemaBuilderException
      */
-    public static function fetch(string $key): self
+    public static function build(string $key): self
     {
         return static::create($key)->loadFromConfig();
     }
@@ -1072,14 +1079,25 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
+     * Turns off messaging
+     */
+    public static function quiet(): void
+    {
+        self::$verbose = false;
+    }
+
+    /**
      * Used for logging in tasks
      * @param string $message
      */
     public static function message(string $message): void
     {
+        if (!self::$verbose) {
+            return;
+        }
         if (Director::is_cli()) {
             fwrite(STDOUT, $message . PHP_EOL);
-        } else {
+        } else if ($toBrowser) {
             echo $message . "<br>";
         }
     }

@@ -10,6 +10,7 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Dev\Benchmark;
+use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
@@ -253,13 +254,20 @@ class CodeGenerationStore implements SchemaStorageInterface
 
     /**
      * @return GraphQLSchema
+     * @throws SchemaNotFoundException
      */
     public function getSchema(): GraphQLSchema
     {
+        if (!file_exists($this->getSchemaFilename())) {
+            throw new SchemaNotFoundException(sprintf(
+                'Schema "%s" has not been built',
+                $this->name
+            ));
+        }
+
         require_once($this->getSchemaFilename());
 
         $registryClass = $this->getClassName(self::TYPE_CLASS_NAME);
-
         $hasMutations = method_exists($registryClass, Schema::MUTATION_TYPE);
         $schemaConfig = new SchemaConfig();
         $callback = call_user_func([$registryClass, Schema::QUERY_TYPE]);

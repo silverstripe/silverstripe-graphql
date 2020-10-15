@@ -15,11 +15,11 @@ use SilverStripe\Core\Flushable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\Dev\Benchmark;
+use SilverStripe\GraphQL\Dev\Build;
 use SilverStripe\GraphQL\Dev\State\DisableTypeCacheState;
 use SilverStripe\GraphQL\Permission\MemberContextProvider;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
-use SilverStripe\GraphQL\Scaffolding\StaticSchema;
-use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\Connect\DatabaseException;
@@ -89,6 +89,11 @@ class Controller extends BaseController implements Flushable
     protected $corsConfig = [];
 
     /**
+     * @var bool
+     */
+    protected $autobuildSchema = true;
+
+    /**
      * @param string $schemaKey
      * @param QueryHandlerInterface|null $queryHandler
      */
@@ -129,7 +134,17 @@ class Controller extends BaseController implements Flushable
 
             // Temporary, maybe useful by feature flag later..
             Benchmark::start('schema-perf');
-            $schema = $this->getSchema()->build();
+            try {
+                $schema = $this->getSchema()->fetch();
+            } catch (SchemaNotFoundException $e) {
+                if ($this->autobuildEnabled()) {
+                    Schema::quiet();
+                    Build::singleton()->buildSchema($this->getSchema()->getSchemaKey());
+                    $schema = $this->getSchema()->fetch();
+                } else {
+                    throw $e;
+                }
+            }
             $schemaPerf = Benchmark::end('schema-perf', '%sms', true);
             $handler = $this->getQueryHandler();
             if ($handler instanceof ContextProvider) {
@@ -181,6 +196,25 @@ class Controller extends BaseController implements Flushable
     {
         return $this->assetHandler;
     }
+
+    /**
+     * @return bool
+     */
+    public function autobuildEnabled(): bool
+    {
+        return $this->autobuildSchema;
+    }
+
+    /**
+     * @param bool $autobuildSchema
+     * @return Controller
+     */
+    public function setAutobuildSchema(bool $autobuildSchema): Controller
+    {
+        $this->autobuildSchema = $autobuildSchema;
+        return $this;
+    }
+
 
     /**
      * Get an instance of the authorization Handler to manage any authentication requirements
@@ -464,8 +498,19 @@ class Controller extends BaseController implements Flushable
         if ($handler instanceof ContextProvider) {
             $this->applyContext($handler, $this->getRequest());
         }
+        try {
+            $schema = $this->getSchema()->fetch();
+        } catch (SchemaNotFoundException $e) {
+            if ($this->autobuildEnabled()) {
+                Schema::quiet();
+                Build::singleton()->buildSchema($this->getSchema()->getSchemaKey());
+                $schema = $this->getSchema()->fetch();
+            } else {
+                throw $e;
+            }
+        }
         $fragments = $this->getQueryHandler()->query(
-            $this->getSchema()->build(),
+            $schema,
             <<<GRAPHQL
 query IntrospectionQuery {
     __schema {
