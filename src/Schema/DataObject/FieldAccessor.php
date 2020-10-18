@@ -81,6 +81,10 @@ class FieldAccessor
             return $field;
         }
 
+        if ($dataObject->hasMethod($field)) {
+            return $field;
+        }
+
         return null;
     }
 

@@ -23,11 +23,6 @@ SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator:
     class: 'SilverStripe\GraphQL\Schema\Storage\CodeGenerationStoreCreator'
 
-  Psr\SimpleCache\CacheInterface.FileSchemaStore:
-    factory: SilverStripe\Core\Cache\CacheFactory
-    constructor:
-      namespace: "GraphQLSchema"
-
   SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore:
     properties:
       rootDir: '`BASE_PATH`'

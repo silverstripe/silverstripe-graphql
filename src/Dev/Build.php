@@ -40,8 +40,8 @@ class Build extends Controller
             echo $renderer->renderInfo("GraphQL Schema Builder", Director::absoluteBaseURL());
             echo "<div class=\"build\">";
         }
-
-        $this->buildSchema($request->getVar('schema'));
+        $clear = (bool) $request->getVar('clear');
+        $this->buildSchema($request->getVar('schema'), $clear);
 
         if ($isBrowser) {
             echo "</div>";
@@ -51,9 +51,10 @@ class Build extends Controller
 
     /**
      * @param null $key
+     * @param bool $clear
      * @throws SchemaBuilderException
      */
-    public function buildSchema($key = null): void
+    public function buildSchema($key = null, $clear = false): void
     {
         $keys = $key ? [$key] : array_keys(Schema::config()->get('schemas'));
         $keys = array_filter($keys, function ($key) {
@@ -66,9 +67,9 @@ class Build extends Controller
             self::$activeBuild = $schema;
             $schema->loadFromConfig();
 
-            //if ($clear) { todo: caching isn't great
-            $schema->getStore()->clear();
-            //}
+            if ($clear) {
+                $schema->getStore()->clear();
+            }
 
             $schema->save();
             Schema::message(

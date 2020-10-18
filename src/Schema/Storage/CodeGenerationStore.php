@@ -25,7 +25,7 @@ use Psr\SimpleCache\InvalidArgumentException;
 use RuntimeException;
 
 /**
- * Class FileSchemaStore
+ * Class CodeGenerationStore
  */
 class CodeGenerationStore implements SchemaStorageInterface
 {
@@ -99,7 +99,7 @@ class CodeGenerationStore implements SchemaStorageInterface
         $dest = $this->getDirectory();
         if ($fs->exists($dest)) {
             Schema::message('Moving current schema to temp folder');
-            $fs->copy($dest, $temp);
+            $fs->mirror($dest, $temp);
         } else {
             Schema::message('Creating new schema');
             try {
