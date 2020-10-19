@@ -115,21 +115,19 @@ class DataObjectModel implements
         if (!$result) {
             return null;
         }
-        $fieldConfig = array_merge([
-            'type' => $result->config()->get('graphql_type'),
-        ], $config);
 
         if ($result instanceof DBField) {
+            $fieldConfig = array_merge([
+                'type' => $result->config()->get('graphql_type'),
+            ], $config);
+
             return ModelField::create($fieldName, $fieldConfig, $this);
         }
 
         $class = $this->getModelClass($result);
-        Schema::invariant(
-            $class,
-            'Cannot determine data class for field %s on %s',
-            $fieldName,
-            get_class($this->dataObject)
-        );
+        if (!$class) {
+            return null;
+        }
 
         $type = DataObjectModel::create($class, $this->configuration)->getTypeName();
         if ($this->isList($result)) {

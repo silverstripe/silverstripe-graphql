@@ -394,7 +394,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
                         $plugin->apply($component, $this, $config);
                     } catch (SchemaBuilderException $e) {
                         throw new SchemaBuilderException(sprintf(
-                            'Failed to apply plugin %s to %s. Got error %s',
+                            'Failed to apply plugin %s to %s. Got error "%s"',
                             get_class($plugin),
                             $component->getName(),
                             $e->getMessage()
