@@ -126,10 +126,12 @@ class DataObjectModel implements
 
         $class = $this->getModelClass($result);
         if (!$class) {
+            if ($this->isList($result)) {
+                return ModelField::create($fieldName, $config, $this);
+            }
             return null;
         }
-
-        $type = DataObjectModel::create($class, $this->configuration)->getTypeName();
+        $type = Build::requireActiveBuild()->getTypeNameForClass($class);
         if ($this->isList($result)) {
             $queryConfig = array_merge([
                 'type' => sprintf('[%s]', $type),

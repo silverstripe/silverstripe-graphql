@@ -12,6 +12,7 @@ use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Dev\Benchmark;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
+use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
@@ -335,81 +336,118 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
      */
     private function applySchemaUpdates(): void
     {
-        // Create a map of all the lists we need to apply plugins to, and their
-        // required plugin interface(s)
+        $typeComponents = [
+            'types' => $this->types,
+            'models' => $this->models,
+            'queries' => $this->queryFields,
+            'mutations' => $this->mutationFields,
+        ];
+        $this->applyComponentSet($typeComponents);
+
         $allTypeFields = [];
         $allModelFields = [];
         foreach ($this->types as $type) {
-            $pluggedFields = array_filter($type->getFields(), function (Field $field) {
+            if ($type->getIsInput()) {
+                continue;
+            }
+            $pluggedFields = array_filter($type->getFields(), function (Field $field) use($type) {
                 return !empty($field->getPlugins());
             });
             $allTypeFields = array_merge($allTypeFields, $pluggedFields);
         }
         foreach ($this->models as $model) {
-            $pluggedFields = array_filter($model->getFields(), function (Field $field) {
+            $pluggedFields = array_filter($model->getFields(), function (ModelField $field) {
                 return !empty($field->getPlugins());
             });
             $allModelFields = array_merge($allModelFields, $pluggedFields);
         }
 
-        $allComponents = [
-            'types' => $this->types,
-            'models' => $this->models,
-            'queries' => $this->queryFields,
-            'mutations' => $this->mutationFields,
+        $fieldComponents = [
             'fields' => $allTypeFields,
-            'model fields' => $allModelFields,
+            'modelFields' => $allModelFields,
         ];
+        $this->applyComponentSet($fieldComponents);
+    }
+
+    /**
+     * @param array $componentSet
+     * @throws SchemaBuilderException
+     */
+    private function applyComponentSet(array $componentSet): void
+    {
         $schemaUpdates = [];
-        foreach($allComponents as $components) {
+        foreach($componentSet as $components) {
             /* @var SchemaComponent $component */
-            foreach ($components as $component) {
-                foreach ($component->loadPlugins() as $data) {
-                    list ($plugin) = $data;
-                    if ($plugin instanceof SchemaUpdater) {
-                        $schemaUpdates[get_class($plugin)] = get_class($plugin);
-                    }
-                }
-            }
+            $schemaUpdates = array_merge($schemaUpdates, $this->collectSchemaUpdaters($components));
         }
+
         /* @var SchemaUpdater $builder */
         foreach ($schemaUpdates as $class) {
             $class::updateSchema($this);
         }
-        foreach ($allComponents as $name => $components) {
+        foreach ($componentSet as $name => $components) {
             /* @var SchemaComponent $component */
             foreach ($components as $component) {
-                foreach ($component->loadPlugins() as $data) {
-                    /* @var QueryPlugin|MutationPlugin|TypePlugin|ModelTypePlugin $plugin */
-                    list ($plugin, $config) = $data;
+                $this->applyComponentPlugins($component, $name);
+            }
+        }
+    }
 
-                    // Duck programming here just because there is such an exhaustive list of possible
-                    // interfaces, and they can't have a common ancestor until PHP 7.4 allows it.
-                    // https://wiki.php.net/rfc/covariant-returns-and-contravariant-parameters
-                    if (!method_exists($plugin, 'apply')) {
-                        continue;
-                    }
+    /**
+     * @param SchemaComponent $component
+     * @param string $name
+     * @throws SchemaBuilderException
+     */
+    private function applyComponentPlugins(SchemaComponent $component, string $name): void
+    {
+        foreach ($component->loadPlugins() as $data) {
+            /* @var QueryPlugin|MutationPlugin|TypePlugin|ModelTypePlugin $plugin */
+            list ($plugin, $config) = $data;
 
-                    try {
-                        $plugin->apply($component, $this, $config);
-                    } catch (SchemaBuilderException $e) {
-                        throw new SchemaBuilderException(sprintf(
-                            'Failed to apply plugin %s to %s. Got error "%s"',
-                            get_class($plugin),
-                            $component->getName(),
-                            $e->getMessage()
-                        ));
-                    } catch (TypeError $e) {
-                        throw new SchemaBuilderException(sprintf(
-                            'Plugin %s does not apply to component "%s" (category: %s)',
-                            $plugin->getIdentifier(),
-                            $component->getName(),
-                            $name
-                        ));
-                    }
+            // Duck programming here just because there is such an exhaustive list of possible
+            // interfaces, and they can't have a common ancestor until PHP 7.4 allows it.
+            // https://wiki.php.net/rfc/covariant-returns-and-contravariant-parameters
+            if (!method_exists($plugin, 'apply')) {
+                continue;
+            }
+
+            try {
+                $plugin->apply($component, $this, $config);
+            } catch (SchemaBuilderException $e) {
+                throw new SchemaBuilderException(sprintf(
+                    'Failed to apply plugin %s to %s. Got error "%s"',
+                    get_class($plugin),
+                    $component->getName(),
+                    $e->getMessage()
+                ));
+            } catch (TypeError $e) {
+                throw new SchemaBuilderException(sprintf(
+                    'Plugin %s does not apply to component "%s" (category: %s)',
+                    $plugin->getIdentifier(),
+                    $component->getName(),
+                    $name
+                ));
+            }
+        }
+    }
+
+    /**
+     * @param array $components
+     * @return array
+     */
+    private function collectSchemaUpdaters(array $components): array
+    {
+        $schemaUpdates = [];
+        foreach ($components as $component) {
+            foreach ($component->loadPlugins() as $data) {
+                list ($plugin) = $data;
+                if ($plugin instanceof SchemaUpdater) {
+                    $schemaUpdates[get_class($plugin)] = get_class($plugin);
                 }
             }
         }
+
+        return $schemaUpdates;
     }
 
     /**

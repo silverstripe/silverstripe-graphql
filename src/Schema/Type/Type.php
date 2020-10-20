@@ -216,11 +216,12 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
             $this->getName()
         );
         foreach ($type->getFields() as $field) {
+            $clonedField = clone $field;
             $existing = $this->fields[$field->getName()] ?? null;
             if (!$existing) {
-                $this->fields[$field->getName()] = $field;
+                $this->fields[$field->getName()] = $clonedField;
             } else {
-                $this->fields[$field->getName()] = $existing->mergeWith($field);
+                $this->fields[$field->getName()] = $existing->mergeWith($clonedField);
             }
         }
 

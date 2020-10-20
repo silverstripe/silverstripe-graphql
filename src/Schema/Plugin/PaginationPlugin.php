@@ -92,6 +92,7 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
     public function apply(Field $field, Schema $schema, array $config = []): void
     {
         $defaultLimit = $config['defaultLimit'] ?? $this->config()->get('default_limit');
+        $connectionName = $config['connection'] ?? $field->getName();
         $max = $this->config()->get('max_limit');
         $limit = min($defaultLimit, $max);
         $field->addArg('limit', "Int = $limit")
@@ -103,10 +104,10 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
 
         // Set the new return type
         $plainType = $field->getNamedType();
-        $field->setType($field->getName() . 'Connection');
+        $field->setType($connectionName . 'Connection');
 
         // Create the edge type for this query
-        $edgeType = Type::create($field->getName() . 'Edge')
+        $edgeType = Type::create($connectionName . 'Edge')
             ->setDescription('The collections edge')
             ->addField('node', $plainType, function (Field $field) {
                 $field->setResolver([static::class, 'noop'])
@@ -115,7 +116,7 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
         $schema->addType($edgeType);
 
         // Create the connection type for this query
-        $connectionType = Type::create($field->getName() . 'Connection')
+        $connectionType = Type::create($connectionName . 'Connection')
             ->addField('edges', "[{$edgeType->getName()}]!")
             ->addField('nodes', "[$plainType]!")
             ->addField('pageInfo', 'PageInfo!');

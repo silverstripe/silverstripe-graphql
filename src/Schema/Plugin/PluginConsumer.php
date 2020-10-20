@@ -40,7 +40,7 @@ trait PluginConsumer
      * @param $config
      * @return $this
      */
-    public function addPlugin(string $pluginName, $config): self
+    public function addPlugin(string $pluginName, array $config = []): self
     {
         $this->plugins[$pluginName] = $config;
 

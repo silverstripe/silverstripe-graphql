@@ -7,7 +7,6 @@ namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
-use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\Filterable;
 use InvalidArgumentException;
 use SilverStripe\ORM\SS_List;
@@ -36,6 +35,7 @@ class CanViewPermission extends AbstractCanViewPermission
      * @param $obj
      * @param array $args
      * @param array $context
+     * @param ResolveInfo $info
      * @return Filterable|object|array|null
      * @throws InvalidArgumentException
      */
@@ -91,7 +91,7 @@ class CanViewPermission extends AbstractCanViewPermission
 
         $list = $obj['nodes'];
         $originalCount = $list->count();
-        $filteredList = CanViewPermission::permissionCheck($list, $args, $context, $info);
+        $filteredList = static::permissionCheck($list, $args, $context, $info);
         $newCount = $filteredList->count();
         if ($originalCount === $newCount) {
             return $obj;

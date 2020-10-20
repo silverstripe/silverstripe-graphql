@@ -37,17 +37,23 @@ class ReadCreator implements OperationCreator
     {
         $plugins = $config['plugins'] ?? [];
         $queryName = $config['name'] ?? null;
+        $resolver = $config['resolver'] ?? null;
         if (!$queryName) {
             $queryName = 'read' . ucfirst(Schema::pluralise($typeName));
         }
 
-        return ModelQuery::create($model, $queryName)
+        $query = ModelQuery::create($model, $queryName)
             ->setType("[$typeName]")
             ->setPlugins($plugins)
             ->setDefaultResolver([static::class, 'resolve'])
             ->setResolverContext([
                 'dataClass' => $model->getSourceClass(),
             ]);
+        if ($resolver) {
+            $query->setResolver($resolver);
+        }
+
+        return $query;
     }
 
     /**

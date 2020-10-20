@@ -255,7 +255,7 @@ class Field implements
     public function mergeWith(Field $field): self
     {
         foreach ($field->getArgs() as $arg) {
-            $this->args[$arg->getName()] = $arg;
+            $this->args[$arg->getName()] = clone $arg;
         }
         $this->mergePlugins($field->getPlugins());
 
