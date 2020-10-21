@@ -13,6 +13,8 @@ use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use Closure;
+use SilverStripe\ORM\Filterable;
+use SilverStripe\ORM\SS_List;
 
 /**
  * Adds a filter parameter to a DataObject query
@@ -86,7 +88,7 @@ class QueryFilter extends AbstractQueryFilterPlugin
         $mapping = $context['fieldMapping'] ?? [];
         $fieldName = $context['fieldName'];
 
-        return function (DataList $list, array $args) use ($mapping, $fieldName) {
+        return function (Filterable $list, array $args) use ($mapping, $fieldName) {
             $filterArgs = $args[$fieldName] ?? [];
             /* @var FilterRegistryInterface $registry */
             $registry = Injector::inst()->get(FilterRegistryInterface::class);
