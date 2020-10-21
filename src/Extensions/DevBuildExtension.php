@@ -27,7 +27,10 @@ class DevBuildExtension extends DataExtension
      */
     public function onAfterBuild()
     {
-        if (!self::$done || !static::config()->get('enabled')) {
+        if (!static::config()->get('enabled')) {
+            return;
+        }
+        if (!self::$done) {
             Build::singleton()->buildSchema();
             self::$done = true;
         }
