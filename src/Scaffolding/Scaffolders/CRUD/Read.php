@@ -12,6 +12,7 @@ use SilverStripe\GraphQL\QueryFilter\QueryFilterAware;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\Security\Member;
@@ -37,8 +38,8 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
     {
         parent::__construct(null, null, $this, $dataObjectClass);
         $filter = Injector::inst()->create(DataObjectQueryFilter::class, $dataObjectClass)
-            ->setFilterKey(self::FILTER)
-            ->setExcludeKey(self::EXCLUDE);
+            ->setFilterKey(StaticSchema::inst()->formatField(self::FILTER))
+            ->setExcludeKey(StaticSchema::inst()->formatField(self::EXCLUDE));
         $this->setQueryFilter($filter);
     }
 
@@ -131,11 +132,14 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
         if (!$this->queryFilter->exists()) {
             return [];
         }
+        $filterKey = StaticSchema::inst()->formatField(self::FILTER);
+        $excludeKey = StaticSchema::inst()->formatField(self::EXCLUDE);
+
         return [
-            self::FILTER => [
+            $filterKey => [
                 'type' => $manager->getType($this->inputTypeName(self::FILTER)),
             ],
-            self::EXCLUDE => [
+            $excludeKey => [
                 'type' => $manager->getType($this->inputTypeName(self::EXCLUDE)),
             ],
         ];

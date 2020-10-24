@@ -12,6 +12,7 @@ use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
 use SilverStripe\ORM\DataObjectSchema;
@@ -62,8 +63,9 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
      */
     protected function createDefaultArgs(Manager $manager)
     {
+        $input = $this->argName();
         return [
-            'Input' => [
+            $input => [
                 'type' => Type::nonNull($manager->getType($this->inputTypeName())),
             ],
         ];
@@ -127,7 +129,8 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        $input = $args['Input'];
+        $input = $this->argName();
+        $input = $args[$input];
         $obj = DataList::create($this->getDataObjectClass())
             ->byID($input['ID']);
         if (!$obj) {
@@ -157,5 +160,13 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
         $this->extend('afterMutation', $obj, $args, $context, $info);
 
         return $obj;
+    }
+
+    /**
+     * @return string
+     */
+    private function argName()
+    {
+        return StaticSchema::inst()->formatField('Input');
     }
 }

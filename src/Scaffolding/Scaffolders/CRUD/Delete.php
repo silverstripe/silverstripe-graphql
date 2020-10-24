@@ -10,6 +10,7 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
@@ -48,8 +49,9 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
      */
     protected function createDefaultArgs(Manager $manager)
     {
+        $argName = $this->argName();
         return [
-            'IDs' => [
+            $argName => [
                 'type' => Type::nonNull($this->generateInputType()),
             ],
         ];
@@ -65,10 +67,11 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
 
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
-        DB::get_conn()->withTransaction(function () use ($args, $context, $info) {
+        $argName = $this->argName();
+        DB::get_conn()->withTransaction(function () use ($args, $context, $info, $argName) {
             // Build list to filter
             $results = DataList::create($this->getDataObjectClass())
-                ->byIDs($args['IDs']);
+                ->byIDs($args[$argName]);
             $extensionResults = $this->extend('augmentMutation', $results, $args, $context, $info);
 
             // Extension points that return false should kill the deletion
@@ -96,5 +99,10 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
 
             $this->extend('afterMutation', $resultsList, $args, $context, $info);
         });
+    }
+
+    private function argName()
+    {
+        return StaticSchema::inst()->formatField('IDs');
     }
 }

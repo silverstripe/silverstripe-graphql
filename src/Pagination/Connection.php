@@ -291,6 +291,10 @@ class Connection implements OperationResolver
             'edges' => [
                 'type' => Type::listOf($this->getEdgeType()),
                 'description' => 'Collection of records'
+            ],
+            'nodes' => [
+                'type' => Type::listOf($this->getConnectionType()),
+                'description' => 'The node at the end of the collections edge',
             ]
         ];
     }
@@ -410,11 +414,12 @@ class Connection implements OperationResolver
 
         return [
             'edges'    => $list,
+            'nodes'    => $list,
             'pageInfo' => [
                 'totalCount'      => $count,
                 'hasNextPage'     => $nextPage,
                 'hasPreviousPage' => $previousPage
-            ]
+            ],
         ];
     }
 

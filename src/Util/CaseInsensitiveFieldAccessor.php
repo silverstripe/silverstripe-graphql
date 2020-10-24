@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Util;
 
+use SilverStripe\GraphQL\FieldAccessorInterface;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\View\ViewableData;
@@ -21,7 +22,7 @@ use InvalidArgumentException;
  * @see http://www.php.net/manual/en/functions.user-defined.php
  * @see http://php.net/manual/en/function.array-change-key-case.php
  */
-class CaseInsensitiveFieldAccessor
+class CaseInsensitiveFieldAccessor implements FieldAccessorInterface
 {
 
     const HAS_METHOD = 'HAS_METHOD';
@@ -34,9 +35,10 @@ class CaseInsensitiveFieldAccessor
      * @param string $fieldName Name of the field/getter/method
      * @param array $opts Map of which lookups to use (class constants to booleans).
      *              Example: [ViewableDataCaseInsensitiveFieldMapper::HAS_METHOD => true]
+     * @param bool $asObject If true, return the DBField instance instead of the scalar value.
      * @return mixed
      */
-    public function getValue(ViewableData $object, $fieldName, $opts = [])
+    public function getValue(ViewableData $object, $fieldName, $opts = [], $asObject = false)
     {
         $opts = $opts ?: [];
         $opts = array_merge([
@@ -63,7 +65,7 @@ class CaseInsensitiveFieldAccessor
 
         // Correct case (and getters)
         if ($object->hasField($objectFieldName)) {
-            return $object->{$objectFieldName};
+            return $asObject ? $object->obj($objectFieldName) : $object->{$objectFieldName};
         }
 
         return null;

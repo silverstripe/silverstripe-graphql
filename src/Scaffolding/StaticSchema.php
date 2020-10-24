@@ -8,6 +8,7 @@ use Exception;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\FieldAccessorInterface;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\ORM\ArrayLib;
 use SilverStripe\ORM\DataObject;
@@ -38,6 +39,16 @@ class StaticSchema
      * @var array
      */
     protected $typesMap;
+
+    /**
+     * @var FieldAccessorInterface|null
+     */
+    protected $fieldAccessor;
+
+    /**
+     * @var callable
+     */
+    protected $fieldFormatter;
 
     /**
      * @config
@@ -145,6 +156,9 @@ class StaticSchema
      */
     public function isValidFieldName(ViewableData $instance, $fieldName)
     {
+        if ($this->getFieldAccessor()) {
+            return $this->getFieldAccessor()->getObjectFieldName($instance, $fieldName);
+        }
         return ($instance->hasMethod($fieldName) || $instance->hasField($fieldName));
     }
 
@@ -301,6 +315,125 @@ GRAPHQL
 
         return $fragments;
     }
+
+    /**
+     * @param $field
+     * @return string
+     */
+    public function formatField(string $field): string
+    {
+        if ($this->getFieldFormatter()) {
+            return call_user_func_array($this->getFieldFormatter(), [$field]);
+        }
+
+        return $field;
+    }
+
+    /**
+     * @param array $fields
+     * @return array
+     */
+    public function formatFields(array $fields): array
+    {
+        if (!$this->getFieldFormatter()) {
+            return $fields;
+        }
+
+        return array_map(function ($field) {
+            return $this->formatField($field);
+        }, $fields);
+    }
+
+    /**
+     * Formats all the keys of an array, preserving the values
+     * @param array $arr
+     * @return array
+     */
+    public function formatKeys(array $arr): array
+    {
+        if (!$this->getFieldFormatter()) {
+            return $arr;
+        }
+        if (!ArrayLib::is_associative($arr)) {
+            return $arr;
+        }
+
+        $newArr = [];
+        foreach ($arr as $k => $v) {
+            $newArr[$this->formatField($k)] = $v;
+        }
+
+        return $newArr;
+    }
+
+    /**
+     * Extracts the values for a list of keys
+     * @param array $keys
+     * @param array $arr
+     * @param bool $graceful
+     * @return array
+     */
+    public function extractKeys(array $keys, array $arr, $graceful = true): array
+    {
+        return array_map(function ($key) use ($graceful, $arr) {
+            $formatted = $this->formatField($key);
+            return $graceful ? ($arr[$formatted] ?? null) : $arr[$formatted];
+        }, $keys);
+    }
+
+    /**
+     * @return FieldAccessorInterface|null
+     */
+    public function getFieldAccessor()
+    {
+        return $this->fieldAccessor;
+    }
+
+    /**
+     * @param ViewableData $obj
+     * @param $fieldName
+     * @return mixed
+     */
+    public function accessField(ViewableData $obj, $fieldName)
+    {
+        return $this->getFieldAccessor()
+            ? $this->getFieldAccessor()->getValue($obj, $fieldName, [], true)
+            : $obj->obj($fieldName);
+    }
+
+    /**
+     * @param FieldAccessorInterface|null $fieldAccessor
+     * @return $this
+     */
+    public function setFieldAccessor($fieldAccessor)
+    {
+        $this->fieldAccessor = $fieldAccessor;
+
+        return $this;
+    }
+
+    /**
+     * @return callable
+     */
+    public function getFieldFormatter()
+    {
+        return $this->fieldFormatter;
+    }
+
+    /**
+     * @param callable $fieldFormatter
+     * @return $this
+     */
+    public function setFieldFormatter($fieldFormatter)
+    {
+        if (!is_callable($fieldFormatter)) {
+            throw new InvalidArgumentException('Field formatter must be callable');
+        }
+        $this->fieldFormatter = $fieldFormatter;
+
+        return $this;
+    }
+
 
     /**
      * @param string $class
