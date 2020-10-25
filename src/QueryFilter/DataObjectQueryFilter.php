@@ -423,7 +423,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
 
             $relationName = array_shift($relationNames);
             $class = $this->getDataObjectInstance()->getRelationClass($relationName);
-            while ($class && count($relationNames) > 0) {
+            while ($class && !empty($relationNames)) {
                 $relationName = array_shift($relationNames);
                 $lastClass = $class;
                 $class = Injector::inst()->get($class)->getRelationClass($relationName);
