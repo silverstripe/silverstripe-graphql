@@ -420,14 +420,16 @@ class DataObjectQueryFilter implements ConfigurationApplier
         if (stristr($field, self::SEPARATOR) !== false) {
             $relationNames = explode(self::SEPARATOR, $field);
             $relationField = array_pop($relationNames);
-
-            $relationName = array_shift($relationNames);
+            
+            // reverse array so we can use the faster array_pop
+            $relationNames = array_reverse($relationNames)
+            // initialize current class
             $class = $this->getDataObjectInstance()->getRelationClass($relationName);
-            while ($class && !empty($relationNames)) {
-                $relationName = array_shift($relationNames);
+            do {
+                $relationName = array_pop($relationNames);
                 $lastClass = $class;
                 $class = Injector::inst()->get($class)->getRelationClass($relationName);
-            }
+            } while ($class && !empty($relationNames));
 
             if (!$class) {
                 throw new InvalidArgumentException(sprintf(
