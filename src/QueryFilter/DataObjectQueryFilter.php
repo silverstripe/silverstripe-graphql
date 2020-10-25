@@ -422,7 +422,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
             $relationField = array_pop($relationNames);
             
             // reverse array so we can use the faster array_pop
-            $relationNames = array_reverse($relationNames)
+            $relationNames = array_reverse($relationNames);
             // initialize current class
             $class = $this->getDataObjectInstance()->getRelationClass($relationName);
             do {
