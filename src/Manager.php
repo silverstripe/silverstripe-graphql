@@ -19,6 +19,7 @@ use SilverStripe\GraphQL\Scaffolding\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
+use SilverStripe\GraphQL\Util\NaiveFieldAccessor;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\ScaffoldingProvider;
@@ -212,6 +213,8 @@ class Manager implements ConfigurationApplier
         }
         if (array_key_exists('fieldAccessor', $config)) {
             StaticSchema::inst()->setFieldAccessor(Injector::inst()->get($config['fieldAccessor']));
+        } else {
+            StaticSchema::inst()->setFieldAccessor(Injector::inst()->get(NaiveFieldAccessor::class));
         }
 
         // Types (incl. Interfaces and InputTypes)

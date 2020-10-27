@@ -60,7 +60,7 @@ class CaseInsensitiveFieldAccessor implements FieldAccessorInterface
 
         // Correct case for methods (e.g. canView)
         if ($object->hasMethod($objectFieldName)) {
-            return $object->{$objectFieldName}();
+            return $asObject ? $object->obj($objectFieldName) : $object->{$objectFieldName}();
         }
 
         // Correct case (and getters)
