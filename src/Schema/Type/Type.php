@@ -234,7 +234,7 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
     /**
      * @throws SchemaBuilderException
      */
-    public function validate()
+    public function validate(): void
     {
         Schema::invariant(
             !empty($this->getFields()),
