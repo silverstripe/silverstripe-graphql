@@ -12,5 +12,4 @@ interface DefaultFieldsProvider
      * @return array
      */
     public function getDefaultFields(): array;
-
 }

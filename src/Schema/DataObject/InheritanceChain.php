@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
-
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Convert;
@@ -176,7 +175,7 @@ class InheritanceChain
 
         $subtypes = [];
         foreach ($this->getDescendantModels() as $className) {
-            $modelType = ModelType::create($className);
+            $modelType = Build::requireActiveBuild()->createModel($className);
             $originalName = $modelType->getName();
             $newName = call_user_func_array($nameCreator, [$originalName]);
             $modelType->setName($newName);
@@ -227,5 +226,4 @@ class InheritanceChain
     {
         return $obj;
     }
-
 }

@@ -19,7 +19,7 @@ class <?=$globals['typeClassName']; ?> extends AbstractTypeRegistry
         return __NAMESPACE__;
     }
 
-    <?php foreach ($components as $component): ?>
+    <?php foreach ($components as $component) : ?>
 public static function <?=$component->getName(); ?>() { return static::get('<?=$component->getName(); ?>'); }
     <?php endforeach; ?>
 

@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Type;
 
-
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
@@ -235,12 +234,12 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
     /**
      * @throws SchemaBuilderException
      */
-    public function validate(): void
-
+    public function validate()
     {
         Schema::invariant(
             !empty($this->getFields()),
-            'Fields cannot be empty for type %s', $this->getName()
+            'Fields cannot be empty for type %s',
+            $this->getName()
         );
         foreach ($this->getFields() as $field) {
             $field->validate();

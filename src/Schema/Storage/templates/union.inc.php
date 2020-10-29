@@ -23,7 +23,7 @@ class <?=$union->getName() ?> extends UnionType
                 $type = call_user_func_array(<?=$union->getEncodedTypeResolver()->encode(); ?>, [$obj]);
                 return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName'] ?>', $type]);
             },
-        <?php if (!empty($union->getDescription())): ?>
+        <?php if (!empty($union->getDescription())) : ?>
             'description' => '<?=addslashes($union->getDescription()); ?>',
         <?php endif; ?>
         ]);

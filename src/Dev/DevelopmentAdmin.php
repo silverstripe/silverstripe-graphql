@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Dev;
 
-
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
@@ -113,5 +112,4 @@ class DevelopmentAdmin extends Controller
         }
         return $links;
     }
-
 }

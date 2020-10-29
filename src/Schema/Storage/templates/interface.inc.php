@@ -18,25 +18,25 @@ class <?=$interface->getName(); ?> extends InterfaceType
                 $type = call_user_func_array(<?=$interface->getEncodedTypeResolver()->encode(); ?>, [$obj]);
                 return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName']; ?>', $type]);
             },
-        <?php if (!empty($interface->getDescription())): ?>
+        <?php if (!empty($interface->getDescription())) : ?>
             'description' => '<?=addslashes($interface->getDescription()); ?>',
         <?php endif; ?>
             'fields' => function () {
                 return [
-                <?php foreach($interface->getFields() as $field): ?>
+                <?php foreach ($interface->getFields() as $field) : ?>
                     [
                         'name' => '<?=$field->getName(); ?>',
                         'type' => <?=$field->getEncodedType()->encode() ?>,
-                    <?php if (!empty($field->getDescription())): ?>
+                    <?php if (!empty($field->getDescription())) : ?>
                         'description' => '<?=addslashes($field->getDescription()); ?>',
                     <?php endif; ?>
-                    <?php if (!empty($field->getArgs())): ?>
+                    <?php if (!empty($field->getArgs())) : ?>
                         'args' => [
-                        <?php foreach ($field->getArgs() as $arg): ?>
+                        <?php foreach ($field->getArgs() as $arg) : ?>
                             [
                                 'name' => '<?=$arg->getName(); ?>',
                                 'type' => <?=$arg->getEncodedType()->encode(); ?>,
-                            <?php if ($arg->getDefaultValue() !== null): ?>
+                            <?php if ($arg->getDefaultValue() !== null) : ?>
                                 'defaultValue' => <?=var_export($arg->getDefaultValue(), true); ?>,
                             <?php endif; ?>
                             ],

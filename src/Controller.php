@@ -156,7 +156,6 @@ class Controller extends BaseController implements Flushable
             $result = $handler->query($schema, $query, $variables);
             $queryPerf = Benchmark::end('query-perf', '%sms', true);
             $this->extend('onAfterHandleQuery', $schema, $query, $ctx, $variables, $result);
-
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
 

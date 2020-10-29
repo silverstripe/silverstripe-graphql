@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
-
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
@@ -143,5 +142,4 @@ class QuerySort extends AbstractQuerySortPlugin
     {
         return !$field->isList();
     }
-
 }

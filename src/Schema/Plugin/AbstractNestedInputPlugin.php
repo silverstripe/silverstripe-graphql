@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
-
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -109,7 +108,6 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
                 'fieldName' => $this->getFieldName(),
             ]
         );
-
     }
 
     /**
@@ -218,9 +216,9 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
             if ($data === self::SELF_REFERENTIAL) {
                 // Self-referential input type
                 $parentType->addField($fieldName, $parentType->getName());
-            } else if ($data === self::SELF_REFERENTIAL_LIST) {
+            } elseif ($data === self::SELF_REFERENTIAL_LIST) {
                 $parentType->addField($fieldName, '[' . $parentType->getName() . ']');
-            } else if (!is_array($data)) {
+            } elseif (!is_array($data)) {
                 // Regular field, e.g. scalar
                 $fieldType = $fieldObj->getNamedType();
                 if (!$modelType && in_array($fieldType, Schema::getInternalTypes())) {
@@ -283,7 +281,7 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
                 $model
             );
             $prop = static::getObjectProperty(
-                $model->getSourceClass(),
+                $model->getModel()->getSourceClass(),
                 $fieldObj->getName(),
                 $schema
             );
@@ -317,7 +315,6 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
             } else {
                 $allPaths[implode('.', $fieldPath)] = implode('.', $propPath);
             }
-
         }
 
         return $allPaths;

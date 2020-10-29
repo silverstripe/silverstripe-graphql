@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Registry;
 
-
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\PluginInterface;

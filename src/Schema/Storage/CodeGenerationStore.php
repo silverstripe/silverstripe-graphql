@@ -130,7 +130,8 @@ class CodeGenerationStore implements SchemaStorageInterface
         $typeMappingFile = $this->getTempTypeMappingFilename();
 
         try {
-            $fs->dumpFile($typeMappingFile,
+            $fs->dumpFile(
+                $typeMappingFile,
                 '<?php ' .
                 PHP_EOL .
                 'return ' .

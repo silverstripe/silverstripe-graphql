@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
-
 interface SchemaComponent
 {
     /**

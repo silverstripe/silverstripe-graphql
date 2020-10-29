@@ -26,5 +26,4 @@ class NotEqualFilter implements FieldFilterInterface
     {
         return 'ne';
     }
-
 }

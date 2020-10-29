@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
-
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
@@ -50,8 +49,7 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): ?ModelOperation
-    {
+    ): ?ModelOperation {
         $plugins = $config['plugins'] ?? [];
         $mutationName = $config['name'] ?? null;
         if (!$mutationName) {
@@ -162,5 +160,4 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
     {
         return 'Update' . ucfirst($typeName) . 'Input';
     }
-
 }

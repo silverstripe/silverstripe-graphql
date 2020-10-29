@@ -17,5 +17,4 @@ interface TypePlugin extends PluginInterface
      * @param array $config
      */
     public function apply(Type $type, Schema $schema, array $config = []): void;
-
 }

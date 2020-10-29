@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Resolver;
 
-
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -111,6 +110,14 @@ class EncodedResolver implements EncoderInterface
     }
 
     /**
+     * @return ResolverReference
+     */
+    public function getRef(): ResolverReference
+    {
+        return $this->resolverRef;
+    }
+
+    /**
      * @param string $key
      * @param $val
      * @return EncodedResolver
@@ -166,5 +173,4 @@ class EncodedResolver implements EncoderInterface
     {
         return $this->afterware;
     }
-
 }

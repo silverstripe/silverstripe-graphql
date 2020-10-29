@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Type;
 
-
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Dev\Build;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -31,11 +30,6 @@ class ModelType extends Type implements ExtraTypeProvider
     use ModelAware;
 
     /**
-     * @var string
-     */
-    private $sourceClass;
-
-    /**
      * @var array
      */
     private $operationCreators = [];
@@ -58,23 +52,19 @@ class ModelType extends Type implements ExtraTypeProvider
 
     /**
      * ModelType constructor.
-     * @param string $class
      * @param array $config
+     * @param SchemaModelInterface|null $model
      * @throws SchemaBuilderException
      */
-    public function __construct(string $class, array $config = [])
+    public function __construct(SchemaModelInterface $model, array $config = [])
     {
-        $model = Build::requireActiveBuild()->getModelCreator()->getModel($class);
-        Schema::invariant($model, 'No model found for class %s', $class);
-
         $this->setModel($model);
-        $this->setSourceClass($class);
-
         $type = $this->getModel()->getTypeName();
+
         Schema::invariant(
             $type,
             'Could not determine type for model %s',
-            $this->getSourceClass()
+            $this->getModel()->getSourceClass()
         );
 
         /* @var SchemaModelInterface&ModelBlacklist $model */
@@ -152,7 +142,7 @@ class ModelType extends Type implements ExtraTypeProvider
                 $fieldObj->setName($field->getName());
                 if (is_array($fieldConfig)) {
                     $fieldObj->applyConfig($fieldConfig);
-                } else if (is_string($fieldConfig)) {
+                } elseif (is_string($fieldConfig)) {
                     $fieldObj->setType($fieldConfig);
                 }
             } else {
@@ -436,24 +426,6 @@ class ModelType extends Type implements ExtraTypeProvider
         }
 
         return $extraTypes;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSourceClass(): string
-    {
-        return $this->sourceClass;
-    }
-
-    /**
-     * @param string $sourceClass
-     * @return ModelType
-     */
-    public function setSourceClass(string $sourceClass): ModelType
-    {
-        $this->sourceClass = $sourceClass;
-        return $this;
     }
 
     /**

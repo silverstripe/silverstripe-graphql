@@ -229,7 +229,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
 
         static::assertValidConfig($models);
         foreach ($models as $modelName => $modelConfig) {
-             $model = ModelType::create($modelName, $modelConfig);
+             $model = $this->createModel($modelName, $modelConfig);
              $this->addModel($model);
         }
 
@@ -310,7 +310,6 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
                 }
             }
         }
-
     }
 
     /**
@@ -350,7 +349,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
             if ($type->getIsInput()) {
                 continue;
             }
-            $pluggedFields = array_filter($type->getFields(), function (Field $field) use($type) {
+            $pluggedFields = array_filter($type->getFields(), function (Field $field) use ($type) {
                 return !empty($field->getPlugins());
             });
             $allTypeFields = array_merge($allTypeFields, $pluggedFields);
@@ -376,7 +375,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     private function applyComponentSet(array $componentSet): void
     {
         $schemaUpdates = [];
-        foreach($componentSet as $components) {
+        foreach ($componentSet as $components) {
             /* @var SchemaComponent $component */
             $schemaUpdates = array_merge($schemaUpdates, $this->collectSchemaUpdaters($components));
         }
@@ -464,8 +463,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
         }
         $schemas = $this->config()->get('schemas');
         static::invariant($schemas, 'There are no schemas defined in the config');
-        $schema = $schemas[$this->schemaKey] ?? null;
-        static::invariant($schema, 'Schema "%s" is not configured', $this->schemaKey);
+        $schema = $schemas[$this->schemaKey] ?? [];
 
         // Gather all the global config first
         $mergedSchema = $schemas[self::ALL] ?? [];
@@ -622,7 +620,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     {
         $typeMapping = [];
         foreach ($this->getModels() as $modelType) {
-            $typeMapping[$modelType->getSourceClass()] = $modelType->getName();
+            $typeMapping[$modelType->getModel()->getSourceClass()] = $modelType->getName();
         }
 
         return $typeMapping;
@@ -680,7 +678,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
             array_keys($this->scalars)
         );
         $dupes = [];
-        foreach(array_count_values($allNames) as $val => $count) {
+        foreach (array_count_values($allNames) as $val => $count) {
             if ($count > 1) {
                 $dupes[] = $val;
             }
@@ -870,6 +868,22 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
 
     /**
      * @param string $class
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function addModelbyClassName(string $class): self
+    {
+        $model = $this->createModel($class);
+        Schema::invariant(
+            $model,
+            'Could not add class %s to schema. No model exists.'
+        );
+
+        return $this->addModel($model);
+    }
+
+    /**
+     * @param string $class
      * @return ModelType|null
      */
     public function getModelByClassName(string $class): ?ModelType
@@ -881,6 +895,21 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
         }
 
         return null;
+    }
+
+    /**
+     * @param string $class
+     * @param array $config
+     * @return ModelType|null
+     */
+    public function createModel(string $class, array $config = []): ?ModelType
+    {
+        $model = $this->getModelCreator()->getModel($class);
+        if (!$model) {
+            return null;
+        }
+
+        return ModelType::create($model, $config);
     }
 
     /**
@@ -898,7 +927,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
      */
     public function findOrMakeModel(string $class): ModelType
     {
-        $newModel = ModelType::create($class);
+        $newModel = $this->createModel($class);
         $name = $newModel->getName();
         $existing = $this->getModel($name);
         if ($existing) {
@@ -924,7 +953,6 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
             $callback($typeObj);
         }
         return $this;
-
     }
 
     /**
@@ -1067,10 +1095,10 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     public static function assertValidName($name): void
     {
         static::invariant(
-          preg_match(' /[_A-Za-z][_0-9A-Za-z]*/', $name),
-          'Invalid name: %s. Names must only use underscores and alphanumeric characters, and cannot
+            preg_match(' /[_A-Za-z][_0-9A-Za-z]*/', $name),
+            'Invalid name: %s. Names must only use underscores and alphanumeric characters, and cannot
           begin with a number.',
-          $name
+            $name
         );
     }
 
@@ -1145,9 +1173,8 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
         }
         if (Director::is_cli()) {
             fwrite(STDOUT, $message . PHP_EOL);
-        } else if ($toBrowser) {
+        } elseif ($toBrowser) {
             echo $message . "<br>";
         }
     }
-
 }

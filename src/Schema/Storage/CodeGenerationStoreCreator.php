@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Storage;
 
-
 use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Cache\CacheFactory;
 use SilverStripe\Core\Injector\Injector;

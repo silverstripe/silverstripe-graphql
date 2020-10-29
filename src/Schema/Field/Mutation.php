@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Field;
 
-
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\PluginValidator;

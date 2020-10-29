@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
-
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataObject;

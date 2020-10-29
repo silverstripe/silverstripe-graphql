@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Resolver;
 
-
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelField;

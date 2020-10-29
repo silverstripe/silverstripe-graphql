@@ -118,6 +118,4 @@ class QueryFilter extends AbstractQueryFilterPlugin
         $fieldName = $field->getPropertyName();
         return stristr($fieldName, '.') === false;
     }
-
-
 }

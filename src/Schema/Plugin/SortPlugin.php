@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
-
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\DataObject\Plugin\QuerySort;
@@ -108,5 +107,4 @@ class SortPlugin implements FieldPlugin, SchemaUpdater
 
         return ResolverReference::create($resolver)->toArray();
     }
-
 }

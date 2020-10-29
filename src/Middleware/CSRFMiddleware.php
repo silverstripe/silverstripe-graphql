@@ -40,6 +40,4 @@ class CSRFMiddleware implements Middleware
 
         return $next($params);
     }
-
-
 }

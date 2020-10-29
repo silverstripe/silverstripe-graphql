@@ -49,5 +49,4 @@ class Paginator extends PaginationPlugin
             return static::createPaginationResult($total, $limitedList, $limit, $offset);
         };
     }
-
 }

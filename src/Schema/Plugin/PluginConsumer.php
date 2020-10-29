@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
-
 use MJS\TopSort\CircularDependencyException;
 use MJS\TopSort\ElementNotFoundException;
 use MJS\TopSort\Implementations\ArraySort;
@@ -256,5 +255,4 @@ trait PluginConsumer
 
         return $map;
     }
-
 }

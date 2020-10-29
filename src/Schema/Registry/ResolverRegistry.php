@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Registry;
 
-
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use InvalidArgumentException;
@@ -96,5 +95,4 @@ class ResolverRegistry
 
         return $this;
     }
-
 }

@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
-
 use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceChain;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -36,7 +35,7 @@ class InheritedPlugins implements ModelTypePlugin
      */
     public function apply(ModelType $type, Schema $schema, array $config = []): void
     {
-        $sourceClass = $type->getSourceClass();
+        $sourceClass = $type->getModel()->getSourceClass();
         Schema::invariant(
             is_subclass_of($sourceClass, DataObject::class),
             '%s only applies to %s subclasses',

@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
-
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -33,8 +32,7 @@ class ReadOneCreator implements OperationCreator
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): ?ModelOperation
-    {
+    ): ?ModelOperation {
         $plugins = $config['plugins'] ?? [];
         $queryName = $config['name'] ?? null;
         if (!$queryName) {
@@ -48,5 +46,4 @@ class ReadOneCreator implements OperationCreator
                 'dataClass' => $model->getSourceClass()
             ]);
     }
-
 }

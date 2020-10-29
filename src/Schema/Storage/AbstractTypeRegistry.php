@@ -87,5 +87,4 @@ abstract class AbstractTypeRegistry
     {
         return new NonNull($type);
     }
-
 }

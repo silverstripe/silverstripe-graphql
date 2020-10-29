@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
-
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
@@ -21,7 +20,7 @@ class Resolver
      * @param ResolveInfo $info
      * @return string|bool|int|float|null
      */
-    public static function resolve($obj, array $args = [], array $context =[], ?ResolveInfo $info = null)
+    public static function resolve($obj, array $args = [], array $context = [], ?ResolveInfo $info = null)
     {
         $fieldName = $info->fieldName;
         return static::resolveField($obj, $fieldName);
@@ -37,7 +36,7 @@ class Resolver
     public static function resolveContext(array $resolverContext = []): Closure
     {
         $propertyMapping = $resolverContext['propertyMapping'];
-        return function(
+        return function (
             DataObject $obj,
             array $args,
             array $context,

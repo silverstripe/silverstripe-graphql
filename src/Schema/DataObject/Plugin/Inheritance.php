@@ -63,7 +63,6 @@ class Inheritance implements PluginInterface, SchemaUpdater
             self::addInheritance($schema, $baseClass);
             self::touchNode($schema, $baseClass);
         }
-
     }
 
     /**
@@ -145,7 +144,6 @@ class Inheritance implements PluginInterface, SchemaUpdater
                         'resolver' => [InheritanceChain::class, 'resolveExtensionType']
                     ]);
                 }
-
             }
         }
         foreach ($inheritance->getDirectDescendants() as $descendantClass) {
@@ -206,5 +204,4 @@ class Inheritance implements PluginInterface, SchemaUpdater
         $key = md5($schema->getSchemaKey() . $baseClass);
         return isset(self::$touchedNodes[$key]);
     }
-
 }

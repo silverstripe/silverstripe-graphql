@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
-
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
@@ -64,7 +63,6 @@ class CanViewPermission extends AbstractCanViewPermission
             SS_List::class,
             Filterable::class
         ));
-
     }
 
     /**
@@ -104,7 +102,6 @@ class CanViewPermission extends AbstractCanViewPermission
         $obj['edges'] = $edges;
 
         return $obj;
-
     }
 
     /**

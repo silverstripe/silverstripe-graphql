@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
-
 /**
  * A class that can store a generic array of context
  */
@@ -20,5 +19,4 @@ interface ContextProvider
      * @return array
      */
     public function getContext(): array;
-
 }

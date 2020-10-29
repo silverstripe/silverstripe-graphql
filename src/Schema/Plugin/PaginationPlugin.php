@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
-
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
@@ -80,7 +79,6 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
             ->setDescription('Information about pagination in a connection.');
 
         $schema->addType($pageinfoType);
-
     }
 
     /**
@@ -164,7 +162,7 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
      * @param $obj
      * @return mixed
      */
-    public static function noop ($obj)
+    public static function noop($obj)
     {
         return $obj;
     }

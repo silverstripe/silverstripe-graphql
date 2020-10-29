@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Field;
 
-
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 
 /**
@@ -33,5 +32,4 @@ trait ModelAware
         $this->model = $model;
         return $this;
     }
-
 }

@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Type;
 
-
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
@@ -22,7 +21,8 @@ class UnionType implements
     SchemaValidator,
     ConfigurationApplier,
     SignatureProvider,
-    SchemaComponent {
+    SchemaComponent
+{
 
     use Injectable;
     use Configurable;

@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Resolver;
 
-
 use GraphQL\Type\Definition\ResolveInfo;
 use ArrayAccess;
 use Closure;
@@ -33,7 +32,7 @@ class DefaultResolver
             if (isset($source[$fieldName])) {
                 $property = $source[$fieldName];
             }
-        } else if (is_object($source)) {
+        } elseif (is_object($source)) {
             if (isset($source->{$fieldName})) {
                 $property = $source->{$fieldName};
             }

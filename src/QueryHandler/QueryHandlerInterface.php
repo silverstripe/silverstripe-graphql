@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\QueryHandler;
 
-
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\Type\Schema;
 
@@ -22,5 +21,4 @@ interface QueryHandlerInterface
      * @return array
      */
     public function serialiseResult(ExecutionResult $executionResult): array;
-
 }

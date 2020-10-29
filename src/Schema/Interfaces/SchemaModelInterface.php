@@ -56,6 +56,4 @@ interface SchemaModelInterface
      * @return ModelType|null
      */
     public function getModelTypeForField(string $fieldName): ?ModelType;
-
-
 }

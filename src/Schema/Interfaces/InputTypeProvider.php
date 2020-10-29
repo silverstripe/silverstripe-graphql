@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
-
 use SilverStripe\GraphQL\Schema\Type\InputType;
 
 /**

@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Permission;
 
-
 use SilverStripe\Security\Member;
 
 /**
@@ -20,5 +19,4 @@ interface MemberContextProvider
      * @return Member|null
      */
     public function getMemberContext(): ?Member;
-
 }

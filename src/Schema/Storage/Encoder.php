@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Storage;
 
-
 use SilverStripe\Core\Injector\Injectable;
 use InvalidArgumentException;
 use SilverStripe\Core\Path;
@@ -57,5 +56,4 @@ class Encoder implements EncoderInterface
 
         return $content;
     }
-
 }

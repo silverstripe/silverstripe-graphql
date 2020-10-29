@@ -33,8 +33,7 @@ class ReadCreator implements OperationCreator
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): ?ModelOperation
-    {
+    ): ?ModelOperation {
         $plugins = $config['plugins'] ?? [];
         $queryName = $config['name'] ?? null;
         $resolver = $config['resolver'] ?? null;
@@ -70,5 +69,4 @@ class ReadCreator implements OperationCreator
             return DataList::create($dataClass);
         };
     }
-
 }

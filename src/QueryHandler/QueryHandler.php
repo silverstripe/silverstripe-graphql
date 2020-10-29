@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\QueryHandler;
 
-
 use GraphQL\Error\Error;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Executor\ExecutionResult;
@@ -97,7 +96,6 @@ class QueryHandler implements
         };
 
         return $this->callMiddleware($schema, $query, $context, $params, $last);
-
     }
 
 

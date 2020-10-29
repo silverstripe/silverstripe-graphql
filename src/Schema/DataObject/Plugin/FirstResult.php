@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
-
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;

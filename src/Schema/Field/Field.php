@@ -2,7 +2,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Field;
 
-
 use GraphQL\Language\Token;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
@@ -558,6 +557,22 @@ class Field implements
     }
 
     /**
+     * @return EncodedResolver[]
+     */
+    public function getResolverMiddlewares(): array
+    {
+        return $this->resolverMiddlewares;
+    }
+
+    /**
+     * @return EncodedResolver[]
+     */
+    public function getResolverAfterwares(): array
+    {
+        return $this->resolverAfterwares;
+    }
+
+    /**
      * @return string
      * @throws SchemaBuilderException
      * @throws Exception
@@ -566,7 +581,7 @@ class Field implements
     {
         $args = $this->getArgs();
         usort($args, function (Argument $a, Argument $z) {
-           return $a->getName() <=> $z->getName();
+            return $a->getName() <=> $z->getName();
         });
 
         $components = [
@@ -612,7 +627,7 @@ class Field implements
                 : ResolverReference::create($resolver);
             if ($position === EncodedResolver::MIDDLEWARE) {
                 $this->resolverMiddlewares[] = EncodedResolver::create($ref, $context);
-            } else if ($position === EncodedResolver::AFTERWARE) {
+            } elseif ($position === EncodedResolver::AFTERWARE) {
                 $this->resolverAfterwares[] = EncodedResolver::create($ref, $context);
             }
         }
@@ -627,5 +642,4 @@ class Field implements
     {
         return TypeReference::create($this->type);
     }
-
 }

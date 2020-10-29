@@ -65,5 +65,4 @@ trait MiddlewareConsumer
 
         return $result;
     }
-
 }

@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
-
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelCreatorInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;

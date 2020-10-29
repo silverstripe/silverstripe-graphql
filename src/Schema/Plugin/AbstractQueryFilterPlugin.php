@@ -77,6 +77,4 @@ abstract class AbstractQueryFilterPlugin extends AbstractNestedInputPlugin imple
     {
         return sprintf('QueryFilter%sComparator', $internalType);
     }
-
-
 }

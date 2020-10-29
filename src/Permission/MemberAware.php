@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Permission;
 
-
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 
@@ -34,5 +33,4 @@ trait MemberAware
     {
         return $this->member ?: Security::getCurrentUser();
     }
-
 }

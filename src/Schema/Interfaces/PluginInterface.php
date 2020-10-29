@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
-
 /**
  * Base plugin interface. There is a lot of "duck programming" happening in this API
  * that will go away once we have better type variance in PHP 7.4:
@@ -19,5 +18,4 @@ interface PluginInterface
      * @return string
      */
     public function getIdentifier(): string;
-
 }

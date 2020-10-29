@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Config;
 
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
@@ -32,7 +33,7 @@ class ModelConfiguration
      */
     public function getTypeFormatter(): ?callable
     {
-        return $this->get('type_formatter');
+        return $this->get('type_formatter', [ClassInfo::class, 'shortName']);
     }
 
     /**
@@ -41,7 +42,7 @@ class ModelConfiguration
      */
     public function getTypePrefix(): string
     {
-        return $this->get('type_prefix');
+        return $this->get('type_prefix', '');
     }
 
     /**
@@ -50,7 +51,7 @@ class ModelConfiguration
      */
     public function getNestedQueryPlugins(): array
     {
-        return $this->get('nested_query_plugins');
+        return $this->get('nested_query_plugins', []);
     }
 
     /**
@@ -81,8 +82,6 @@ class ModelConfiguration
 
         return $prefix . $typeName;
     }
-
-
 
     /**
      * Return a setting by dot.separated.syntax
@@ -117,7 +116,7 @@ class ModelConfiguration
      */
     private function formatClass(string $class): string
     {
-        $formatter = $this->get('type_formatter');
+        $formatter = $this->getTypeFormatter();
         Schema::invariant(
             is_callable($formatter, false),
             'type_formatter property for %s is not callable',
@@ -134,7 +133,7 @@ class ModelConfiguration
      */
     private function getPrefix(string $class): string
     {
-        $prefix = $this->get('type_prefix');
+        $prefix = $this->getTypePrefix();
         if (is_callable($prefix, false)) {
             return call_user_func_array($prefix, [$class]);
         }
@@ -147,5 +146,4 @@ class ModelConfiguration
 
         return $prefix;
     }
-
 }

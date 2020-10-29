@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Type;
 
-
 use GraphQL\Language\AST\NamedTypeNode;
 use GraphQL\Language\AST\Node;
 use GraphQL\Language\AST\NodeKind;

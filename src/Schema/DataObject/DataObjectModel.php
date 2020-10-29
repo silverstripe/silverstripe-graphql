@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
-
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
@@ -292,12 +291,8 @@ class DataObjectModel implements
         if (!$class) {
             return null;
         }
-        $model = Build::requireActiveBuild()->getModelCreator()->getModel($class);
-        if (!$model) {
-            return null;
-        }
 
-        return ModelType::create($class);
+        return Build::requireActiveBuild()->createModel($class);
     }
 
     /**
@@ -358,6 +353,4 @@ class DataObjectModel implements
     {
         return $result instanceof SS_List || $result instanceof UnsavedRelationList;
     }
-
-
 }

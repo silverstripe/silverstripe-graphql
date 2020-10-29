@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Field;
 
-
 use GraphQL\Error\SyntaxError;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
@@ -199,5 +198,4 @@ class Argument implements ConfigurationApplier, SignatureProvider
 
         return md5(json_encode($components));
     }
-
 }

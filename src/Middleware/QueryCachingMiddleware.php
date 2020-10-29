@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Middleware;
 
-
 use GraphQL\Executor\ExecutionResult;
 use Psr\SimpleCache\CacheInterface;
 use Psr\SimpleCache\InvalidArgumentException;

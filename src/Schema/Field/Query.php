@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Field;
 
-
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\PluginValidator;

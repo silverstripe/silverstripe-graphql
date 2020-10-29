@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Type;
 
-
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
@@ -11,6 +10,7 @@ use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 use Exception;
+
 /**
  * Defines a GraphQL interface. It may seem counter-intuitive that an abstraction would inherit
  * from the concretion, but since these are just value objects that end up getting rendered

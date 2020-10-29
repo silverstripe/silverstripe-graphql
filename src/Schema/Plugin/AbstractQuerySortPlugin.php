@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
-
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
@@ -64,5 +63,4 @@ abstract class AbstractQuerySortPlugin extends AbstractNestedInputPlugin impleme
     {
         return 'SortDirection';
     }
-
 }

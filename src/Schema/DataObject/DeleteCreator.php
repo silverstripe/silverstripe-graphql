@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
-
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
@@ -39,8 +38,7 @@ class DeleteCreator implements OperationCreator
         SchemaModelInterface $model,
         string $typeName,
         array $config = []
-    ): ?ModelOperation
-    {
+    ): ?ModelOperation {
         $plugins = $config['plugins'] ?? [];
         $mutationName = $config['name'] ?? null;
         if (!$mutationName) {

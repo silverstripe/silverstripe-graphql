@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Type;
 
-
 use GraphQL\Language\AST\NamedTypeNode;
 use GraphQL\Language\AST\Node;
 use GraphQL\Language\AST\NodeKind;
@@ -91,7 +90,7 @@ class TypeReference
     {
         $node = $this->toAST();
         $path = [];
-        while($node && !$node instanceof NamedTypeNode) {
+        while ($node && !$node instanceof NamedTypeNode) {
             $path[] = $node->kind;
             $node = $node->type;
         }
@@ -116,5 +115,4 @@ class TypeReference
     {
         return $this->typeStr;
     }
-
 }

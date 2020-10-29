@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
-
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Config_ForClass;
 use SilverStripe\Core\Config\Configurable;
