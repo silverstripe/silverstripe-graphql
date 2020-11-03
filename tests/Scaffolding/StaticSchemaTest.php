@@ -293,6 +293,5 @@ class StaticSchemaTest extends SapphireTest
 
         $result = StaticSchema::inst()->isValidFieldName($obj, 'ofo');
         $this->assertFalse($result);
-
     }
 }

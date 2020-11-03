@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
-
 use SilverStripe\GraphQL\FieldAccessorInterface;
 use SilverStripe\View\ViewableData;
 
@@ -27,7 +26,5 @@ class FakeFieldAccessor implements FieldAccessorInterface
 
     public function setValue(ViewableData $object, $fieldName, $value, $opts = [])
     {
-
     }
-
 }
