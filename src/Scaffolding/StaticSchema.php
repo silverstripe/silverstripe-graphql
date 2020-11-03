@@ -334,6 +334,7 @@ GRAPHQL
     }
 
     /**
+     * @internal
      * @param array $fields
      * @return array
      */
@@ -406,6 +407,7 @@ GRAPHQL
     }
 
     /**
+     * @internal
      * @param FieldAccessorInterface|null $fieldAccessor
      * @return $this
      */
@@ -425,6 +427,7 @@ GRAPHQL
     }
 
     /**
+     * @internal
      * @param callable $fieldFormatter
      * @return $this
      */
