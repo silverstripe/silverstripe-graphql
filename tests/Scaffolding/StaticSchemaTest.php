@@ -9,9 +9,12 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FakeFieldAccessor;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
+use SilverStripe\ORM\FieldType\DBField;
+use SilverStripe\View\ArrayData;
 
 class StaticSchemaTest extends SapphireTest
 {
@@ -213,5 +216,83 @@ class StaticSchemaTest extends SapphireTest
 
         StaticSchema::reset();
         $this->assertNotSame($new, StaticSchema::inst());
+    }
+
+    public function testFormatField()
+    {
+        $result = StaticSchema::inst()->formatField('Foo');
+        $this->assertEquals('Foo', $result);
+
+        StaticSchema::inst()->setFieldFormatter('strrev');
+        $result = StaticSchema::inst()->formatField('abc');
+        $this->assertEquals('cba', $result);
+    }
+
+    public function testFormatFields()
+    {
+        $result = StaticSchema::inst()->formatFields(['Foo', 'Bar']);
+        $this->assertEquals(['Foo', 'Bar'], $result);
+
+        StaticSchema::inst()->setFieldFormatter('strrev');
+        $result = StaticSchema::inst()->formatFields(['abc', '123']);
+        $this->assertEquals(['cba', '321'], $result);
+    }
+
+    public function testFormatKeys()
+    {
+        $result = StaticSchema::inst()->formatKeys(['Foo', 'Bar']);
+        $this->assertEquals(['Foo', 'Bar'], $result);
+
+        StaticSchema::inst()->setFieldFormatter('strrev');
+        $result = StaticSchema::inst()->formatKeys(['Foo', 'Bar']);
+        $this->assertEquals(['Foo', 'Bar'], $result);
+
+        $result = StaticSchema::inst()->formatKeys(['Foo' => 'test1', 'Bar' => 'test2']);
+        $this->assertArrayHasKey('ooF', $result);
+        $this->assertArrayHasKey('raB', $result);
+        $this->assertEquals('test1', $result['ooF']);
+        $this->assertEquals('test2', $result['raB']);
+    }
+
+    public function testExtractKeys()
+    {
+        $arr = ['Foo' => 'test1', 'Bar' => 'test2'];
+        $result = StaticSchema::inst()->extractKeys(['Foo', 'Bar'], $arr);
+        $this->assertEquals(['test1', 'test2'], $result);
+
+        $arr = ['ooF' => 'test1', 'raB' => 'test2'];
+        StaticSchema::inst()->setFieldFormatter('strrev');
+        $result = StaticSchema::inst()->extractKeys(['Foo', 'Bar'], $arr);
+        $this->assertEquals(['test1', 'test2'], $result);
+
+        $result = StaticSchema::inst()->extractKeys(['Foo', 'NotExists'], $arr);
+        $this->assertEquals(['test1', null], $result);
+
+        $this->expectException(\PHPUnit_Framework_Error_Notice::class);
+        StaticSchema::inst()->extractKeys(['Foo', 'NotExists'], $arr, false);
+    }
+
+    public function testAccessField()
+    {
+        StaticSchema::inst()->setFieldAccessor(new FakeFieldAccessor());
+
+        $obj = new ArrayData(['Foo' => 'test1', 'Bar' => 'test2']);
+        $result = StaticSchema::inst()->accessField($obj, 'Foo');
+        $this->assertInstanceOf(DBField::class, $result);
+        $this->assertEquals('test1', $result->getValue());
+
+        $result = StaticSchema::inst()->accessField($obj, 'ooF');
+        $this->assertInstanceOf(DBField::class, $result);
+        $this->assertEquals('test1', $result->getValue());
+
+        $result = StaticSchema::inst()->isValidFieldName($obj, 'Foo');
+        $this->assertTrue($result);
+
+        $result = StaticSchema::inst()->isValidFieldName($obj, 'ooF');
+        $this->assertTrue($result);
+
+        $result = StaticSchema::inst()->isValidFieldName($obj, 'ofo');
+        $this->assertFalse($result);
+
     }
 }

@@ -156,10 +156,14 @@ class StaticSchema
      */
     public function isValidFieldName(ViewableData $instance, $fieldName)
     {
-        if ($this->getFieldAccessor()) {
-            return $this->getFieldAccessor()->getObjectFieldName($instance, $fieldName);
+        if ($instance->hasMethod($fieldName) || $instance->hasField($fieldName)) {
+            return true;
         }
-        return ($instance->hasMethod($fieldName) || $instance->hasField($fieldName));
+        if ($this->getFieldAccessor()) {
+            return $this->getFieldAccessor()->getObjectFieldName($instance, $fieldName) !== null;
+        }
+
+        return false;
     }
 
     /**

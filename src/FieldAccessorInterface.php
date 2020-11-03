@@ -29,7 +29,7 @@ interface FieldAccessorInterface
      * @param ViewableData $object
      * @param $fieldName
      * @param array $opts
-     * @return mixed
+     * @return string|null
      */
     public function getObjectFieldName(ViewableData $object, $fieldName, $opts = []);
 }
