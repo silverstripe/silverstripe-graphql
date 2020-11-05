@@ -537,9 +537,19 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     {
         $resolvedDir = ModuleResourceLoader::singleton()->resolvePath($dir);
         $absConfigSrc = Path::join(BASE_PATH, $resolvedDir);
+
+        static::invariant(
+            !is_file($absConfigSrc),
+            'Provided source config file "%s" rather than directory on schema %s. ' .
+            'See https://docs.silverstripe.org/en/4/developer_guides/graphql/getting_started/configuring_your_schema/',
+            $absConfigSrc,
+            $this->schemaKey
+        );
+
         static::invariant(
             is_dir($absConfigSrc),
-            'Source config directory %s does not exist on schema %s',
+            'Source config directory %s does not exist on schema %s. ' .
+            'See https://docs.silverstripe.org/en/4/developer_guides/graphql/getting_started/configuring_your_schema/',
             $absConfigSrc,
             $this->schemaKey
         );
