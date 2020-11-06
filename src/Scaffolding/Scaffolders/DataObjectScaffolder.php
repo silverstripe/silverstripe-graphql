@@ -63,12 +63,6 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
      */
     protected $nestedQueries = [];
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        StaticSchema::reset();
-    }
-
     /**
      * DataObjectScaffold constructor.
      *
