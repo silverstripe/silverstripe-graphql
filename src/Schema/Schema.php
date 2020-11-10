@@ -666,6 +666,14 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     }
 
     /**
+     * @return bool
+     */
+    public function exists(): bool
+    {
+        return !empty($this->types) && !empty($this->queryFields);
+    }
+
+    /**
      * @throws SchemaBuilderException
      */
     public function validate(): void
@@ -1173,7 +1181,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
         }
         if (Director::is_cli()) {
             fwrite(STDOUT, $message . PHP_EOL);
-        } elseif ($toBrowser) {
+        } else {
             echo $message . "<br>";
         }
     }

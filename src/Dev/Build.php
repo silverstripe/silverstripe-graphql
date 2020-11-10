@@ -65,6 +65,9 @@ class Build extends Controller
             $schema = Schema::create($key);
             self::$activeBuild = $schema;
             $schema->loadFromConfig();
+            if (!$schema->exists()) {
+                continue;
+            }
 
             if ($clear) {
                 $schema->getStore()->clear();
