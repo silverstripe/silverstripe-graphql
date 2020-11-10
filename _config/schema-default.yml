@@ -1,0 +1,37 @@
+---
+Name: 'graphql-schema-default'
+---
+SilverStripe\Core\Injector\Injector:
+  # Set up a default endpoint that can be activated with a Director rule
+  SilverStripe\GraphQL\Controller.default:
+    class: SilverStripe\GraphQL\Controller
+    constructor:
+      schema: default
+      # use a custom handler so it's easy to override/add middlewares in the default schema
+      handler: '%$SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface.default'
+
+SilverStripe\GraphQL\Schema\Schema:
+  schemas:
+    default:
+      modelConfig:
+        DataObject:
+          operations:
+            read:
+              plugins:
+                filter:
+                  before: paginateList
+                sort:
+                  before: paginateList
+            readOne:
+              plugins:
+                filter: true
+                sort: true
+          nested_query_plugins:
+            paginateList: true
+            filter:
+              before: paginateList
+            sort:
+              before: paginateList
+            canView:
+              after: paginateList
+
