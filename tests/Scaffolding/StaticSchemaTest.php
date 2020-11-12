@@ -18,7 +18,7 @@ use SilverStripe\View\ArrayData;
 
 class StaticSchemaTest extends SapphireTest
 {
-    protected function setUp(): void
+    protected function setUp()
     {
         parent::setUp();
         StaticSchema::reset();
@@ -268,7 +268,7 @@ class StaticSchemaTest extends SapphireTest
         $result = StaticSchema::inst()->extractKeys(['Foo', 'NotExists'], $arr);
         $this->assertEquals(['test1', null], $result);
 
-        $this->expectException(\PHPUnit_Framework_Error_Notice::class);
+        $this->expectException(\PHPUnit_Framework_Error_Warning::class);
         StaticSchema::inst()->extractKeys(['Foo', 'NotExists'], $arr, false);
     }
 
