@@ -420,7 +420,6 @@ class DataObjectQueryFilter implements ConfigurationApplier
         if (stristr($field, self::SEPARATOR) !== false) {
             $relationNames = explode(self::SEPARATOR, $field);
             $relationField = array_pop($relationNames);
-            
             // reverse array so we can use the faster array_pop
             $relationNames = array_reverse($relationNames);
             // initialize current class
