@@ -341,7 +341,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         if (!$queryScaffolder) {
             // If no scaffolder if provided, try to infer the type by resolving the field
-            $result = $this->getDataObjectInstance()->obj($fieldName);
+            $result = StaticSchema::inst()->accessField($this->getDataObjectInstance(), $fieldName);
 
             if (!$result instanceof DataList && !$result instanceof ArrayList) {
                 throw new InvalidArgumentException(
@@ -352,14 +352,13 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                     )
                 );
             }
-
             $queryScaffolder = Injector::inst()->create(
                 ListQueryScaffolder::class,
                 $fieldName,
                 null,
                 function ($obj) use ($fieldName) {
                     /* @var DataObject $obj */
-                    return $obj->obj($fieldName);
+                    return StaticSchema::inst()->accessField($obj, $fieldName);
                 },
                 $result->dataClass()
             );
@@ -669,7 +668,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             /**
              * @var DataObject $obj
              */
-            $field = $obj->obj($info->fieldName);
+            $field = StaticSchema::inst()->accessField($obj, $info->fieldName);
             // return the raw field value, or checks like `is_numeric()` fail
             if ($field instanceof DBField && $field->isInternalGraphQLType()) {
                 return $field->getValue();
@@ -689,7 +688,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
                 );
             }
 
-            $result = $instance->obj($fieldName);
+            $result = StaticSchema::inst()->accessField($instance, $fieldName);
 
             if ($result instanceof SS_List) {
                 throw new InvalidArgumentException(
@@ -722,10 +721,10 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
 
         foreach ($this->nestedQueries as $name => $scaffolder) {
             $scaffold = $scaffolder->scaffold($manager);
-            $scaffold['name'] = $name;
+            $scaffold['name'] = StaticSchema::inst()->formatField($name);
             $fieldMap[$name] = $scaffold;
         }
 
-        return $fieldMap;
+        return StaticSchema::inst()->formatKeys($fieldMap);
     }
 }

@@ -13,6 +13,7 @@ use SilverStripe\GraphQL\QueryFilter\QueryFilterAware;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObjectInterface;
 use InvalidArgumentException;
@@ -33,8 +34,8 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
     {
         parent::__construct(null, null, $this, $dataObjectClass);
         $filter = Injector::inst()->create(DataObjectQueryFilter::class, $dataObjectClass)
-            ->setFilterKey(Read::FILTER)
-            ->setExcludeKey(Read::EXCLUDE);
+            ->setFilterKey(StaticSchema::inst()->formatField(Read::FILTER))
+            ->setExcludeKey(StaticSchema::inst()->formatField(Read::EXCLUDE));
         $this->setQueryFilter($filter);
     }
 
@@ -54,17 +55,19 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
      */
     protected function createDefaultArgs(Manager $manager)
     {
+        $id = StaticSchema::inst()->formatField('ID');
         $args = [
-            'ID' => [
+            $id => [
                 'type' => Type::id()
             ],
         ];
-
+        $filterKey = StaticSchema::inst()->formatField(Read::FILTER);
+        $excludeKey = StaticSchema::inst()->formatField(Read::EXCLUDE);
         if ($this->queryFilter->exists()) {
-            $args[Read::FILTER] = [
+            $args[$filterKey] = [
                 'type' => $this->queryFilter->getInputType($this->inputTypeName(Read::FILTER)),
             ];
-            $args[Read::EXCLUDE] = [
+            $args[$excludeKey] = [
                 'type' => $this->queryFilter->getInputType($this->inputTypeName(Read::EXCLUDE)),
             ];
         }
@@ -91,10 +94,11 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
+        $id = StaticSchema::inst()->formatField('ID');
         // get as a list so extensions can influence it pre-query
         $list = DataList::create($this->getDataObjectClass());
-        if (isset($args['ID'])) {
-            $list = $list->filter('ID', $args['ID']);
+        if (isset($args[$id])) {
+            $list = $list->filter('ID', $args[$id]);
         }
         if ($this->queryFilter->exists()) {
             $list = $this->queryFilter->applyArgsToList($list, $args);

@@ -12,6 +12,7 @@ use SilverStripe\GraphQL\OperationResolver;
 use SilverStripe\GraphQL\Scaffolding\Extensions\TypeCreatorExtension;
 use SilverStripe\GraphQL\Scaffolding\Interfaces\CRUDInterface;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\MutationScaffolder;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
@@ -59,8 +60,9 @@ class Create extends MutationScaffolder implements OperationResolver, CRUDInterf
      */
     protected function createDefaultArgs(Manager $manager)
     {
+        $argName = $this->argName();
         return [
-            'Input' => [
+            $argName => [
                 'type' => Type::nonNull($manager->getType($this->inputTypeName())),
             ]
         ];
@@ -120,7 +122,7 @@ class Create extends MutationScaffolder implements OperationResolver, CRUDInterf
 
         /** @var DataObject $newObject */
         $newObject = Injector::inst()->create($this->getDataObjectClass());
-        $newObject->update($args['Input']);
+        $newObject->update($args[$this->argName()]);
 
         // Extension points that return false should kill the create
         $results = $this->extend('augmentMutation', $newObject, $args, $context, $info);
@@ -135,5 +137,13 @@ class Create extends MutationScaffolder implements OperationResolver, CRUDInterf
         $this->extend('afterMutation', $newObject, $args, $context, $info);
 
         return $newObject;
+    }
+
+    /**
+     * @return string
+     */
+    private function argName()
+    {
+        return StaticSchema::inst()->formatField('Input');
     }
 }

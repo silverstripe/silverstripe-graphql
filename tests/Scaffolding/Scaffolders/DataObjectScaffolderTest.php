@@ -18,7 +18,9 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\OperationScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\QueryScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
+use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FakeFieldAccessor;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
@@ -481,6 +483,20 @@ class DataObjectScaffolderTest extends SapphireTest
         $this->assertContains('Title', $target->getFields()->column('Name'));
         $this->assertNotContains('RedirectionType', $target->getFields()->column('Name'));
         $this->assertCount(2, $target->getOperations());
+    }
+
+    public function testFieldAccessor()
+    {
+        StaticSchema::inst()->setFieldAccessor(new FakeFieldAccessor());
+        $scaffolder = $this->getFakeScaffolder()
+            ->addField('dleiFyM')
+            ->addField('MyField');
+        $type = $scaffolder->scaffold(new Manager());
+        $fields = $type->config['fields']();
+        $this->assertArrayHasKey('dleiFyM', $fields);
+        $this->assertArrayHasKey('MyField', $fields);
+        $this->assertArrayNotHasKey('myfeild', $fields);
+        StaticSchema::reset();
     }
 
     /**
