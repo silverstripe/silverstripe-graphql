@@ -184,6 +184,23 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
         $scalars = $schemaConfig[self::SCALARS] ?? [];
         $modelConfig = $schemaConfig[self::MODEL_CONFIG] ?? [];
 
+
+        $validConfigKeys = [
+            self::DEFAULTS,
+            self::TYPES,
+            self::QUERIES,
+            self::MUTATIONS,
+            self::INTERFACES,
+            self::UNIONS,
+            self::MODELS,
+            self::ENUMS,
+            self::SCALARS,
+            self::MODEL_CONFIG,
+            'builders',
+            'src',
+        ];
+        static::assertValidConfig($schemaConfig, $validConfigKeys);
+
         $this->defaults = $defaults;
 
         // Configure the models
