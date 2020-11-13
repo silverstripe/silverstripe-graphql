@@ -268,11 +268,7 @@ class StaticSchemaTest extends SapphireTest
         $result = StaticSchema::inst()->extractKeys(['Foo', 'NotExists'], $arr);
         $this->assertEquals(['test1', null], $result);
 
-        if (version_compare(PHP_VERSION, '8.0.0') >= 0) {
-            $this->expectException(\PHPUnit_Framework_Error_Warning::class);
-        } else {
-            $this->expectException(\PHPUnit_Framework_Error_Notice::class);
-        }
+        $this->expectException(\PHPUnit_Framework_Error::class);
         StaticSchema::inst()->extractKeys(['Foo', 'NotExists'], $arr, false);
     }
 
