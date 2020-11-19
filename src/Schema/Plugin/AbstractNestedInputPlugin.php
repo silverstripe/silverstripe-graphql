@@ -162,7 +162,7 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
                 $filters[$fieldObj->getName()] = true;
             }
         }
-        $this->_allConfigCache[$modelType->getName()] = $filters;
+        $this->_allConfigCache[$key] = $filters;
 
         return $filters;
     }

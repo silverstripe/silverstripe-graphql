@@ -406,6 +406,8 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
             // Duck programming here just because there is such an exhaustive list of possible
             // interfaces, and they can't have a common ancestor until PHP 7.4 allows it.
             // https://wiki.php.net/rfc/covariant-returns-and-contravariant-parameters
+            // ideally, this should be `instanceof PluginInterface` and PluginInterface should have
+            // apply(SchemaComponent)
             if (!method_exists($plugin, 'apply')) {
                 continue;
             }
