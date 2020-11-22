@@ -11,6 +11,8 @@ trait FieldReconciler
 {
     /**
      * @param array $config
+     * @param DataObject $dataObject
+     * @param FieldAccessor $fieldAccessor
      * @return array
      * @throws SchemaBuilderException
      */

@@ -4,20 +4,36 @@ Name: 'graphql-schema-global'
 SilverStripe\GraphQL\Schema\Schema:
   schemas:
     '*':
-      modelConfig:
-        DataObject:
-          plugins:
-            inheritance: true
-            inheritedPlugins:
-              after: '*'
-          operations:
-            read:
-              plugins:
-                paginateList: true
-                canView:
-                  after: paginateList
-            readOne:
-              plugins:
-                canView: true
-                firstResult:
-                  after: '*'
+      config:
+        resolverStrategy: ['SilverStripe\GraphQL\Schema\Resolver\DefaultResolverStrategy', 'getResolverMethod']
+        defaultResolver: ['SilverStripe\GraphQL\Schema\Resolver\DefaultResolver', 'defaultFieldResolver']
+        modelCreators:
+          - 'SilverStripe\GraphQL\Schema\DataObject\ModelCreator'
+        modelConfig:
+          DataObject:
+            type_formatter: [ 'SilverStripe\Core\ClassInfo', 'shortName' ]
+            type_prefix: ''
+            type_mapping: []
+            plugins:
+              inheritance: true
+              inheritedPlugins:
+                after: '*'
+            operations:
+              read:
+                class: 'SilverStripe\GraphQL\Schema\DataObject\ReadCreator'
+                plugins:
+                  paginateList: true
+                  canView:
+                    after: paginateList
+              readOne:
+                class: 'SilverStripe\GraphQL\Schema\DataObject\ReadOneCreator'
+                plugins:
+                  canView: true
+                  firstResult:
+                    after: '*'
+              delete:
+                class: 'SilverStripe\GraphQL\Schema\DataObject\DeleteCreator'
+              update:
+                class: 'SilverStripe\GraphQL\Schema\DataObject\UpdateCreator'
+              create:
+                class: 'SilverStripe\GraphQL\Schema\DataObject\CreateCreator'

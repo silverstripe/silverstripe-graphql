@@ -16,7 +16,6 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
 use SilverStripe\GraphQL\Schema\Registry\ResolverRegistry;
-use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -103,7 +102,6 @@ class Field implements
      */
     public function __construct(string $name, $config)
     {
-        $this->setResolverRegistry(Injector::inst()->get(ResolverRegistry::class));
         list ($name, $args) = static::parseName($name);
         $this->setName($name);
 
@@ -324,7 +322,7 @@ class Field implements
         $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
         $safeNamedClass = TypeReference::create($safeModelTypeDef)->getNamedType();
         $namedClass = str_replace('__', '\\', $safeNamedClass);
-        $model = Build::requireActiveBuild()->getModelCreator()->getModel($namedClass);
+        $model = Build::requireActiveBuild()->getSchemaContext()->createModel($namedClass);
         Schema::invariant(
             $model,
             'No model found for %s on %s',
@@ -401,13 +399,14 @@ class Field implements
     /**
      * @param string|null $typeName
      * @return EncodedResolver
+     * @throws SchemaBuilderException
      */
     public function getEncodedResolver(?string $typeName = null): EncodedResolver
     {
         if ($this->getResolver()) {
             $encodedResolver = EncodedResolver::create($this->getResolver(), $this->getResolverContext());
         } else {
-            $resolver = $this->getResolverRegistry()->findResolver($typeName, $this);
+            $resolver = Build::requireActiveBuild()->getSchemaContext()->discoverResolver($typeName, $this);
             $encodedResolver = EncodedResolver::create($resolver, $this->getResolverContext());
         }
 
@@ -485,24 +484,6 @@ class Field implements
             $this->defaultResolver = null;
         }
 
-        return $this;
-    }
-
-    /**
-     * @return ResolverRegistry
-     */
-    public function getResolverRegistry(): ResolverRegistry
-    {
-        return $this->resolverRegistry;
-    }
-
-    /**
-     * @param ResolverRegistry $resolverRegistry
-     * @return $this
-     */
-    public function setResolverRegistry(ResolverRegistry $resolverRegistry): self
-    {
-        $this->resolverRegistry = $resolverRegistry;
         return $this;
     }
 
