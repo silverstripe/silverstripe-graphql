@@ -243,8 +243,8 @@ class DataObjectModel implements
      */
     public function getOperationCreatorByIdentifier(string $id): ?OperationCreator
     {
-        $registeredOperations = $this->config()->get('operations') ?? [];
-        $creator = $registeredOperations[$id] ?? null;
+        $registeredOperations = $this->getModelConfig()->get('operations', []);
+        $creator = $registeredOperations[$id]['class'] ?? null;
         if (!$creator) {
             return null;
         }
@@ -267,10 +267,11 @@ class DataObjectModel implements
 
     /**
      * @return string[]
+     * @throws SchemaBuilderException
      */
     public function getAllOperationIdentifiers(): array
     {
-        $registeredOperations = $this->config()->get('operations') ?? [];
+        $registeredOperations = $this->getModelConfig()->get('operations', []);
 
         return array_keys($registeredOperations);
     }

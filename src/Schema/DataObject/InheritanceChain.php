@@ -198,7 +198,7 @@ class InheritanceChain
      */
     public static function createDescendantTypename(DataObject $dataObject): string
     {
-        $model = Build::requireActiveBuild()->getModelCreator()->getModel($dataObject);
+        $model = Build::requireActiveBuild()->getSchemaContext()->createModel(get_class($dataObject));
         Schema::invariant(
             $model,
             'No model defined for %s. Cannot create inheritance typename',

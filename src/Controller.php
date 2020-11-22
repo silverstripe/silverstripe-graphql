@@ -22,6 +22,7 @@ use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\SchemaContext;
 use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
@@ -96,13 +97,18 @@ class Controller extends BaseController implements Flushable
     /**
      * @param string $schemaKey
      * @param QueryHandlerInterface|null $queryHandler
+     * @param SchemaContext|null $schemaContext
      */
-    public function __construct(string $schemaKey, ?QueryHandlerInterface $queryHandler = null)
-    {
+    public function __construct(
+        string $schemaKey,
+        ?QueryHandlerInterface $queryHandler = null,
+        ?SchemaContext $schemaContext = null
+    ) {
         parent::__construct();
-        $schema = Schema::create($schemaKey);
+        $schemaContext = $schemaContext ?: Injector::inst()->create(SchemaContext::class);
+        $schema = Schema::create($schemaKey, $schemaContext);
         $this->setSchema($schema);
-        $handler = $queryHandler ?: Injector::inst()->get(QueryHandlerInterface::class);
+        $handler = $queryHandler ?: Injector::inst()->create(QueryHandlerInterface::class);
         $this->setQueryHandler($handler);
     }
 
