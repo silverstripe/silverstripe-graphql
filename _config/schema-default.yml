@@ -35,4 +35,3 @@ SilverStripe\GraphQL\Schema\Schema:
                 before: paginateList
               canView:
                 after: paginateList
-
