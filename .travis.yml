@@ -22,7 +22,7 @@ env:
     - COMPOSER_ROOT_VERSION=4.x-dev
     - SS_BASE_URL="http://localhost:8080/"
     - SS_ENVIRONMENT_TYPE="dev"
-    - RECIPE_CMS_VERSION=5.x-dev
+    - RECIPE_CMS_VERSION=4.x-dev
 
 matrix:
   fast_finish: true
@@ -51,7 +51,7 @@ before_script:
 
 # Install composer dependencies
   - composer validate
-  - if [[ (! $BEHAT_TEST) && (! $ASSETADMIN_TEST) ]]; then composer require --prefer-dist --no-update silverstripe/recipe-core:5.x-dev silverstripe/assets:2.x-dev --prefer-dist ; fi
+  - if [[ (! $BEHAT_TEST) && (! $ASSETADMIN_TEST) ]]; then composer require --prefer-dist --no-update silverstripe/recipe-core:4.x-dev silverstripe/assets:2.x-dev --prefer-dist ; fi
   - if [[ $DB == PGSQL ]]; then composer require silverstripe/postgresql:3.x-dev --prefer-dist --no-update; fi
   - if [[ $ASSETADMIN_TEST ]]; then composer require silverstripe/recipe-cms $RECIPE_CMS_VERSION --prefer-source --no-update ; fi
   - if [[ $BEHAT_TEST ]]; then composer require silverstripe/recipe-testing:^2 silverstripe/recipe-cms:$RECIPE_CMS_VERSION silverstripe/frameworktest:dev-master --prefer-source --no-update ; fi
