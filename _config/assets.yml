@@ -23,10 +23,6 @@ SilverStripe\Assets\File:
   app_categories:
     document:
       - graphql
-  graphql_blacklisted_fields:
-    file: true
-  extensions:
-    - SilverStripe\GraphQL\Extensions\DevBuildExtension
 
 SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Controller:
