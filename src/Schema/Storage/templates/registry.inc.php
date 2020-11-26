@@ -9,6 +9,8 @@ use SilverStripe\GraphQL\Schema\Storage\AbstractTypeRegistry;
 
 class <?=$globals['typeClassName']; ?> extends AbstractTypeRegistry
 {
+    protected static $types = [];
+
     protected static function getSourceDirectory(): string
     {
         return __DIR__;

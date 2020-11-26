@@ -92,7 +92,6 @@ class CodeGenerationStore implements SchemaStorageInterface
      */
     public function persistSchema(Schema $schema): void
     {
-        Benchmark::start('render');
         $fs = new Filesystem();
         $finder = new Finder();
         $temp = $this->getTempDirectory();
@@ -250,7 +249,6 @@ class CodeGenerationStore implements SchemaStorageInterface
             Schema::message(sprintf('(... and %s more)', $diff));
         }
 
-        Schema::message(Benchmark::end('render', 'Generated code in %sms'));
     }
 
     /**
@@ -266,7 +264,7 @@ class CodeGenerationStore implements SchemaStorageInterface
             ));
         }
 
-        require_once($this->getSchemaFilename());
+        require($this->getSchemaFilename());
 
         $registryClass = $this->getClassName(self::TYPE_CLASS_NAME);
         $hasMutations = method_exists($registryClass, Schema::MUTATION_TYPE);

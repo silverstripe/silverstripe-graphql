@@ -5,17 +5,13 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
-use SilverStripe\Core\Convert;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\GraphQL\Dev\Build;
-use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
+use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\ORM\DataObject;
 use ReflectionException;
-use InvalidArgumentException;
 
 /**
  * Utility class that abstracts away class ancestry computations and creates
@@ -175,7 +171,7 @@ class InheritanceChain
 
         $subtypes = [];
         foreach ($this->getDescendantModels() as $className) {
-            $modelType = Build::requireActiveBuild()->createModel($className);
+            $modelType = BuildState::requireActiveBuild()->createModel($className);
             $originalName = $modelType->getName();
             $newName = call_user_func_array($nameCreator, [$originalName]);
             $modelType->setName($newName);
@@ -198,7 +194,7 @@ class InheritanceChain
      */
     public static function createDescendantTypename(DataObject $dataObject): string
     {
-        $model = Build::requireActiveBuild()->getSchemaContext()->createModel(get_class($dataObject));
+        $model = BuildState::requireActiveBuild()->getSchemaContext()->createModel(get_class($dataObject));
         Schema::invariant(
             $model,
             'No model defined for %s. Cannot create inheritance typename',

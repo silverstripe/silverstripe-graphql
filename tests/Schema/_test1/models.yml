@@ -1,0 +1,4 @@
+SilverStripe\GraphQL\Tests\Fake\DataObjectFake:
+  fields:
+    myField: true
+  operations: '*'

@@ -130,8 +130,6 @@ class Controller extends BaseController implements Flushable
         if ($request->httpMethod() === 'OPTIONS') {
             return $this->handleOptions($request);
         }
-        $queryPerf = '';
-        $schemaPerf = '';
         // Main query handling
         try {
             list($query, $variables) = $this->getRequestQueryVariables($request);
@@ -139,8 +137,6 @@ class Controller extends BaseController implements Flushable
                 $this->httpError(400, 'This endpoint requires a "query" parameter');
             }
 
-            // Temporary, maybe useful by feature flag later..
-            Benchmark::start('schema-perf');
             try {
                 $schema = $this->getSchema()->fetch();
             } catch (SchemaNotFoundException $e) {
@@ -152,16 +148,13 @@ class Controller extends BaseController implements Flushable
                     throw $e;
                 }
             }
-            $schemaPerf = Benchmark::end('schema-perf', '%sms', true);
             $handler = $this->getQueryHandler();
             if ($handler instanceof ContextProvider) {
                 $this->applyContext($handler, $request);
             }
             $ctx = $handler->getContext();
             $this->extend('onBeforeHandleQuery', $schema, $query, $ctx, $variables);
-            Benchmark::start('query-perf');
             $result = $handler->query($schema, $query, $variables);
-            $queryPerf = Benchmark::end('query-perf', '%sms', true);
             $this->extend('onAfterHandleQuery', $schema, $query, $ctx, $variables, $result);
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
@@ -179,9 +172,7 @@ class Controller extends BaseController implements Flushable
         }
 
         $response = $this->addCorsHeaders($request, new HTTPResponse(json_encode($result)));
-        return $response->addHeader('Content-Type', 'application/json')
-            ->addHeader('X-QueryPerf', $queryPerf)
-            ->addHeader('X-SchemaPerf', $schemaPerf);
+        return $response->addHeader('Content-Type', 'application/json');
     }
 
     /**

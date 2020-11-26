@@ -1,0 +1,7 @@
+foo: bar
+types:
+  TestType:
+    fields:
+      test: String
+config:
+  bobo: jojo
