@@ -58,7 +58,6 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     use Injectable;
     use Configurable;
 
-    const DEFAULTS = 'defaults';
     const SCHEMA_CONFIG = 'config';
     const TYPES = 'types';
     const QUERIES = 'queries';
@@ -119,14 +118,14 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     private $scalars = [];
 
     /**
-     * @var Query[]
+     * @var Query
      */
-    private $queryFields = [];
+    private $queryType;
 
     /**
-     * @var Mutation[]
+     * @var Mutation
      */
-    private $mutationFields = [];
+    private $mutationType;
 
     /**
      * @var SchemaStorageInterface
@@ -152,12 +151,14 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     public function __construct(string $schemaKey, SchemaContext $schemaContext = null)
     {
         $this->setSchemaKey($schemaKey);
+        $this->queryType = Type::create(self::QUERY_TYPE);
+        $this->mutationType = Type::create(self::MUTATION_TYPE);
+
         $this->bootConfig();
         $config = $this->getSchemaConfiguration();
         $schemaConfig = $config[self::SCHEMA_CONFIG] ?? [];
 
         $this->setSchemaContext($schemaContext ?: SchemaContext::create());
-
 
         $store = Injector::inst()->get(SchemaStorageCreator::class)
             ->createStore($schemaKey);
@@ -173,7 +174,6 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
      */
     public function applyConfig(array $schemaConfig): Schema
     {
-        Benchmark::start('apply-config');
         $types = $schemaConfig[self::TYPES] ?? [];
         $queries = $schemaConfig[self::QUERIES] ?? [];
         $mutations = $schemaConfig[self::MUTATIONS] ?? [];
@@ -199,14 +199,12 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
 
         static::assertValidConfig($queries);
         foreach ($queries as $queryName => $queryConfig) {
-            $query = Query::create($queryName, $queryConfig);
-            $this->queryFields[$query->getName()] = $query;
+            $this->addQuery(Query::create($queryName, $queryConfig));
         }
 
         static::assertValidConfig($mutations);
         foreach ($mutations as $mutationName => $mutationConfig) {
-            $mutation = Mutation::create($mutationName, $mutationConfig);
-            $this->mutationFields[$mutation->getName()] = $mutation;
+            $this->addMutation(Mutation::create($mutationName, $mutationConfig));
         }
 
         static::assertValidConfig($interfaces);
@@ -245,33 +243,14 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
             $this->addScalar($scalar);
         }
 
-        Benchmark::start('procedural-updates');
         $this->applyProceduralUpdates($config['execute'] ?? []);
-        Benchmark::end('procedural-updates');
-
-        Benchmark::start('process-models');
         $this->processModels();
-        Benchmark::end('process-models');
-
-        Benchmark::start('schema-updates');
         $this->applySchemaUpdates();
-        Benchmark::end('schema-updates') . PHP_EOL;
+
         foreach ($this->models as $modelType) {
             $this->addType($modelType);
         }
 
-        $queryType = Type::create(self::QUERY_TYPE, [
-            'fields' => $this->queryFields,
-        ]);
-        $this->types[self::QUERY_TYPE] = $queryType;
-
-        if (!empty($this->mutationFields)) {
-            $mutationType = Type::create(self::MUTATION_TYPE, [
-                'fields' => $this->mutationFields,
-            ]);
-            $this->types[self::MUTATION_TYPE] = $mutationType;
-        }
-        Benchmark::end('apply-config');
         return $this;
     }
 
@@ -289,6 +268,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
 
         // Flushless global sources
         $globalSrcs = $mergedSchema['src'] ?? [];
+        unset($mergedSchema['src']);
         if (is_string($globalSrcs)) {
             $globalSrcs = [Schema::ALL => $globalSrcs];
         }
@@ -304,6 +284,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
 
         // Schema-specific flushless sources
         $configSrcs = $schema['src'] ?? [];
+        unset($schema['src']);
         if (is_string($configSrcs)) {
             $configSrcs = [$this->schemaKey => $configSrcs];
         }
@@ -344,10 +325,10 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
                 );
 
                 if ($operationType instanceof ModelQuery) {
-                    $this->queryFields[$operationType->getName()] = $operationType;
+                    $this->addQuery($operationType);
                 } else {
                     if ($operationType instanceof ModelMutation) {
-                        $this->mutationFields[$operationType->getName()] = $operationType;
+                        $this->addMutation($operationType);
                     }
                 }
             }
@@ -380,8 +361,8 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
         $typeComponents = [
             'types' => $this->types,
             'models' => $this->models,
-            'queries' => $this->queryFields,
-            'mutations' => $this->mutationFields,
+            'queries' => $this->queryType->getFields(),
+            'mutations' => $this->mutationType->getFields(),
         ];
         $this->applyComponentSet($typeComponents);
 
@@ -528,7 +509,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     public function loadConfigFromSource(string $dir): array
     {
         $resolvedDir = ModuleResourceLoader::singleton()->resolvePath($dir);
-        $absConfigSrc = Path::join(BASE_PATH, $resolvedDir);
+        $absConfigSrc = Director::is_absolute($dir) ? $dir : Path::join(BASE_PATH, $resolvedDir);
         static::invariant(
             is_dir($absConfigSrc),
             'Source config directory %s does not exist on schema %s',
@@ -537,7 +518,6 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
         );
 
         $config = [
-            self::DEFAULTS => [],
             self::SCHEMA_CONFIG => [],
             self::TYPES => [],
             self::MODELS => [],
@@ -601,6 +581,11 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
      */
     public function save(): void
     {
+        $this->types[self::QUERY_TYPE] = $this->queryType;
+        if ($this->mutationType->exists()) {
+            $this->types[self::MUTATION_TYPE] = $this->mutationType;
+        }
+
         $this->validate();
         $this->getStore()->persistSchema($this);
     }
@@ -663,7 +648,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
      */
     public function exists(): bool
     {
-        return !empty($this->types) && !empty($this->queryFields);
+        return !empty($this->types) && $this->queryType->exists();
     }
 
     /**
@@ -691,10 +676,15 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
             implode(', ', $dupes)
         );
 
+        static::invariant(
+            $this->exists(),
+            'Your schema must contain at least one type and at least one query'
+        );
+
         $validators = array_merge(
             $this->types,
-            $this->queryFields,
-            $this->mutationFields,
+            $this->queryType->getFields(),
+            $this->mutationType->getFields(),
             $this->enums,
             $this->interfaces,
             $this->unions,
@@ -740,6 +730,28 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     public function setSchemaContext(SchemaContext $schemaContext): Schema
     {
         $this->schemaContext = $schemaContext;
+        return $this;
+    }
+
+    /**
+     * @param Query $query
+     * @return $this
+     */
+    public function addQuery(Query $query): self
+    {
+        $this->queryType->addField($query->getName(), $query);
+
+        return $this;
+    }
+
+    /**
+     * @param Mutation $mutation
+     * @return $this
+     */
+    public function addMutation(Mutation $mutation): self
+    {
+        $this->mutationType->addField($mutation->getName(), $mutation);
+
         return $this;
     }
 
@@ -1058,29 +1070,15 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
      * @return string
      * @throws SchemaBuilderException
      */
-    public static function pluralise($typeName): string
+    public function pluralise($typeName): string
     {
-        $callable = static::config()->get('pluraliser');
+        $callable = $this->getSchemaConfiguration()->getPluraliser();
         Schema::invariant(
             is_callable($callable),
             'Schema does not have a valid callable "pluraliser" property set in its config'
         );
 
         return call_user_func_array($callable, [$typeName]);
-    }
-
-    /**
-     * @param string $typeName
-     * @return string
-     */
-    public static function pluraliser(string $typeName): string
-    {
-        // Ported from DataObject::plural_name()
-        if (preg_match('/[^aeiou]y$/i', $typeName)) {
-            $typeName = substr($typeName, 0, -1) . 'ie';
-        }
-        $typeName .= 's';
-        return $typeName;
     }
 
     /**

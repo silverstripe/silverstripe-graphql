@@ -103,4 +103,29 @@ class SchemaContext extends AbstractConfiguration
             $this->get('defaultResolver')
         );
     }
+
+    /**
+     * @return callable
+     * @throws SchemaBuilderException
+     */
+    public function getPluraliser(): callable
+    {
+        return $this->get('pluraliser', [static::class, 'pluralise']);
+    }
+
+    /**
+     * @param string $typeName
+     * @return string
+     */
+    public static function pluralise(string $typeName): string
+    {
+        // Ported from DataObject::plural_name()
+        if (preg_match('/[^aeiou]y$/i', $typeName)) {
+            $typeName = substr($typeName, 0, -1) . 'ie';
+        }
+        $typeName .= 's';
+        return $typeName;
+    }
+
+
 }

@@ -7,7 +7,7 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Config\ModelConfiguration;
-use SilverStripe\GraphQL\Dev\Build;
+use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
@@ -19,7 +19,6 @@ use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationProvider;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
@@ -130,7 +129,7 @@ class DataObjectModel implements
             }
             return null;
         }
-        $type = Build::requireActiveBuild()->getTypeNameForClass($class);
+        $type = BuildState::requireActiveBuild()->getTypeNameForClass($class);
         if ($this->isList($result)) {
             $queryConfig = array_merge([
                 'type' => sprintf('[%s]', $type),
@@ -293,7 +292,7 @@ class DataObjectModel implements
             return null;
         }
 
-        return Build::requireActiveBuild()->createModel($class);
+        return BuildState::requireActiveBuild()->createModel($class);
     }
 
     /**

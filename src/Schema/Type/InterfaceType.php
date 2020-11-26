@@ -70,6 +70,32 @@ class InterfaceType extends Type
         return $this;
     }
 
+    /**
+     * @param Type $type
+     * @return InterfaceType
+     * @throws SchemaBuilderException
+     */
+    public function mergeWith(Type $type): Type
+    {
+        Schema::invariant(
+            $type instanceof InterfaceType,
+            '%s::%s only accepts instances of %s',
+            __CLASS__,
+            __FUNCTION__,
+            InterfaceType::class
+        );
+        foreach ($type->getFields() as $field) {
+            $clonedField = clone $field;
+            $existing = $this->fields[$field->getName()] ?? null;
+            if (!$existing) {
+                $this->fields[$field->getName()] = $clonedField;
+            } else {
+                $this->fields[$field->getName()] = $existing->mergeWith($clonedField);
+            }
+        }
+        return $this;
+    }
+
     public function validate(): void
     {
         Schema::invariant(

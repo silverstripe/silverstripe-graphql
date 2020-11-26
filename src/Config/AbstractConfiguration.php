@@ -14,7 +14,7 @@ abstract class AbstractConfiguration
     /**
      * @var array
      */
-    private $settings = [];
+    protected $settings = [];
 
     /**
      * ModelConfiguration constructor.
