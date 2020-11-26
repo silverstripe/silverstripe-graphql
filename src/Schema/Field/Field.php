@@ -6,6 +6,7 @@ use GraphQL\Language\Token;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Dev\Build;
+use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
@@ -93,7 +94,7 @@ class Field implements
      * @param array|string $config
      * @throws SchemaBuilderException
      */
-    public function __construct(string $name, $config)
+    public function __construct(string $name, $config = [])
     {
         list ($name, $args) = static::parseName($name);
         $this->setName($name);
@@ -315,7 +316,7 @@ class Field implements
         $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
         $safeNamedClass = TypeReference::create($safeModelTypeDef)->getNamedType();
         $namedClass = str_replace('__', '\\', $safeNamedClass);
-        $model = Build::requireActiveBuild()->getSchemaContext()->createModel($namedClass);
+        $model = BuildState::requireActiveBuild()->getSchemaContext()->createModel($namedClass);
         Schema::invariant(
             $model,
             'No model found for %s on %s',
@@ -399,7 +400,7 @@ class Field implements
         if ($this->getResolver()) {
             $encodedResolver = EncodedResolver::create($this->getResolver(), $this->getResolverContext());
         } else {
-            $resolver = Build::requireActiveBuild()->getSchemaContext()->discoverResolver($typeName, $this);
+            $resolver = BuildState::requireActiveBuild()->getSchemaContext()->discoverResolver($typeName, $this);
             $encodedResolver = EncodedResolver::create($resolver, $this->getResolverContext());
         }
 

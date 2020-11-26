@@ -22,11 +22,6 @@ class Build extends Controller
     ];
 
     /**
-     * @var Schema|null
-     */
-    private static $activeBuild;
-
-    /**
      * @param HTTPRequest $request
      * @throws SchemaBuilderException
      */
@@ -63,7 +58,7 @@ class Build extends Controller
             Benchmark::start('build-schema-' . $key);
             Schema::message(sprintf('--- Building schema "%s" ---', $key));
             $schema = Schema::create($key);
-            self::$activeBuild = $schema;
+            BuildState::activate($schema);
             $schema->loadFromConfig();
             if (!$schema->exists()) {
                 continue;
@@ -79,29 +74,7 @@ class Build extends Controller
             );
         }
 
-        self::$activeBuild = null;
+        BuildState::clear();
     }
 
-    /**
-     * @return Schema|null
-     */
-    public static function getActiveBuild(): ?Schema
-    {
-        return self::$activeBuild;
-    }
-
-    /**
-     * @return Schema
-     * @throws SchemaBuilderException
-     */
-    public static function requireActiveBuild(): Schema
-    {
-        $schema = static::getActiveBuild();
-        Schema::invariant(
-            $schema,
-            'Attempted to access schema building tools when no build was active'
-        );
-
-        return $schema;
-    }
 }

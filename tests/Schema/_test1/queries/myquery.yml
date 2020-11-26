@@ -1,0 +1,2 @@
+myQuery: SomeType
+'myOtherQuery(Arg1: String)': SomeType
