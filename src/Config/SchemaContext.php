@@ -13,6 +13,9 @@ use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 
+/**
+ * Encapsulates configuration required for a {@link Schema} object.
+ */
 class SchemaContext extends AbstractConfiguration
 {
     /**
