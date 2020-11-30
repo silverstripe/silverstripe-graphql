@@ -5,7 +5,6 @@ namespace SilverStripe\GraphQL\Schema\Field;
 use GraphQL\Language\Token;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Dev\Build;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -15,7 +14,6 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaComponent;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Plugin\PluginConsumer;
-use SilverStripe\GraphQL\Schema\Registry\ResolverRegistry;
 use SilverStripe\GraphQL\Schema\Resolver\EncodedResolver;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -38,11 +36,6 @@ class Field implements
     use PluginConsumer;
 
     const DEFAULT_TYPE = 'String';
-
-    /**
-     * @var ResolverRegistry
-     */
-    private $resolverRegistry;
 
     /**
      * @var string
