@@ -5,13 +5,13 @@ SilverStripe\GraphQL\Schema\Schema:
   schemas:
     '*':
       config:
-        resolverStrategy: ['SilverStripe\GraphQL\Schema\Resolver\DefaultResolverStrategy', 'getResolverMethod']
-        defaultResolver: ['SilverStripe\GraphQL\Schema\Resolver\DefaultResolver', 'defaultFieldResolver']
+        resolverStrategy: 'SilverStripe\GraphQL\Schema\Resolver\DefaultResolverStrategy::getResolverMethod'
+        defaultResolver: 'SilverStripe\GraphQL\Schema\Resolver\DefaultResolver::defaultFieldResolver'
         modelCreators:
           - 'SilverStripe\GraphQL\Schema\DataObject\ModelCreator'
         modelConfig:
           DataObject:
-            type_formatter: [ 'SilverStripe\Core\ClassInfo', 'shortName' ]
+            type_formatter: 'SilverStripe\Core\ClassInfo::shortName'
             type_prefix: ''
             type_mapping: []
             plugins:

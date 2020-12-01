@@ -89,7 +89,7 @@ class Field implements
 
     /**
      * Field constructor.
-     * @param string|array $name
+     * @param string $name
      * @param array|string $config
      * @throws SchemaBuilderException
      */

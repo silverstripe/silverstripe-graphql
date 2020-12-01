@@ -6,6 +6,7 @@ namespace SilverStripe\GraphQL\Schema\Plugin;
 use MJS\TopSort\CircularDependencyException;
 use MJS\TopSort\ElementNotFoundException;
 use MJS\TopSort\Implementations\ArraySort;
+use SilverStripe\Config\MergeStrategy\Priority;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\PluginValidator;
@@ -123,7 +124,7 @@ trait PluginConsumer
     public function getPlugins(bool $inheritDefaults = true): array
     {
         $plugins = $inheritDefaults
-            ? array_replace_recursive($this->defaultPlugins, $this->plugins)
+            ? Priority::mergeArray($this->plugins, $this->defaultPlugins)
             : $this->plugins;
         $excluded = array_keys($this->excludedPlugins);
         foreach ($excluded as $pluginName) {

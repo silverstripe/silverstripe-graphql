@@ -4,6 +4,7 @@ namespace SilverStripe\GraphQL\Schema;
 
 use GraphQL\Type\Schema as GraphQLSchema;
 use M1\Env\Exception\ParseException;
+use SilverStripe\Config\MergeStrategy\Priority;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
@@ -299,7 +300,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
                 continue;
             }
             $sourcedConfig = $this->loadConfigFromSource($data);
-            $mergedSchema = array_replace_recursive($mergedSchema, $sourcedConfig);
+            $mergedSchema = Priority::mergeArray($sourcedConfig, $mergedSchema);
         }
 
         // Schema-specific flushless sources
@@ -313,11 +314,11 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
                 continue;
             }
             $sourcedConfig = $this->loadConfigFromSource($data);
-            $mergedSchema = array_replace_recursive($mergedSchema, $sourcedConfig);
+            $mergedSchema = Priority::mergeArray($sourcedConfig, $mergedSchema);
         }
 
         // Finally, apply the standard _config schema
-        $mergedSchema = array_replace_recursive($mergedSchema, $schema);
+        $mergedSchema = Priority::mergeArray($schema, $mergedSchema);
         $this->_cachedConfig = $mergedSchema;
     }
 

@@ -3,6 +3,7 @@
 
 namespace SilverStripe\GraphQL\Config;
 
+use SilverStripe\Config\MergeStrategy\Priority;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -87,7 +88,7 @@ abstract class AbstractConfiguration
      */
     public function apply(array $settings): self
     {
-        $this->settings = array_replace_recursive($this->settings, $settings);
+        $this->settings = Priority::mergeArray($settings, $this->settings);
 
         return $this;
     }

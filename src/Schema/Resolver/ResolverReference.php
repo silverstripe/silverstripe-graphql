@@ -37,7 +37,7 @@ class ResolverReference
             __CLASS__
         );
 
-        list($class, $method) = $callable;
+        list($class, $method) = $callableArray;
         $this->class = $class;
         $this->method = $method;
     }
