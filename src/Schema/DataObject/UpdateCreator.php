@@ -11,6 +11,7 @@ use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
+use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
 use SilverStripe\GraphQL\Schema\Exception\MutationException;
@@ -121,7 +122,11 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
 
         $fieldMap = [];
         foreach ($includedFields as $fieldName) {
-            $fieldMap[$fieldName] = $model->getField($fieldName)->getType();
+            $type = $model->getField($fieldName)->getType();
+            // No nested input types... yet
+            if ($type && Schema::isInternalType($type)) {
+                $fieldMap[$fieldName] = $type;
+            }
         }
         $inputType = InputType::create(
             self::inputTypeName($typeName),

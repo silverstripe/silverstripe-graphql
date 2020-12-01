@@ -9,24 +9,8 @@ use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
 use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Schema;
 
-class ModelConfiguration
+class ModelConfiguration extends AbstractConfiguration
 {
-    use Injectable;
-
-    /**
-     * @var array
-     */
-    private $settings = [];
-
-    /**
-     * ModelConfiguration constructor.
-     * @param array $settings
-     */
-    public function __construct(array $settings = [])
-    {
-        $this->settings = $settings;
-    }
-
     /**
      * @return callable|null
      * @throws SchemaBuilderException
@@ -82,32 +66,6 @@ class ModelConfiguration
 
         return $prefix . $typeName;
     }
-
-    /**
-     * Return a setting by dot.separated.syntax
-     * @param string|array $path
-     * @param mixed $default
-     * @return array|string|bool|null
-     * @throws SchemaBuilderException
-     */
-    public function get($path, $default = null)
-    {
-        Schema::invariant(
-            is_array($path) || is_string($path),
-            'get() must be passed an array or string'
-        );
-        $parts = is_string($path) ? explode('.', $path) : $path;
-        $scope = $this->settings;
-        foreach ($parts as $part) {
-            $scope = $scope[$part] ?? $default;
-            if (!is_array($scope)) {
-                break;
-            }
-        }
-
-        return $scope;
-    }
-
 
     /**
      * @param string $class

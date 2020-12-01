@@ -1,13 +1,6 @@
 ---
 Name: silverstripe-graphql-dataobject
 ---
-SilverStripe\GraphQL\Schema\DataObject\DataObjectModel:
-  operations:
-    read: 'SilverStripe\GraphQL\Schema\DataObject\ReadCreator'
-    readOne: 'SilverStripe\GraphQL\Schema\DataObject\ReadOneCreator'
-    delete: 'SilverStripe\GraphQL\Schema\DataObject\DeleteCreator'
-    update: 'SilverStripe\GraphQL\Schema\DataObject\UpdateCreator'
-    create: 'SilverStripe\GraphQL\Schema\DataObject\CreateCreator'
 SilverStripe\ORM\DataObject:
   graphql_blacklisted_fields:
     ClassName: true

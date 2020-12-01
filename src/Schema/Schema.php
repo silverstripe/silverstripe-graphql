@@ -4,6 +4,7 @@ namespace SilverStripe\GraphQL\Schema;
 
 use GraphQL\Type\Schema as GraphQLSchema;
 use M1\Env\Exception\ParseException;
+use SilverStripe\Config\MergeStrategy\Priority;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
@@ -59,7 +60,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     use Configurable;
 
     const DEFAULTS = 'defaults';
-    const MODEL_CONFIG = 'modelConfig';
+    const SCHEMA_CONFIG = 'config';
     const TYPES = 'types';
     const QUERIES = 'queries';
     const MUTATIONS = 'mutations';
@@ -87,11 +88,6 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
      * @var string
      */
     private $schemaKey;
-
-    /**
-     * @var array
-     */
-    private $defaults = [];
 
     /**
      * @var Type[]
@@ -139,9 +135,9 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     private $schemaStore;
 
     /**
-     * @var SchemaModelCreatorRegistry
+     * @var SchemaContext
      */
-    private $modelCreator;
+    private $schemaContext;
 
     /**
      * @var array|null
@@ -151,18 +147,24 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     /**
      * Schema constructor.
      * @param string $schemaKey
+     * @param SchemaContext|null $schemaContext
+     * @throws SchemaBuilderException
      */
-    public function __construct(string $schemaKey)
+    public function __construct(string $schemaKey, SchemaContext $schemaContext = null)
     {
         $this->setSchemaKey($schemaKey);
+        $this->bootConfig();
+        $config = $this->getSchemaConfiguration();
+        $schemaConfig = $config[self::SCHEMA_CONFIG] ?? [];
+
+        $this->setSchemaContext($schemaContext ?: SchemaContext::create());
+
+
         $store = Injector::inst()->get(SchemaStorageCreator::class)
             ->createStore($schemaKey);
-
         $this->setStore($store);
 
-        $modelCreator = SchemaModelCreatorRegistry::create()
-            ->setConfigurations($this->getModelConfiguration());
-        $this->setModelCreator($modelCreator);
+        $this->getSchemaContext()->apply($schemaConfig);
     }
 
     /**
@@ -173,7 +175,6 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     public function applyConfig(array $schemaConfig): Schema
     {
         Benchmark::start('apply-config');
-        $defaults = $schemaConfig[self::DEFAULTS] ?? [];
         $types = $schemaConfig[self::TYPES] ?? [];
         $queries = $schemaConfig[self::QUERIES] ?? [];
         $mutations = $schemaConfig[self::MUTATIONS] ?? [];
@@ -182,13 +183,9 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
         $models = $schemaConfig[self::MODELS] ?? [];
         $enums = $schemaConfig[self::ENUMS] ?? [];
         $scalars = $schemaConfig[self::SCALARS] ?? [];
-        $modelConfig = $schemaConfig[self::MODEL_CONFIG] ?? [];
+        $config = $schemaConfig[self::SCHEMA_CONFIG] ?? [];
 
-        $this->defaults = $defaults;
-
-        // Configure the models
-        SchemaModelCreatorRegistry::singleton()
-            ->setConfigurations($modelConfig);
+        $this->getSchemaContext()->apply($config);
 
         static::assertValidConfig($types);
         foreach ($types as $typeName => $typeConfig) {
@@ -250,7 +247,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
         }
 
         Benchmark::start('procedural-updates');
-        $this->applyProceduralUpdates($schemaConfig['builders'] ?? []);
+        $this->applyProceduralUpdates($config['execute'] ?? []);
         Benchmark::end('procedural-updates');
 
         Benchmark::start('process-models');
@@ -277,6 +274,52 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
         }
         Benchmark::end('apply-config');
         return $this;
+    }
+
+    /**
+     * @throws SchemaBuilderException
+     */
+    private function bootConfig(): void
+    {
+        $schemas = $this->config()->get('schemas');
+        static::invariant($schemas, 'There are no schemas defined in the config');
+        $schema = $schemas[$this->schemaKey] ?? [];
+
+        // Gather all the global config first
+        $mergedSchema = $schemas[self::ALL] ?? [];
+
+        // Flushless global sources
+        $globalSrcs = $mergedSchema['src'] ?? [];
+        if (is_string($globalSrcs)) {
+            $globalSrcs = [Schema::ALL => $globalSrcs];
+        }
+
+        Schema::assertValidConfig($globalSrcs);
+        foreach ($globalSrcs as $configSrc => $data) {
+            if ($data === false) {
+                continue;
+            }
+            $sourcedConfig = $this->loadConfigFromSource($data);
+            $mergedSchema = Priority::mergeArray($sourcedConfig, $mergedSchema);
+        }
+
+        // Schema-specific flushless sources
+        $configSrcs = $schema['src'] ?? [];
+        if (is_string($configSrcs)) {
+            $configSrcs = [$this->schemaKey => $configSrcs];
+        }
+        Schema::assertValidConfig($configSrcs);
+        foreach ($configSrcs as $configSrc => $data) {
+            if ($data === false) {
+                continue;
+            }
+            $sourcedConfig = $this->loadConfigFromSource($data);
+            $mergedSchema = Priority::mergeArray($sourcedConfig, $mergedSchema);
+        }
+
+        // Finally, apply the standard _config schema
+        $mergedSchema = Priority::mergeArray($schema, $mergedSchema);
+        $this->_cachedConfig = $mergedSchema;
     }
 
     /**
@@ -461,59 +504,9 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
         if ($cached && $this->_cachedConfig) {
             return $this->_cachedConfig;
         }
-        $schemas = $this->config()->get('schemas');
-        static::invariant($schemas, 'There are no schemas defined in the config');
-        $schema = $schemas[$this->schemaKey] ?? [];
 
-        // Gather all the global config first
-        $mergedSchema = $schemas[self::ALL] ?? [];
-
-        // Flushless global sources
-        $globalSrcs = $mergedSchema['src'] ?? [];
-        if (is_string($globalSrcs)) {
-            $globalSrcs = [Schema::ALL => $globalSrcs];
-        }
-
-        Schema::assertValidConfig($globalSrcs);
-        foreach ($globalSrcs as $configSrc => $data) {
-            if ($data === false) {
-                continue;
-            }
-            $sourcedConfig = $this->loadConfigFromSource($data);
-            $mergedSchema = array_replace_recursive($mergedSchema, $sourcedConfig);
-        }
-
-        // Schema-specific flushless sources
-        $configSrcs = $schema['src'] ?? [];
-        if (is_string($configSrcs)) {
-            $configSrcs = [$this->schemaKey => $configSrcs];
-        }
-        Schema::assertValidConfig($configSrcs);
-        foreach ($configSrcs as $configSrc => $data) {
-            if ($data === false) {
-                continue;
-            }
-            $sourcedConfig = $this->loadConfigFromSource($data);
-            $mergedSchema = array_replace_recursive($mergedSchema, $sourcedConfig);
-        }
-
-        // Finally, apply the standard _config schema
-        $mergedSchema = array_replace_recursive($mergedSchema, $schema);
-        $this->_cachedConfig = $mergedSchema;
-
+        $this->bootConfig();
         return $this->_cachedConfig;
-    }
-
-    /**
-     * @param bool $cache
-     * @return array
-     * @throws SchemaBuilderException
-     */
-    public function getModelConfiguration($cache = true): array
-    {
-        $config = $this->getSchemaConfiguration($cache);
-
-        return $config[self::MODEL_CONFIG] ?? [];
     }
 
     /**
@@ -546,7 +539,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
 
         $config = [
             self::DEFAULTS => [],
-            self::MODEL_CONFIG => [],
+            self::SCHEMA_CONFIG => [],
             self::TYPES => [],
             self::MODELS => [],
             self::QUERIES => [],
@@ -629,6 +622,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     /**
      * @param string $class
      * @return string|null
+     * @throws SchemaBuilderException
      */
     public function getTypeNameForClass(string $class): ?string
     {
@@ -638,7 +632,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
             return $typeName;
         }
 
-        $model = $this->getModelCreator()->getModel($class);
+        $model = $this->getSchemaContext()->createModel($class);
         if ($model) {
             return $model->getTypeName();
         }
@@ -729,6 +723,24 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     {
         $this->schemaKey = $key;
 
+        return $this;
+    }
+
+    /**
+     * @return SchemaContext
+     */
+    public function getSchemaContext(): SchemaContext
+    {
+        return $this->schemaContext;
+    }
+
+    /**
+     * @param SchemaContext $schemaContext
+     * @return Schema
+     */
+    public function setSchemaContext(SchemaContext $schemaContext): Schema
+    {
+        $this->schemaContext = $schemaContext;
         return $this;
     }
 
@@ -909,10 +921,11 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
      * @param string $class
      * @param array $config
      * @return ModelType|null
+     * @throws SchemaBuilderException
      */
     public function createModel(string $class, array $config = []): ?ModelType
     {
-        $model = $this->getModelCreator()->getModel($class);
+        $model = $this->getSchemaContext()->createModel($class);
         if (!$model) {
             return null;
         }
@@ -1031,6 +1044,15 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     }
 
     /**
+     * @param string $type
+     * @return bool
+     */
+    public static function isInternalType(string $type): bool
+    {
+        return in_array($type, static::getInternalTypes());
+    }
+
+    /**
      * Pluralise a name
      *
      * @param string $typeName
@@ -1141,24 +1163,6 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     {
         $this->schemaStore = $store;
 
-        return $this;
-    }
-
-    /**
-     * @return SchemaModelCreatorRegistry
-     */
-    public function getModelCreator(): SchemaModelCreatorRegistry
-    {
-        return $this->modelCreator;
-    }
-
-    /**
-     * @param SchemaModelCreatorRegistry $modelCreator
-     * @return Schema
-     */
-    public function setModelCreator(SchemaModelCreatorRegistry $modelCreator): Schema
-    {
-        $this->modelCreator = $modelCreator;
         return $this;
     }
 

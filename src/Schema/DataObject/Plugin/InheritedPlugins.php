@@ -3,6 +3,7 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
+use SilverStripe\Config\MergeStrategy\Priority;
 use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceChain;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -63,8 +64,10 @@ class InheritedPlugins implements ModelTypePlugin
             $pluginArgs[] = $model->getPlugins(false);
         }
         $pluginArgs[] = $type->getPlugins(false);
-
-        $plugins = array_replace_recursive(...$pluginArgs);
+        $plugins = [];
+        foreach ($pluginArgs as $pluginData) {
+            $plugins = Priority::mergeArray($pluginData, $plugins);
+        }
         $type->setPlugins($plugins);
 
         $operations = $type->getOperations();
@@ -79,7 +82,10 @@ class InheritedPlugins implements ModelTypePlugin
                 }
             }
             $pluginArgs[] = $operation->getPlugins(false);
-            $plugins = array_replace_recursive(...$pluginArgs);
+            $plugins = [];
+            foreach ($pluginArgs as $pluginData) {
+                $plugins = Priority::mergeArray($pluginData, $plugins);
+            }
             $operation->setPlugins($plugins);
         }
     }
