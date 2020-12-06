@@ -13,24 +13,26 @@ SilverStripe\Core\Injector\Injector:
 SilverStripe\GraphQL\Schema\Schema:
   schemas:
     default:
-      modelConfig:
-          operations:
-            read:
-              plugins:
-                filter:
-                  before: paginateList
-                sort:
-                  before: paginateList
-            readOne:
-              plugins:
-                filter: true
-                sort: true
-          nested_query_plugins:
-            paginateList: true
-            filter:
-              before: paginateList
-            sort:
-              before: paginateList
-            canView:
-              after: paginateList
+      config:
+        modelConfig:
+          DataObject:
+            operations:
+              read:
+                plugins:
+                  filter:
+                    before: paginateList
+                  sort:
+                    before: paginateList
+              readOne:
+                plugins:
+                  filter: true
+                  sort: true
+            nested_query_plugins:
+              paginateList: true
+              filter:
+                before: paginateList
+              sort:
+                before: paginateList
+              canView:
+                after: paginateList
 
