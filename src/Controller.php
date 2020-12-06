@@ -129,8 +129,6 @@ class Controller extends BaseController implements Flushable
         if ($request->httpMethod() === 'OPTIONS') {
             return $this->handleOptions($request);
         }
-        $queryPerf = '';
-        $schemaPerf = '';
         // Main query handling
         try {
             list($query, $variables) = $this->getRequestQueryVariables($request);
