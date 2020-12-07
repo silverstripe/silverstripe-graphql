@@ -4,6 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\Registry;
 
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\PluginInterface;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -21,25 +22,26 @@ class PluginRegistry
     private $plugins = [];
 
     /**
-     * @param PluginInterface[] ...$plugins
+     * @param array ...$plugins
      * @throws SchemaBuilderException
      */
     public function __construct(...$plugins)
     {
         foreach ($plugins as $plugin) {
+            $inst = Injector::inst()->get($plugin);
             Schema::invariant(
-                $plugin instanceof PluginInterface,
+                $inst instanceof PluginInterface,
                 '%s only accepts implementations of %s',
                 __CLASS__,
                 PluginInterface::class
             );
-            $existing = $this->plugins[$plugin->getIdentifier()] ?? null;
+            $existing = $this->plugins[$inst->getIdentifier()] ?? null;
             Schema::invariant(
-                !$existing || (get_class($existing) === get_class($plugin)),
+                !$existing || ($existing === $plugin),
                 'Two different plugins are registered under identifier %s',
-                $plugin->getIdentifier()
+                $inst->getIdentifier()
             );
-            $this->plugins[$plugin->getIdentifier()] = $plugin;
+            $this->plugins[$inst->getIdentifier()] = $plugin;
         }
     }
 
@@ -49,6 +51,8 @@ class PluginRegistry
      */
     public function getPluginByID(string $id): ?PluginInterface
     {
-        return $this->plugins[$id] ?? null;
+        $class = $this->plugins[$id] ?? null;
+
+        return $class ? Injector::inst()->create($class) : null;
     }
 }
