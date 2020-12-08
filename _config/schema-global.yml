@@ -24,12 +24,13 @@ SilverStripe\GraphQL\Schema\Schema:
                 plugins:
                   paginateList: true
                   canView:
-                    after: paginateList
+                    after: '*'
               readOne:
                 class: 'SilverStripe\GraphQL\Schema\DataObject\ReadOneCreator'
                 plugins:
-                  canView: true
                   firstResult:
+                    after: '*'
+                  canView:
                     after: '*'
               delete:
                 class: 'SilverStripe\GraphQL\Schema\DataObject\DeleteCreator'
