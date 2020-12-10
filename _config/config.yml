@@ -3,7 +3,6 @@ Name: graphqlconfig
 ---
 # Define the type parsers
 SilverStripe\Core\Injector\Injector:
-
   SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface:
     class: SilverStripe\GraphQL\QueryHandler\QueryHandler
 
@@ -15,6 +14,9 @@ SilverStripe\Core\Injector\Injector:
 
   SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider:
     class: SilverStripe\GraphQL\PersistedQuery\JSONStringProvider
+
+  SilverStripe\GraphQL\PersistedQuery\RequestProcessor:
+    class: SilverStripe\GraphQL\PersistedQuery\RequestIDProcessor
 
   SilverStripe\GraphQL\PersistedQuery\HTTPProvider:
     constructor:
