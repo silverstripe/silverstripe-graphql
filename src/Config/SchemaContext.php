@@ -93,11 +93,10 @@ class SchemaContext extends AbstractConfiguration
             is_callable($strategy),
             'SchemaContext resolverStrategy must be callable'
         );
-        foreach ($this->getResolvers() as $className) {
-            $resolver = call_user_func_array($strategy, [$className, $typeName, $field]);
-            if ($resolver) {
-                return ResolverReference::create([$className, $resolver]);
-            }
+
+        $callable = call_user_func_array($strategy, [$this->getResolvers(), $typeName, $field]);
+        if ($callable) {
+            return ResolverReference::create($callable);
         }
 
         $default = $field->getDefaultResolver();

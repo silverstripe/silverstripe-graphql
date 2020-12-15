@@ -15,12 +15,12 @@ use SilverStripe\GraphQL\Schema\Interfaces\ResolverProvider;
 class DefaultResolverStrategy
 {
     /**
-     * @param string $className
+     * @param array $resolverClasses
      * @param string|null $typeName
      * @param Field|null $field
-     * @return string|null
+     * @return callable|null
      */
-    public static function getResolverMethod(string $className, ?string $typeName = null, ?Field $field = null): ?string
+    public static function getResolverMethod(array $resolverClasses, ?string $typeName = null, ?Field $field = null): ?callable
     {
         $fieldName = $field->getName();
         $candidates = array_filter([
@@ -49,10 +49,12 @@ class DefaultResolverStrategy
         ]);
 
         foreach ($candidates as $method) {
-            $callable = [$className, $method];
-            $isCallable = is_callable($callable, false);
-            if ($isCallable) {
-                return $method;
+            foreach ($resolverClasses as $className) {
+                $callable = [$className, $method];
+                $isCallable = is_callable($callable, false);
+                if ($isCallable) {
+                    return $callable;
+                }
             }
         }
 
