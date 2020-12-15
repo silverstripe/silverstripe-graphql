@@ -15,6 +15,7 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
+use SilverStripe\ORM\ArrayLib;
 
 /**
  * This is an extremely complex class that is used to generate input types
@@ -360,7 +361,7 @@ abstract class AbstractNestedInputPlugin implements ModelFieldPlugin
         $allPaths = [];
         foreach ($argFilters as $fieldName => $val) {
             $path = array_merge($origin, [$fieldName]);
-            if (is_array($val)) {
+            if (ArrayLib::is_associative($val)) {
                 $allPaths = array_merge($allPaths, static::buildPathsFromArgs($val, $path));
             } else {
                 $allPaths[implode('.', $path)] = $val;
