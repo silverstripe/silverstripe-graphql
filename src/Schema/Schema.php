@@ -308,7 +308,6 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
         if (is_string($configSrcs)) {
             $configSrcs = [$this->schemaKey => $configSrcs];
         }
-        Schema::assertValidConfig($configSrcs);
         foreach ($configSrcs as $configSrc => $data) {
             if ($data === false) {
                 continue;
