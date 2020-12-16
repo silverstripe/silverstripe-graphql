@@ -105,50 +105,38 @@ class SchemaTest extends SapphireTest
         $this->assertCount(5, $schema->getTypes());
     }
 
-    public function testGetSchemaConfiguration()
-    {
-        $schema = $this->buildSchema();
-        Config::modify()->set(Schema::class, 'schemas', [
-            'test' => [
-                'baz' => 'qux'
-            ]
-        ]);
-        $config = $schema->getSchemaConfiguration();
-        Config::modify()->set(Schema::class, 'schemas', [
-            'test' => [
-                'foo' => 'bar'
-            ]
-        ]);
-        $config2 = $schema->getSchemaConfiguration();
-        $config3 = $schema->getSchemaConfiguration(false);
-        $config4 = $schema->getSchemaConfiguration();
-        $this->assertSame($config, $config2);
-        $this->assertNotEquals($config, $config3);
-        $this->assertSame($config3, $config4);
-    }
-
-    public function testLoadFromConfig()
+    public function testBootLoadsConfig()
     {
         Config::modify()->set(Schema::class, 'schemas', [
             'test' => [
                 'foo' => 'bar',
+            ],
+            'other' => [
+                'bar' => 'baz'
             ]
         ]);
 
-        $mock = $this->getMockBuilder(Schema::class)
-            ->setConstructorArgs(['test', $this->createSchemaContext()])
-            ->setMethods(['applyConfig'])
-            ->getMock();
-        $mock->expects($this->once())
-            ->method('applyConfig')
-            ->with($this->equalTo(['foo' => 'bar']));
-        $mock->loadFromConfig();
+        $schema = $this->buildSchema('test');
+        $this->assertEquals(
+            ['foo' => 'bar'],
+            $schema->boot()
+        );
+    }
+
+    public function testBootPreventsMultipleInvocations()
+    {
+        $this->expectException(SchemaBuilderException::class);
+        $this->expectExceptionMessage('Schema has already been booted');
+
+        $schema = $this->buildSchema('test');
+        $schema->boot();
+        $schema->boot();
     }
 
     public function testLoadConfigFromSource()
     {
         $schema = $this->buildSchema();
-        $config = $schema->loadConfigFromSource(__DIR__ . '/_test1');
+        $config = $schema->getSchemaConfigFromSource(__DIR__ . '/_test1');
         $expect = [
             'queries' => [
                 'myQuery' => 'SomeType',

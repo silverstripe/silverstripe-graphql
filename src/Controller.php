@@ -126,10 +126,14 @@ class Controller extends BaseController implements Flushable
         if ($stage) {
             Versioned::set_stage($stage);
         }
+
         // Check for a possible CORS preflight request and handle if necessary
         if ($request->httpMethod() === 'OPTIONS') {
             return $this->handleOptions($request);
         }
+
+        $schema = $this->getSchema();
+
         // Main query handling
         try {
             list($query, $variables) = $this->getRequestQueryVariables($request);
@@ -138,12 +142,16 @@ class Controller extends BaseController implements Flushable
             }
 
             try {
-                $schema = $this->getSchema()->fetch();
+                // Use un-booted schema for performance reasons
+                $graphqlSchema = $schema->fetch();
             } catch (SchemaNotFoundException $e) {
                 if ($this->autobuildEnabled()) {
                     Schema::quiet();
-                    Build::singleton()->buildSchema($this->getSchema()->getSchemaKey());
-                    $schema = $this->getSchema()->fetch();
+                    // Boot schema if required
+                    $schema->boot();
+                    // TODO Assumes buildSchema modifies the same instance through globals
+                    Build::singleton()->buildSchema($schema->getSchemaKey());
+                    $graphqlSchema = $schema->fetch();
                 } else {
                     throw $e;
                 }
@@ -153,9 +161,9 @@ class Controller extends BaseController implements Flushable
                 $this->applyContext($handler, $request);
             }
             $ctx = $handler->getContext();
-            $this->extend('onBeforeHandleQuery', $schema, $query, $ctx, $variables);
-            $result = $handler->query($schema, $query, $variables);
-            $this->extend('onAfterHandleQuery', $schema, $query, $ctx, $variables, $result);
+            $this->extend('onBeforeHandleQuery', $graphqlSchema, $query, $ctx, $variables);
+            $result = $handler->query($graphqlSchema, $query, $variables);
+            $this->extend('onAfterHandleQuery', $graphqlSchema, $query, $ctx, $variables, $result);
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
 

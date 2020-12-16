@@ -140,12 +140,16 @@ class Schema implements ConfigurationApplier, SchemaValidator
     private $schemaContext;
 
     /**
-     * @var array|null
+     * @var bool See constructor for details about booting.
      */
-    private $_cachedConfig = null;
+    private $_booted = false;
 
     /**
-     * Schema constructor.
+     * In order to trigger auto-discovery of the schema configuration
+     * in Silverstripe's config system, call {@link boot()} before using.
+     * Since booting has a performance impact, some functionality is
+     * available without booting (e.g. fetching an already persisted schema).
+     *
      * @param string $schemaKey
      * @param SchemaContext|null $schemaContext
      * @throws SchemaBuilderException
@@ -156,20 +160,19 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $this->queryType = Type::create(self::QUERY_TYPE);
         $this->mutationType = Type::create(self::MUTATION_TYPE);
 
-        $this->bootConfig();
-        $config = $this->getSchemaConfiguration();
-        $schemaConfig = $config[self::SCHEMA_CONFIG] ?? [];
-
         $this->setSchemaContext($schemaContext ?: SchemaContext::create());
 
         $store = Injector::inst()->get(SchemaStorageCreator::class)
             ->createStore($schemaKey);
         $this->setStore($store);
-
-        $this->getSchemaContext()->apply($schemaConfig);
     }
 
     /**
+     * Converts a configuration array to instance state.
+     * This is only needed for deeper customisations,
+     * since the configuration is auto-discovered and applied
+     * through the {@link boot()} step.
+     *
      * @param array $schemaConfig
      * @return Schema
      * @throws SchemaBuilderException
@@ -257,10 +260,24 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
+     * Auto-discovers the schema based on the provided schema key
+     * in Silverstripe's configuration layer. Merges the global schema
+     * with specifics for this schema key.
+     *
+     * An instance can only be booted once to avoid conflicts with further
+     * instance level modifications such as {@link addType()}.
+     *
      * @throws SchemaBuilderException
+     * @return array The resulting schema (for diagnostic purposes)
      */
-    private function bootConfig(): void
+    public function boot(): array
     {
+        if ($this->_booted) {
+            throw new SchemaBuilderException(
+                'Schema has already been booted'
+            );
+        }
+
         $schemas = $this->config()->get('schemas');
         static::invariant($schemas, 'There are no schemas defined in the config');
         $schema = $schemas[$this->schemaKey] ?? [];
@@ -280,7 +297,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
             if ($data === false) {
                 continue;
             }
-            $sourcedConfig = $this->loadConfigFromSource($data);
+            $sourcedConfig = $this->getSchemaConfigFromSource($data);
             $mergedSchema = Priority::mergeArray($sourcedConfig, $mergedSchema);
         }
 
@@ -294,13 +311,17 @@ class Schema implements ConfigurationApplier, SchemaValidator
             if ($data === false) {
                 continue;
             }
-            $sourcedConfig = $this->loadConfigFromSource($data);
+            $sourcedConfig = $this->getSchemaConfigFromSource($data);
             $mergedSchema = Priority::mergeArray($sourcedConfig, $mergedSchema);
         }
 
         // Finally, apply the standard _config schema
         $mergedSchema = Priority::mergeArray($schema, $mergedSchema);
-        $this->_cachedConfig = $mergedSchema;
+        $this->applyConfig($mergedSchema);
+
+        $this->_booted = true;
+
+        return $mergedSchema;
     }
 
     /**
@@ -476,40 +497,14 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * Builds the configuration graph from all the different sources
+     * Retrieves config from filesystem path.
+     * Use {@link applyConfig()} to use the resulting config array on the schema instance.
      *
-     * @param bool $cached
-     * @return array
-     * @throws SchemaBuilderException
-     */
-    public function getSchemaConfiguration($cached = true): array
-    {
-        if ($cached && $this->_cachedConfig) {
-            return $this->_cachedConfig;
-        }
-
-        $this->bootConfig();
-        return $this->_cachedConfig;
-    }
-
-    /**
-     * @return Schema
-     * @throws SchemaBuilderException
-     */
-    public function loadFromConfig(): Schema
-    {
-        $config = $this->getSchemaConfiguration();
-        $this->applyConfig($config);
-
-        return $this;
-    }
-
-    /**
      * @param string $dir
      * @return array
      * @throws SchemaBuilderException
      */
-    public function loadConfigFromSource(string $dir): array
+    public function getSchemaConfigFromSource(string $dir): array
     {
         $resolvedDir = ModuleResourceLoader::singleton()->resolvePath($dir);
         $absConfigSrc = Director::is_absolute($dir) ? $dir : Path::join(BASE_PATH, $resolvedDir);
@@ -643,7 +638,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public static function build(string $key): self
     {
-        $schema = static::create($key)->loadFromConfig();
+        $schema = static::create($key);
+        $schema->boot();
         BuildState::activate($schema);
 
         return $schema;
@@ -1069,7 +1065,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function pluralise($typeName): string
     {
-        $callable = $this->getSchemaConfiguration()->getPluraliser();
+        $callable = $this->getSchemaContext()->getPluraliser();
         Schema::invariant(
             is_callable($callable),
             'Schema does not have a valid callable "pluraliser" property set in its config'
