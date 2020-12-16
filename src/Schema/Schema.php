@@ -31,7 +31,6 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Interfaces\SettingsProvider;
-use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\TypePlugin;
 use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Type\Enum;
@@ -54,7 +53,7 @@ use TypeError;
  * Applies plugins, validates, and persists to code.
  *
  */
-class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
+class Schema implements ConfigurationApplier, SchemaValidator
 {
     use Injectable;
     use Configurable;
@@ -1025,15 +1024,6 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
     public function getUnions(): array
     {
         return $this->unions;
-    }
-
-    /**
-     * @return string
-     * @throws SchemaBuilderException
-     */
-    public function getSignature(): string
-    {
-        return serialize($this->getSchemaConfiguration());
     }
 
     /**
