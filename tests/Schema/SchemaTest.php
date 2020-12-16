@@ -102,7 +102,8 @@ class SchemaTest extends SapphireTest
     {
         $schema = $this->buildSchema()->applyConfig($this->getValidConfig());
         // Three types, two models
-        $this->assertCount(5, $schema->getTypes());
+        $this->assertCount(3, $schema->getTypes());
+        $this->assertCount(2, $schema->getModels());
     }
 
     public function testBootLoadsConfig()
@@ -136,7 +137,7 @@ class SchemaTest extends SapphireTest
     public function testLoadConfigFromSource()
     {
         $schema = $this->buildSchema();
-        $config = $schema->getSchemaConfigFromSource(__DIR__ . '/_test1');
+        $config = $schema->getSchemaConfigFromSource(__DIR__ . '/_' . __FUNCTION__);
         $expect = [
             'queries' => [
                 'myQuery' => 'SomeType',

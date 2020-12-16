@@ -1,0 +1,4 @@
+modelConfig:
+  DataObject:
+    type_formatter: [SilverStripe\GraphQL\Tests\Fake\FakeFunctions, fakeFormatter]
+    type_prefix: Test

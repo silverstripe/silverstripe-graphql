@@ -82,13 +82,14 @@ class Inheritance implements PluginInterface, SchemaUpdater
         // Merge with the parent model for inherited fields
         if ($parentModel) {
             $modelType->mergeWith($parentModel);
+            //$modelType->removeField(InheritanceChain::getName());
         }
 
         if (!$inheritance->hasDescendants()) {
             return;
         }
 
-        // Add the new __extends field to the base class only
+        // Add the new _extend field to the base class only
         if (!$parentModel) {
             $result = $inheritance->getExtensionType();
             if ($result) {

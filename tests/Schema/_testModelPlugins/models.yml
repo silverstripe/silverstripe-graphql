@@ -1,0 +1,4 @@
+SilverStripe\GraphQL\Tests\Fake\DataObjectFake:
+  fields: '*'
+SilverStripe\GraphQL\Tests\Fake\FakeSiteTree:
+  fields: '*'

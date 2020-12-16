@@ -1,0 +1,8 @@
+types:
+  MyType:
+    fields:
+      field1: String
+      field2: Int
+      'field3(MyArg: String)': String
+queries:
+  readMyTypes: '[MyType]'

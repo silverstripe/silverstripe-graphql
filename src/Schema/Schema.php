@@ -179,6 +179,9 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function applyConfig(array $schemaConfig): Schema
     {
+        if (empty($schemaConfig)) {
+            return $this;
+        }
         $types = $schemaConfig[self::TYPES] ?? [];
         $queries = $schemaConfig[self::QUERIES] ?? [];
         $mutations = $schemaConfig[self::MUTATIONS] ?? [];
@@ -249,12 +252,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
         }
 
         $this->applyProceduralUpdates($config['execute'] ?? []);
-        $this->processModels();
-        $this->applySchemaUpdates();
-
-        foreach ($this->models as $modelType) {
-            $this->addType($modelType);
-        }
 
         return $this;
     }
@@ -380,14 +377,64 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     private function applySchemaUpdates(): void
     {
-        $typeComponents = [
+        // These updates mutate the state of the schema, so each iteration
+        // needs to retrieve the components dynamically.
+        $this->applySchemaUpdatesFromSet($this->getTypeComponents());
+        $this->applyComponentUpdatesFromSet($this->getTypeComponents());
+
+        $this->applySchemaUpdatesFromSet($this->getFieldComponents());
+        $this->applyComponentUpdatesFromSet($this->getFieldComponents());
+    }
+
+    /**
+     * @param array $componentSet
+     */
+    private function applySchemaUpdatesFromSet(array $componentSet): void
+    {
+        $schemaUpdates = [];
+        foreach ($componentSet as $components) {
+            /* @var SchemaComponent $component */
+            $schemaUpdates = array_merge($schemaUpdates, $this->collectSchemaUpdaters($components));
+        }
+
+        /* @var SchemaUpdater $builder */
+        foreach ($schemaUpdates as $class) {
+            $class::updateSchema($this);
+        }
+    }
+
+    /**
+     * @param array $componentSet
+     * @throws SchemaBuilderException
+     */
+    private function applyComponentUpdatesFromSet(array $componentSet)
+    {
+        foreach ($componentSet as $name => $components) {
+            /* @var SchemaComponent $component */
+            foreach ($components as $component) {
+                $this->applyComponentPlugins($component, $name);
+            }
+        }
+    }
+
+    /**
+     * @return array
+     */
+    private function getTypeComponents(): array
+    {
+        return [
             'types' => $this->types,
             'models' => $this->models,
             'queries' => $this->queryType->getFields(),
             'mutations' => $this->mutationType->getFields(),
         ];
-        $this->applyComponentSet($typeComponents);
+    }
 
+    /**
+     * @return array
+     */
+    private function getFieldComponents(): array
+    {
         $allTypeFields = [];
         $allModelFields = [];
         foreach ($this->types as $type) {
@@ -406,35 +453,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
             $allModelFields = array_merge($allModelFields, $pluggedFields);
         }
 
-        $fieldComponents = [
+        return [
             'fields' => $allTypeFields,
             'modelFields' => $allModelFields,
         ];
-        $this->applyComponentSet($fieldComponents);
-    }
-
-    /**
-     * @param array $componentSet
-     * @throws SchemaBuilderException
-     */
-    private function applyComponentSet(array $componentSet): void
-    {
-        $schemaUpdates = [];
-        foreach ($componentSet as $components) {
-            /* @var SchemaComponent $component */
-            $schemaUpdates = array_merge($schemaUpdates, $this->collectSchemaUpdaters($components));
-        }
-
-        /* @var SchemaUpdater $builder */
-        foreach ($schemaUpdates as $class) {
-            $class::updateSchema($this);
-        }
-        foreach ($componentSet as $name => $components) {
-            /* @var SchemaComponent $component */
-            foreach ($components as $component) {
-                $this->applyComponentPlugins($component, $name);
-            }
-        }
     }
 
     /**
@@ -579,6 +601,14 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function save(): void
     {
+        $this->processModels();
+        $this->applySchemaUpdates();
+
+        foreach ($this->models as $modelType) {
+            $this->addType($modelType);
+        }
+
+
         $this->types[self::QUERY_TYPE] = $this->queryType;
         if ($this->mutationType->exists()) {
             $this->types[self::MUTATION_TYPE] = $this->mutationType;
@@ -639,8 +669,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public static function build(string $key): self
     {
         $schema = static::create($key);
-        $schema->boot();
         BuildState::activate($schema);
+        $schema->boot();
 
         return $schema;
     }
@@ -715,10 +745,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @param Query $query
+     * @param Field $query
      * @return $this
      */
-    public function addQuery(Query $query): self
+    public function addQuery(Field $query): self
     {
         $this->queryType->addField($query->getName(), $query);
 
@@ -726,10 +756,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @param Mutation $mutation
+     * @param Field $mutation
      * @return $this
      */
-    public function addMutation(Mutation $mutation): self
+    public function addMutation(Field $mutation): self
     {
         $this->mutationType->addField($mutation->getName(), $mutation);
 
