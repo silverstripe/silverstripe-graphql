@@ -250,10 +250,8 @@ class SchemaTest extends SapphireTest
 
     public function testSchemaKey()
     {
-        $schema = $this->buildSchema();
+        $schema = $this->buildSchema('test');
         $this->assertEquals('test', $schema->getSchemaKey());
-        $schema->setSchemaKey('foo');
-        $this->assertEquals('foo', $schema->getSchemaKey());
     }
 
     public function testSchemaContext()
@@ -261,9 +259,6 @@ class SchemaTest extends SapphireTest
         $context = $this->createSchemaContext();
         $schema = new Schema('test', $context);
         $this->assertSame($context, $schema->getSchemaContext());
-        $newContext = new SchemaContext();
-        $schema->setSchemaContext($newContext);
-        $this->assertSame($newContext, $schema->getSchemaContext());
     }
 
     public function testAddQueriesAndMutations()

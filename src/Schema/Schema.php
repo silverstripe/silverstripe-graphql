@@ -156,11 +156,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function __construct(string $schemaKey, SchemaContext $schemaContext = null)
     {
-        $this->setSchemaKey($schemaKey);
+        $this->schemaKey = $schemaKey;
         $this->queryType = Type::create(self::QUERY_TYPE);
         $this->mutationType = Type::create(self::MUTATION_TYPE);
 
-        $this->setSchemaContext($schemaContext ?: SchemaContext::create());
+        $this->schemaContext = $schemaContext ?: SchemaContext::create();
 
         $store = Injector::inst()->get(SchemaStorageCreator::class)
             ->createStore($schemaKey);
@@ -707,32 +707,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @param string $key
-     * @return $this
-     */
-    public function setSchemaKey(string $key): self
-    {
-        $this->schemaKey = $key;
-
-        return $this;
-    }
-
-    /**
      * @return SchemaContext
      */
     public function getSchemaContext(): SchemaContext
     {
         return $this->schemaContext;
-    }
-
-    /**
-     * @param SchemaContext $schemaContext
-     * @return Schema
-     */
-    public function setSchemaContext(SchemaContext $schemaContext): Schema
-    {
-        $this->schemaContext = $schemaContext;
-        return $this;
     }
 
     /**
