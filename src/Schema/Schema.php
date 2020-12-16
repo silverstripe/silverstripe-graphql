@@ -60,6 +60,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
     use Configurable;
 
     const SCHEMA_CONFIG = 'config';
+    const SOURCE = 'src';
     const TYPES = 'types';
     const QUERIES = 'queries';
     const MUTATIONS = 'mutations';
@@ -268,8 +269,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $mergedSchema = $schemas[self::ALL] ?? [];
 
         // Flushless global sources
-        $globalSrcs = $mergedSchema['src'] ?? [];
-        unset($mergedSchema['src']);
+        $globalSrcs = $mergedSchema[self::SOURCE] ?? [];
+        unset($mergedSchema[self::SOURCE]);
         if (is_string($globalSrcs)) {
             $globalSrcs = [Schema::ALL => $globalSrcs];
         }
@@ -284,8 +285,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
         }
 
         // Schema-specific flushless sources
-        $configSrcs = $schema['src'] ?? [];
-        unset($schema['src']);
+        $configSrcs = $schema[self::SOURCE] ?? [];
+        unset($schema[self::SOURCE]);
         if (is_string($configSrcs)) {
             $configSrcs = [$this->schemaKey => $configSrcs];
         }
