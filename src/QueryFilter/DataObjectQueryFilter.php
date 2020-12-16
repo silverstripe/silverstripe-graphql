@@ -392,10 +392,9 @@ class DataObjectQueryFilter implements ConfigurationApplier
             $filterIdentifier = array_pop($parts);
             // If the field segment contained __, that implies relationship (dot notation)
             $field = implode('.', $parts);
-            if (!isset($result[$field])) {
-                $result[$field] = [];
-            }
-            $filter = $this->getFieldFilterByIdentifier($field, $filterIdentifier);
+            // The Field key is written with self::SEPARATOR
+            $fieldName = implode(self::SEPARATOR, $parts);
+            $filter = $this->getFieldFilterByIdentifier($fieldName, $filterIdentifier);
             if (!$filter instanceof FieldFilterInterface) {
                 $filter = $this->getFilterRegistry()->getFilterByIdentifier($filterIdentifier);
             }
@@ -419,13 +418,24 @@ class DataObjectQueryFilter implements ConfigurationApplier
     {
         $dbField = null;
         if (stristr($field, self::SEPARATOR) !== false) {
-            list ($relationName, $relationField) = explode(self::SEPARATOR, $field);
-            $class = $this->getDataObjectInstance()->getRelationClass($relationName);
+            $relationNames = explode(self::SEPARATOR, $field);
+            $relationField = array_pop($relationNames);
+            // reverse array so we can use the faster array_pop
+            $relationNames = array_reverse($relationNames);
+            // initialize current class
+            $class = get_class($this->getDataObjectInstance());
+            do {
+                $relationName = array_pop($relationNames);
+                $lastClass = $class;
+                $class = Injector::inst()->get($class)->getRelationClass($relationName);
+            } while ($class && !empty($relationNames));
+
             if (!$class) {
                 throw new InvalidArgumentException(sprintf(
-                    'Could not find relation %s on %s',
+                    'Could not find relation %s on %s for the filter %s',
                     $relationName,
-                    $this->getDataObjectClass()
+                    $lastClass,
+                    $field
                 ));
             }
             return Injector::inst()->get($class)->dbObject($relationField);
