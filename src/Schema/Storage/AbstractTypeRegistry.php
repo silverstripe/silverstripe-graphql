@@ -11,7 +11,7 @@ use Exception;
 
 abstract class AbstractTypeRegistry
 {
-    private static $types = [];
+    protected static $types = [];
 
     /**
      * @param string $typename
@@ -20,7 +20,7 @@ abstract class AbstractTypeRegistry
      */
     public static function get(string $typename)
     {
-        return self::fromCache($typename);
+        return static::fromCache($typename);
     }
 
     abstract protected static function getSourceDirectory(): string;
@@ -32,10 +32,10 @@ abstract class AbstractTypeRegistry
      * @return mixed|null
      * @throws Exception
      */
-    private static function fromCache(string $typename)
+    protected static function fromCache(string $typename)
     {
         $type = null;
-        if (!isset(self::$types[$typename])) {
+        if (!isset(static::$types[$typename])) {
             $file = static::getSourceDirectory() . DIRECTORY_SEPARATOR . $typename . '.php';
             if (file_exists($file)) {
                 require_once($file);
@@ -44,9 +44,9 @@ abstract class AbstractTypeRegistry
                     $type = new $cls();
                 }
             }
-            self::$types[$typename] = $type;
+            static::$types[$typename] = $type;
         }
-        $type = self::$types[$typename];
+        $type = static::$types[$typename];
         if (!$type) {
             throw new Exception("Unknown graphql type: " . $typename);
         }

@@ -4,11 +4,13 @@
 namespace SilverStripe\GraphQL\Tests\Schema;
 
 
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStoreCreator;
+use SilverStripe\GraphQL\Tests\Fake\IntegrationTestResolverA;
 use Symfony\Component\Filesystem\Filesystem;
 use GraphQL\Type\Schema as GraphQLSchema;
 use Exception;
@@ -23,7 +25,7 @@ class IntegrationTest extends SapphireTest
 
     public function testSimpleType()
     {
-        $schema = $this->createSchema('_test2');
+        $schema = $this->createSchema(__FUNCTION__, ['_test2'], [IntegrationTestResolverA::class]);
         $query = <<<GRAPHQL
 query {
     readMyTypes {
@@ -35,7 +37,7 @@ GRAPHQL;
 
         $result = $this->querySchema($schema, $query);
         $this->assertSuccess($result);
-        $records = $result['data'];
+        $records = $result['data']['readMyTypes'] ?? [];
         $this->assertCount(2, $records);
         $this->assertResults([
             ['field1' => 'foo', 'field2' => 2],
@@ -44,17 +46,51 @@ GRAPHQL;
 
     }
 
-    private function createSchema(string $configDir, array $extraConfig = []): GraphQLSchema
+    public function testSourceOverride()
+    {
+        $schema = $this->createSchema(__FUNCTION__, ['_test2', '_test2a'], [IntegrationTestResolverA::class]);
+        $query = <<<GRAPHQL
+query {
+    readMyTypesAgain {
+        field1
+        field2
+    }
+}
+GRAPHQL;
+
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $records = $result['data']['readMyTypesAgain'] ?? [];
+        $this->assertCount(2, $records);
+        $this->assertResults([
+            ['field1' => 'foo', 'field2' => true],
+            ['field1' => 'bar', 'field2' => false],
+        ], $records);
+
+    }
+
+    private function createSchema(string $name, array $configDirs, array $resolvers = [], array $extraConfig = []): GraphQLSchema
     {
         $this->clean();
-        $schema = new Schema('test');
+        Config::modify()->merge(
+            Schema::class,
+            'schemas',
+            [
+                $name => [
+                    'src' => array_map(function ($dir) {
+                        return __DIR__ . '/' . $dir;
+                    }, $configDirs),
+                ],
+            ]
+        );
+        $schema = Schema::build($name);
         /* @var CodeGenerationStore $store */
-        $store = (new CodeGenerationStoreCreator())->createStore('test');
+        $store = (new CodeGenerationStoreCreator())->createStore($name);
         $store->setRootDir(__DIR__);
+        $store->clear();
         $schema->setStore($store);
-
-        $schema->applyConfig([
-            'src' => __DIR__ . '/' . $configDir,
+        $schema->getSchemaContext()->apply([
+            'resolvers' => $resolvers
         ]);
         $schema->applyConfig($extraConfig);
         $schema->save();
@@ -66,10 +102,7 @@ GRAPHQL;
     {
         $handler = new QueryHandler();
         try {
-            $result = $handler->query($schema, $query, $variables);
-            return [
-                'data' => $result,
-            ];
+            return $handler->query($schema, $query, $variables);
         } catch (Exception $e) {
             return [
                 'error' => $e->getMessage(),

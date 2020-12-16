@@ -5,7 +5,6 @@ namespace SilverStripe\GraphQL\Schema\Field;
 use GraphQL\Language\Token;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\GraphQL\Dev\Build;
 use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;

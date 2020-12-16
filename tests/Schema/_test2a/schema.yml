@@ -2,6 +2,6 @@ types:
   MyType:
     fields:
       field1: String
-      field2: Int
+      field2: Boolean
 queries:
-  readMyTypes: '[MyType]'
+  readMyTypesAgain: '[MyType]'

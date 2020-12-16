@@ -12,6 +12,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Dev\Benchmark;
+use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
@@ -642,7 +643,10 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
      */
     public static function build(string $key): self
     {
-        return static::create($key)->loadFromConfig();
+        $schema = static::create($key)->loadFromConfig();
+        BuildState::activate($schema);
+
+        return $schema;
     }
 
     /**

@@ -264,7 +264,7 @@ class CodeGenerationStore implements SchemaStorageInterface
             ));
         }
 
-        require_once($this->getSchemaFilename());
+        require($this->getSchemaFilename());
 
         $registryClass = $this->getClassName(self::TYPE_CLASS_NAME);
         $hasMutations = method_exists($registryClass, Schema::MUTATION_TYPE);
