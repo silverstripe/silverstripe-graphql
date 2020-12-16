@@ -627,7 +627,7 @@ class Schema implements ConfigurationApplier, SchemaValidator, SignatureProvider
      */
     public function getTypeNameForClass(string $class): ?string
     {
-        $mapping = $this->getStore()->getTypeMapping();
+        $mapping = $this->getStore()->getContext()->get('typeMapping', []);
         $typeName = $mapping[$class] ?? null;
         if ($typeName) {
             return $typeName;

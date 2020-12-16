@@ -92,4 +92,12 @@ abstract class AbstractConfiguration
 
         return $this;
     }
+
+    /**
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return $this->settings;
+    }
 }

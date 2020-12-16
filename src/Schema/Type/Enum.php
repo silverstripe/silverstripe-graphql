@@ -6,6 +6,7 @@ namespace SilverStripe\GraphQL\Schema\Type;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\ORM\ArrayLib;
 
 /**
  * Abstraction for enum types
@@ -48,7 +49,12 @@ class Enum extends Type implements SchemaValidator
     public function getValueList(): array
     {
         $list = [];
-        foreach ($this->getValues() as $key => $val) {
+        $values = $this->getValues();
+        if (!ArrayLib::is_associative($values)) {
+            $list = array_values($values);
+            $values = array_combine($list, $list);
+        }
+        foreach ($values as $key => $val) {
             $value = null;
             $description = null;
             if (is_array($val)) {
