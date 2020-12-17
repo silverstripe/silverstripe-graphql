@@ -4,7 +4,7 @@
 namespace SilverStripe\GraphQL\Tests\Fake;
 
 
-class IntegrationTestResolverB
+class SchemaContextTestResolverB
 {
     public static function resolveSpecialField()
     {

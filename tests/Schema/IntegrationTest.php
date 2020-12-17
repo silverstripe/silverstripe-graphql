@@ -10,7 +10,7 @@ use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStoreCreator;
-use SilverStripe\GraphQL\Tests\Fake\IntegrationTestResolverA;
+use SilverStripe\GraphQL\Tests\Fake\IntegrationTestResolver;
 use Symfony\Component\Filesystem\Filesystem;
 use GraphQL\Type\Schema as GraphQLSchema;
 use Exception;
@@ -25,7 +25,7 @@ class IntegrationTest extends SapphireTest
 
     public function testSimpleType()
     {
-        $schema = $this->createSchema(__FUNCTION__, ['_test2'], [IntegrationTestResolverA::class]);
+        $schema = $this->createSchema(__FUNCTION__, ['_test2'], [IntegrationTestResolver::class]);
         $query = <<<GRAPHQL
 query {
     readMyTypes {
@@ -48,7 +48,8 @@ GRAPHQL;
 
     public function testSourceOverride()
     {
-        $schema = $this->createSchema(__FUNCTION__, ['_test2', '_test2a'], [IntegrationTestResolverA::class]);
+        // The second config (test2a) redefines the field types on the same MyType.
+        $schema = $this->createSchema(__FUNCTION__, ['_test2', '_test2a'], [IntegrationTestResolver::class]);
         $query = <<<GRAPHQL
 query {
     readMyTypesAgain {

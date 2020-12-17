@@ -6,8 +6,8 @@ use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Resolver\DefaultResolverStrategy;
 use SilverStripe\GraphQL\Schema\SchemaContext;
-use SilverStripe\GraphQL\Tests\Fake\IntegrationTestResolverA;
-use SilverStripe\GraphQL\Tests\Fake\IntegrationTestResolverB;
+use SilverStripe\GraphQL\Tests\Fake\SchemaContextTestResolverA;
+use SilverStripe\GraphQL\Tests\Fake\SchemaContextTestResolverB;
 
 class SchemaContextTest extends SapphireTest
 {
@@ -15,27 +15,27 @@ class SchemaContextTest extends SapphireTest
     {
         $context = new SchemaContext([
             'resolvers' => [
-                IntegrationTestResolverA::class,
-                IntegrationTestResolverB::class,
+                SchemaContextTestResolverA::class,
+                SchemaContextTestResolverB::class,
             ],
             'resolverStrategy' => [DefaultResolverStrategy::class, 'getResolverMethod']
         ]);
 
         $result = $context->discoverResolver('TypeName', new Field('fieldName'));
         $this->assertEquals('resolveTypeNameFieldName', $result->getMethod());
-        $this->assertEquals(IntegrationTestResolverA::class, $result->getClass());
+        $this->assertEquals(SchemaContextTestResolverA::class, $result->getClass());
 
         $result = $context->discoverResolver('TypeName', new Field('foo'));
         $this->assertEquals('resolveTypeName', $result->getMethod());
-        $this->assertEquals(IntegrationTestResolverA::class, $result->getClass());
+        $this->assertEquals(SchemaContextTestResolverA::class, $result->getClass());
 
         $result = $context->discoverResolver('Nothing', new Field('foo'));
         $this->assertEquals('resolve', $result->getMethod());
-        $this->assertEquals(IntegrationTestResolverA::class, $result->getClass());
+        $this->assertEquals(SchemaContextTestResolverA::class, $result->getClass());
 
         $result = $context->discoverResolver('Nothing', new Field('specialField'));
         $this->assertEquals('resolveSpecialField', $result->getMethod());
-        $this->assertEquals(IntegrationTestResolverB::class, $result->getClass());
+        $this->assertEquals(SchemaContextTestResolverB::class, $result->getClass());
 
     }
 }

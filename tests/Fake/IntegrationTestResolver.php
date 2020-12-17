@@ -2,7 +2,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
-class IntegrationTestResolverA
+class IntegrationTestResolver
 {
     public static function resolveReadMyTypes($obj, $args = [])
     {
@@ -18,21 +18,6 @@ class IntegrationTestResolverA
             ['field1' => 'foo', 'field2' => true],
             ['field1' => 'bar', 'field2' => false],
         ];
-    }
-
-    public static function resolveTypeNameFieldName()
-    {
-        return __FUNCTION__;
-    }
-
-    public static function resolveTypeName()
-    {
-        return __FUNCTION__;
-    }
-
-    public static function resolve()
-    {
-        return __FUNCTION__;
     }
 
 }
