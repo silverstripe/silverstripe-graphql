@@ -7,7 +7,7 @@ SilverStripe\Core\Injector\Injector:
     constructor:
       contains: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters\ContainsFilter'
       eq: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters\EqualToFilter'
-      ne: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters\EqualToFilter'
+      ne: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters\NotEqualFilter'
       gt: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters\GreaterThanFilter'
       lt: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters\LessThanFilter'
       gte: '%$SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters\GreaterThanOrEqualFilter'
