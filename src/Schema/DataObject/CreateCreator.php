@@ -74,7 +74,7 @@ class CreateCreator implements OperationCreator, InputTypeProvider
     public static function resolve(array $resolverContext = []): Closure
     {
         $dataClass = $resolverContext['dataClass'] ?? null;
-        return function ($obj, $args = [], $context = [], ResolveInfo $info) use ($dataClass) {
+        return function ($obj, $args = [], $context = [], ResolveInfo $info = null) use ($dataClass) {
             if (!$dataClass) {
                 return null;
             }
