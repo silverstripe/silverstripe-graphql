@@ -121,7 +121,10 @@ class QuerySort extends AbstractQuerySortPlugin
         $mapping = $context['fieldMapping'] ?? [];
         $fieldName = $context['fieldName'];
 
-        return function (Sortable $list, array $args) use ($mapping, $fieldName) {
+        return function (?Sortable $list, array $args) use ($mapping, $fieldName) {
+            if (!$list) {
+                return $list;
+            }
             $filterArgs = $args[$fieldName] ?? [];
             $paths = static::buildPathsFromArgs($filterArgs);
             foreach ($paths as $path => $value) {

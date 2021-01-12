@@ -88,7 +88,10 @@ class QueryFilter extends AbstractQueryFilterPlugin
         $mapping = $context['fieldMapping'] ?? [];
         $fieldName = $context['fieldName'];
 
-        return function (Filterable $list, array $args) use ($mapping, $fieldName) {
+        return function (?Filterable $list, array $args) use ($mapping, $fieldName) {
+            if (!$list) {
+                return $list;
+            }
             $filterArgs = $args[$fieldName] ?? [];
             /* @var FilterRegistryInterface $registry */
             $registry = Injector::inst()->get(FilterRegistryInterface::class);
