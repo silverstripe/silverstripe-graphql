@@ -10,6 +10,7 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\DebugView;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\Security;
+use Exception;
 
 class DevelopmentAdmin extends Controller
 {
