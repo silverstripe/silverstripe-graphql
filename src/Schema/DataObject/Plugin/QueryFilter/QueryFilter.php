@@ -89,8 +89,8 @@ class QueryFilter extends AbstractQueryFilterPlugin
         $fieldName = $context['fieldName'];
 
         return function (?Filterable $list, array $args) use ($mapping, $fieldName) {
-            if (!$list) {
-                return $list;
+            if ($list === null) {
+                return null;
             }
             $filterArgs = $args[$fieldName] ?? [];
             /* @var FilterRegistryInterface $registry */

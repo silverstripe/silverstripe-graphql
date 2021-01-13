@@ -40,6 +40,10 @@ class CanViewPermission extends AbstractCanViewPermission
      */
     public static function permissionCheck($obj, array $args, array $context, ResolveInfo $info)
     {
+        if ($obj === null) {
+            return null;
+        }
+
         if (is_array($obj)) {
             return static::paginatedPermissionCheck($obj, $args, $context, $info);
         }

@@ -33,6 +33,9 @@ class Paginator extends PaginationPlugin
         $maxLimit = $context['maxLimit'];
 
         return function ($list, array $args, array $context, ResolveInfo $info) use ($maxLimit) {
+            if ($list === null) {
+                return null;
+            }
             if (!$list instanceof Limitable) {
                 return static::createPaginationResult($list, $list, $maxLimit, 0);
             }
