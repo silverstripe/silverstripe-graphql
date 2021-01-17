@@ -77,4 +77,24 @@ class Build extends Controller
         BuildState::clear();
     }
 
+    // It's likely that this global state will get removed in the near future, so
+    // this is just for BC for the currently more semantically correct BuildState class.
+
+    /**
+     * @return Schema|null
+     */
+    public static function getActiveBuild(): ?Schema
+    {
+        return BuildState::getActiveBuild();
+    }
+
+    /**
+     * @return Schema
+     * @throws SchemaBuilderException
+     */
+    public static function requireActiveBuild(): Schema
+    {
+        return BuildState::requireActiveBuild();
+    }
+
 }
