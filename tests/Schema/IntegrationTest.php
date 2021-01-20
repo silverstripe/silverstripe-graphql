@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema;
 
-
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\Assets\File;
 use SilverStripe\Core\Config\Config;
@@ -88,7 +87,6 @@ GRAPHQL;
             ['field1' => 'foo', 'field2' => 2, 'field3' => 'arg'],
             ['field1' => 'bar', 'field2' => 3, 'field3' => 'arg'],
         ], $records);
-
     }
 
     public function testSourceOverride()
@@ -116,7 +114,6 @@ GRAPHQL;
             ['field1' => 'foo', 'field2' => true],
             ['field1' => 'bar', 'field2' => false],
         ], $records);
-
     }
 
     public function testModelConfig()
@@ -130,7 +127,6 @@ GRAPHQL;
         $testDir = '_' . __FUNCTION__;
         $schema = $this->createSchema([$testDir]);
         $this->assertSchemaHasType($schema, 'FakePage');
-        $this->assertSchemaHasType($schema, 'FakeSiteTreeVersion');
 
         // disable versioning as a global plugin
         $schema = $this->createSchema([$testDir], [], [
@@ -145,7 +141,6 @@ GRAPHQL;
             ]
         ]);
         $this->assertSchemaNotHasType($schema, 'FakePageVersion');
-        $this->assertSchemaNotHasType($schema, 'FakeSiteTreeVersion');
 
         // Disable versioning per type
         $schema = $this->createSchema([$testDir], [], [
@@ -158,13 +153,11 @@ GRAPHQL;
             ]
         ]);
         $this->assertSchemaNotHasType($schema, 'FakePageVersion');
-        $this->assertSchemaHasType($schema, 'FakeSiteTreeVersion');
     }
 
     public function testInheritance()
     {
         $this->markTestSkipped();
-
     }
 
     public function testPluginOverride()
@@ -502,7 +495,6 @@ GRAPHQL;
 
 //        $this->assertSuccess($result);
 //        $this->assertNull($result['data']['readOneDataObjectFake']);
-
     }
 
 
@@ -586,7 +578,6 @@ GRAPHQL;
         $this->assertSuccess($result);
         $this->assertResult('readOneDataObjectFake.myAliasedField', 'test2', $result);
         $this->assertResult('readOneDataObjectFake.author', null, $result);
-
     }
 
     public function testAggregateProperties()
@@ -747,7 +738,6 @@ GRAPHQL;
             ['field1' => 'field1-9'],
             ['field1' => 'field1-10'],
         ], $records);
-
     }
 
     private function createSchema(array $configDirs, array $resolvers = [], array $extraConfig = []): GraphQLSchema
@@ -765,7 +755,8 @@ GRAPHQL;
                 ],
             ]
         );
-        Schema::quiet();;
+        Schema::quiet();
+        ;
         $schema = Schema::build($name);
         /* @var CodeGenerationStore $store */
         $store = (new CodeGenerationStoreCreator())->createStore($name);

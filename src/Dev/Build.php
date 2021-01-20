@@ -96,5 +96,4 @@ class Build extends Controller
     {
         return BuildState::requireActiveBuild();
     }
-
 }

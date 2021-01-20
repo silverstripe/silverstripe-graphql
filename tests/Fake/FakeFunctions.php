@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
-
 use SilverStripe\Core\ClassInfo;
 
 class FakeFunctions

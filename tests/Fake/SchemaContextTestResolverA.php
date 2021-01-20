@@ -18,5 +18,4 @@ class SchemaContextTestResolverA
     {
         return __FUNCTION__;
     }
-
 }

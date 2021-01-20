@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake;
 
-
 class ResolverDiscoveryTestA
 {
     public static function resolveTypeNameFieldName()
@@ -20,5 +19,4 @@ class ResolverDiscoveryTestA
     {
         return __FUNCTION__;
     }
-
 }

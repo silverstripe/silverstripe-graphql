@@ -248,7 +248,6 @@ class CodeGenerationStore implements SchemaStorageInterface
         if ($diff > 0) {
             Schema::message(sprintf('(... and %s more)', $diff));
         }
-
     }
 
     /**

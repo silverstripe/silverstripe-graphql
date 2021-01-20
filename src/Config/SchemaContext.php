@@ -128,6 +128,4 @@ class SchemaContext extends AbstractConfiguration
         $typeName .= 's';
         return $typeName;
     }
-
-
 }

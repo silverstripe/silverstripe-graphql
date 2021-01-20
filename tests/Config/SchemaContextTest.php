@@ -36,6 +36,5 @@ class SchemaContextTest extends SapphireTest
         $result = $context->discoverResolver('Nothing', new Field('specialField'));
         $this->assertEquals('resolveSpecialField', $result->getMethod());
         $this->assertEquals(SchemaContextTestResolverB::class, $result->getClass());
-
     }
 }

@@ -397,7 +397,9 @@ class SchemaTest extends SapphireTest
         Schema::assertValidConfig([]);
     }
 
-    public static function noop() {}
+    public static function noop()
+    {
+    }
 
     private function buildSchema(string $key = 'test', SchemaContext $context = null): Schema
     {
@@ -494,5 +496,4 @@ class SchemaTest extends SapphireTest
             'modelCreators' => [ModelCreator::class],
         ]);
     }
-
 }

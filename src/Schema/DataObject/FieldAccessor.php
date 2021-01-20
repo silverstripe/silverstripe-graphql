@@ -243,7 +243,6 @@ class FieldAccessor
                 }
 
                 return null;
-
             }
 
             $singleton = DataObject::singleton($subject->dataClass());
