@@ -257,68 +257,16 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * Auto-discovers the schema based on the provided schema key
-     * in Silverstripe's configuration layer. Merges the global schema
-     * with specifics for this schema key.
-     *
-     * An instance can only be booted once to avoid conflicts with further
-     * instance level modifications such as {@link addType()}.
-     *
-     * @throws SchemaBuilderException
-     * @return array The resulting schema (for diagnostic purposes)
+     * @return bool
      */
-    public function boot(): array
+    public function isStored(): bool
     {
-        if ($this->_booted) {
-            throw new SchemaBuilderException(
-                'Schema has already been booted'
-            );
+        try {
+            $this->fetch();
+            return true;
+        } catch (SchemaNotFoundException $e) {
+            return false;
         }
-
-        $schemas = $this->config()->get('schemas');
-        static::invariant($schemas, 'There are no schemas defined in the config');
-        $schema = $schemas[$this->schemaKey] ?? [];
-
-        // Gather all the global config first
-        $mergedSchema = $schemas[self::ALL] ?? [];
-
-        // Flushless global sources
-        $globalSrcs = $mergedSchema[self::SOURCE] ?? [];
-        unset($mergedSchema[self::SOURCE]);
-        if (is_string($globalSrcs)) {
-            $globalSrcs = [Schema::ALL => $globalSrcs];
-        }
-
-        Schema::assertValidConfig($globalSrcs);
-        foreach ($globalSrcs as $configSrc => $data) {
-            if ($data === false) {
-                continue;
-            }
-            $sourcedConfig = $this->getSchemaConfigFromSource($data);
-            $mergedSchema = Priority::mergeArray($sourcedConfig, $mergedSchema);
-        }
-
-        // Schema-specific flushless sources
-        $configSrcs = $schema[self::SOURCE] ?? [];
-        unset($schema[self::SOURCE]);
-        if (is_string($configSrcs)) {
-            $configSrcs = [$this->schemaKey => $configSrcs];
-        }
-        foreach ($configSrcs as $configSrc => $data) {
-            if ($data === false) {
-                continue;
-            }
-            $sourcedConfig = $this->getSchemaConfigFromSource($data);
-            $mergedSchema = Priority::mergeArray($sourcedConfig, $mergedSchema);
-        }
-
-        // Finally, apply the standard _config schema
-        $mergedSchema = Priority::mergeArray($schema, $mergedSchema);
-        $this->applyConfig($mergedSchema);
-
-        $this->_booted = true;
-
-        return $mergedSchema;
     }
 
     /**
@@ -516,84 +464,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
         }
 
         return $schemaUpdates;
-    }
-
-    /**
-     * Retrieves config from filesystem path.
-     * Use {@link applyConfig()} to use the resulting config array on the schema instance.
-     *
-     * @param string $dir
-     * @return array
-     * @throws SchemaBuilderException
-     */
-    public function getSchemaConfigFromSource(string $dir): array
-    {
-        $resolvedDir = ModuleResourceLoader::singleton()->resolvePath($dir);
-        $absConfigSrc = Director::is_absolute($dir) ? $dir : Path::join(BASE_PATH, $resolvedDir);
-        static::invariant(
-            is_dir($absConfigSrc),
-            'Source config directory %s does not exist on schema %s',
-            $absConfigSrc,
-            $this->schemaKey
-        );
-
-        $config = [
-            self::SCHEMA_CONFIG => [],
-            self::TYPES => [],
-            self::MODELS => [],
-            self::QUERIES => [],
-            self::MUTATIONS => [],
-            self::ENUMS => [],
-            self::INTERFACES => [],
-            self::UNIONS => [],
-            self::SCALARS => [],
-        ];
-
-        $finder = new Finder();
-        $yamlFiles = $finder->files()->in($absConfigSrc)->name('*.yml');
-
-        /* @var SplFileInfo $yamlFile */
-        foreach ($yamlFiles as $yamlFile) {
-            try {
-                $contents = $yamlFile->getContents();
-                // fail gracefully on empty files
-                if (empty($contents)) {
-                    continue;
-                }
-                $yaml = Yaml::parse($contents);
-            } catch (ParseException $e) {
-                throw new SchemaBuilderException(sprintf(
-                    'Could not parse YAML config for schema %s on file %s. Got error: %s',
-                    $this->schemaKey,
-                    $yamlFile->getPathname(),
-                    $e->getMessage()
-                ));
-            }
-            // Friendly check to see if the config was accidentally keyed to a schema
-            Schema::invariant(
-                !isset($yaml[$this->schemaKey]),
-                'Sourced config file %s does not need a schema key. It is implicitly "%s".',
-                $yamlFile->getPathname(),
-                $this->schemaKey
-            );
-            // If the file is in the root src dir, e.g. _graphql/models.yml,
-            // then allow the filename to be the namespace.
-            if ($yamlFile->getPath() === $absConfigSrc) {
-                $namespace = $yamlFile->getBasename('.yml');
-            } else {
-                // Otherwise, the directory name is the namespace, e.g _graphql/models/myfile.yml
-                $namespace = basename($yamlFile->getPath());
-            }
-
-            // if the yaml file was in a namespace directory, e.g. "models/" or "types/", the key is implied.
-            if (isset($config[$namespace])) {
-                $config[$namespace] = array_merge_recursive($config[$namespace], $yaml);
-            } else {
-                $config = array_merge_recursive($config, $yaml);
-            }
-        }
-
-        return $config;
     }
 
     /**

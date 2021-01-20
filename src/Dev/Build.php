@@ -9,6 +9,7 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Dev\DebugView;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\SchemaFactory;
 use SilverStripe\ORM\DatabaseAdmin;
 
 class Build extends Controller
@@ -57,9 +58,8 @@ class Build extends Controller
         foreach ($keys as $key) {
             Benchmark::start('build-schema-' . $key);
             Schema::message(sprintf('--- Building schema "%s" ---', $key));
-            $schema = Schema::create($key);
+            $schema = SchemaFactory::singleton()->boot($key);
             BuildState::activate($schema);
-            $schema->loadFromConfig();
             if (!$schema->exists()) {
                 continue;
             }

@@ -21,10 +21,11 @@ use SilverStripe\GraphQL\Dev\State\DisableTypeCacheState;
 use SilverStripe\GraphQL\Permission\MemberContextProvider;
 use SilverStripe\GraphQL\PersistedQuery\RequestProcessor;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\SchemaFactory;
 use SilverStripe\ORM\Connect\DatabaseException;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
@@ -70,9 +71,9 @@ class Controller extends BaseController implements Flushable
     private static $cache_on_flush = true;
 
     /**
-     * @var Schema
+     * @var string
      */
-    private $schema;
+    private $schemaKey;
 
     /**
      * @var QueryHandlerInterface
@@ -96,19 +97,15 @@ class Controller extends BaseController implements Flushable
     protected $autobuildSchema = true;
 
     /**
-     * @param string $schemaKey
+     * @param string|null $schemaKey
      * @param QueryHandlerInterface|null $queryHandler
-     * @param SchemaContext|null $schemaContext
      */
     public function __construct(
-        string $schemaKey,
-        ?QueryHandlerInterface $queryHandler = null,
-        ?SchemaContext $schemaContext = null
+        ?string $schemaKey = null,
+        ?QueryHandlerInterface $queryHandler = null
     ) {
         parent::__construct();
-        $schemaContext = $schemaContext ?: Injector::inst()->create(SchemaContext::class);
-        $schema = Schema::create($schemaKey, $schemaContext);
-        $this->setSchema($schema);
+        $this->setSchemaKey($schemaKey);
         $handler = $queryHandler ?: Injector::inst()->create(QueryHandlerInterface::class);
         $this->setQueryHandler($handler);
     }
@@ -132,8 +129,6 @@ class Controller extends BaseController implements Flushable
             return $this->handleOptions($request);
         }
 
-        $schema = $this->getSchema();
-
         // Main query handling
         try {
             list($query, $variables) = $this->getRequestQueryVariables($request);
@@ -141,20 +136,21 @@ class Controller extends BaseController implements Flushable
                 $this->httpError(400, 'This endpoint requires a "query" parameter');
             }
 
-            try {
-                // Use un-booted schema for performance reasons
+            $schema = SchemaFactory::singleton()->get($this->getSchemaKey());
+            $graphqlSchema = null;
+            if ($schema) {
                 $graphqlSchema = $schema->fetch();
-            } catch (SchemaNotFoundException $e) {
-                if ($this->autobuildEnabled()) {
-                    Schema::quiet();
-                    // Boot schema if required
-                    $schema->boot();
-                    // TODO Assumes buildSchema modifies the same instance through globals
-                    Build::singleton()->buildSchema($schema->getSchemaKey());
-                    $graphqlSchema = $schema->fetch();
-                } else {
-                    throw $e;
-                }
+            } else if ($this->autobuildEnabled()) {
+                Schema::quiet();
+                Build::singleton()->buildSchema($schema->getSchemaKey());
+                // At this point we hav e a fully built schema, so it should throw if not found.
+                $schema = SchemaFactory::singleton()->require($this->getSchemaKey());
+                $graphqlSchema = $schema->fetch();
+            } else {
+                throw new SchemaBuilderException(sprintf(
+                    'Schema %s has not been built.',
+                    $this->schemaKey
+                ));
             }
             $handler = $this->getQueryHandler();
             if ($handler instanceof ContextProvider) {
@@ -497,18 +493,18 @@ class Controller extends BaseController implements Flushable
             $this->applyContext($handler, $this->getRequest());
         }
         try {
-            $schema = $this->getSchema()->fetch();
+            $graphqlSchema = SchemaFactory::singleton()->require($this->getSchemaKey())->fetch();
         } catch (SchemaNotFoundException $e) {
             if ($this->autobuildEnabled()) {
                 Schema::quiet();
-                Build::singleton()->buildSchema($this->getSchema()->getSchemaKey());
-                $schema = $this->getSchema()->fetch();
+                Build::singleton()->buildSchema($this->getSchemaKey());
+                $graphqlSchema = SchemaFactory::singleton()->require($this->getSchemaKey())->fetch();
             } else {
                 throw $e;
             }
         }
         $fragments = $this->getQueryHandler()->query(
-            $schema,
+            $graphqlSchema,
             <<<GRAPHQL
 query IntrospectionQuery {
     __schema {
@@ -572,21 +568,22 @@ GRAPHQL
     }
 
     /**
-     * @return Schema
+     * @param string $schemaKey
+     * @return $this
      */
-    public function getSchema(): Schema
+    public function setSchemaKey(string $schemaKey): self
     {
-        return $this->schema;
+        $this->schemaKey = $schemaKey;
+
+        return $this;
     }
 
     /**
-     * @param Schema $schema
-     * @return Controller
+     * @return string|null
      */
-    public function setSchema(Schema $schema): self
+    public function getSchemaKey(): ?string
     {
-        $this->schema = $schema;
-        return $this;
+        return $this->schemaKey;
     }
 
     /**
