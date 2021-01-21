@@ -1,6 +1,6 @@
 # SilverStripe GraphQL Server
 
-[![Build Status](https://travis-ci.org/silverstripe/silverstripe-graphql.svg?branch=master)](https://travis-ci.org/silverstripe/silverstripe-graphql)
+[![Build Status](https://api.travis-ci.com/silverstripe/silverstripe-graphql.svg?branch=3)](https://travis-ci.com/silverstripe/silverstripe-graphql)
 [![codecov](https://codecov.io/gh/silverstripe/silverstripe-graphql/branch/master/graph/badge.svg)](https://codecov.io/gh/silverstripe/silverstripe-graphql)
 [![SilverStripe supported module](https://img.shields.io/badge/silverstripe-supported-0071C4.svg)](https://www.silverstripe.org/software/addons/silverstripe-commercially-supported-module-list/)
 
