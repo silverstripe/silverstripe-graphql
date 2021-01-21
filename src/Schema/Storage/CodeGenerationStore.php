@@ -70,7 +70,6 @@ class CodeGenerationStore implements SchemaStorageInterface
 
     /**
      * @var string
-     * @config
      */
     private $rootDir = BASE_PATH;
 
@@ -263,7 +262,7 @@ class CodeGenerationStore implements SchemaStorageInterface
             ));
         }
 
-        require($this->getSchemaFilename());
+        require_once($this->getSchemaFilename());
 
         $registryClass = $this->getClassName(self::TYPE_CLASS_NAME);
         $hasMutations = method_exists($registryClass, Schema::MUTATION_TYPE);
@@ -284,7 +283,7 @@ class CodeGenerationStore implements SchemaStorageInterface
     public function getTypeMapping(): array
     {
         if (file_exists($this->getTypeMappingFilename())) {
-            $mapping = require($this->getTypeMappingFilename());
+            $mapping = require_once($this->getTypeMappingFilename());
 
             return $mapping;
         }

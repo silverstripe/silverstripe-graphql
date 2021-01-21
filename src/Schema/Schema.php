@@ -532,20 +532,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @param string $key
-     * @return Schema
-     * @throws SchemaBuilderException
-     */
-    public static function build(string $key): self
-    {
-        $schema = static::create($key);
-        BuildState::activate($schema);
-        $schema->boot();
-
-        return $schema;
-    }
-
-    /**
      * @return bool
      */
     public function exists(): bool

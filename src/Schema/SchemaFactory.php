@@ -3,13 +3,13 @@
 
 namespace SilverStripe\GraphQL\Schema;
 
-
 use M1\Env\Exception\ParseException;
 use SilverStripe\Config\MergeStrategy\Priority;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Core\Path;
+use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use Symfony\Component\Finder\Finder;
@@ -59,6 +59,11 @@ class SchemaFactory
     public function boot(string $key): Schema
     {
         $schemaObj = Schema::create($key);
+
+        // Hack... BuildState is a temporary API that will be removed.
+        // https://github.com/silverstripe/silverstripe-graphql/issues/341
+        BuildState::activate($schemaObj);
+
         $schemas = $schemaObj->config()->get('schemas') ?: [];
         $schema = $schemas[$key] ?? [];
 
@@ -180,6 +185,4 @@ class SchemaFactory
 
         return $config;
     }
-
-
 }

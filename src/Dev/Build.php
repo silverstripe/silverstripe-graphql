@@ -59,7 +59,6 @@ class Build extends Controller
             Benchmark::start('build-schema-' . $key);
             Schema::message(sprintf('--- Building schema "%s" ---', $key));
             $schema = SchemaFactory::singleton()->boot($key);
-            BuildState::activate($schema);
             if (!$schema->exists()) {
                 continue;
             }

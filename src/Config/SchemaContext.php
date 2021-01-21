@@ -11,6 +11,8 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
+use SilverStripe\GraphQL\Schema\Resolver\DefaultResolver;
+use SilverStripe\GraphQL\Schema\Resolver\DefaultResolverStrategy;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 
 /**
@@ -88,7 +90,7 @@ class SchemaContext extends AbstractConfiguration
      */
     public function discoverResolver(?string $typeName = null, ?Field $field = null): ResolverReference
     {
-        $strategy = $this->get('resolverStrategy');
+        $strategy = $this->get('resolverStrategy', [DefaultResolverStrategy::class, 'getResolverMethod']);
         Schema::invariant(
             is_callable($strategy),
             'SchemaContext resolverStrategy must be callable'
@@ -102,7 +104,7 @@ class SchemaContext extends AbstractConfiguration
         $default = $field->getDefaultResolver();
 
         return $default ?: ResolverReference::create(
-            $this->get('defaultResolver')
+            $this->get('defaultResolver', [DefaultResolver::class, 'defaultFieldResolver'])
         );
     }
 

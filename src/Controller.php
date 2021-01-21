@@ -140,7 +140,7 @@ class Controller extends BaseController implements Flushable
             $graphqlSchema = null;
             if ($schema) {
                 $graphqlSchema = $schema->fetch();
-            } else if ($this->autobuildEnabled()) {
+            } elseif ($this->autobuildEnabled()) {
                 Schema::quiet();
                 Build::singleton()->buildSchema($schema->getSchemaKey());
                 // At this point we hav e a fully built schema, so it should throw if not found.
