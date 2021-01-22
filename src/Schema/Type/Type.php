@@ -245,6 +245,15 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
             $field->validate();
         }
     }
+
+    /**
+     * @return bool
+     */
+    public function exists(): bool
+    {
+        return !empty($this->getFields());
+    }
+
     /**
      * @param mixed $description
      * @return Type

@@ -3,10 +3,7 @@
 namespace SilverStripe\GraphQL\Middleware;
 
 use Exception;
-use GraphQL\Error\SyntaxError;
-use GraphQL\Language\AST\NodeKind;
-use GraphQL\Language\Parser;
-use GraphQL\Language\Source;
+use GraphQL\Type\Schema;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\Security\SecurityToken;
 
@@ -15,18 +12,13 @@ use SilverStripe\Security\SecurityToken;
  * to happen. Protects against CSRF attacks
  *
  */
-class CSRFMiddleware implements Middleware
+class CSRFMiddleware implements QueryMiddleware
 {
     /**
-     * @param array $params
-     * @param callable $next
-     * @return mixed
-     * @throws SyntaxError
+     * @inheritDoc
      */
-    public function process(array $params, callable $next)
+    public function process(Schema $schema, $query, $context, $vars, callable $next)
     {
-        $query = $params['query'] ?? null;
-        $context = $params['context'] ?? [];
         if ($query && QueryHandler::isMutation($query)) {
             if (empty($context['token'])) {
                 throw new Exception('Mutations must provide a CSRF token in the X-CSRF-TOKEN header');
@@ -38,6 +30,6 @@ class CSRFMiddleware implements Middleware
             }
         }
 
-        return $next($params);
+        return $next($schema, $query, $context, $vars);
     }
 }

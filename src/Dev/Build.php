@@ -9,6 +9,7 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Dev\DebugView;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\SchemaFactory;
 use SilverStripe\ORM\DatabaseAdmin;
 
 class Build extends Controller
@@ -20,11 +21,6 @@ class Build extends Controller
     private static $allowed_actions = [
         'build'
     ];
-
-    /**
-     * @var Schema|null
-     */
-    private static $activeBuild;
 
     /**
      * @param HTTPRequest $request
@@ -62,9 +58,7 @@ class Build extends Controller
         foreach ($keys as $key) {
             Benchmark::start('build-schema-' . $key);
             Schema::message(sprintf('--- Building schema "%s" ---', $key));
-            $schema = Schema::create($key);
-            self::$activeBuild = $schema;
-            $schema->loadFromConfig();
+            $schema = SchemaFactory::singleton()->boot($key);
             if (!$schema->exists()) {
                 continue;
             }
@@ -79,15 +73,18 @@ class Build extends Controller
             );
         }
 
-        self::$activeBuild = null;
+        BuildState::clear();
     }
+
+    // It's likely that this global state will get removed in the near future, so
+    // this is just for BC for the currently more semantically correct BuildState class.
 
     /**
      * @return Schema|null
      */
     public static function getActiveBuild(): ?Schema
     {
-        return self::$activeBuild;
+        return BuildState::getActiveBuild();
     }
 
     /**
@@ -96,12 +93,6 @@ class Build extends Controller
      */
     public static function requireActiveBuild(): Schema
     {
-        $schema = static::getActiveBuild();
-        Schema::invariant(
-            $schema,
-            'Attempted to access schema building tools when no build was active'
-        );
-
-        return $schema;
+        return BuildState::requireActiveBuild();
     }
 }

@@ -1,0 +1,17 @@
+SilverStripe\GraphQL\Tests\Fake\DataObjectFake:
+  operations:
+    readOne:
+      plugins:
+        filter: true
+        sort: true
+  fields:
+    myField: true
+    author:
+      fields:
+        firstName: true
+    files:
+      plugins:
+        filter: true
+        sort: true
+      fields:
+        title: true

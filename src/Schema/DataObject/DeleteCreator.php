@@ -6,6 +6,7 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelMutation;
@@ -42,7 +43,7 @@ class DeleteCreator implements OperationCreator
         $plugins = $config['plugins'] ?? [];
         $mutationName = $config['name'] ?? null;
         if (!$mutationName) {
-            $mutationName = 'delete' . ucfirst(Schema::pluralise($typeName));
+            $mutationName = 'delete' . ucfirst(BuildState::requireActiveBuild()->pluralise($typeName));
         }
 
         return ModelMutation::create($model, $mutationName)

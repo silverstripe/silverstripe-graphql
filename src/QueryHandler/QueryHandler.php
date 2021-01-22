@@ -17,8 +17,7 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Middleware\Middleware;
-use SilverStripe\GraphQL\Middleware\MiddlewareConsumer;
+use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 use SilverStripe\GraphQL\Permission\MemberAware;
 use SilverStripe\GraphQL\Permission\MemberContextProvider;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
@@ -40,7 +39,6 @@ class QueryHandler implements
     ContextProvider,
     MemberContextProvider
 {
-    use MiddlewareConsumer;
     use Extensible;
     use Injectable;
     use Configurable;
@@ -62,14 +60,19 @@ class QueryHandler implements
     private $errorFormatter = [self::class, 'formatError'];
 
     /**
+     * @var QueryMiddleware[]
+     */
+    private $middlewares = [];
+
+    /**
      * @param GraphQLSchema $schema
      * @param string $query
      * @param array|null $params
      * @return array
      */
-    public function query(GraphQLSchema $schema, string $query, ?array $params = []): array
+    public function query(GraphQLSchema $schema, string $query, ?array $vars = []): array
     {
-        $executionResult = $this->queryAndReturnResult($schema, $query, $params);
+        $executionResult = $this->queryAndReturnResult($schema, $query, $vars);
 
         // Already in array form
         if (is_array($executionResult)) {
@@ -84,18 +87,14 @@ class QueryHandler implements
      * @param array|null $params
      * @return array|ExecutionResult
      */
-    public function queryAndReturnResult(GraphQLSchema $schema, string $query, ?array $params = [])
+    public function queryAndReturnResult(GraphQLSchema $schema, string $query, ?array $vars = [])
     {
         $context = $this->getContext();
-        $last = function ($params) {
-            $schema = $params['schema'];
-            $query = $params['query'];
-            $context = $params['context'];
-            $params = $params['vars'];
-            return GraphQL::executeQuery($schema, $query, null, $context, $params);
+        $last = function ($schema, $query, $context, $vars) {
+            return GraphQL::executeQuery($schema, $query, null, $context, $vars);
         };
 
-        return $this->callMiddleware($schema, $query, $context, $params, $last);
+        return $this->callMiddleware($schema, $query, $context, $vars, $last);
     }
 
 
@@ -173,6 +172,38 @@ class QueryHandler implements
     }
 
     /**
+     * @return QueryMiddleware[]
+     */
+    public function getMiddlewares()
+    {
+        return $this->middlewares;
+    }
+
+    /**
+     * @param QueryMiddleware[] $middlewares
+     * @return $this
+     */
+    public function setMiddlewares(array $middlewares)
+    {
+        foreach ($middlewares as $middleware) {
+            if ($middleware instanceof QueryMiddleware) {
+                $this->addMiddleware($middleware);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * @param QueryMiddleware $middleware
+     * @return $this
+     */
+    public function addMiddleware($middleware)
+    {
+        $this->middlewares[] = $middleware;
+        return $this;
+    }
+
+    /**
      * @return array
      */
     protected function getContextDefaults(): array
@@ -182,27 +213,30 @@ class QueryHandler implements
         ];
     }
 
-
     /**
      * Call middleware to evaluate a graphql query
      *
      * @param GraphQLSchema $schema
      * @param string $query Query to invoke
      * @param array $context
-     * @param array $variables Variables passed to this query
+     * @param array $params Variables passed to this query
      * @param callable $last The callback to call after all middlewares
      * @return ExecutionResult|array
      */
-    protected function callMiddleware(GraphQLSchema $schema, $query, $context, $variables, callable $last)
+    protected function callMiddleware(GraphQLSchema $schema, $query, $context, $params, callable $last)
     {
+        // Reverse middlewares
+        $next = $last;
+        // Filter out any middlewares that are set to `false`, e.g. via config
+        $middlewares = array_reverse(array_filter($this->getMiddlewares()));
+        /** @var QueryMiddleware $middleware */
+        foreach ($middlewares as $middleware) {
+            $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
+                return $middleware->process($schema, $query, $context, $params, $next);
+            };
+        }
 
-        $params = [
-            'schema' => $schema,
-            'query' => $query,
-            'context' => $context,
-            'vars' => $variables,
-        ];
-        $result = $this->executeMiddleware($params, $last);
+        $result = $next($schema, $query, $context, $params);
 
         return $result;
     }
@@ -255,7 +289,7 @@ class QueryHandler implements
         }
 
         // If "mutation" is the first expression in the query, then it's a mutation.
-        if (preg_match('/^\s*'.preg_quote('mutation', '/').'/', $query)) {
+        if (preg_match('/^\s*' . preg_quote('mutation', '/') . '/', $query)) {
             return true;
         }
 

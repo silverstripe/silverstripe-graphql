@@ -1,0 +1,14 @@
+SilverStripe\GraphQL\Tests\Fake\FakePage:
+  fields: '*'
+  operations:
+    read: true
+    update: true
+    delete: true
+    create: true
+
+SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage:
+  fields: '*'
+  operations:
+    read:
+      plugins:
+        paginateList: false

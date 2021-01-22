@@ -36,9 +36,11 @@ matrix:
     - php: 7.4
       env: DB=MYSQL PHPUNIT_TEST=1
     - php: 7.3
-      env: DB=MYSQL BEHAT_TEST=1
-    - php: 7.3
       env: DB=MYSQL ASSETADMIN_TEST=1
+  # TODO https://github.com/silverstripe/silverstripe-asset-admin/issues/1163
+  allow_failures:
+    - php: 7.3
+      env: DB=MYSQL BEHAT_TEST=1
 
 before_script:
 # Extra $PATH
@@ -54,7 +56,7 @@ before_script:
   - if [[ (! $BEHAT_TEST) && (! $ASSETADMIN_TEST) ]]; then composer require --prefer-dist --no-update silverstripe/recipe-core:4.x-dev silverstripe/assets:1.x-dev --prefer-dist ; fi
   - if [[ $DB == PGSQL ]]; then composer require silverstripe/postgresql:2.x-dev --prefer-dist --no-update; fi
   - if [[ $ASSETADMIN_TEST ]]; then composer require silverstripe/recipe-cms $RECIPE_CMS_VERSION --prefer-source --no-update ; fi
-  - if [[ $BEHAT_TEST ]]; then composer require silverstripe/recipe-testing:^1 silverstripe/recipe-cms:$RECIPE_CMS_VERSION silverstripe/frameworktest:0.2.0 --prefer-source --no-update ; fi
+  - if [[ $BEHAT_TEST ]]; then composer require silverstripe/recipe-testing:^1 silverstripe/recipe-cms:$RECIPE_CMS_VERSION silverstripe/frameworktest:4.x-dev --prefer-source --no-update ; fi
   - composer update
 
   - if [[ $BEHAT_TEST ]]; then mkdir artifacts; fi
@@ -72,3 +74,6 @@ script:
 
 after_success:
   - if [[ $PHPUNIT_COVERAGE_TEST ]]; then bash <(curl -s https://codecov.io/bash) -f coverage.xml; fi
+
+after_failure:
+  - php ./vendor/silverstripe/framework/tests/behat/travis-upload-artifacts.php --if-env BEHAT_TEST,ARTIFACTS_BUCKET,ARTIFACTS_KEY,ARTIFACTS_SECRET --target-path $TRAVIS_REPO_SLUG/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID --artifacts-base-url https://s3.amazonaws.com/$ARTIFACTS_BUCKET/ --artifacts-path ./artifacts/

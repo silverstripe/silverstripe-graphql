@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
@@ -38,7 +39,7 @@ class ReadCreator implements OperationCreator
         $queryName = $config['name'] ?? null;
         $resolver = $config['resolver'] ?? null;
         if (!$queryName) {
-            $queryName = 'read' . ucfirst(Schema::pluralise($typeName));
+            $queryName = 'read' . ucfirst(BuildState::requireActiveBuild()->pluralise($typeName));
         }
 
         $query = ModelQuery::create($model, $queryName)

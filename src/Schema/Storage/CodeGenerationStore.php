@@ -70,7 +70,6 @@ class CodeGenerationStore implements SchemaStorageInterface
 
     /**
      * @var string
-     * @config
      */
     private $rootDir = BASE_PATH;
 
@@ -92,7 +91,6 @@ class CodeGenerationStore implements SchemaStorageInterface
      */
     public function persistSchema(Schema $schema): void
     {
-        Benchmark::start('render');
         $fs = new Filesystem();
         $finder = new Finder();
         $temp = $this->getTempDirectory();
@@ -249,8 +247,6 @@ class CodeGenerationStore implements SchemaStorageInterface
         if ($diff > 0) {
             Schema::message(sprintf('(... and %s more)', $diff));
         }
-
-        Schema::message(Benchmark::end('render', 'Generated code in %sms'));
     }
 
     /**
@@ -287,7 +283,7 @@ class CodeGenerationStore implements SchemaStorageInterface
     public function getTypeMapping(): array
     {
         if (file_exists($this->getTypeMappingFilename())) {
-            $mapping = require($this->getTypeMappingFilename());
+            $mapping = require_once($this->getTypeMappingFilename());
 
             return $mapping;
         }

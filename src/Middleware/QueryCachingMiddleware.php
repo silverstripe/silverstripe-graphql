@@ -14,6 +14,7 @@ use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use Exception;
+use GraphQL\Type\Schema;
 
 /**
  * Enables graphql responses to be cached.
@@ -23,7 +24,7 @@ use Exception;
  *
  * @internal
  */
-class QueryCachingMiddleware implements Middleware, Flushable
+class QueryCachingMiddleware implements QueryMiddleware, Flushable
 {
     use Injectable;
     /**
@@ -32,13 +33,9 @@ class QueryCachingMiddleware implements Middleware, Flushable
     protected $cache;
 
     /**
-     * @param array $params
-     * @param callable $next
-     * @throws InvalidArgumentException
-     * @throws Exception
-     * @return mixed
+     * @inheritDoc
      */
-    public function process(array $params, callable $next)
+    public function process(Schema $schema, $query, $context, $vars, callable $next)
     {
         if (!DataObject::singleton()->hasExtension(QueryRecorderExtension::class)) {
             throw new Exception(sprintf(
@@ -48,8 +45,7 @@ class QueryCachingMiddleware implements Middleware, Flushable
                 __CLASS__
             ));
         }
-        $query = $params['query'];
-        $vars = $params['vars'];
+        $vars = $vars['vars'];
         $key = $this->generateCacheKey($query, $vars);
 
         // Get successful cache response
@@ -61,8 +57,8 @@ class QueryCachingMiddleware implements Middleware, Flushable
         // Closure begins / ends recording of classes queried by DataQuery.
         // ClassSpyExtension is added to DataQuery via yml
         $spy = QueryRecorderExtension::singleton();
-        list ($classesUsed, $response) = $spy->recordClasses(function () use ($params, $next) {
-            return $next($params);
+        list($classesUsed, $response) = $spy->recordClasses(function () use ($schema, $query, $context, $vars, $next) {
+            return $next($schema, $query, $context, $vars);
         });
 
         // Save freshly generated response
@@ -92,15 +88,15 @@ class QueryCachingMiddleware implements Middleware, Flushable
      * Generate cache key
      *
      * @param string $query
-     * @param array $params
+     * @param array $vars
      * @return string
      */
-    protected function generateCacheKey($query, $params): string
+    protected function generateCacheKey($query, $vars): string
     {
         return md5(var_export(
             [
                 'query' => $query,
-                'params' => $params
+                'params' => $vars
             ],
             true
         ));

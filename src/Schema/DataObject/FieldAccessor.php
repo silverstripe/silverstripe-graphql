@@ -238,7 +238,11 @@ class FieldAccessor
                         $aggregateFunction
                     ));
                 }
-                return call_user_func_array([$subject, $aggregateFunction], [$aggregateColumn]);
+                if (method_exists($subject, $aggregateFunction)) {
+                    return call_user_func_array([$subject, $aggregateFunction], [$aggregateColumn]);
+                }
+
+                return null;
             }
 
             $singleton = DataObject::singleton($subject->dataClass());

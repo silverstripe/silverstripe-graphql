@@ -1,0 +1,7 @@
+types:
+  MyType:
+    fields:
+      field1: String
+      field2: Boolean
+queries:
+  readMyTypesAgain: '[MyType]'
