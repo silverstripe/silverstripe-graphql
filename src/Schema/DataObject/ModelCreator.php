@@ -6,6 +6,7 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelCreatorInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
+use SilverStripe\GraphQL\Schema\SchemaContext;
 use SilverStripe\ORM\DataObject;
 
 /**
@@ -26,10 +27,11 @@ class ModelCreator implements SchemaModelCreatorInterface
 
     /**
      * @param string $class
+     * @param SchemaContext $context
      * @return SchemaModelInterface
      */
-    public function createModel(string $class): SchemaModelInterface
+    public function createModel(string $class, SchemaContext $context): SchemaModelInterface
     {
-        return DataObjectModel::create($class);
+        return DataObjectModel::create($class, $context);
     }
 }

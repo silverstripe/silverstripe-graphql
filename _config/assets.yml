@@ -24,7 +24,3 @@ SilverStripe\Assets\File:
     document:
       - graphql
 
-SilverStripe\Core\Injector\Injector:
-  SilverStripe\GraphQL\Controller:
-    properties:
-      assetHandler: '%$SilverStripe\Assets\Storage\GeneratedAssetHandler'

@@ -32,12 +32,21 @@ class <?=$type->getName() ?> extends <?php if ($type->getIsInput()) :
             },
         <?php endif; ?>
 'fields' => function () {
-                return [
+                $fields = [];
                 <?php foreach ($type->getFields() as $field) : ?>
-                    [
+                    <?php $resolver = $field->getEncodedResolver($type->getName()); ?>
+                    $resolverInst = <?=$resolver->encode(); ?>;
+                    $fields[] = [
                         'name' => '<?=$field->getName(); ?>',
                         'type' => <?=$field->getEncodedType()->encode() ?>,
-                        'resolve' => <?=$field->getEncodedResolver($type->getName())->encode(); ?>,
+                        'resolve' => $resolverInst->toClosure(),
+                        'resolverComposition' => [
+                            <?php foreach ($resolver->getStack() as $ref) : ?>
+                                [
+                                    <?=$ref->getInnerExpression() ?>,
+                                ],
+                            <?php endforeach; ?>
+                        ],
                     <?php if (!empty($field->getDescription())) : ?>
                         'description' => '<?=addslashes($field->getDescription()); ?>',
                     <?php endif; ?>
@@ -50,13 +59,13 @@ class <?=$type->getName() ?> extends <?php if ($type->getIsInput()) :
                             <?php if ($arg->getDefaultValue() !== null) : ?>
                                 'defaultValue' => <?=var_export($arg->getDefaultValue(), true); ?>,
                             <?php endif; ?>
-                            ],
+                            ], // arg
                         <?php endforeach; ?>
-                        ],
+                        ], // args
                     <?php endif; ?>
-                    ],
+                    ]; // field
                 <?php endforeach; ?>
-                ];
+                return $fields;
             },
         ]);
     }

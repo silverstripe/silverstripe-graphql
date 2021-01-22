@@ -7,13 +7,12 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Config\ModelConfiguration;
-use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
-use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
+use SilverStripe\GraphQL\Schema\SchemaContext;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationProvider;
@@ -32,16 +31,15 @@ class DataObjectModel implements
     SchemaModelInterface,
     OperationProvider,
     DefaultFieldsProvider,
-    ModelBlacklist,
-    ModelConfigurationProvider
+    ModelBlacklist
 {
     use Injectable;
     use Configurable;
 
     /**
-     * @var ModelConfiguration
+     * @var SchemaContext
      */
-    private $configuration;
+    private $schemaContext;
 
     /**
      * @var array
@@ -77,10 +75,10 @@ class DataObjectModel implements
     /**
      * DataObjectModel constructor.
      * @param string $class
-     * @param ModelConfiguration|null $config
+     * @param SchemaContext $context
      * @throws SchemaBuilderException
      */
-    public function __construct(string $class, ?ModelConfiguration $config = null)
+    public function __construct(string $class, SchemaContext $context)
     {
         Schema::invariant(
             is_subclass_of($class, DataObject::class),
@@ -89,7 +87,7 @@ class DataObjectModel implements
             DataObject::class
         );
         $this->dataObject = Injector::inst()->get($class);
-        $this->configuration = $config;
+        $this->schemaContext = $context;
     }
 
     /**
@@ -129,13 +127,13 @@ class DataObjectModel implements
             }
             return null;
         }
-        $type = BuildState::requireActiveBuild()->getTypeNameForClass($class);
+        $type = $this->getModelConfiguration()->getTypeName($class);
         if ($this->isList($result)) {
             $queryConfig = array_merge([
                 'type' => sprintf('[%s]', $type),
             ], $config);
             $query = ModelQuery::create($this, $fieldName, $queryConfig);
-            $query->setDefaultPlugins($this->getModelConfig()->getNestedQueryPlugins());
+            $query->setDefaultPlugins($this->getModelConfiguration()->getNestedQueryPlugins());
             return $query;
         }
         return ModelField::create($fieldName, $type, $this);
@@ -242,7 +240,7 @@ class DataObjectModel implements
      */
     public function getOperationCreatorByIdentifier(string $id): ?OperationCreator
     {
-        $registeredOperations = $this->getModelConfig()->get('operations', []);
+        $registeredOperations = $this->getModelConfiguration()->get('operations', []);
         $creator = $registeredOperations[$id]['class'] ?? null;
         if (!$creator) {
             return null;
@@ -265,12 +263,12 @@ class DataObjectModel implements
     }
 
     /**
-     * @return string[]
+     * @return array
      * @throws SchemaBuilderException
      */
     public function getAllOperationIdentifiers(): array
     {
-        $registeredOperations = $this->getModelConfig()->get('operations', []);
+        $registeredOperations = $this->getModelConfiguration()->get('operations', []);
 
         return array_keys($registeredOperations);
     }
@@ -292,7 +290,23 @@ class DataObjectModel implements
             return null;
         }
 
-        return BuildState::requireActiveBuild()->createModel($class);
+        $model = $this->getSchemaContext()->createModel($class);
+        if (!$model) {
+            return null;
+        }
+
+        return ModelType::create($model);
+    }
+
+    /**
+     * @param string $field
+     * @return string
+     */
+    public function getPropertyForField(string $field): string
+    {
+        $sng = DataObject::singleton($this->getSourceClass());
+
+        return FieldAccessor::singleton()->normaliseField($sng, $field) ?: $field;
     }
 
     /**
@@ -309,25 +323,25 @@ class DataObjectModel implements
      */
     public function getTypeName(): string
     {
-        return $this->getModelConfig()->getTypeName(get_class($this->dataObject));
+        return $this->getModelConfiguration()->getTypeName(get_class($this->dataObject));
     }
 
     /**
-     * @return ModelConfiguration
+     * @return SchemaContext
      */
-    public function getModelConfig(): ModelConfiguration
+    public function getSchemaContext(): SchemaContext
     {
-        return $this->configuration;
+        return $this->schemaContext;
     }
 
     /**
-     * @param ModelConfiguration $configuration
+     * @return ModelConfiguration|null
+     * @throws SchemaBuilderException
      */
-    public function applyModelConfig(ModelConfiguration $configuration): void
+    public function getModelConfiguration(): ?ModelConfiguration
     {
-        $this->configuration = $configuration;
+        return $this->getSchemaContext()->getModelConfiguration(static::getIdentifier());
     }
-
 
     /**
      * @param $result

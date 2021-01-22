@@ -4,6 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
 use SilverStripe\GraphQL\Schema\Type\InputType;
+use SilverStripe\GraphQL\Schema\Type\ModelType;
 
 /**
  * Implementors of this interface provide input types back to the schema
@@ -11,14 +12,12 @@ use SilverStripe\GraphQL\Schema\Type\InputType;
 interface InputTypeProvider
 {
     /**
-     * @param SchemaModelInterface $model
-     * @param string $typeName
+     * @param ModelType $modelType
      * @param array $config
      * @return InputType[]
      */
     public function provideInputTypes(
-        SchemaModelInterface $model,
-        string $typeName,
+        ModelType $modelType,
         array $config = []
     ): array;
 }

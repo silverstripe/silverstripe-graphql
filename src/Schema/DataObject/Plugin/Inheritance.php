@@ -6,7 +6,6 @@ namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 use SilverStripe\Core\Convert;
 use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceChain;
-use SilverStripe\GraphQL\Schema\DataObject\ReadCreator;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
@@ -91,7 +90,7 @@ class Inheritance implements PluginInterface, SchemaUpdater
 
         // Add the new _extend field to the base class only
         if (!$parentModel) {
-            $result = $inheritance->getExtensionType();
+            $result = $inheritance->getExtensionType($schema->getSchemaContext());
             if ($result) {
                 /* @var Type $extendsType */
                 list($extendsType, $subtypes) = $result;
@@ -162,7 +161,7 @@ class Inheritance implements PluginInterface, SchemaUpdater
      */
     private static function isBaseModel(string $class, Schema $schema): bool
     {
-        $chain = InheritanceChain::create($class);
+        $chain = InheritanceChain::create($class, $schema);
         if ($chain->getBaseClass() === $class) {
             return true;
         }

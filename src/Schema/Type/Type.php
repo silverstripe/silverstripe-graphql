@@ -163,8 +163,8 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
         }
 
         $defaultResolver = $this->getFieldResolver();
-        if ($defaultResolver) {
-            $fieldObj->setDefaultResolver($defaultResolver);
+        if ($defaultResolver && !$fieldObj->getResolver()) {
+            $fieldObj->setResolver($defaultResolver);
         }
         $this->fields[$fieldObj->getName()] = $fieldObj;
         if ($callback) {

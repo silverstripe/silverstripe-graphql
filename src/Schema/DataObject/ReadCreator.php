@@ -5,13 +5,11 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
-use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataList;
 use Closure;
 
@@ -38,14 +36,17 @@ class ReadCreator implements OperationCreator
         $plugins = $config['plugins'] ?? [];
         $queryName = $config['name'] ?? null;
         $resolver = $config['resolver'] ?? null;
+
         if (!$queryName) {
-            $queryName = 'read' . ucfirst(BuildState::requireActiveBuild()->pluralise($typeName));
+            $pluraliser = $model->getSchemaContext()->getPluraliser();
+            $suffix = $pluraliser ? $pluraliser($typeName) : $typeName;
+            $queryName = 'read' . ucfirst($suffix);
         }
 
         $query = ModelQuery::create($model, $queryName)
             ->setType("[$typeName]")
             ->setPlugins($plugins)
-            ->setDefaultResolver([static::class, 'resolve'])
+            ->setResolver([static::class, 'resolve'])
             ->setResolverContext([
                 'dataClass' => $model->getSourceClass(),
             ]);

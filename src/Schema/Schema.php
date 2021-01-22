@@ -3,16 +3,12 @@
 namespace SilverStripe\GraphQL\Schema;
 
 use GraphQL\Type\Schema as GraphQLSchema;
-use M1\Env\Exception\ParseException;
-use SilverStripe\Config\MergeStrategy\Priority;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\Core\Manifest\ModuleResourceLoader;
-use SilverStripe\Core\Path;
-use SilverStripe\GraphQL\Dev\Benchmark;
-use SilverStripe\GraphQL\Dev\BuildState;
+use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
+use SilverStripe\EventDispatcher\Symfony\Event;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
@@ -22,7 +18,6 @@ use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
-use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelTypePlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
@@ -31,22 +26,18 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaComponent;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
-use SilverStripe\GraphQL\Schema\Interfaces\SettingsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\TypePlugin;
-use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\Scalar;
 use SilverStripe\GraphQL\Schema\Type\Type;
+use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\GraphQL\Schema\Type\UnionType;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\ORM\ArrayLib;
 use Exception;
-use Symfony\Component\Finder\Finder;
-use Symfony\Component\Finder\SplFileInfo;
-use Symfony\Component\Yaml\Yaml;
 use TypeError;
 
 /**
@@ -82,7 +73,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
     /**
      * @var bool
      */
-    private static $verbose = true;
+    private static $verbose = false;
 
     /**
      * @var string
@@ -152,7 +143,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
      *
      * @param string $schemaKey
      * @param SchemaContext|null $schemaContext
-     * @throws SchemaBuilderException
      */
     public function __construct(string $schemaKey, SchemaContext $schemaContext = null)
     {
@@ -275,6 +265,67 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
+     * Fills in values for types with lazy definitions, e.g. type expressed as class name
+     *
+     * @throws SchemaBuilderException
+     */
+    private function processTypes(): void
+    {
+        $types = array_merge(
+            $this->getTypes(),
+            [$this->queryType, $this->mutationType]
+        );
+        foreach ($types as $type) {
+            foreach ($type->getFields() as $fieldObj) {
+                $modelTypeDef = $fieldObj->getTypeAsModel();
+                if (!$modelTypeDef || $fieldObj->getType()) {
+                    continue;
+                }
+                $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
+                $safeNamedClass = TypeReference::create($safeModelTypeDef)->getNamedType();
+                $namedClass = str_replace('__', '\\', $safeNamedClass);
+                $model = $this->getSchemaContext()->createModel($namedClass);
+                Schema::invariant(
+                    $model,
+                    'No model found for %s',
+                    $namedClass
+                );
+
+                $typeName = $model->getTypeName();
+                $wrappedTypeName = str_replace($namedClass, $typeName, $modelTypeDef);
+
+                $fieldObj->setType($wrappedTypeName);
+            }
+        }
+    }
+
+    /**
+     * Apply resolver discovery
+     * @throws SchemaBuilderException
+     */
+    private function processFields(): void
+    {
+        $types = array_merge(
+            $this->getTypes(),
+            $this->getInterfaces()
+        );
+        foreach ($types as $type) {
+            foreach ($type->getFields() as $fieldObj) {
+                if (!$fieldObj->getResolver()) {
+                    $discoveredResolver = $this->getSchemaContext()->discoverResolver($type->getName(), $fieldObj);
+                    Schema::invariant(
+                        $discoveredResolver,
+                        'Could not discover a resolver for field %s on type %s',
+                        $fieldObj->getName(),
+                        $type->getName()
+                    );
+                    $fieldObj->setResolver($discoveredResolver);
+                }
+            }
+        }
+    }
+
+    /**
      * @throws SchemaBuilderException
      */
     private function processModels(): void
@@ -282,10 +333,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
         foreach ($this->getModels() as $modelType) {
             // Apply default plugins
             $model = $modelType->getModel();
-            if ($model instanceof ModelConfigurationProvider) {
-                $plugins = $model->getModelConfig()->get('plugins', []);
-                $modelType->setDefaultPlugins($plugins);
-            }
+            $plugins = $model->getModelConfiguration()->get('plugins', []);
+            $modelType->setDefaultPlugins($plugins);
             $modelType->buildOperations();
 
             foreach ($modelType->getOperations() as $operationName => $operationType) {
@@ -443,10 +492,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 ));
             } catch (TypeError $e) {
                 throw new SchemaBuilderException(sprintf(
-                    'Plugin %s does not apply to component "%s" (category: %s)',
+                    'Error applying plugin %s to component "%s": %s',
                     $plugin->getIdentifier(),
                     $component->getName(),
-                    $name
+                    $e->getMessage()
                 ));
             }
         }
@@ -476,34 +525,32 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function save(): void
     {
+        // Fill in lazily defined type properties, e.g. fields with a classname as a type
+        $this->processTypes();
+        // Create operations, add default plugins
         $this->processModels();
+        // Execute plugins
         $this->applySchemaUpdates();
 
+        // Models have expressed all they can now. They can graduate to actual types.
         foreach ($this->models as $modelType) {
             $this->addType($modelType);
         }
-
 
         $this->types[self::QUERY_TYPE] = $this->queryType;
         if ($this->mutationType->exists()) {
             $this->types[self::MUTATION_TYPE] = $this->mutationType;
         }
 
+        // Resolver discovery
+        $this->processFields();
+
         $this->validate();
         $this->getStore()->persistSchema($this);
-    }
 
-    /**
-     * @return array
-     */
-    public function mapTypeNames(): array
-    {
-        $typeMapping = [];
-        foreach ($this->getModels() as $modelType) {
-            $typeMapping[$modelType->getModel()->getSourceClass()] = $modelType->getName();
-        }
-
-        return $typeMapping;
+        Dispatcher::singleton()->trigger('graphqlSchemaBuild', Event::create(
+            $this->getSchemaKey()
+        ));
     }
 
     /**
@@ -513,8 +560,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function getTypeNameForClass(string $class): ?string
     {
-        $mapping = $this->getStore()->getTypeMapping();
-        $typeName = $mapping[$class] ?? null;
+        $typeName = $this->getSchemaContext()->getTypeNameForClass($class);
         if ($typeName) {
             return $typeName;
         }
@@ -678,6 +724,15 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
+     * @param string $name
+     * @return Type|null
+     */
+    public function getTypeOrModel(string $name): ?Type
+    {
+        return $this->getType($name) ?: $this->getModel($name);
+    }
+
+    /**
      * @param Enum $enum
      * @return $this
      */
@@ -771,10 +826,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
     /**
      * @param string $class
+     * @param callable|null $callback
      * @return $this
      * @throws SchemaBuilderException
      */
-    public function addModelbyClassName(string $class): self
+    public function addModelbyClassName(string $class, ?callable $callback = null): self
     {
         $model = $this->createModel($class);
         Schema::invariant(
@@ -782,6 +838,9 @@ class Schema implements ConfigurationApplier, SchemaValidator
             'Could not add class %s to schema. No model exists.'
         );
 
+        if ($callback) {
+            $callback($model);
+        }
         return $this->addModel($model);
     }
 
@@ -1026,11 +1085,12 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * Turns off messaging
+     * @param bool $verbose
+     * @return void
      */
-    public static function quiet(): void
+    public static function setVerbose(bool $verbose): void
     {
-        self::$verbose = false;
+        self::$verbose = $verbose;
     }
 
     /**

@@ -29,9 +29,6 @@ SilverStripe\Core\Injector\Injector:
     properties:
       rootDir: '`BASE_PATH`'
 
-SilverStripe\GraphQL\Controller:
-  extensions:
-    - SilverStripe\GraphQL\Extensions\IntrospectionProvider
 SilverStripe\GraphQL\Schema\Schema:
   schemas: []
 ---

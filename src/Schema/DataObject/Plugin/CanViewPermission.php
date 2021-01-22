@@ -6,6 +6,7 @@ namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
+use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
 use SilverStripe\ORM\Filterable;
 use InvalidArgumentException;
 use SilverStripe\ORM\SS_List;
@@ -117,7 +118,7 @@ class CanViewPermission extends AbstractCanViewPermission
      */
     public static function itemPermissionCheck($obj, array $args, array $context, ResolveInfo $info)
     {
-        $member = $context[QueryHandler::CURRENT_USER] ?? null;
+        $member = UserContextProvider::get($context);
         if (is_object($obj) && method_exists($obj, 'canView')) {
             if (!$obj->canView($member)) {
                 return null;
@@ -136,7 +137,7 @@ class CanViewPermission extends AbstractCanViewPermission
      */
     public static function listPermissionCheck(Filterable $obj, array $args, array $context, ResolveInfo $info): Filterable
     {
-        $member = $context[QueryHandler::CURRENT_USER] ?? null;
+        $member = UserContextProvider::get($context);
         $excludes = [];
 
         foreach ($obj as $record) {

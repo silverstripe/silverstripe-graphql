@@ -67,10 +67,8 @@ class ModelField extends Field
         $resolver = $config['resolver'] ?? null;
         if ($resolver) {
             $this->setResolver($resolver);
-        }
-        $defaultResolver = $config['defaultResolver'] ?? null;
-        if (!$defaultResolver) {
-            $config['defaultResolver'] = $this->getModel()->getDefaultResolver($this->getResolverContext());
+        } else {
+            $this->setResolver($this->getModel()->getDefaultResolver($this->getResolverContext()));
         }
 
         $this->modelTypeFields = $config['fields'] ?? null;
@@ -80,23 +78,6 @@ class ModelField extends Field
         unset($config['property']);
 
         parent::applyConfig($config);
-    }
-
-    /**
-     * @return array|null
-     */
-    public function getResolverContext(): ?array
-    {
-        $context = [];
-        if ($this->getProperty() && $this->getProperty() !== $this->getName()) {
-            $context = [
-                'propertyMapping' => [
-                    $this->getName() => $this->getProperty(),
-                ]
-            ];
-        }
-
-        return array_merge(parent::getResolverContext(), $context);
     }
 
     /**
@@ -149,7 +130,7 @@ class ModelField extends Field
      */
     public function getPropertyName(): string
     {
-        return $this->getProperty() ?: $this->getName();
+        return $this->getProperty() ?: $this->getModel()->getPropertyForField($this->getName());
     }
 
     /**

@@ -1,0 +1,57 @@
+SilverStripe\Security\Member:
+  author1:
+    FirstName: Author1
+  author2:
+    FirstName: Author2
+SilverStripe\GraphQL\Tests\Fake\FakeProductPage:
+  productPage1:
+    Title: This is product page one
+    BannerContent: This is product one banner
+  productPage2:
+    Title: This is product page two
+    BannerContent: This is product two banner
+
+SilverStripe\GraphQL\Tests\Fake\FakeProduct:
+  product1:
+    Title: This is product one
+    Parent: =>SilverStripe\GraphQL\Tests\Fake\FakeProductPage.productPage1
+  product2:
+    Title: This is product two
+    Parent: =>SilverStripe\GraphQL\Tests\Fake\FakeProductPage.productPage2
+  product3:
+    Title: This is product three
+    Parent: =>SilverStripe\GraphQL\Tests\Fake\FakeProductPage.productPage1
+  product4:
+    Title: This is product four
+    Parent: =>SilverStripe\GraphQL\Tests\Fake\FakeProductPage.productPage2
+  product5:
+    Title: This is product five
+    Parent: =>SilverStripe\GraphQL\Tests\Fake\FakeProductPage.productPage1
+  product6:
+    Title: This is product six
+    Parent: =>SilverStripe\GraphQL\Tests\Fake\FakeProductPage.productPage2
+  product7:
+    Title: This is product seven
+    Parent: =>SilverStripe\GraphQL\Tests\Fake\FakeProductPage.productPage1
+
+SilverStripe\GraphQL\Tests\Fake\FakeReview:
+  review1:
+    Content: This is review one
+    Author: =>SilverStripe\Security\Member.author1
+    Product: =>SilverStripe\GraphQL\Tests\Fake\FakeProduct.product1
+  review2:
+    Content: This is review two
+    Author: =>SilverStripe\Security\Member.author2
+    Product: =>SilverStripe\GraphQL\Tests\Fake\FakeProduct.product1
+  review3:
+    Content: This is review three
+    Author: =>SilverStripe\Security\Member.author1
+    Product: =>SilverStripe\GraphQL\Tests\Fake\FakeProduct.product1
+  review4:
+    Content: This is review four
+    Author: =>SilverStripe\Security\Member.author2
+    Product: =>SilverStripe\GraphQL\Tests\Fake\FakeProduct.product2
+  review5:
+    Content: This is review five
+    Author: =>SilverStripe\Security\Member.author1
+    Product: =>SilverStripe\GraphQL\Tests\Fake\FakeProduct.product2

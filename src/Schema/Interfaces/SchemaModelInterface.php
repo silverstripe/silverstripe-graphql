@@ -3,8 +3,10 @@
 
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
+use SilverStripe\GraphQL\Config\ModelConfiguration;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
+use SilverStripe\GraphQL\Schema\SchemaContext;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 
 /**
@@ -56,4 +58,20 @@ interface SchemaModelInterface
      * @return ModelType|null
      */
     public function getModelTypeForField(string $fieldName): ?ModelType;
+
+    /**
+     * @return SchemaContext
+     */
+    public function getSchemaContext(): SchemaContext;
+
+    /**
+     * @return ModelConfiguration|null
+     */
+    public function getModelConfiguration(): ?ModelConfiguration;
+
+    /**
+     * @param string $field
+     * @return string
+     */
+    public function getPropertyForField(string $field): string;
 }

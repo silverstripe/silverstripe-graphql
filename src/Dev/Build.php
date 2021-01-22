@@ -51,6 +51,7 @@ class Build extends Controller
      */
     public function buildSchema($key = null, $clear = false): void
     {
+        Schema::setVerbose(true);
         $keys = $key ? [$key] : array_keys(Schema::config()->get('schemas'));
         $keys = array_filter($keys, function ($key) {
             return $key !== Schema::ALL;
@@ -72,27 +73,5 @@ class Build extends Controller
                 Benchmark::end('build-schema-' . $key, 'Built schema in %sms.')
             );
         }
-
-        BuildState::clear();
-    }
-
-    // It's likely that this global state will get removed in the near future, so
-    // this is just for BC for the currently more semantically correct BuildState class.
-
-    /**
-     * @return Schema|null
-     */
-    public static function getActiveBuild(): ?Schema
-    {
-        return BuildState::getActiveBuild();
-    }
-
-    /**
-     * @return Schema
-     * @throws SchemaBuilderException
-     */
-    public static function requireActiveBuild(): Schema
-    {
-        return BuildState::requireActiveBuild();
     }
 }

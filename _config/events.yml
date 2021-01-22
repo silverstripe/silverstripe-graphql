@@ -1,0 +1,7 @@
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\EventDispatcher\Dispatch\Dispatcher:
+    properties:
+      handlers:
+        graphqlTranscribe:
+          on: [ graphqlSchemaBuild ]
+          handler: '%$SilverStripe\GraphQL\Schema\Services\SchemaTranscribeHandler'

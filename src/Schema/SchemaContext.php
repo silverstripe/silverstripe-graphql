@@ -9,7 +9,6 @@ use SilverStripe\GraphQL\Config\ModelConfiguration;
 use SilverStripe\GraphQL\Schema\DataObject\ModelCreator;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
-use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Schema\Resolver\DefaultResolver;
 use SilverStripe\GraphQL\Schema\Resolver\DefaultResolverStrategy;
@@ -67,12 +66,7 @@ class SchemaContext extends AbstractConfiguration
                 ModelCreator::class
             );
             if ($creator->appliesTo($class)) {
-                $model = $creator->createModel($class);
-                if ($model && $model instanceof ModelConfigurationProvider) {
-                    $id = $model::getIdentifier();
-                    $config = $this->getModelConfiguration($id);
-                    $model->applyModelConfig($config);
-                }
+                $model = $creator->createModel($class, $this);
                 $this->__modelCache[$class] = $model;
 
                 return $model;
@@ -82,7 +76,7 @@ class SchemaContext extends AbstractConfiguration
         return null;
     }
 
-    /***
+    /**
      * @param string|null $typeName
      * @param Field|null $field
      * @return ResolverReference
@@ -101,9 +95,7 @@ class SchemaContext extends AbstractConfiguration
             return ResolverReference::create($callable);
         }
 
-        $default = $field->getDefaultResolver();
-
-        return $default ?: ResolverReference::create(
+        return ResolverReference::create(
             $this->get('defaultResolver', [DefaultResolver::class, 'defaultFieldResolver'])
         );
     }
@@ -129,5 +121,85 @@ class SchemaContext extends AbstractConfiguration
         }
         $typeName .= 's';
         return $typeName;
+    }
+
+    /**
+     * @param array $typeMapping
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function setTypeMapping(array $typeMapping): self
+    {
+        return $this->set('typeMapping', $typeMapping);
+    }
+
+    /**
+     * @param array $fields
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function setFieldMapping(array $fields): self
+    {
+        return $this->set('fieldMapping', $fields);
+    }
+
+
+    /**
+     * @param string $class
+     * @return string|null
+     * @throws SchemaBuilderException
+     */
+    public function getTypeNameForClass(string $class): ?string
+    {
+        return $this->get(['typeMapping', $class]);
+    }
+
+    /**
+     * @param string $typeName
+     * @param string $fieldName
+     * @return array|null
+     * @throws SchemaBuilderException
+     */
+    public function mapField(string $typeName, string $fieldName): ?array
+    {
+        return $this->get(['fieldMapping', $typeName, $fieldName]);
+    }
+
+    /**
+     * @param string $className
+     * @param string $fieldName
+     * @return array|null
+     * @throws SchemaBuilderException
+     */
+    public function mapFieldByClassName(string $className, string $fieldName): ?array
+    {
+        $typeName = $this->getTypeNameForClass($className);
+        if (!$typeName) {
+            return null;
+        }
+
+        return $this->mapField($typeName, $fieldName);
+    }
+    /**
+     * @param string $rootType
+     * @param string $path
+     * @return string|null
+     * @throws SchemaBuilderException
+     */
+    public function mapPath(string $rootType, string $path): ?string
+    {
+        $map = [];
+        $currentType = $rootType;
+        foreach (explode('.', $path) as $fieldName) {
+            $info = $this->mapField($currentType, $fieldName);
+            if (!$info) {
+                return null;
+            }
+            list($typeName, $prop) = $info;
+            $map[] = $prop;
+            $currentType = $typeName;
+        }
+
+        return implode('.', $map);
     }
 }

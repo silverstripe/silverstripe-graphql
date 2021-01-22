@@ -19,14 +19,10 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Middleware\QueryMiddleware;
 use SilverStripe\GraphQL\Permission\MemberAware;
-use SilverStripe\GraphQL\Permission\MemberContextProvider;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryProvider;
-use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
-use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\ValidationException;
-use InvalidArgumentException;
 
 /**
  * This class is responsible for taking query information from a controller,
@@ -35,24 +31,20 @@ use InvalidArgumentException;
  */
 class QueryHandler implements
     QueryHandlerInterface,
-    PersistedQueryProvider,
-    ContextProvider,
-    MemberContextProvider
+    PersistedQueryProvider
 {
     use Extensible;
     use Injectable;
     use Configurable;
     use MemberAware;
 
-    /**
-     * The context key that refers the the logged in user
-     */
+    // Deprecated. Remove once all dependencies use UserContextProvider::get($context);
     const CURRENT_USER = 'currentUser';
 
     /**
-     * @var array
+     * @var ContextProvider[]
      */
-    private $extraContext = [];
+    private $contextProviders = [];
 
     /**
      * @var callable
@@ -65,9 +57,20 @@ class QueryHandler implements
     private $middlewares = [];
 
     /**
+     * QueryHandler constructor.
+     * @param ContextProvider[] $contextProviders
+     */
+    public function __construct(array $contextProviders = [])
+    {
+        foreach ($contextProviders as $contextProvider) {
+            $this->addContextProvider($contextProvider);
+        }
+    }
+
+    /**
      * @param GraphQLSchema $schema
      * @param string $query
-     * @param array|null $params
+     * @param array|null $vars
      * @return array
      */
     public function query(GraphQLSchema $schema, string $query, ?array $vars = []): array
@@ -84,7 +87,7 @@ class QueryHandler implements
     /**
      * @param GraphQLSchema $schema
      * @param string $query
-     * @param array|null $params
+     * @param array|null $vars
      * @return array|ExecutionResult
      */
     public function queryAndReturnResult(GraphQLSchema $schema, string $query, ?array $vars = [])
@@ -119,23 +122,21 @@ class QueryHandler implements
      */
     public function getContext(): array
     {
-        return array_merge(
-            $this->getContextDefaults(),
-            $this->extraContext
-        );
+        $context = [];
+        foreach ($this->contextProviders as $provider) {
+            $context = array_merge($context, $provider->provideContext());
+        }
+
+        return $context;
     }
 
     /**
-     * @param string $key
-     * @param mixed $value
-     * @return ContextProvider
+     * @param ContextProvider $provider
+     * @return $this
      */
-    public function addContext(string $key, $value): ContextProvider
+    public function addContextProvider(ContextProvider $provider): QueryHandlerInterface
     {
-        if (empty($key)) {
-            throw new InvalidArgumentException('Context key cannot be empty');
-        }
-        $this->extraContext[$key] = $value;
+        $this->contextProviders[] = $provider;
 
         return $this;
     }
@@ -174,7 +175,7 @@ class QueryHandler implements
     /**
      * @return QueryMiddleware[]
      */
-    public function getMiddlewares()
+    public function getMiddlewares(): array
     {
         return $this->middlewares;
     }
@@ -183,7 +184,7 @@ class QueryHandler implements
      * @param QueryMiddleware[] $middlewares
      * @return $this
      */
-    public function setMiddlewares(array $middlewares)
+    public function setMiddlewares(array $middlewares): self
     {
         foreach ($middlewares as $middleware) {
             if ($middleware instanceof QueryMiddleware) {
@@ -197,7 +198,7 @@ class QueryHandler implements
      * @param QueryMiddleware $middleware
      * @return $this
      */
-    public function addMiddleware($middleware)
+    public function addMiddleware(QueryMiddleware $middleware): self
     {
         $this->middlewares[] = $middleware;
         return $this;
@@ -257,7 +258,7 @@ class QueryHandler implements
             $error['code'] = $exception->getCode();
             $error['file'] = $exception->getFile();
             $error['line'] = $exception->getLine();
-            $error['trace'] = $exception->getTraceAsString();
+            $error['trace'] = json_encode($exception->getTrace(), JSON_PRETTY_PRINT);
         }
 
 

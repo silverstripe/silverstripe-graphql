@@ -4,6 +4,9 @@
 namespace SilverStripe\GraphQL\Tests\Schema;
 
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -13,7 +16,10 @@ use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStoreCreator;
 
 class TestSchemaFactory extends SchemaFactory
 {
-    public static $schemaCount = 0;
+    /**
+     * @var string
+     */
+    private $id;
 
     /**
      * @var string
@@ -38,12 +44,12 @@ class TestSchemaFactory extends SchemaFactory
     public function __construct(array $configDirs = [])
     {
         $this->configDirs = $configDirs;
+        $this->id = uniqid();
     }
 
     public function get(string $key = 'test'): ?Schema
     {
-        static::$schemaCount++;
-        $schemaName = $key . '-' . static::$schemaCount;
+        $schemaName = $key . '-' . $this->id;
         $schema = parent::get($schemaName);
         if ($schema) {
             $this->configureSchema($schema);
@@ -59,8 +65,7 @@ class TestSchemaFactory extends SchemaFactory
      */
     public function boot(string $key = 'test'): Schema
     {
-        static::$schemaCount++;
-        $schemaName = $key . '-' . static::$schemaCount;
+        $schemaName = $key . '-' . $this->id;
         $this->bootstrapSchema($schemaName);
         $schema = parent::boot($schemaName);
         $this->configureSchema($schema);
@@ -85,6 +90,19 @@ class TestSchemaFactory extends SchemaFactory
                     'src' => array_map(function ($dir) {
                         return static::$dir . '/' . $dir;
                     }, $this->configDirs),
+                ],
+            ]
+        );
+        Config::inst()->merge(
+            Injector::class,
+            Dispatcher::class,
+            [
+                'properties' => [
+                    'handlers' => [
+                        'graphqlTranscribe' => [
+                            'off' => ['graphqlSchemaBuild']
+                        ],
+                    ],
                 ],
             ]
         );

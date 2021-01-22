@@ -4,9 +4,14 @@
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use GraphQL\Type\Definition\ResolveInfo;
+use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
 use Closure;
+use SilverStripe\ORM\SS_List;
 
 /**
  * Generic resolver for DataObjects
@@ -17,48 +22,19 @@ class Resolver
      * @param DataObject $obj
      * @param array $args
      * @param array $context
-     * @param ResolveInfo $info
-     * @return string|bool|int|float|null
+     * @param ResolveInfo|null $info
+     * @return array|bool|int|mixed|DataList|DataObject|DBField|SS_List|string|null
+     * @throws SchemaBuilderException
      */
     public static function resolve($obj, array $args = [], array $context = [], ?ResolveInfo $info = null)
     {
         $fieldName = $info->fieldName;
-        return static::resolveField($obj, $fieldName);
-    }
-
-    /**
-     * Property mapping allows custom property names for a DataObject field rather
-     * than relying on basic field formatting
-     *
-     * @param array $resolverContext
-     * @return Closure
-     */
-    public static function resolveContext(array $resolverContext = []): Closure
-    {
-        $propertyMapping = $resolverContext['propertyMapping'];
-        return function (
-            DataObject $obj,
-            array $args,
-            array $context,
-            ResolveInfo $info
-        ) use ($propertyMapping) {
-            $fieldName = $info->fieldName;
-            $property = $propertyMapping[$fieldName] ?? null;
-            if (!$property) {
-                return null;
-            }
-            return static::resolveField($obj, $property);
-        };
-    }
-
-    /**
-     * @param DataObject $obj
-     * @param string $fieldName
-     * @return string|bool|int|float|null
-     */
-    protected static function resolveField(DataObject $obj, string $fieldName)
-    {
         $result = FieldAccessor::singleton()->accessField($obj, $fieldName);
+        if ($result === null) {
+            $context = SchemaContextProvider::get($context);
+            $fieldName = $context->mapFieldByClassName(get_class($obj), $fieldName);
+            $result = $fieldName ? FieldAccessor::singleton()->accessField($obj, $fieldName[1]) : null;
+        }
         if ($result instanceof DBField) {
             return $result->getValue();
         }

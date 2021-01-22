@@ -37,12 +37,6 @@ class SchemaTest extends SapphireTest
         ]);
     }
 
-    protected function tearDown()
-    {
-        parent::tearDown();
-        BuildState::clear();
-    }
-
     public function testConstructor()
     {
         $schema = $this->buildSchema('test');
@@ -83,7 +77,6 @@ class SchemaTest extends SapphireTest
             ->method('addScalar')
             ->with($this->isInstanceOf(Scalar::class));
 
-        BuildState::activate($mock);
         $config = $this->getValidConfig();
         $mock->applyConfig($config);
     }
@@ -117,26 +110,11 @@ class SchemaTest extends SapphireTest
         $schema->save();
     }
 
-    public function testMapTypeNames()
-    {
-        $schema = $this->buildSchema();
-        $modelType1 = new ModelType(DataObjectModel::create(DataObjectFake::class, new ModelConfiguration()));
-        $modelType2 = new ModelType(DataObjectModel::create(FakeSiteTree::class, new ModelConfiguration()));
-        $schema->addModel($modelType1);
-        $schema->addModel($modelType2);
-        $mapping = $schema->mapTypeNames();
-        $expect = [
-            DataObjectFake::class => $modelType1->getName(),
-            FakeSiteTree::class => $modelType2->getName(),
-        ];
-        $this->assertEquals($expect, $mapping);
-    }
-
     public function testGetTypeNameForClass()
     {
         $schema = $this->buildSchema();
-        $modelType1 = new ModelType(DataObjectModel::create(DataObjectFake::class, new ModelConfiguration()));
-        $modelType2 = new ModelType(DataObjectModel::create(FakeSiteTree::class, new ModelConfiguration()));
+        $modelType1 = new ModelType(DataObjectModel::create(DataObjectFake::class, new SchemaContext()));
+        $modelType2 = new ModelType(DataObjectModel::create(FakeSiteTree::class, new SchemaContext()));
         // Only add one model
         $schema->addModel($modelType1);
         $this->assertEquals($modelType1->getName(), $schema->getTypeNameForClass(DataObjectFake::class));
@@ -344,8 +322,6 @@ class SchemaTest extends SapphireTest
             ->getMock();
         $schema = new Schema($key, $this->createSchemaContext());
         $schema->setStore($store);
-
-        BuildState::activate($schema);
 
         return $schema;
     }

@@ -1,0 +1,47 @@
+config:
+  modelConfig:
+    DataObject:
+      operations:
+        read:
+          plugins:
+            filter:
+              before: paginateList
+            sort:
+              before: paginateList
+        readOne:
+          plugins:
+            filter: true
+            sort: true
+      nested_query_plugins:
+        paginateList: true
+        filter:
+          before: paginateList
+        sort:
+          before: paginateList
+        canView:
+          after: paginateList
+
+models:
+  SilverStripe\GraphQL\Tests\Fake\FakeProductPage:
+    fields: '*'
+    operations: '*'
+
+  SilverStripe\GraphQL\Tests\Fake\FakeProduct:
+    fields:
+      '*': true
+      highestReview:
+        type: Int
+        property: 'Reviews.Max(Rating)'
+    operations: '*'
+
+  SilverStripe\GraphQL\Tests\Fake\FakeReview:
+    fields:
+      '*': true
+      score:
+        property: Rating
+        type: Int
+    operations: '*'
+
+  SilverStripe\Security\Member:
+    fields: '*'
+    operations: '*'
