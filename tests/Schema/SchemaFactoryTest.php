@@ -36,6 +36,8 @@ class SchemaFactoryTest extends SapphireTest
         $this->assertInstanceOf(Schema::class, $schema);
         $this->assertEquals('my-schema', $schema->getSchemaKey());
         BuildState::clear();
+
+        $schema->getStore()->getCache()->clear();
     }
 
     public function testBoot()
