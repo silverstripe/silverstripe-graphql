@@ -283,7 +283,7 @@ class CodeGenerationStore implements SchemaStorageInterface
     public function getTypeMapping(): array
     {
         if (file_exists($this->getTypeMappingFilename())) {
-            $mapping = require_once($this->getTypeMappingFilename());
+            $mapping = require($this->getTypeMappingFilename());
 
             return $mapping;
         }
