@@ -996,11 +996,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public static function invariant($test, $message = '', ...$params): void
     {
         if (!$test) {
-            $message = sprintf($message, ...$params);
+            $message = count($params) > 0 ? sprintf($message, ...$params) : $message;
             throw new SchemaBuilderException($message);
         }
     }
-
 
     /**
      * @return SchemaStorageInterface
