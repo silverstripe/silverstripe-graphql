@@ -3,10 +3,7 @@
 namespace SilverStripe\GraphQL\Config;
 
 use SilverStripe\Core\ClassInfo;
-use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
-use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Schema;
 
 class ModelConfiguration extends AbstractConfiguration
