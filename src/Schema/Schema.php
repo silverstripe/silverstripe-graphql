@@ -232,6 +232,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
         static::assertValidConfig($models);
         foreach ($models as $modelName => $modelConfig) {
              $model = $this->createModel($modelName, $modelConfig);
+             Schema::invariant(
+                 $model,
+                 'No model found for "%s". Maybe the class does not exist?',
+                 $modelName
+             );
              $this->addModel($model);
         }
 
