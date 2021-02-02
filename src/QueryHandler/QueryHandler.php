@@ -250,28 +250,29 @@ class QueryHandler implements
      */
     public static function formatError(Error $exception): array
     {
+        $current = $exception;
+        $relevant = $exception->getPrevious() ?: $current;
         $error = [
-            'message' => $exception->getMessage(),
+            'message' => $relevant->getMessage(),
         ];
 
         if (Director::isDev()) {
-            $error['code'] = $exception->getCode();
-            $error['file'] = $exception->getFile();
-            $error['line'] = $exception->getLine();
-            $error['trace'] = json_encode($exception->getTrace(), JSON_PRETTY_PRINT);
+            $error['code'] = $relevant->getCode();
+            $error['file'] = $relevant->getFile();
+            $error['line'] = $relevant->getLine();
+            $error['trace'] = json_encode($relevant->getTrace(), JSON_PRETTY_PRINT);
         }
 
 
-        $locations = $exception->getLocations();
+        $locations = $current->getLocations();
         if (!empty($locations)) {
             $error['locations'] = array_map(function (SourceLocation $loc) {
                 return $loc->toArray();
             }, $locations);
         }
 
-        $previous = $exception->getPrevious();
-        if ($previous && $previous instanceof ValidationException) {
-            $errorx['validation'] = $previous->getResult()->getMessages();
+        if ($relevant instanceof ValidationException) {
+            $error['validation'] = $relevant->getResult()->getMessages();
         }
 
         return $error;
