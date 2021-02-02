@@ -115,13 +115,23 @@ class SchemaFactory
     {
         $resolvedDir = ModuleResourceLoader::singleton()->resolvePath($dir);
         $absConfigSrc = Director::is_absolute($dir) ? $dir : Path::join(BASE_PATH, $resolvedDir);
+
         Schema::invariant(
-            is_dir($absConfigSrc),
-            'Source config directory %s does not exist on schema %s',
+            !is_file($absConfigSrc),
+            'Provided source config file "%s" rather than directory on schema %s. ' .
+            'See https://docs.silverstripe.org/en/4/developer_guides/graphql/getting_started/configuring_your_schema/',
             $absConfigSrc,
             $schemaKey
         );
 
+        Schema::invariant(
+            is_dir($absConfigSrc),
+            'Source config directory %s does not exist on schema %s. ' .
+            'See https://docs.silverstripe.org/en/4/developer_guides/graphql/getting_started/configuring_your_schema/',
+            $absConfigSrc,
+            $schemaKey
+        );
+        
         $config = [
             Schema::SCHEMA_CONFIG => [],
             Schema::TYPES => [],
