@@ -172,6 +172,22 @@ class Schema implements ConfigurationApplier, SchemaValidator
         if (empty($schemaConfig)) {
             return $this;
         }
+
+        $validConfigKeys = [
+            self::TYPES,
+            self::QUERIES,
+            self::MUTATIONS,
+            self::INTERFACES,
+            self::UNIONS,
+            self::MODELS,
+            self::ENUMS,
+            self::SCALARS,
+            self::SCHEMA_CONFIG,
+            'execute',
+            'src',
+        ];
+        static::assertValidConfig($schemaConfig, $validConfigKeys);
+        
         $types = $schemaConfig[self::TYPES] ?? [];
         $queries = $schemaConfig[self::QUERIES] ?? [];
         $mutations = $schemaConfig[self::MUTATIONS] ?? [];
@@ -312,7 +328,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         foreach ($types as $type) {
             foreach ($type->getFields() as $fieldObj) {
                 if (!$fieldObj->getResolver()) {
-                    $discoveredResolver = $this->getSchemaContext()->discoverResolver($type->getName(), $fieldObj);
+                    $discoveredResolver = $this->getSchemaContext()->discoverResolver($type, $fieldObj);
                     Schema::invariant(
                         $discoveredResolver,
                         'Could not discover a resolver for field %s on type %s',

@@ -13,6 +13,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Schema\Resolver\DefaultResolver;
 use SilverStripe\GraphQL\Schema\Resolver\DefaultResolverStrategy;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
+use SilverStripe\GraphQL\Schema\Type\Type;
 
 /**
  * Encapsulates configuration required for a {@link Schema} object.
@@ -77,27 +78,38 @@ class SchemaContext extends AbstractConfiguration
     }
 
     /**
-     * @param string|null $typeName
+     * @param Type|null $type
      * @param Field|null $field
      * @return ResolverReference
      * @throws SchemaBuilderException
      */
-    public function discoverResolver(?string $typeName = null, ?Field $field = null): ResolverReference
+    public function discoverResolver(?Type $type = null, ?Field $field = null): ResolverReference
     {
         $strategy = $this->get('resolverStrategy', [DefaultResolverStrategy::class, 'getResolverMethod']);
         Schema::invariant(
             is_callable($strategy),
             'SchemaContext resolverStrategy must be callable'
         );
-
+        $typeName = $type ? $type->getName() : null;
         $callable = call_user_func_array($strategy, [$this->getResolvers(), $typeName, $field]);
         if ($callable) {
             return ResolverReference::create($callable);
+        } else if ($type && $type->getFieldResolver()) {
+            // If no resolver can be discovered, check if the type has a fallback resolver configured.
+            return $type->getFieldResolver();
         }
 
-        return ResolverReference::create(
-            $this->get('defaultResolver', [DefaultResolver::class, 'defaultFieldResolver'])
-        );
+
+        return ResolverReference::create($this->getDefaultResolver());
+    }
+
+    /**
+     * @return callable
+     * @throws SchemaBuilderException
+     */
+    public function getDefaultResolver(): callable
+    {
+        return $this->get('defaultResolver', [DefaultResolver::class, 'defaultFieldResolver']);
     }
 
     /**
