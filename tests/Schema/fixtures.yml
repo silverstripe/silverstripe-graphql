@@ -37,14 +37,17 @@ SilverStripe\GraphQL\Tests\Fake\FakeProduct:
 SilverStripe\GraphQL\Tests\Fake\FakeReview:
   review1:
     Content: This is review one
+    Rating: 1
     Author: =>SilverStripe\Security\Member.author1
     Product: =>SilverStripe\GraphQL\Tests\Fake\FakeProduct.product1
   review2:
     Content: This is review two
+    Rating: 2
     Author: =>SilverStripe\Security\Member.author2
     Product: =>SilverStripe\GraphQL\Tests\Fake\FakeProduct.product1
   review3:
     Content: This is review three
+    Rating: 3
     Author: =>SilverStripe\Security\Member.author1
     Product: =>SilverStripe\GraphQL\Tests\Fake\FakeProduct.product1
   review4:

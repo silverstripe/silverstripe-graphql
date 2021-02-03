@@ -40,6 +40,21 @@ class FakeProduct extends DataObject implements TestOnly
         'Reviews',
     ];
 
+    private static $table_name = 'FakeProduct_Test';
+
+    /**
+     * @return string
+     */
+    public function getReverseTitle()
+    {
+        return strrev($this->Title);
+    }
+
+    public function Link()
+    {
+        return 'products/' . $this->ID;
+    }
+
     public function canCreate($member = null, $context = [])
     {
         return static::$canCreate;

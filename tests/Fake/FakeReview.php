@@ -29,6 +29,8 @@ class FakeReview extends DataObject implements TestOnly
         Versioned::class,
     ];
 
+    private static $table_name = 'FakeReview_Test';
+
     public function canCreate($member = null, $context = [])
     {
         return static::$canCreate;

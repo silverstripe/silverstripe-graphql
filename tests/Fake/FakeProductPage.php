@@ -19,6 +19,8 @@ class FakeProductPage extends DataObject implements TestOnly
         'BannerContent' => 'Varchar',
     ];
 
+    private static $table_name = 'FakeProductPage_Test';
+
     private static $has_many = [
         'Products' => FakeProduct::class,
     ];

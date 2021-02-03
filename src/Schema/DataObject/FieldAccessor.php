@@ -136,6 +136,14 @@ class FieldAccessor
     }
 
     /**
+     * Resolves complex dot syntax references.
+     *
+     * Image.URL (String)
+     * FeaturedProduct.Categories.Title ([String] ->column('Title'))
+     * FeaturedProduct.Categories.Count() (Int)
+     * FeaturedProduct.Categories.Products.Max(Price)
+     * Category.Products.Reviews ([Review])
+     *
      * @param DataObject $dataObject
      * @param string $field
      * @return DBField|SS_List|DataObject|null
@@ -235,13 +243,6 @@ class FieldAccessor
     }
 
     /**
-     * Resolves complex dot syntax references.
-     *
-     * Image.URL (String)
-     * FeaturedProduct.Categories.Title ([String] ->column('Title'))
-     * FeaturedProduct.Categories.Count() (Int)
-     * FeaturedProduct.Categories.Products.Max(Price)
-     * Category.Products.Reviews ([Review])
      *
      * @param DataObject|DataList|DBField $subject
      * @param array $path
