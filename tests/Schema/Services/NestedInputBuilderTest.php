@@ -4,6 +4,7 @@ namespace SilverStripe\GraphQL\Tests\Schema\Services;
 
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Dev\BuildState;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaFactory;
@@ -25,6 +26,9 @@ class NestedInputBuilderTest extends SapphireTest
 
     protected static $fixture_file = '../fixtures.yml';
 
+    /**
+     * @throws SchemaBuilderException
+     */
     public function testNestedInputBuilder()
     {
         $schema = SchemaFactory::singleton()->boot('inputBuilderTest');

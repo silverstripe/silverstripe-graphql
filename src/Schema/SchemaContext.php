@@ -17,6 +17,8 @@ use SilverStripe\GraphQL\Schema\Type\Type;
 
 /**
  * Encapsulates configuration required for a {@link Schema} object.
+ * This should include only that state which might be relevant to
+ * query-time execution, such as resolver code.
  */
 class SchemaContext extends AbstractConfiguration
 {
@@ -136,7 +138,7 @@ class SchemaContext extends AbstractConfiguration
     }
 
     /**
-     * @param array $typeMapping
+     * @param string[] $typeMapping
      * @return $this
      * @throws SchemaBuilderException
      */
@@ -146,7 +148,7 @@ class SchemaContext extends AbstractConfiguration
     }
 
     /**
-     * @param array $fields
+     * @param string[] $fields
      * @return $this
      * @throws SchemaBuilderException
      */

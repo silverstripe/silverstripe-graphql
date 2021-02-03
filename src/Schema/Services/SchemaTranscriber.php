@@ -5,12 +5,14 @@ namespace SilverStripe\GraphQL\Schema\Services;
 
 use SilverStripe\Assets\Storage\GeneratedAssetHandler;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Path;
 use SilverStripe\EventDispatcher\Event\EventHandlerInterface;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Schema;
 use Exception;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Persists a graphql schema to a json document consumable by Apollo
@@ -20,13 +22,6 @@ class SchemaTranscriber
     use Injectable;
 
     const CACHE_FILENAME = 'types.graphql';
-
-    /**
-     * @var array
-     */
-    private static $dependencies = [
-        'assetHandler' => '%$' . GeneratedAssetHandler::class,
-    ];
 
     /**
      * @var Schema
@@ -39,12 +34,25 @@ class SchemaTranscriber
     protected $assetHandler;
 
     /**
+     * @var Filesystem
+     */
+    private $fs;
+
+    /**
+     * @var string
+     */
+    private $rootDir;
+
+    /**
      * SchemaTranscriber constructor.
      * @param Schema $schema
+     * @param string $rootDir
      */
-    public function __construct(Schema $schema)
+    public function __construct(Schema $schema, string $rootDir = PUBLIC_PATH)
     {
+        $this->fs = new Filesystem();
         $this->schema = $schema;
+        $this->rootDir = $rootDir;
     }
 
     /**
@@ -70,11 +78,7 @@ class SchemaTranscriber
      */
     public function removeSchemaFromFilesystem(): void
     {
-        if (!$this->getAssetHandler()) {
-            return;
-        }
-
-        $this->getAssetHandler()->removeContent($this->generateCacheFilename());
+        $this->fs->remove($this->generateCacheFilename());
     }
 
     /**
@@ -82,34 +86,32 @@ class SchemaTranscriber
      */
     public function writeTypes(string $content)
     {
-        if (!$this->getAssetHandler()) {
-            return;
-        }
-        $this->getAssetHandler()->setContent($this->generateCacheFilename(), $content);
+        $this->fs->dumpFile($this->generateCacheFilename(), $content);
     }
 
     /**
-     * @param GeneratedAssetHandler $handler
-     * @return $this
+     * @return string
      */
-    public function setAssetHandler(GeneratedAssetHandler $handler): self
+    public function getRootDir(): string
     {
-        $this->assetHandler = $handler;
+        return $this->rootDir;
+    }
 
+    /**
+     * @param string
+     * @return SchemaTranscriber
+     */
+    public function setRootDir(string $rootDir): self
+    {
+        $this->rootDir = $rootDir;
         return $this;
     }
 
-    /**
-     * @return GeneratedAssetHandler|null
-     */
-    public function getAssetHandler(): ?GeneratedAssetHandler
-    {
-        return $this->assetHandler;
-    }
 
     /**
      * @return array
      * @throws SchemaNotFoundException
+     * @throws Exception
      */
     private function introspectTypes(): array
     {
@@ -152,6 +154,9 @@ GRAPHQL
      */
     private function generateCacheFilename(): string
     {
-        return $this->schema->getSchemaKey() . '.' . self::CACHE_FILENAME;
+        return Path::join(
+            $this->rootDir,
+            $this->schema->getSchemaKey() . '.' . self::CACHE_FILENAME
+        );
     }
 }

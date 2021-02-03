@@ -7,6 +7,7 @@ use Closure;
 use Exception;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\ResolverFailure;
+use SilverStripe\GraphQL\Schema\Schema;
 
 /**
  * Given a stack of resolver middleware and afterware, compress it into one composed function,
@@ -43,6 +44,10 @@ class ComposedResolver
             $first = array_shift($callables);
             $result = $first($obj, ...$params);
             foreach ($callables as $callable) {
+                Schema::invariant(
+                    !$callable instanceof Closure,
+                    'Resolvers must be serialised callables, e.g. arrays. Closures are not allowed'
+                );
                 if ($isDone) {
                     return $result;
                 }

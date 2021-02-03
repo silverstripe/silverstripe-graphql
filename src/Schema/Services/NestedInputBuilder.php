@@ -14,6 +14,11 @@ use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\ORM\ArrayLib;
 
+/**
+ * An agnostic service that builds an input type based on a given field, with nesting.
+ * Composable typeName functionality and handling of leaf nodes (e.g. turning the
+ * leaf node into a SortDirection enum.
+ */
 class NestedInputBuilder
 {
     use Injectable;
