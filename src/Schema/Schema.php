@@ -187,7 +187,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
             'src',
         ];
         static::assertValidConfig($schemaConfig, $validConfigKeys);
-        
+
         $types = $schemaConfig[self::TYPES] ?? [];
         $queries = $schemaConfig[self::QUERIES] ?? [];
         $mutations = $schemaConfig[self::MUTATIONS] ?? [];
@@ -851,7 +851,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $model = $this->createModel($class);
         Schema::invariant(
             $model,
-            'Could not add class %s to schema. No model exists.'
+            sprintf(
+                'Could not add class %s to schema. No model exists.',
+                $class
+            )
         );
 
         if ($callback) {
