@@ -59,16 +59,13 @@ class Build extends Controller
         foreach ($keys as $key) {
             Benchmark::start('build-schema-' . $key);
             Schema::message(sprintf('--- Building schema "%s" ---', $key));
-            $schema = SchemaFactory::singleton()->boot($key);
-            if (!$schema->exists()) {
-                continue;
-            }
 
+            $schema = SchemaFactory::singleton()->boot($key);
             if ($clear) {
                 $schema->getStore()->clear();
             }
-
             $schema->save();
+
             Schema::message(
                 Benchmark::end('build-schema-' . $key, 'Built schema in %sms.')
             );
