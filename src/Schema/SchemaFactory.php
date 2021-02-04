@@ -60,7 +60,15 @@ class SchemaFactory
         $schemaObj = Schema::create($key);
 
         $schemas = $schemaObj->config()->get('schemas') ?: [];
-        $schema = $schemas[$key] ?? [];
+
+        if (!array_key_exists($key, $schemas)) {
+            throw new SchemaBuilderException(sprintf(
+                'Schema "%s" has not been defined',
+                $key
+            ));
+        }
+
+        $schema = $schemas[$key];
 
         // Gather all the global config first
         $mergedSchema = $schemas[Schema::ALL] ?? [];
@@ -131,7 +139,7 @@ class SchemaFactory
             $absConfigSrc,
             $schemaKey
         );
-        
+
         $config = [
             Schema::SCHEMA_CONFIG => [],
             Schema::TYPES => [],
