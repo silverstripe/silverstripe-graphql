@@ -299,7 +299,8 @@ class Controller extends BaseController
                 ->addContextProvider(TokenContextProvider::create($token ?: ''))
                 ->addContextProvider(RequestContextProvider::create($request));
         if ($schema) {
-            $handler->addContextProvider(SchemaContextProvider::create($schema));
+            $schemaContext = $schema->getStore()->getContext();
+            $handler->addContextProvider(SchemaContextProvider::create($schemaContext));
         }
     }
 

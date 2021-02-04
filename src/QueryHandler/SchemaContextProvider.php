@@ -5,7 +5,6 @@ namespace SilverStripe\GraphQL\QueryHandler;
 
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
-use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaContext;
 
 class SchemaContextProvider implements ContextProvider
@@ -15,13 +14,13 @@ class SchemaContextProvider implements ContextProvider
     const KEY = 'schemaContext';
 
     /**
-     * @var Schema
+     * @var SchemaContext
      */
-    private $schema;
+    private $schemaContext;
 
-    public function __construct(Schema $schema)
+    public function __construct(SchemaContext $schemaContext)
     {
-        $this->schema = $schema;
+        $this->schemaContext = $schemaContext;
     }
 
     /**
@@ -39,7 +38,7 @@ class SchemaContextProvider implements ContextProvider
     public function provideContext(): array
     {
         return [
-            self::KEY => $this->schema->getStore()->getContext(),
+            self::KEY => $this->schemaContext,
         ];
     }
 }

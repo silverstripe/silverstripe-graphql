@@ -1018,7 +1018,8 @@ GRAPHQL;
     {
         $graphQLSchena = $schema->fetch();
         $handler = new QueryHandler();
-        $handler->addContextProvider(SchemaContextProvider::create($schema));
+        $schemaContext = $schema->getStore()->getContext();
+        $handler->addContextProvider(SchemaContextProvider::create($schemaContext));
         try {
             return $handler->query($graphQLSchena, $query, $variables);
         } catch (Exception $e) {
