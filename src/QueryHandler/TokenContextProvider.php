@@ -21,7 +21,7 @@ class TokenContextProvider implements ContextProvider
      * TokenContextProvider constructor.
      * @param string $token
      */
-    public function __construct(string $token)
+    public function __construct(string $token = '')
     {
         $this->token = $token;
     }

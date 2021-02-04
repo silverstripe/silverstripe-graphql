@@ -296,7 +296,7 @@ class Controller extends BaseController
         $token = $this->getToken();
 
         $handler->addContextProvider(UserContextProvider::create($user))
-                ->addContextProvider(TokenContextProvider::create($token))
+                ->addContextProvider(TokenContextProvider::create($token ?: ''))
                 ->addContextProvider(RequestContextProvider::create($request));
         if ($schema) {
             $handler->addContextProvider(SchemaContextProvider::create($schema));
