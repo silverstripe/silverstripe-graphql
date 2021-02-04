@@ -44,10 +44,6 @@ class ComposedResolver
             $first = array_shift($callables);
             $result = $first($obj, ...$params);
             foreach ($callables as $callable) {
-                Schema::invariant(
-                    !$callable instanceof Closure,
-                    'Resolvers must be serialised callables, e.g. arrays. Closures are not allowed'
-                );
                 if ($isDone) {
                     return $result;
                 }
