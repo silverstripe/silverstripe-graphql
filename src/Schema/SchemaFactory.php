@@ -19,6 +19,14 @@ class SchemaFactory
 {
     use Injectable;
 
+    /**
+     * Retrieves an already stored schema
+     * which does not require booting.
+     * Returns null when no stored schema can be found.
+     *
+     * @param string $key
+     * @return Schema|null
+     */
     public function get(string $key): ?Schema
     {
         $schema = Schema::create($key);
@@ -27,6 +35,11 @@ class SchemaFactory
     }
 
     /**
+     * Retrieves an already stored schema
+     * which does not require booting.
+     * Throws when the schema can either not be found,
+     * or when it has not been stored yet.
+     *
      * @param string $key
      * @return Schema
      * @throws SchemaNotFoundException
@@ -51,6 +64,10 @@ class SchemaFactory
      *
      * An instance can only be booted once to avoid conflicts with further
      * instance level modifications such as {@link addType()}.
+     *
+     * This method should only be used on schemas which have not been stored,
+     * and is usually only needed for the process of storing them
+     * (through {@link Schema->save()}).
      *
      * @param string $key
      * @throws SchemaBuilderException

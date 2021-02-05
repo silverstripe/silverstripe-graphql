@@ -64,6 +64,17 @@ class Build extends Controller
             if ($clear) {
                 $schema->getStore()->clear();
             }
+            $schema->process();
+
+            // Allow for "empty" schemas which don't have any types defined.
+            // This enables baseline configuration of the "default" schema.
+            if ($schema->exists()) {
+
+            } else {
+                Schema::message('No types defined, skipping');
+                continue;
+            }
+
             $schema->save();
 
             Schema::message(

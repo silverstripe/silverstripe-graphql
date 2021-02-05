@@ -41,9 +41,11 @@ use Exception;
 use TypeError;
 
 /**
- * The main Schema definition. A docking station for all type, model, interface, etc., abstractions.
+ * The main Schema definition. A docking station for all type, model and interface abstractions.
  * Applies plugins, validates, and persists to code.
  *
+ * Use {@link SchemaFactory} to create functional instances of this type
+ * based on YAML configuration.
  */
 class Schema implements ConfigurationApplier, SchemaValidator
 {
@@ -131,16 +133,11 @@ class Schema implements ConfigurationApplier, SchemaValidator
     private $schemaContext;
 
     /**
-     * @var bool See constructor for details about booting.
+     * @var boolean
      */
-    private $_booted = false;
+    private $_isProcessed = false;
 
     /**
-     * In order to trigger auto-discovery of the schema configuration
-     * in Silverstripe's config system, call {@link boot()} before using.
-     * Since booting has a performance impact, some functionality is
-     * available without booting (e.g. fetching an already persisted schema).
-     *
      * @param string $schemaKey
      * @param SchemaContext|null $schemaContext
      */
@@ -537,9 +534,14 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @throws SchemaBuilderException
+     * Process any lazy defined properties (types and modules),
+     * and execute plugins. This step is automatically taken during {@link save()},
+     * but can be useful to execute separately in order to determine if the schema
+     * is valid before saving.
+     *
+     * @return void
      */
-    public function save(): void
+    public function process(): void
     {
         // Fill in lazily defined type properties, e.g. fields with a classname as a type
         $this->processTypes();
@@ -560,6 +562,18 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
         // Resolver discovery
         $this->processFields();
+
+        $this->_isProcessed = true;
+    }
+
+    /**
+     * @throws SchemaBuilderException
+     */
+    public function save(): void
+    {
+        if (!$this->_isProcessed) {
+            $this->process();
+        }
 
         $this->validate();
         $this->getStore()->persistSchema($this);
