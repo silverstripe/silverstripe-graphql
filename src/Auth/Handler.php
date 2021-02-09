@@ -30,10 +30,6 @@ class Handler
         [
             'class' => MemberAuthenticator::class,
             'priority' => 10,
-        ],
-        [
-            'class' => BasicAuthAuthenticator::class,
-            'priority' => 20,
         ]
     ];
 
