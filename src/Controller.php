@@ -11,6 +11,8 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
+use SilverStripe\EventDispatcher\Symfony\Event;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\PersistedQuery\RequestProcessor;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
@@ -20,7 +22,7 @@ use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
 use SilverStripe\GraphQL\QueryHandler\TokenContextProvider;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\SchemaFactory;
+use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
@@ -111,19 +113,13 @@ class Controller extends BaseController
             if (!$query) {
                 $this->httpError(400, 'This endpoint requires a "query" parameter');
             }
-            $schema = SchemaFactory::singleton()->get($this->getSchemaKey());
-            $graphqlSchema = null;
-            if ($schema) {
-                $graphqlSchema = $schema->fetch();
-            } elseif ($this->autobuildEnabled()) {
-                $schema = SchemaFactory::singleton()->boot($this->getSchemaKey());
-                Schema::invariant(
-                    $schema->exists(),
-                    'Attempted to build schema %s, but it is empty',
-                    $schema->getSchemaKey()
-                );
-                $schema->save();
-                $graphqlSchema = $schema->fetch();
+            $builder = SchemaBuilder::singleton();
+            $graphqlSchema = $builder->getSchema($this->getSchemaKey());
+            if (!$graphqlSchema && $this->autobuildEnabled()) {
+                // clear the cache on autobuilds until we trust it more. Maybe
+                // make this configurable.
+                $clear = true;
+                $graphqlSchema = $builder->buildByName($this->getSchemaKey(), $clear);
             } else {
                 throw new SchemaBuilderException(sprintf(
                     'Schema %s has not been built.',
@@ -131,12 +127,22 @@ class Controller extends BaseController
                 ));
             }
             $handler = $this->getQueryHandler();
-            $this->applyContext($handler, $schema);
+            $this->applyContext($handler);
 
             $ctx = $handler->getContext();
-            $this->extend('onBeforeHandleQuery', $graphqlSchema, $query, $ctx, $variables);
+            $eventContext = [
+                'schema' => $graphqlSchema,
+                'query' => $query,
+                'context' => $ctx,
+                'variables' => $variables,
+            ];
+
+            Dispatcher::singleton()->trigger('onGraphQLQuery', Event::create($this->getSchemaKey(), $eventContext));
+
             $result = $handler->query($graphqlSchema, $query, $variables);
-            $this->extend('onAfterHandleQuery', $graphqlSchema, $query, $ctx, $variables, $result);
+            $eventContext['result'] = $result;
+
+            Dispatcher::singleton()->trigger('onGraphQLResponse', Event::create($this->getSchemaKey(), $eventContext));
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
 
@@ -286,10 +292,9 @@ class Controller extends BaseController
 
     /**
      * @param QueryHandlerInterface $handler
-     * @param Schema|null $schema
      * @throws Exception
      */
-    protected function applyContext(QueryHandlerInterface $handler, ?Schema $schema)
+    protected function applyContext(QueryHandlerInterface $handler)
     {
         $request = $this->getRequest();
         $user = $this->getRequestUser($request);
@@ -298,8 +303,8 @@ class Controller extends BaseController
         $handler->addContextProvider(UserContextProvider::create($user))
                 ->addContextProvider(TokenContextProvider::create($token ?: ''))
                 ->addContextProvider(RequestContextProvider::create($request));
-        if ($schema) {
-            $schemaContext = $schema->getStore()->getContext();
+        $schemaContext = SchemaBuilder::singleton()->read($this->getSchemaKey());
+        if ($schemaContext) {
             $handler->addContextProvider(SchemaContextProvider::create($schemaContext));
         }
     }

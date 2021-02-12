@@ -29,6 +29,10 @@ SilverStripe\Core\Injector\Injector:
     properties:
       rootDir: '`BASE_PATH`'
 
+  SilverStripe\GraphQL\Schema\SchemaBuilder:
+    constructor:
+      storeCreator: '%$SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator'
+
 SilverStripe\GraphQL\Schema\Schema:
   schemas: []
 ---

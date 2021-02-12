@@ -7,12 +7,13 @@ use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\SchemaFactory;
+use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Services\NestedInputBuilder;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Tests\Fake\FakeProduct;
 use SilverStripe\GraphQL\Tests\Fake\FakeProductPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeReview;
+use SilverStripe\GraphQL\Tests\Schema\TestSchemaBuilder;
 use SilverStripe\Security\Member;
 
 class NestedInputBuilderTest extends SapphireTest
@@ -31,7 +32,7 @@ class NestedInputBuilderTest extends SapphireTest
      */
     public function testNestedInputBuilder()
     {
-        $schema = SchemaFactory::singleton()->boot('inputBuilderTest');
+        $schema = (new TestSchemaBuilder())->boot('inputBuilderTest');
         $schema
             ->addModelbyClassName(FakeProductPage::class, function (ModelType $model) {
                 $model->addField('title');

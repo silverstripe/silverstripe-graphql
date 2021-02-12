@@ -4,10 +4,9 @@
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
 use GraphQL\Type\Schema as GraphQLSchema;
-use GraphQL\Type\SchemaConfig;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
-use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\StorableSchema;
 
 /**
  * Persists a graphql-php Schema object, and retrieves it
@@ -16,10 +15,10 @@ interface SchemaStorageInterface
 {
 
     /**
-     * @param Schema $schema
+     * @param StorableSchema $schema
      * @return void
      */
-    public function persistSchema(Schema $schema): void;
+    public function persistSchema(StorableSchema $schema): void;
 
     /**
      * @return GraphQLSchema
@@ -36,4 +35,9 @@ interface SchemaStorageInterface
      * @return void
      */
     public function clear(): void;
+
+    /**
+     * @return bool
+     */
+    public function exists(): bool;
 }

@@ -8,8 +8,9 @@ use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Dev\DebugView;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\SchemaFactory;
+use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\ORM\DatabaseAdmin;
 
 class Build extends Controller
@@ -47,6 +48,7 @@ class Build extends Controller
     /**
      * @param null $key
      * @param bool $clear
+     * @throws SchemaNotFoundException
      * @throws SchemaBuilderException
      */
     public function buildSchema($key = null, $clear = false): void
@@ -59,23 +61,16 @@ class Build extends Controller
         foreach ($keys as $key) {
             Benchmark::start('build-schema-' . $key);
             Schema::message(sprintf('--- Building schema "%s" ---', $key));
-
-            $schema = SchemaFactory::singleton()->boot($key);
-            if ($clear) {
-                $schema->getStore()->clear();
-            }
-            $schema->process();
-
+            $builder = SchemaBuilder::singleton();
+            $schema = $builder->boot($key);
             // Allow for "empty" schemas which don't have any types defined.
             // This enables baseline configuration of the "default" schema.
-            if ($schema->exists()) {
-
-            } else {
+            if (!$schema->exists()) {
                 Schema::message('No types defined, skipping');
                 continue;
             }
 
-            $schema->save();
+            $builder->build($schema, $clear);
 
             Schema::message(
                 Benchmark::end('build-schema-' . $key, 'Built schema in %sms.')

@@ -97,7 +97,6 @@ class FieldAccessorTest extends SapphireTest
 
         $result = $this->accessor->normaliseField($this->obj, 'Link');
         $this->assertEquals('Link', $result);
-
     }
 
     public function testHasField()
@@ -179,7 +178,5 @@ class FieldAccessorTest extends SapphireTest
 
         $result = $this->accessor->accessField($page1, 'Products.Reviews.Count()');
         $this->assertEquals(3, $result);
-
     }
-
 }

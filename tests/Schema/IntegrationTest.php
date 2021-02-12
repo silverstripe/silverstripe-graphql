@@ -14,7 +14,7 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\SchemaFactory;
+use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStoreCreator;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
@@ -47,7 +47,7 @@ class IntegrationTest extends SapphireTest
     protected function setUp()
     {
         parent::setUp();
-        TestSchemaFactory::$dir = __DIR__;
+        TestStoreCreator::$dir = __DIR__;
     }
 
     protected function tearDown()
@@ -61,7 +61,7 @@ class IntegrationTest extends SapphireTest
 
     public function testSimpleType()
     {
-        $factory = new TestSchemaFactory(['_' . __FUNCTION__]);
+        $factory = new TestSchemaBuilder(['_' . __FUNCTION__]);
         $factory->resolvers = [IntegrationTestResolver::class];
         $schema = $this->createSchema($factory);
         $query = <<<GRAPHQL
@@ -110,7 +110,7 @@ GRAPHQL;
             '_' . __FUNCTION__ . '-b',
         ];
         // The second config (test2a) redefines the field types on the same MyType.
-        $factory = new TestSchemaFactory($dirs);
+        $factory = new TestSchemaBuilder($dirs);
         $factory->resolvers = [IntegrationTestResolver::class];
         $schema = $this->createSchema($factory);
         $query = <<<GRAPHQL
@@ -134,7 +134,7 @@ GRAPHQL;
 
     public function testModelConfig()
     {
-        $schema = $this->createSchema(new TestSchemaFactory(['_' . __FUNCTION__]));
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
         // Uses type_formatter with sttrev. See FakeFunctions::fakeFormatter
         $this->assertSchemaHasType($schema, 'TestekaFtcejbOataD');
     }
@@ -142,7 +142,7 @@ GRAPHQL;
     public function testModelPlugins()
     {
         $testDir = '_' . __FUNCTION__;
-        $schema = $this->createSchema($factory = new TestSchemaFactory([$testDir]));
+        $schema = $this->createSchema($factory = new TestSchemaBuilder([$testDir]));
         $this->assertSchemaHasType($schema, 'FakePage');
 
         // disable versioning as a global plugin
@@ -181,7 +181,7 @@ GRAPHQL;
 
     public function testPluginOverride()
     {
-        $schema = $this->createSchema(new TestSchemaFactory(['_' . __FUNCTION__]));
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
         $this->assertSchemaHasType($schema, 'FakePage');
         $this->assertSchemaHasType($schema, 'FakeRedirectorPage');
         $this->assertSchemaNotHasType($schema, 'FakeSiteTree');
@@ -258,7 +258,7 @@ GRAPHQL;
 
     public function testFieldInclusion()
     {
-        $schema = $this->createSchema(new TestSchemaFactory(['_' . __FUNCTION__]));
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
         $this->assertSchemaHasType($schema, 'DataObjectFake');
         $fake = DataObjectFake::create(['MyField' => 'test', 'MyInt' => 5]);
         $fake->write();
@@ -273,7 +273,7 @@ GRAPHQL;
         $result = $this->querySchema($schema, $query);
         $this->assertSuccess($result);
         $this->assertResult('readOneDataObjectFake.myField', 'test', $result);
-        $factory = new TestSchemaFactory();
+        $factory = new TestSchemaBuilder();
         $factory->extraConfig = [
             'models' => [
                 DataObjectFake::class => [
@@ -292,7 +292,7 @@ GRAPHQL;
         $this->assertFailure($result);
         $this->assertMissingField($result, 'id');
 
-        $factory = new TestSchemaFactory();
+        $factory = new TestSchemaBuilder();
         $factory->extraConfig = [
             'models' => [
                 DataObjectFake::class => [
@@ -322,7 +322,7 @@ GRAPHQL;
         $result = $this->querySchema($schema, $query);
         $this->assertSuccess($result);
         $this->assertResult('readOneDataObjectFake.myInt', 5, $result);
-        $factory = new TestSchemaFactory();
+        $factory = new TestSchemaBuilder();
         $factory->extraConfig = [
             'models' => [
                 DataObjectFake::class => [
@@ -335,7 +335,7 @@ GRAPHQL;
             ]
         ];
         $schema = $this->createSchema($factory);
-        $gql = $schema->fetch();
+        $gql = $factory->fetchSchema($schema);
         $queryType = $gql->getQueryType();
         $mutationType = $gql->getMutationType();
         $queries = $queryType->getFields();
@@ -361,7 +361,7 @@ GRAPHQL;
 
         $dataObject->Files()->add($file);
 
-        $schema = $this->createSchema(new TestSchemaFactory(['_' . __FUNCTION__]));
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
 
         $query = <<<GRAPHQL
 query {
@@ -431,7 +431,7 @@ GRAPHQL;
         $id1 = $dataObject1->ID;
         $id2 = $dataObject2->ID;
 
-        $schema = $this->createSchema(new TestSchemaFactory([$dir]));
+        $schema = $this->createSchema(new TestSchemaBuilder([$dir]));
 
         $query = <<<GRAPHQL
 query {
@@ -531,7 +531,7 @@ GRAPHQL;
         $dataObject2 = DataObjectFake::create(['MyField' => 'test2', 'AuthorID' => $author->ID]);
         $dataObject2->write();
 
-        $factory = new TestSchemaFactory();
+        $factory = new TestSchemaBuilder();
         $factory->extraConfig = [
             'models' => [
                 DataObjectFake::class => [
@@ -623,7 +623,7 @@ GRAPHQL;
 
         $dataObject1->write();
 
-        $factory = new TestSchemaFactory();
+        $factory = new TestSchemaBuilder();
         $factory->extraConfig = [
             'models' => [
                 DataObjectFake::class => [
@@ -706,7 +706,7 @@ GRAPHQL;
 
     public function testBasicPaginator()
     {
-        $factory = new TestSchemaFactory(['_' . __FUNCTION__]);
+        $factory = new TestSchemaBuilder(['_' . __FUNCTION__]);
         $factory->resolvers = [IntegrationTestResolver::class];
         $schema = $this->createSchema($factory);
         $query = <<<GRAPHQL
@@ -770,7 +770,7 @@ GRAPHQL;
 
     public function testQueriesAndMutations()
     {
-        $schema = $this->createSchema(new TestSchemaFactory(['_' . __FUNCTION__]));
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
 
         // Create a couple of product pages
         $productPageIDs = [];
@@ -994,15 +994,16 @@ GRAPHQL;
     }
 
     /**
-     * @param SchemaFactory $factory
+     * @param TestSchemaBuilder $factory
      * @return Schema
      * @throws SchemaBuilderException
-=     */
-    private function createSchema(SchemaFactory $factory): Schema
+     * @throws SchemaNotFoundException
+     */
+    private function createSchema(TestSchemaBuilder $factory): Schema
     {
         $this->clean();
         $schema = $factory->boot();
-        $schema->save();
+        $factory->build($schema, true);
 
         return $schema;
     }
@@ -1016,9 +1017,10 @@ GRAPHQL;
      */
     private function querySchema(Schema $schema, string $query, array $variables = [])
     {
-        $graphQLSchena = $schema->fetch();
+        $builder = new TestSchemaBuilder();
+        $graphQLSchena = $builder->fetchSchema($schema);
         $handler = new QueryHandler();
-        $schemaContext = $schema->getStore()->getContext();
+        $schemaContext = $builder->read($schema->getSchemaKey());
         $handler->addContextProvider(SchemaContextProvider::create($schemaContext));
         try {
             return $handler->query($graphQLSchena, $query, $variables);
@@ -1075,7 +1077,8 @@ GRAPHQL;
     private function assertSchemaHasType(Schema $schema, string $type)
     {
         try {
-            $result = $schema->fetch()->getType($type);
+            $graphQLSchema = (new TestSchemaBuilder())->fetchSchema($schema);
+            $result = $graphQLSchema->getType($type);
             $this->assertInstanceOf(ObjectType::class, $result);
         } catch (\Exception $e) {
             $this->fail('Schema does not have type "' . $type . '"');
@@ -1085,7 +1088,7 @@ GRAPHQL;
     private function assertSchemaNotHasType(Schema $schema, string $type)
     {
         try {
-            $schema->fetch()->getType($type);
+            (new TestSchemaBuilder())->fetchSchema($schema)->getType($type);
             $this->fail('Failed to assert that schema does not have type "' . $type . '"');
         } catch (\Exception $e) {
         }

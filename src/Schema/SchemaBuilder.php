@@ -11,50 +11,98 @@ use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
+use GraphQL\Type\Schema as GraphQLSchema;
 
-class SchemaFactory
+class SchemaBuilder
 {
     use Injectable;
 
     /**
-     * Retrieves an already stored schema
-     * which does not require booting.
-     * Returns null when no stored schema can be found.
-     *
-     * @param string $key
-     * @return Schema|null
+     * @var SchemaStorageCreator
      */
-    public function get(string $key): ?Schema
-    {
-        $schema = Schema::create($key);
+    private $storeCreator;
 
-        return $schema->isStored() ? $schema : null;
+    /**
+     * SchemaBuilder constructor.
+     * @param SchemaStorageCreator $storeCreator
+     */
+    public function __construct(SchemaStorageCreator $storeCreator)
+    {
+        $this->setStoreCreator($storeCreator);
     }
 
     /**
-     * Retrieves an already stored schema
-     * which does not require booting.
-     * Throws when the schema can either not be found,
-     * or when it has not been stored yet.
+     * Retrieves the context for an already stored schema
+     * which does not require booting. Useful for getting data from
+     * a saved schema at request time.
+     * Returns null when no stored schema can be found.
      *
      * @param string $key
-     * @return Schema
+     * @return SchemaContext|null
+     */
+    public function read(string $key): ?SchemaContext
+    {
+        $store = $this->storeCreator->createStore($key);
+        if ($store->exists()) {
+            return $store->getContext();
+        }
+        return null;
+    }
+
+    /**
+     * Gets a graphql-php Schema instance that can be queried
+     *
+     * @param string $key
+     * @return GraphQLSchema|null
      * @throws SchemaNotFoundException
      */
-    public function require(string $key): Schema
+    public function fetch(string $key): ?GraphQLSchema
     {
-        $schema = static::get($key);
-        if (!$schema) {
-            throw new SchemaNotFoundException(sprintf(
-                'Schema %s not found',
-                $key
-            ));
+        $store = $this->getStoreCreator()->createStore($key);
+        if ($store->exists()) {
+            return $store->getSchema();
         }
 
-        return $schema;
+        return null;
+    }
+
+    /**
+     * Stores a schema and fetches the graphql-php instance
+     *
+     * @param Schema $schema
+     * @param bool $clear If true, clear the cache
+     * @return GraphQLSchema
+     * @throws SchemaNotFoundException
+     */
+    public function build(Schema $schema, $clear = false): GraphQLSchema
+    {
+        $store = $this->getStoreCreator()->createStore($schema->getSchemaKey());
+        if ($clear) {
+            $store->clear();
+        }
+        $store->persistSchema($schema->getStoreableSchema());
+
+        return $store->getSchema();
+    }
+
+    /**
+     * Boots a schema, persists it, and fetches it
+     *
+     * @param string $key
+     * @param false $clear
+     * @return GraphQLSchema
+     * @throws SchemaBuilderException
+     * @throws SchemaNotFoundException
+     */
+    public function buildByName(string $key, $clear = false): GraphQLSchema
+    {
+        $schema = $this->boot($key);
+
+        return $this->build($schema, $clear);
     }
 
     /**
@@ -67,10 +115,11 @@ class SchemaFactory
      *
      * This method should only be used on schemas which have not been stored,
      * and is usually only needed for the process of storing them
-     * (through {@link Schema->save()}).
+     * (through {@link SchemaBuilder->build()}).
      *
      * @param string $key
      * @throws SchemaBuilderException
+     * @return Schema
      */
     public function boot(string $key): Schema
     {
@@ -126,6 +175,25 @@ class SchemaFactory
 
         return $schemaObj;
     }
+
+    /**
+     * @return SchemaStorageCreator
+     */
+    public function getStoreCreator(): SchemaStorageCreator
+    {
+        return $this->storeCreator;
+    }
+
+    /**
+     * @param SchemaStorageCreator $storeCreator
+     * @return SchemaBuilder
+     */
+    public function setStoreCreator(SchemaStorageCreator $storeCreator): SchemaBuilder
+    {
+        $this->storeCreator = $storeCreator;
+        return $this;
+    }
+
 
     /**
      * Retrieves config from filesystem path.

@@ -15,6 +15,7 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\StorableSchema;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\Type;
@@ -92,13 +93,15 @@ class CodeGenerationStore implements SchemaStorageInterface
     }
 
     /**
-     * @param Schema $schema
+     * @param StorableSchema $schema
      * @throws Exception
      * @throws InvalidArgumentException
      * @throws RuntimeException
      */
-    public function persistSchema(Schema $schema): void
+    public function persistSchema(StorableSchema $schema): void
     {
+        $schema->validate();
+
         $fs = new Filesystem();
         $finder = new Finder();
         $temp = $this->getTempDirectory();
@@ -131,11 +134,10 @@ class CodeGenerationStore implements SchemaStorageInterface
             'typeClassName' => self::TYPE_CLASS_NAME,
             'namespace' => $this->getNamespace(),
         ];
-        $config = $schema->getSchemaContext()
-            ->setTypeMapping($this->mapTypeNames($schema))
-            ->setFieldMapping($this->mapFieldNames($schema))
-            ->toArray();
+
+        $config = $schema->getContext()->toArray();
         $configFile = $this->getTempConfigFilename();
+
         try {
             $fs->dumpFile(
                 $configFile,
@@ -296,7 +298,7 @@ class CodeGenerationStore implements SchemaStorageInterface
         }
         $context = [];
         if (file_exists($this->getConfigFilename())) {
-            $context = require_once($this->getConfigFilename());
+            $context = require($this->getConfigFilename());
         }
         $this->cachedContext = new SchemaContext($context);
 
@@ -308,6 +310,19 @@ class CodeGenerationStore implements SchemaStorageInterface
         $fs = new Filesystem();
         $fs->remove($this->getDirectory());
         $this->getCache()->clear();
+    }
+
+    /**
+     * @return bool
+     */
+    public function exists(): bool
+    {
+        try {
+            $this->getSchema();
+            return true;
+        } catch (SchemaNotFoundException $e) {
+            return false;
+        }
     }
 
     /**
@@ -352,45 +367,6 @@ class CodeGenerationStore implements SchemaStorageInterface
     public static function getTemplateDir(): string
     {
         return Path::join(__DIR__, 'templates');
-    }
-
-    /**
-     * @param Schema $schema
-     * @return array
-     */
-    private function mapTypeNames(Schema $schema): array
-    {
-        $typeMapping = [];
-        foreach ($schema->getModels() as $modelType) {
-            $class = $modelType->getModel()->getSourceClass();
-            if (!isset($typeMapping[$class])) {
-                $typeMapping[$class] = $modelType->getName();
-            }
-        }
-
-        return $typeMapping;
-    }
-
-    /**
-     * @param Schema $schema
-     * @return array
-     * @throws SchemaBuilderException
-     */
-    private function mapFieldNames(Schema $schema): array
-    {
-        $map = [];
-        foreach ($schema->getModels() as $modelType) {
-            $fields = [];
-            /* @var ModelField $modelField */
-            foreach ($modelType->getFields() as $modelField) {
-                $relatedModel = $modelField->getModelType();
-                $model = $relatedModel ?: $modelType;
-                $fields[$modelField->getName()] = [$model->getName(), $modelField->getPropertyName()];
-            }
-            $map[$modelType->getName()] = $fields;
-        }
-
-        return $map;
     }
 
     /**

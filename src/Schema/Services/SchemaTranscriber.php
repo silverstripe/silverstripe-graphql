@@ -6,11 +6,8 @@ namespace SilverStripe\GraphQL\Schema\Services;
 use SilverStripe\Assets\Storage\GeneratedAssetHandler;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Path;
-use SilverStripe\EventDispatcher\Event\EventHandlerInterface;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
-use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
-use SilverStripe\GraphQL\Schema\Schema;
+use GraphQL\Type\Schema as GraphQLSchema;
 use Exception;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -24,9 +21,14 @@ class SchemaTranscriber
     const CACHE_FILENAME = 'types.graphql';
 
     /**
-     * @var Schema
+     * @var GraphQLSchema
      */
     private $schema;
+
+    /**
+     * @var string
+     */
+    private $name;
 
     /**
      * @var GeneratedAssetHandler
@@ -45,13 +47,15 @@ class SchemaTranscriber
 
     /**
      * SchemaTranscriber constructor.
-     * @param Schema $schema
+     * @param GraphQLSchema $schema
+     * @param string $name
      * @param string $rootDir
      */
-    public function __construct(Schema $schema, string $rootDir = PUBLIC_PATH)
+    public function __construct(GraphQLSchema $schema, string $name, string $rootDir = PUBLIC_PATH)
     {
         $this->fs = new Filesystem();
         $this->schema = $schema;
+        $this->name = $name;
         $this->rootDir = $rootDir;
     }
 
@@ -110,16 +114,13 @@ class SchemaTranscriber
 
     /**
      * @return array
-     * @throws SchemaNotFoundException
      * @throws Exception
      */
     private function introspectTypes(): array
     {
         $handler = QueryHandler::create();
-        $graphqlSchema = $this->schema->fetch();
-
         $fragments = $handler->query(
-            $graphqlSchema,
+            $this->schema,
             <<<GRAPHQL
 query IntrospectionQuery {
     __schema {
@@ -156,7 +157,7 @@ GRAPHQL
     {
         return Path::join(
             $this->rootDir,
-            $this->schema->getSchemaKey() . '.' . self::CACHE_FILENAME
+            $this->name . '.' . self::CACHE_FILENAME
         );
     }
 }

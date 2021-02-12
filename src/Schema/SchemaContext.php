@@ -96,7 +96,7 @@ class SchemaContext extends AbstractConfiguration
         $callable = call_user_func_array($strategy, [$this->getResolvers(), $typeName, $field]);
         if ($callable) {
             return ResolverReference::create($callable);
-        } else if ($type && $type->getFieldResolver()) {
+        } elseif ($type && $type->getFieldResolver()) {
             // If no resolver can be discovered, check if the type has a fallback resolver configured.
             return $type->getFieldResolver();
         }
@@ -165,7 +165,16 @@ class SchemaContext extends AbstractConfiguration
      */
     public function getTypeNameForClass(string $class): ?string
     {
-        return $this->get(['typeMapping', $class]);
+        $name = $this->get(['typeMapping', $class]);
+        if ($name) {
+            return $name;
+        }
+        $model = $this->createModel($class);
+        if ($model) {
+            return $model->getTypeName();
+        }
+
+        return null;
     }
 
     /**

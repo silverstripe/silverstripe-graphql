@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Schema\Services;
 
 use SilverStripe\EventDispatcher\Event\EventContextInterface;
 use SilverStripe\EventDispatcher\Event\EventHandlerInterface;
-use SilverStripe\GraphQL\Schema\SchemaFactory;
+use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use Exception;
 
 class SchemaTranscribeHandler implements EventHandlerInterface
@@ -17,12 +17,12 @@ class SchemaTranscribeHandler implements EventHandlerInterface
     public function fire(EventContextInterface $context): void
     {
         $schemaKey = $context->getAction();
-        $schema = SchemaFactory::singleton()->get($schemaKey);
+        $schema = SchemaBuilder::singleton()->fetch($schemaKey);
         if (!$schema) {
             return;
         }
 
-        $inst = SchemaTranscriber::create($schema);
+        $inst = SchemaTranscriber::create($schema, $schemaKey);
         $inst->writeSchemaToFilesystem();
     }
 }
