@@ -156,9 +156,9 @@ class FieldAccessorTest extends SapphireTest
         $this->assertEquals(5, $result->getValue());
 
         $product1 = $this->objFromFixture(FakeProduct::class, 'product1');
-        $product2 = $this->objFromFixture(FakeProduct::class, 'product2');
 
         $result = $this->accessor->accessField($product1, 'Reviews.Rating');
+        sort($result);
         $this->assertEquals([1, 2, 3], $result);
 
         $review2 = $this->objFromFixture(FakeReview::class, 'review2');
@@ -167,6 +167,7 @@ class FieldAccessorTest extends SapphireTest
 
         $page1 = $this->objFromFixture(FakeProductPage::class, 'productPage1');
         $result = $this->accessor->accessField($page1, 'Products.Reviews.Rating');
+        sort($result);
         $this->assertEquals([1, 2, 3], $result);
 
         $result = $this->accessor->accessField($page1, 'Products.Reviews');
