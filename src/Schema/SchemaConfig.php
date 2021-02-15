@@ -4,7 +4,7 @@
 namespace SilverStripe\GraphQL\Schema;
 
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Config\AbstractConfiguration;
+use SilverStripe\GraphQL\Config\Configuration;
 use SilverStripe\GraphQL\Config\ModelConfiguration;
 use SilverStripe\GraphQL\Schema\DataObject\ModelCreator;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -20,7 +20,7 @@ use SilverStripe\GraphQL\Schema\Type\Type;
  * This should include only that state which might be relevant to
  * query-time execution, such as resolver code.
  */
-class SchemaContext extends AbstractConfiguration
+class SchemaConfig extends Configuration
 {
     /**
      * @var array
@@ -47,6 +47,7 @@ class SchemaContext extends AbstractConfiguration
     {
         return $this->get('resolvers', []);
     }
+
 
     /**
      * @param string $class
@@ -90,7 +91,7 @@ class SchemaContext extends AbstractConfiguration
         $strategy = $this->get('resolverStrategy', [DefaultResolverStrategy::class, 'getResolverMethod']);
         Schema::invariant(
             is_callable($strategy),
-            'SchemaContext resolverStrategy must be callable'
+            'SchemaConfig resolverStrategy must be callable'
         );
         $typeName = $type ? $type->getName() : null;
         $callable = call_user_func_array($strategy, [$this->getResolvers(), $typeName, $field]);

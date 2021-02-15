@@ -343,7 +343,7 @@ class NestedInputBuilder
      */
     private function persist(string $key, $value): void
     {
-        $this->schema->getSchemaContext()->set([__CLASS__, $key], $value);
+        $this->schema->getState()->set([__CLASS__, $key], $value);
     }
 
     /**
@@ -353,6 +353,6 @@ class NestedInputBuilder
      */
     private function fetch(string $key)
     {
-        return $this->schema->getSchemaContext()->get([__CLASS__, $key]);
+        return $this->schema->getState()->get([__CLASS__, $key]);
     }
 }

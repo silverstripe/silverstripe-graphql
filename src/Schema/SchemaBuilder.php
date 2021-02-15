@@ -42,13 +42,13 @@ class SchemaBuilder
      * Returns null when no stored schema can be found.
      *
      * @param string $key
-     * @return SchemaContext|null
+     * @return SchemaConfig|null
      */
-    public function read(string $key): ?SchemaContext
+    public function getConfig(string $key): ?SchemaConfig
     {
         $store = $this->storeCreator->createStore($key);
         if ($store->exists()) {
-            return $store->getContext();
+            return $store->getConfig();
         }
         return null;
     }
@@ -60,7 +60,7 @@ class SchemaBuilder
      * @return GraphQLSchema|null
      * @throws SchemaNotFoundException
      */
-    public function fetch(string $key): ?GraphQLSchema
+    public function getSchema(string $key): ?GraphQLSchema
     {
         $store = $this->getStoreCreator()->createStore($key);
         if ($store->exists()) {

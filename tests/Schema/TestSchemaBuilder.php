@@ -42,10 +42,10 @@ class TestSchemaBuilder extends SchemaBuilder
         parent::__construct(new TestStoreCreator());
     }
 
-    public function fetch(string $key = 'test'): ?GraphQLSchema
+    public function getSchema(string $key = 'test'): ?GraphQLSchema
     {
         $schemaName = $key . '-' . $this->id;
-        return parent::fetch($schemaName);
+        return parent::getSchema($schemaName);
     }
 
     /**
@@ -55,7 +55,7 @@ class TestSchemaBuilder extends SchemaBuilder
      */
     public function fetchSchema(Schema $schema): ?GraphQLSchema
     {
-        return parent::fetch($schema->getSchemaKey());
+        return parent::getSchema($schema->getSchemaKey());
     }
 
     /**
@@ -110,7 +110,7 @@ class TestSchemaBuilder extends SchemaBuilder
     private function configureSchema(Schema $schema)
     {
 
-        $schema->getSchemaContext()->apply([
+        $schema->getConfig()->apply([
             'resolvers' => $this->resolvers
         ]);
 

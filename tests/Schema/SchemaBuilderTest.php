@@ -25,7 +25,7 @@ class SchemaBuilderTest extends SapphireTest
     public function testFetch()
     {
         $id = uniqid();
-        $this->assertNull(SchemaBuilder::singleton()->fetch('my-schema-' . $id));
+        $this->assertNull(SchemaBuilder::singleton()->getSchema('my-schema-' . $id));
         Injector::inst()->load([
             CodeGenerationStore::class => [
                 'properties' => [
@@ -51,7 +51,7 @@ class SchemaBuilderTest extends SapphireTest
         $schema->addQuery(Query::create('myQuery', 'TestType'));
         SchemaBuilder::singleton()->build($schema, true);
 
-        $schema = SchemaBuilder::singleton()->fetch('my-schema-' . $id);
+        $schema = SchemaBuilder::singleton()->getSchema('my-schema-' . $id);
         $this->assertInstanceOf(GraphQLSchema::class, $schema);
     }
 
@@ -106,9 +106,9 @@ class SchemaBuilderTest extends SapphireTest
             ->method('exists')
             ->willReturnOnConsecutiveCalls(false, true);
         $fakeStore->expects($this->once())
-            ->method('getContext');
+            ->method('getConfig');
 
-        $builder->read('test');
-        $builder->read('test');
+        $builder->getConfig('test');
+        $builder->getConfig('test');
     }
 }

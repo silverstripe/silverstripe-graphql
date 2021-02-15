@@ -4,17 +4,14 @@ namespace SilverStripe\GraphQL\Schema\Storage;
 
 use Exception;
 use GraphQL\Type\Schema as GraphQLSchema;
-use GraphQL\Type\SchemaConfig;
+use GraphQL\Type\SchemaConfig as GraphqLSchemaConfig;
 use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Path;
-use SilverStripe\GraphQL\Dev\Benchmark;
-use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
-use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\StorableSchema;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
@@ -78,9 +75,9 @@ class CodeGenerationStore implements SchemaStorageInterface
     private $rootDir = BASE_PATH;
 
     /**
-     * @var SchemaContext|null
+     * @var SchemaConfig|null
      */
-    private $cachedContext;
+    private $cachedConfig;
 
     /**
      * @param string $name
@@ -277,7 +274,7 @@ class CodeGenerationStore implements SchemaStorageInterface
 
         $registryClass = $this->getClassName(self::TYPE_CLASS_NAME);
         $hasMutations = method_exists($registryClass, Schema::MUTATION_TYPE);
-        $schemaConfig = new SchemaConfig();
+        $schemaConfig = new GraphqLSchemaConfig();
         $callback = call_user_func([$registryClass, Schema::QUERY_TYPE]);
         $schemaConfig->setQuery($callback);
         $schemaConfig->setTypeLoader([$registryClass, 'get']);
@@ -289,20 +286,20 @@ class CodeGenerationStore implements SchemaStorageInterface
     }
 
     /**
-     * @return SchemaContext
+     * @return SchemaConfig
      */
-    public function getContext(): SchemaContext
+    public function getConfig(): SchemaConfig
     {
-        if ($this->cachedContext) {
-            return $this->cachedContext;
+        if ($this->cachedConfig) {
+            return $this->cachedConfig;
         }
         $context = [];
         if (file_exists($this->getConfigFilename())) {
             $context = require($this->getConfigFilename());
         }
-        $this->cachedContext = new SchemaContext($context);
+        $this->cachedConfig = new SchemaConfig($context);
 
-        return $this->cachedContext;
+        return $this->cachedConfig;
     }
 
     public function clear(): void

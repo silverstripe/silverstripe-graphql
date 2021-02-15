@@ -8,7 +8,7 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
 
-abstract class AbstractConfiguration
+class Configuration
 {
     use Injectable;
 

@@ -6,10 +6,9 @@ namespace SilverStripe\GraphQL\Tests\Schema;
 
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
-use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
 
 class NaiveSchemaBuilder extends SchemaBuilder
 {
@@ -27,10 +26,10 @@ class NaiveSchemaBuilder extends SchemaBuilder
      * and never leaves code gen artefacts.
      *
      * @param string $key
-     * @return SchemaContext|null
+     * @return SchemaConfig|null
      * @throws SchemaBuilderException
      */
-    public function read(string $key): ?SchemaContext
+    public function getConfig(string $key): ?SchemaConfig
     {
         $schema = $this->_bootedSchemas[$key] ?? parent::boot($key);
         $this->_bootedSchemas[$key] = $schema;

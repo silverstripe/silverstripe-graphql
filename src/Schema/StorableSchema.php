@@ -51,23 +51,23 @@ class StorableSchema implements SchemaValidator
     private $scalars;
 
     /**
-     * @var SchemaContext
+     * @var SchemaConfig
      */
     private $context;
 
     /**
      * StorableSchema constructor.
      * @param array $config
-     * @param SchemaContext|null $context
+     * @param SchemaConfig|null $context
      */
-    public function __construct(array $config = [], ?SchemaContext $context = null)
+    public function __construct(array $config = [], ?SchemaConfig $context = null)
     {
         $this->types = $config[Schema::TYPES] ?? [];
         $this->enums = $config[Schema::ENUMS] ?? [];
         $this->interfaces = $config[Schema::INTERFACES] ?? [];
         $this->unions = $config[Schema::UNIONS] ?? [];
         $this->scalars = $config[Schema::SCALARS] ?? [];
-        $this->context = $context ?: SchemaContext::create();
+        $this->context = $context ?: SchemaConfig::create();
     }
 
     /**
@@ -111,9 +111,9 @@ class StorableSchema implements SchemaValidator
     }
 
     /**
-     * @return SchemaContext
+     * @return SchemaConfig
      */
-    public function getContext(): SchemaContext
+    public function getContext(): SchemaConfig
     {
         return $this->context;
     }

@@ -3,7 +3,7 @@
 
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
-use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
 
 /**
  * Implementors of this class can create a model for a given classname,
@@ -19,8 +19,8 @@ interface SchemaModelCreatorInterface
 
     /**
      * @param string $class
-     * @param SchemaContext $context
+     * @param SchemaConfig $context
      * @return SchemaModelInterface
      */
-    public function createModel(string $class, SchemaContext $context): SchemaModelInterface;
+    public function createModel(string $class, SchemaConfig $context): SchemaModelInterface;
 }

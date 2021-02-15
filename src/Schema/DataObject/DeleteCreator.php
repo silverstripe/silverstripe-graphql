@@ -41,7 +41,7 @@ class DeleteCreator implements OperationCreator
         $plugins = $config['plugins'] ?? [];
         $mutationName = $config['name'] ?? null;
         if (!$mutationName) {
-            $pluraliser = $model->getSchemaContext()->getPluraliser();
+            $pluraliser = $model->getSchemaConfig()->getPluraliser();
             $suffix = $pluraliser ? $pluraliser($typeName) : $typeName;
             $mutationName = 'delete' . ucfirst($suffix);
         }

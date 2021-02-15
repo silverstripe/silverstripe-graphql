@@ -90,7 +90,7 @@ class Inheritance implements PluginInterface, SchemaUpdater
 
         // Add the new _extend field to the base class only
         if (!$parentModel) {
-            $result = $inheritance->getExtensionType($schema->getSchemaContext());
+            $result = $inheritance->getExtensionType($schema->getConfig());
             if ($result) {
                 /* @var Type $extendsType */
                 list($extendsType, $subtypes) = $result;

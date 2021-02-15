@@ -6,7 +6,7 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;

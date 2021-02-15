@@ -5,9 +5,7 @@ namespace SilverStripe\GraphQL\Schema;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
-use SilverStripe\EventDispatcher\Symfony\Event;
-use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
+use SilverStripe\GraphQL\Config\Configuration;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -118,9 +116,14 @@ class Schema implements ConfigurationApplier
     private $mutationType;
 
     /**
-     * @var SchemaContext
+     * @var SchemaConfig
      */
-    private $schemaContext;
+    private $schemaConfig;
+
+    /**
+     * @var Configuration
+     */
+    private $state;
 
     /**
      * @var boolean
@@ -129,15 +132,16 @@ class Schema implements ConfigurationApplier
 
     /**
      * @param string $schemaKey
-     * @param SchemaContext|null $schemaContext
+     * @param SchemaConfig|null $schemaConfig
      */
-    public function __construct(string $schemaKey, SchemaContext $schemaContext = null)
+    public function __construct(string $schemaKey, SchemaConfig $schemaConfig = null)
     {
         $this->schemaKey = $schemaKey;
         $this->queryType = Type::create(self::QUERY_TYPE);
         $this->mutationType = Type::create(self::MUTATION_TYPE);
 
-        $this->schemaContext = $schemaContext ?: SchemaContext::create();
+        $this->schemaConfig = $schemaConfig ?: SchemaConfig::create();
+        $this->state = Configuration::create();
     }
 
     /**
@@ -181,7 +185,7 @@ class Schema implements ConfigurationApplier
         $scalars = $schemaConfig[self::SCALARS] ?? [];
         $config = $schemaConfig[self::SCHEMA_CONFIG] ?? [];
 
-        $this->getSchemaContext()->apply($config);
+        $this->getConfig()->apply($config);
 
         static::assertValidConfig($types);
         foreach ($types as $typeName => $typeConfig) {
@@ -270,7 +274,7 @@ class Schema implements ConfigurationApplier
                 $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
                 $safeNamedClass = TypeReference::create($safeModelTypeDef)->getNamedType();
                 $namedClass = str_replace('__', '\\', $safeNamedClass);
-                $model = $this->getSchemaContext()->createModel($namedClass);
+                $model = $this->getConfig()->createModel($namedClass);
                 Schema::invariant(
                     $model,
                     'No model found for %s',
@@ -298,7 +302,7 @@ class Schema implements ConfigurationApplier
         foreach ($types as $type) {
             foreach ($type->getFields() as $fieldObj) {
                 if (!$fieldObj->getResolver()) {
-                    $discoveredResolver = $this->getSchemaContext()->discoverResolver($type, $fieldObj);
+                    $discoveredResolver = $this->getConfig()->discoverResolver($type, $fieldObj);
                     Schema::invariant(
                         $discoveredResolver,
                         'Could not discover a resolver for field %s on type %s',
@@ -381,7 +385,7 @@ class Schema implements ConfigurationApplier
             $fieldMapping[$modelType->getName()] = $fields;
         }
 
-        $this->getSchemaContext()
+        $this->getConfig()
             ->setTypeMapping($typeMapping)
             ->setFieldMapping($fieldMapping);
     }
@@ -583,7 +587,7 @@ class Schema implements ConfigurationApplier
                 self::UNIONS => $this->getUnions(),
                 self::SCALARS => $this->getScalars()
             ],
-            $this->getSchemaContext()
+            $this->getConfig()
         );
 
         return $schema;
@@ -606,11 +610,19 @@ class Schema implements ConfigurationApplier
     }
 
     /**
-     * @return SchemaContext
+     * @return SchemaConfig
      */
-    public function getSchemaContext(): SchemaContext
+    public function getConfig(): SchemaConfig
     {
-        return $this->schemaContext;
+        return $this->schemaConfig;
+    }
+
+    /**
+     * @return Configuration
+     */
+    public function getState(): Configuration
+    {
+        return $this->state;
     }
 
     /**
@@ -849,7 +861,7 @@ class Schema implements ConfigurationApplier
      */
     public function createModel(string $class, array $config = []): ?ModelType
     {
-        $model = $this->getSchemaContext()->createModel($class);
+        $model = $this->getConfig()->createModel($class);
         if (!$model) {
             return null;
         }
@@ -976,7 +988,7 @@ class Schema implements ConfigurationApplier
      */
     public function pluralise($typeName): string
     {
-        $callable = $this->getSchemaContext()->getPluraliser();
+        $callable = $this->getConfig()->getPluraliser();
         Schema::invariant(
             is_callable($callable),
             'Schema does not have a valid callable "pluraliser" property set in its config'

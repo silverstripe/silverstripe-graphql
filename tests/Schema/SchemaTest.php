@@ -11,7 +11,7 @@ use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
@@ -38,7 +38,7 @@ class SchemaTest extends SapphireTest
     {
         $schema = $this->buildSchema('test');
         $this->assertEquals('test', $schema->getSchemaKey());
-        $this->assertInstanceOf(SchemaContext::class, $schema->getSchemaContext());
+        $this->assertInstanceOf(SchemaConfig::class, $schema->getConfig());
     }
 
     public function testApplyConfig()
@@ -121,7 +121,7 @@ class SchemaTest extends SapphireTest
     {
         $context = $this->createSchemaContext();
         $schema = new Schema('test', $context);
-        $this->assertSame($context, $schema->getSchemaContext());
+        $this->assertSame($context, $schema->getConfig());
     }
 
     public function testAddQueriesAndMutations()
@@ -263,7 +263,7 @@ class SchemaTest extends SapphireTest
     {
     }
 
-    private function buildSchema(string $key = 'test', SchemaContext $context = null): Schema
+    private function buildSchema(string $key = 'test', SchemaConfig $context = null): Schema
     {
         $schema = new Schema($key, $this->createSchemaContext());
 
@@ -344,11 +344,11 @@ class SchemaTest extends SapphireTest
     }
 
     /**
-     * @return SchemaContext
+     * @return SchemaConfig
      */
-    private function createSchemaContext(): SchemaContext
+    private function createSchemaContext(): SchemaConfig
     {
-        return new SchemaContext([
+        return new SchemaConfig([
             'modelCreators' => [ModelCreator::class],
         ]);
     }

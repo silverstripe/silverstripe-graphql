@@ -8,7 +8,7 @@ use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
-use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
@@ -22,10 +22,10 @@ class SchemaContextTest extends SapphireTest
     {
         $schema = SchemaBuilder::singleton()->boot('default');
         $modelType1 = new ModelType(
-            DataObjectModel::create(DataObjectFake::class, new SchemaContext())
+            DataObjectModel::create(DataObjectFake::class, new SchemaConfig())
         );
         $modelType2 = new ModelType(
-            DataObjectModel::create(FakeSiteTree::class, new SchemaContext())
+            DataObjectModel::create(FakeSiteTree::class, new SchemaConfig())
         );
         // Only add one model
         $schema->addModel($modelType1);

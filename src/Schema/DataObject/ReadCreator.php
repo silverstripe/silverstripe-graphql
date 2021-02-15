@@ -38,7 +38,7 @@ class ReadCreator implements OperationCreator
         $resolver = $config['resolver'] ?? null;
 
         if (!$queryName) {
-            $pluraliser = $model->getSchemaContext()->getPluraliser();
+            $pluraliser = $model->getSchemaConfig()->getPluraliser();
             $suffix = $pluraliser ? $pluraliser($typeName) : $typeName;
             $queryName = 'read' . ucfirst($suffix);
         }

@@ -114,7 +114,7 @@ class Controller extends BaseController
                 $this->httpError(400, 'This endpoint requires a "query" parameter');
             }
             $builder = SchemaBuilder::singleton();
-            $graphqlSchema = $builder->fetch($this->getSchemaKey());
+            $graphqlSchema = $builder->getSchema($this->getSchemaKey());
             if (!$graphqlSchema && $this->autobuildEnabled()) {
                 // clear the cache on autobuilds until we trust it more. Maybe
                 // make this configurable.
@@ -303,7 +303,7 @@ class Controller extends BaseController
         $handler->addContextProvider(UserContextProvider::create($user))
                 ->addContextProvider(TokenContextProvider::create($token ?: ''))
                 ->addContextProvider(RequestContextProvider::create($request));
-        $schemaContext = SchemaBuilder::singleton()->read($this->getSchemaKey());
+        $schemaContext = SchemaBuilder::singleton()->getConfig($this->getSchemaKey());
         if ($schemaContext) {
             $handler->addContextProvider(SchemaContextProvider::create($schemaContext));
         }

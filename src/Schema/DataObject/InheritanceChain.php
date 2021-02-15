@@ -8,7 +8,7 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\ORM\DataObject;
@@ -151,12 +151,12 @@ class InheritanceChain
     }
 
     /**
-     * @param SchemaContext $schemaContext
+     * @param SchemaConfig $schemaContext
      * @return array|null
      * @throws ReflectionException
      * @throws SchemaBuilderException
      */
-    public function getExtensionType(SchemaContext $schemaContext): ?array
+    public function getExtensionType(SchemaConfig $schemaContext): ?array
     {
         if ($this->descendantTypeResult) {
             return $this->descendantTypeResult;
@@ -197,11 +197,11 @@ class InheritanceChain
 
     /**
      * @param DataObject $dataObject
-     * @param SchemaContext $schemaContext
+     * @param SchemaConfig $schemaContext
      * @return string
      * @throws SchemaBuilderException
      */
-    public static function createDescendantTypename(DataObject $dataObject, SchemaContext $schemaContext): string
+    public static function createDescendantTypename(DataObject $dataObject, SchemaConfig $schemaContext): string
     {
         $model = $schemaContext->createModel(get_class($dataObject));
         Schema::invariant(

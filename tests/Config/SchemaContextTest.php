@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Tests\Config;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Resolver\DefaultResolverStrategy;
-use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Tests\Fake\SchemaContextTestResolverA;
 use SilverStripe\GraphQL\Tests\Fake\SchemaContextTestResolverB;
@@ -14,7 +14,7 @@ class SchemaContextTest extends SapphireTest
 {
     public function testResolverDiscovery()
     {
-        $context = new SchemaContext([
+        $context = new SchemaConfig([
             'resolvers' => [
                 SchemaContextTestResolverA::class,
                 SchemaContextTestResolverB::class,

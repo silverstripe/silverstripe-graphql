@@ -12,7 +12,7 @@ use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
-use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationProvider;
@@ -37,9 +37,9 @@ class DataObjectModel implements
     use Configurable;
 
     /**
-     * @var SchemaContext
+     * @var SchemaConfig
      */
-    private $schemaContext;
+    private $schemaConfig;
 
     /**
      * @var array
@@ -75,10 +75,10 @@ class DataObjectModel implements
     /**
      * DataObjectModel constructor.
      * @param string $class
-     * @param SchemaContext $context
+     * @param SchemaConfig $config
      * @throws SchemaBuilderException
      */
-    public function __construct(string $class, SchemaContext $context)
+    public function __construct(string $class, SchemaConfig $config)
     {
         Schema::invariant(
             is_subclass_of($class, DataObject::class),
@@ -87,7 +87,7 @@ class DataObjectModel implements
             DataObject::class
         );
         $this->dataObject = Injector::inst()->get($class);
-        $this->schemaContext = $context;
+        $this->schemaConfig = $config;
     }
 
     /**
@@ -290,7 +290,7 @@ class DataObjectModel implements
             return null;
         }
 
-        $model = $this->getSchemaContext()->createModel($class);
+        $model = $this->getSchemaConfig()->createModel($class);
         if (!$model) {
             return null;
         }
@@ -327,11 +327,11 @@ class DataObjectModel implements
     }
 
     /**
-     * @return SchemaContext
+     * @return SchemaConfig
      */
-    public function getSchemaContext(): SchemaContext
+    public function getSchemaConfig(): SchemaConfig
     {
-        return $this->schemaContext;
+        return $this->schemaConfig;
     }
 
     /**
@@ -340,7 +340,7 @@ class DataObjectModel implements
      */
     public function getModelConfiguration(): ?ModelConfiguration
     {
-        return $this->getSchemaContext()->getModelConfiguration(static::getIdentifier());
+        return $this->getSchemaConfig()->getModelConfiguration(static::getIdentifier());
     }
 
     /**

@@ -6,7 +6,7 @@ use SilverStripe\Core\ClassInfo;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
 
-class ModelConfiguration extends AbstractConfiguration
+class ModelConfiguration extends Configuration
 {
     /**
      * @return callable|null

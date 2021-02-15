@@ -17,7 +17,7 @@ class SchemaTranscribeHandler implements EventHandlerInterface
     public function fire(EventContextInterface $context): void
     {
         $schemaKey = $context->getAction();
-        $schema = SchemaBuilder::singleton()->fetch($schemaKey);
+        $schema = SchemaBuilder::singleton()->getSchema($schemaKey);
         if (!$schema) {
             return;
         }

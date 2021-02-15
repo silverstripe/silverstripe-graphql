@@ -1020,7 +1020,7 @@ GRAPHQL;
         $builder = new TestSchemaBuilder();
         $graphQLSchena = $builder->fetchSchema($schema);
         $handler = new QueryHandler();
-        $schemaContext = $builder->read($schema->getSchemaKey());
+        $schemaContext = $builder->getConfig($schema->getSchemaKey());
         $handler->addContextProvider(SchemaContextProvider::create($schemaContext));
         try {
             return $handler->query($graphQLSchena, $query, $variables);
