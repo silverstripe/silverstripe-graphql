@@ -114,13 +114,13 @@ class Controller extends BaseController
                 $this->httpError(400, 'This endpoint requires a "query" parameter');
             }
             $builder = SchemaBuilder::singleton();
-            $graphqlSchema = $builder->getSchema($this->getSchemaKey());
+            $graphqlSchema = $builder->fetch($this->getSchemaKey());
             if (!$graphqlSchema && $this->autobuildEnabled()) {
                 // clear the cache on autobuilds until we trust it more. Maybe
                 // make this configurable.
                 $clear = true;
                 $graphqlSchema = $builder->buildByName($this->getSchemaKey(), $clear);
-            } else {
+            } else if (!$graphqlSchema) {
                 throw new SchemaBuilderException(sprintf(
                     'Schema %s has not been built.',
                     $this->getSchemaKey()
