@@ -120,7 +120,7 @@ class Controller extends BaseController
                 // make this configurable.
                 $clear = true;
                 $graphqlSchema = $builder->buildByName($this->getSchemaKey(), $clear);
-            } else if (!$graphqlSchema) {
+            } elseif (!$graphqlSchema) {
                 throw new SchemaBuilderException(sprintf(
                     'Schema %s has not been built.',
                     $this->getSchemaKey()

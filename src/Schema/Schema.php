@@ -108,12 +108,12 @@ class Schema implements ConfigurationApplier
     private $scalars = [];
 
     /**
-     * @var Query
+     * @var Type
      */
     private $queryType;
 
     /**
-     * @var Mutation
+     * @var Type
      */
     private $mutationType;
 
@@ -684,6 +684,23 @@ class Schema implements ConfigurationApplier
     {
         return $this->types;
     }
+
+    /**
+     * @return Type
+     */
+    public function getQueryType(): Type
+    {
+        return $this->queryType;
+    }
+
+    /**
+     * @return Type
+     */
+    public function getMutationType(): Type
+    {
+        return $this->mutationType;
+    }
+
 
     /**
      * @param string $name
