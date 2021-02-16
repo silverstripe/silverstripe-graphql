@@ -23,9 +23,3 @@ SilverStripe\Assets\File:
   app_categories:
     document:
       - graphql
-
-## When assets is installed, the schema file can be written to the assets dir
-SilverStripe\Core\Injector\Injector:
-  SilverStripe\GraphQL\Schema\Services\SchemaTranscriber:
-    properties:
-      rootDir: '`ASSETS_PATH`'
