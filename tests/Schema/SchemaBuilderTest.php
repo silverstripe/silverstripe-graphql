@@ -3,6 +3,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema;
 
+use GraphQL\Type\Schema as GraphQLSchema;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
@@ -15,7 +16,6 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
 use SilverStripe\GraphQL\Schema\Type\Type;
-use GraphQL\Type\Schema as GraphQLSchema;
 
 class SchemaBuilderTest extends SapphireTest
 {
@@ -39,7 +39,7 @@ class SchemaBuilderTest extends SapphireTest
             [
                 'properties' => [
                     'handlers' => [
-                        'graphqlTranscribe' => [
+                        'graphqlSchemaBuild' => [
                             'off' => ['graphqlSchemaBuild']
                         ],
                     ],

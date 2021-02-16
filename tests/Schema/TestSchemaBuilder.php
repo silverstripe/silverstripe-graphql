@@ -3,6 +3,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema;
 
+use GraphQL\Type\Schema as GraphQLSchema;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
@@ -11,7 +12,6 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
-use GraphQL\Type\Schema as GraphQLSchema;
 
 class TestSchemaBuilder extends SchemaBuilder
 {
@@ -95,7 +95,7 @@ class TestSchemaBuilder extends SchemaBuilder
             [
                 'properties' => [
                     'handlers' => [
-                        'graphqlTranscribe' => [
+                        'graphqlSchemaBuild' => [
                             'off' => ['graphqlSchemaBuild']
                         ],
                     ],

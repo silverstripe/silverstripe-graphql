@@ -3,19 +3,21 @@
 
 namespace SilverStripe\GraphQL\Schema;
 
+use GraphQL\Type\Schema as GraphQLSchema;
 use M1\Env\Exception\ParseException;
 use SilverStripe\Config\MergeStrategy\Priority;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Core\Path;
+use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
+use SilverStripe\EventDispatcher\Symfony\Event;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
-use GraphQL\Type\Schema as GraphQLSchema;
 
 class SchemaBuilder
 {
@@ -85,6 +87,13 @@ class SchemaBuilder
             $store->clear();
         }
         $store->persistSchema($schema->getStoreableSchema());
+
+        Dispatcher::singleton()->trigger(
+            'graphqlSchemaBuild.' . $schema->getSchemaKey(),
+            Event::create($schema->getSchemaKey(),[
+                'schema' => $schema
+            ])
+        );
 
         return $store->getSchema();
     }
