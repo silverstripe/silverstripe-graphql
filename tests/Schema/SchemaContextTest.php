@@ -32,13 +32,13 @@ class SchemaContextTest extends SapphireTest
         $storeableSchema = $schema->getStoreableSchema();
         $this->assertEquals(
             $modelType1->getName(),
-            $storeableSchema->getContext()->getTypeNameForClass(DataObjectFake::class)
+            $storeableSchema->getConfig()->getTypeNameForClass(DataObjectFake::class)
         );
 
         // Rely on model creation for second model
         $this->assertEquals(
             $modelType2->getName(),
-            $storeableSchema->getContext()->getTypeNameForClass(FakeSiteTree::class)
+            $storeableSchema->getConfig()->getTypeNameForClass(FakeSiteTree::class)
         );
     }
 }

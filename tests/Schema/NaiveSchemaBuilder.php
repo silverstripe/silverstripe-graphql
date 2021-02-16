@@ -35,7 +35,7 @@ class NaiveSchemaBuilder extends SchemaBuilder
         $this->_bootedSchemas[$key] = $schema;
 
         if ($schema) {
-            return $schema->getStoreableSchema()->getContext();
+            return $schema->getStoreableSchema()->getConfig();
         }
 
         return null;

@@ -132,7 +132,7 @@ class CodeGenerationStore implements SchemaStorageInterface
             'namespace' => $this->getNamespace(),
         ];
 
-        $config = $schema->getContext()->toArray();
+        $config = $schema->getConfig()->toArray();
         $configFile = $this->getTempConfigFilename();
 
         try {

@@ -53,7 +53,7 @@ class StorableSchema implements SchemaValidator
     /**
      * @var SchemaConfig
      */
-    private $context;
+    private $config;
 
     /**
      * StorableSchema constructor.
@@ -67,7 +67,7 @@ class StorableSchema implements SchemaValidator
         $this->interfaces = $config[Schema::INTERFACES] ?? [];
         $this->unions = $config[Schema::UNIONS] ?? [];
         $this->scalars = $config[Schema::SCALARS] ?? [];
-        $this->context = $context ?: SchemaConfig::create();
+        $this->config = $context ?: SchemaConfig::create();
     }
 
     /**
@@ -113,9 +113,9 @@ class StorableSchema implements SchemaValidator
     /**
      * @return SchemaConfig
      */
-    public function getContext(): SchemaConfig
+    public function getConfig(): SchemaConfig
     {
-        return $this->context;
+        return $this->config;
     }
 
     /**
