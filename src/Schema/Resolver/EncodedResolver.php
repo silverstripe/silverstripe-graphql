@@ -9,7 +9,6 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\Encoder as EncoderInterface;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Storage\Encoder;
-use SilverStripe\ORM\ArrayList;
 
 /**
  * A resolver function that can be expressed in generated PHP code
@@ -63,15 +62,23 @@ class EncodedResolver implements EncoderInterface
     }
 
     /**
+     * @return array
+     */
+    public function getStack(): array
+    {
+        return array_merge(
+            $this->getResolverMiddlewares(),
+            [$this],
+            $this->getResolverAfterwares()
+        );
+    }
+
+    /**
      * @return string
      */
     public function getExpression(): string
     {
-        $callable = sprintf(
-            "['%s', '%s']",
-            $this->resolverRef->getClass(),
-            $this->resolverRef->getMethod()
-        );
+        $callable = $this->getInnerExpression();
         if (empty($this->getContext())) {
             return $callable;
         }
@@ -80,6 +87,18 @@ class EncodedResolver implements EncoderInterface
             'call_user_func_array(%s, [%s])',
             $callable,
             $this->getContextArgs()
+        );
+    }
+
+    /**
+     * @return string
+     */
+    public function getInnerExpression(): string
+    {
+        return sprintf(
+            "['%s', '%s']",
+            $this->resolverRef->getClass(),
+            $this->resolverRef->getMethod()
         );
     }
 

@@ -3,46 +3,117 @@
 
 namespace SilverStripe\GraphQL\Schema;
 
+use GraphQL\Type\Schema as GraphQLSchema;
 use M1\Env\Exception\ParseException;
 use SilverStripe\Config\MergeStrategy\Priority;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Core\Path;
-use SilverStripe\GraphQL\Dev\BuildState;
+use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
+use SilverStripe\EventDispatcher\Symfony\Event;
+use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
 
-class SchemaFactory
+class SchemaBuilder
 {
     use Injectable;
 
-    public function get(string $key): ?Schema
-    {
-        $schema = Schema::create($key);
+    /**
+     * @var SchemaStorageCreator
+     */
+    private $storeCreator;
 
-        return $schema->isStored() ? $schema : null;
+    /**
+     * SchemaBuilder constructor.
+     * @param SchemaStorageCreator $storeCreator
+     */
+    public function __construct(SchemaStorageCreator $storeCreator)
+    {
+        $this->setStoreCreator($storeCreator);
     }
 
     /**
+     * Retrieves the context for an already stored schema
+     * which does not require booting. Useful for getting data from
+     * a saved schema at request time.
+     * Returns null when no stored schema can be found.
+     *
      * @param string $key
-     * @return Schema
+     * @return SchemaConfig|null
+     */
+    public function getConfig(string $key): ?SchemaConfig
+    {
+        $store = $this->storeCreator->createStore($key);
+        if ($store->exists()) {
+            return $store->getConfig();
+        }
+        return null;
+    }
+
+    /**
+     * Gets a graphql-php Schema instance that can be queried
+     *
+     * @param string $key
+     * @return GraphQLSchema|null
      * @throws SchemaNotFoundException
      */
-    public function require(string $key): Schema
+    public function getSchema(string $key): ?GraphQLSchema
     {
-        $schema = static::get($key);
-        if (!$schema) {
-            throw new SchemaNotFoundException(sprintf(
-                'Schema %s not found',
-                $key
-            ));
+        $store = $this->getStoreCreator()->createStore($key);
+        if ($store->exists()) {
+            return $store->getSchema();
         }
 
-        return $schema;
+        return null;
+    }
+
+    /**
+     * Stores a schema and fetches the graphql-php instance
+     *
+     * @param Schema $schema
+     * @param bool $clear If true, clear the cache
+     * @return GraphQLSchema
+     * @throws SchemaNotFoundException
+     * @throws EmptySchemaException
+     */
+    public function build(Schema $schema, $clear = false): GraphQLSchema
+    {
+        $store = $this->getStoreCreator()->createStore($schema->getSchemaKey());
+        if ($clear) {
+            $store->clear();
+        }
+        $store->persistSchema($schema->createStoreableSchema());
+
+        Dispatcher::singleton()->trigger(
+            'graphqlSchemaBuild.' . $schema->getSchemaKey(),
+            Event::create($schema->getSchemaKey(), [
+                'schema' => $schema
+            ])
+        );
+
+        return $store->getSchema();
+    }
+
+    /**
+     * Boots a schema, persists it, and fetches it
+     *
+     * @param string $key
+     * @param false $clear
+     * @return GraphQLSchema
+     * @throws SchemaBuilderException
+     * @throws SchemaNotFoundException
+     */
+    public function buildByName(string $key, $clear = false): GraphQLSchema
+    {
+        $schema = $this->boot($key);
+
+        return $this->build($schema, $clear);
     }
 
     /**
@@ -53,19 +124,28 @@ class SchemaFactory
      * An instance can only be booted once to avoid conflicts with further
      * instance level modifications such as {@link addType()}.
      *
+     * This method should only be used on schemas which have not been stored,
+     * and is usually only needed for the process of storing them
+     * (through {@link SchemaBuilder->build()}).
+     *
      * @param string $key
      * @throws SchemaBuilderException
+     * @return Schema
      */
     public function boot(string $key): Schema
     {
         $schemaObj = Schema::create($key);
 
-        // Hack... BuildState is a temporary API that will be removed.
-        // https://github.com/silverstripe/silverstripe-graphql/issues/341
-        BuildState::activate($schemaObj);
-
         $schemas = $schemaObj->config()->get('schemas') ?: [];
-        $schema = $schemas[$key] ?? [];
+
+        if (!array_key_exists($key, $schemas)) {
+            throw new SchemaBuilderException(sprintf(
+                'Schema "%s" has not been defined',
+                $key
+            ));
+        }
+
+        $schema = $schemas[$key];
 
         // Gather all the global config first
         $mergedSchema = $schemas[Schema::ALL] ?? [];
@@ -108,6 +188,25 @@ class SchemaFactory
     }
 
     /**
+     * @return SchemaStorageCreator
+     */
+    public function getStoreCreator(): SchemaStorageCreator
+    {
+        return $this->storeCreator;
+    }
+
+    /**
+     * @param SchemaStorageCreator $storeCreator
+     * @return SchemaBuilder
+     */
+    public function setStoreCreator(SchemaStorageCreator $storeCreator): SchemaBuilder
+    {
+        $this->storeCreator = $storeCreator;
+        return $this;
+    }
+
+
+    /**
      * Retrieves config from filesystem path.
      * Use {@link applyConfig()} to use the resulting config array on the schema instance.
      *
@@ -120,9 +219,19 @@ class SchemaFactory
     {
         $resolvedDir = ModuleResourceLoader::singleton()->resolvePath($dir);
         $absConfigSrc = Director::is_absolute($dir) ? $dir : Path::join(BASE_PATH, $resolvedDir);
+
+        Schema::invariant(
+            !is_file($absConfigSrc),
+            'Provided source config file "%s" rather than directory on schema %s. ' .
+            'See https://docs.silverstripe.org/en/4/developer_guides/graphql/getting_started/configuring_your_schema/',
+            $absConfigSrc,
+            $schemaKey
+        );
+
         Schema::invariant(
             is_dir($absConfigSrc),
-            'Source config directory %s does not exist on schema %s',
+            'Source config directory %s does not exist on schema %s. ' .
+            'See https://docs.silverstripe.org/en/4/developer_guides/graphql/getting_started/configuring_your_schema/',
             $absConfigSrc,
             $schemaKey
         );

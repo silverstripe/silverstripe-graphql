@@ -5,21 +5,20 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\DataObject;
 
 trait FieldReconciler
 {
     /**
      * @param array $config
-     * @param DataObject $dataObject
-     * @param FieldAccessor $fieldAccessor
+     * @param ModelType $modelType
      * @return array
      * @throws SchemaBuilderException
      */
     private function reconcileFields(
         array $config,
-        DataObject $dataObject,
-        FieldAccessor $fieldAccessor
+        ModelType $modelType
     ): array {
         $configFields = $config['fields'] ?? null;
         $fields = [];
@@ -32,7 +31,7 @@ trait FieldReconciler
                 $fields[] = $fieldName;
             }
         } else {
-            $fields = $fieldAccessor->getAllFields($dataObject, false);
+            $fields = array_keys($modelType->getFields());
         }
         $configExclude = $config['exclude'] ?? null;
         $excluded = [];

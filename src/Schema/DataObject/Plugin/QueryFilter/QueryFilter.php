@@ -3,18 +3,22 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter;
 
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Type\Type;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
+use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
+use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Plugin\AbstractQueryFilterPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\Services\NestedInputBuilder;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
-use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use Closure;
 use SilverStripe\ORM\Filterable;
-use SilverStripe\ORM\SS_List;
+use Exception;
 
 /**
  * Adds a filter parameter to a DataObject query
@@ -40,12 +44,12 @@ class QueryFilter extends AbstractQueryFilterPlugin
     }
 
     /**
-     * @param ModelField $query
+     * @param ModelQuery $query
      * @param Schema $schema
      * @param array $config
      * @throws SchemaBuilderException
      */
-    public function apply(ModelField $query, Schema $schema, array $config = []): void
+    public function apply(ModelQuery $query, Schema $schema, array $config = []): void
     {
         Schema::invariant(
             is_subclass_of(
@@ -58,25 +62,19 @@ class QueryFilter extends AbstractQueryFilterPlugin
     }
 
     /**
-     * @param string $class
-     * @param string $fieldName
-     * @param Schema $schema
-     * @return string|null
+     * @param NestedInputBuilder $builder
      */
-    public static function getObjectProperty(string $class, string $fieldName, Schema $schema): string
+    protected function updateInputBuilder(NestedInputBuilder $builder): void
     {
-        $modelType = $schema->getModelByClassName($class);
-        if ($modelType) {
-            /* @var ModelField $field */
-            $field = $modelType->getFieldByName($fieldName);
-            if ($field) {
-                $prop = $field->getPropertyName();
-                $sng = DataObject::singleton($class);
-                return FieldAccessor::singleton()->normaliseField($sng, $prop) ?: $fieldName;
+        parent::updateInputBuilder($builder);
+        $builder->setFieldFilter(function (Type $type, Field $field) {
+            if (!$type instanceof ModelType) {
+                return false;
             }
-        }
-
-        return $fieldName;
+            $dataObject = DataObject::singleton($type->getModel()->getSourceClass());
+            $fieldName = $field instanceof ModelField ? $field->getPropertyName() : $field->getName();
+            return FieldAccessor::singleton()->hasNativeField($dataObject, $fieldName);
+        });
     }
 
     /**
@@ -85,22 +83,38 @@ class QueryFilter extends AbstractQueryFilterPlugin
      */
     public static function filter(array $context)
     {
-        $mapping = $context['fieldMapping'] ?? [];
         $fieldName = $context['fieldName'];
+        $rootType = $context['rootType'];
 
-        return function (?Filterable $list, array $args) use ($mapping, $fieldName) {
+        return function (?Filterable $list, array $args, array $context) use ($fieldName, $rootType) {
             if ($list === null) {
                 return null;
+            }
+            $schemaContext = SchemaContextProvider::get($context);
+            if (!$schemaContext) {
+                throw new Exception(sprintf(
+                    'No schemaContext was present in the resolver context. Make sure the %s class is added
+                    to the query handler',
+                    SchemaContextProvider::class
+                ));
             }
             $filterArgs = $args[$fieldName] ?? [];
             /* @var FilterRegistryInterface $registry */
             $registry = Injector::inst()->get(FilterRegistryInterface::class);
-            $paths = static::buildPathsFromArgs($filterArgs);
+            $paths = NestedInputBuilder::buildPathsFromArgs($filterArgs);
             foreach ($paths as $path => $value) {
                 $fieldParts = explode('.', $path);
                 $filterID = array_pop($fieldParts);
                 $fieldPath = implode('.', $fieldParts);
-                $normalised = $mapping[$fieldPath] ?? $fieldPath;
+
+                $normalised = $schemaContext->mapPath($rootType, $fieldPath);
+                Schema::invariant(
+                    $normalised,
+                    'Plugin %s could not map path %s on %s',
+                    static::IDENTIFIER,
+                    $fieldPath,
+                    $rootType
+                );
                 $filter = $registry->getFilterByIdentifier($filterID);
                 if ($filter) {
                     $list = $filter->apply($list, $normalised, $value);
@@ -109,16 +123,5 @@ class QueryFilter extends AbstractQueryFilterPlugin
 
             return $list;
         };
-    }
-
-    /**
-     * @param ModelField $field
-     * @param ModelType $modelType
-     * @return bool
-     */
-    protected function shouldAddField(ModelField $field, ModelType $modelType): bool
-    {
-        $fieldName = $field->getPropertyName();
-        return stristr($fieldName, '.') === false;
     }
 }

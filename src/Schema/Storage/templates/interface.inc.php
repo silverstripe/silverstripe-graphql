@@ -7,15 +7,17 @@
 namespace <?=$globals['namespace'] ?>;
 
 use GraphQL\Type\Definition\InterfaceType;
+use SilverStripe\GraphQL\Schema\Resolver\ComposedResolver;
 
 class <?=$interface->getName(); ?> extends InterfaceType
 {
     public function __construct()
     {
+        $resolver = <?=$interface->getEncodedTypeResolver()->encode(); ?>;
         parent::__construct([
             'name' => '<?=$interface->getName(); ?>',
-            'resolveType' => function ($obj) {
-                $type = call_user_func_array(<?=$interface->getEncodedTypeResolver()->encode(); ?>, [$obj]);
+            'resolveType' => function ($obj) use ($resolver) {
+                $type = call_user_func_array($resolver->toClosure(), [$obj]);
                 return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName']; ?>', $type]);
             },
         <?php if (!empty($interface->getDescription())) : ?>

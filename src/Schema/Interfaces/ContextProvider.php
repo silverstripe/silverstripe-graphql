@@ -9,14 +9,15 @@ namespace SilverStripe\GraphQL\Schema\Interfaces;
 interface ContextProvider
 {
     /**
-     * @param string $key
-     * @param $val
-     * @return ContextProvider
-     */
-    public function addContext(string $key, $val): self;
-
-    /**
+     * Should return key/value pairs that will merge into a separate query context
      * @return array
      */
-    public function getContext(): array;
+    public function provideContext(): array;
+
+    /**
+     * Get the value out of the graphql context array
+     * @param array $context
+     * @return mixed
+     */
+    public static function get(array $context);
 }

@@ -3,22 +3,22 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema;
 
+use GraphQL\Type\Schema as GraphQLSchema;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\SchemaFactory;
-use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
-use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStoreCreator;
+use SilverStripe\GraphQL\Schema\SchemaBuilder;
 
-class TestSchemaFactory extends SchemaFactory
+class TestSchemaBuilder extends SchemaBuilder
 {
-    public static $schemaCount = 0;
-
     /**
      * @var string
      */
-    public static $dir;
+    private $id;
 
     /**
      * @var array
@@ -38,18 +38,24 @@ class TestSchemaFactory extends SchemaFactory
     public function __construct(array $configDirs = [])
     {
         $this->configDirs = $configDirs;
+        $this->id = uniqid();
+        parent::__construct(new TestStoreCreator());
     }
 
-    public function get(string $key = 'test'): ?Schema
+    public function getSchema(string $key = 'test'): ?GraphQLSchema
     {
-        static::$schemaCount++;
-        $schemaName = $key . '-' . static::$schemaCount;
-        $schema = parent::get($schemaName);
-        if ($schema) {
-            $this->configureSchema($schema);
-        }
+        $schemaName = $key . '-' . $this->id;
+        return parent::getSchema($schemaName);
+    }
 
-        return $schema;
+    /**
+     * @param Schema $schema
+     * @return GraphQLSchema|null
+     * @throws SchemaNotFoundException
+     */
+    public function fetchSchema(Schema $schema): ?GraphQLSchema
+    {
+        return parent::getSchema($schema->getSchemaKey());
     }
 
     /**
@@ -59,8 +65,7 @@ class TestSchemaFactory extends SchemaFactory
      */
     public function boot(string $key = 'test'): Schema
     {
-        static::$schemaCount++;
-        $schemaName = $key . '-' . static::$schemaCount;
+        $schemaName = $key . '-' . $this->id;
         $this->bootstrapSchema($schemaName);
         $schema = parent::boot($schemaName);
         $this->configureSchema($schema);
@@ -73,18 +78,27 @@ class TestSchemaFactory extends SchemaFactory
      */
     private function bootstrapSchema(string $key)
     {
-        if (empty($this->configDirs)) {
-            return;
-        }
-
         Config::modify()->merge(
             Schema::class,
             'schemas',
             [
                 $key => [
                     'src' => array_map(function ($dir) {
-                        return static::$dir . '/' . $dir;
+                        return TestStoreCreator::$dir . '/' . $dir;
                     }, $this->configDirs),
+                ],
+            ]
+        );
+        Config::inst()->merge(
+            Injector::class,
+            Dispatcher::class,
+            [
+                'properties' => [
+                    'handlers' => [
+                        'graphqlTranscribe' => [
+                            'off' => ['graphqlSchemaBuild']
+                        ],
+                    ],
                 ],
             ]
         );
@@ -95,13 +109,8 @@ class TestSchemaFactory extends SchemaFactory
      */
     private function configureSchema(Schema $schema)
     {
-        /* @var CodeGenerationStore $store */
-        $store = (new CodeGenerationStoreCreator())->createStore($schema->getSchemaKey());
-        $store->setRootDir(static::$dir);
-        $store->clear();
-        $schema->setStore($store);
 
-        $schema->getSchemaContext()->apply([
+        $schema->getConfig()->apply([
             'resolvers' => $this->resolvers
         ]);
 

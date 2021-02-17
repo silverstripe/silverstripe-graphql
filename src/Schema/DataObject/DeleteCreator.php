@@ -6,15 +6,13 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\GraphQL\Dev\BuildState;
-use SilverStripe\GraphQL\QueryHandler\QueryHandler;
+use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Exception\PermissionsException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
-use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataList;
 use Closure;
 use SilverStripe\ORM\DataObject;
@@ -43,13 +41,15 @@ class DeleteCreator implements OperationCreator
         $plugins = $config['plugins'] ?? [];
         $mutationName = $config['name'] ?? null;
         if (!$mutationName) {
-            $mutationName = 'delete' . ucfirst(BuildState::requireActiveBuild()->pluralise($typeName));
+            $pluraliser = $model->getSchemaConfig()->getPluraliser();
+            $suffix = $pluraliser ? $pluraliser($typeName) : $typeName;
+            $mutationName = 'delete' . ucfirst($suffix);
         }
 
         return ModelMutation::create($model, $mutationName)
             ->setType('[ID]')
             ->setPlugins($plugins)
-            ->setDefaultResolver([static::class, 'resolve'])
+            ->setResolver([static::class, 'resolve'])
             ->setResolverContext([
                 'dataClass' => $model->getSourceClass(),
             ])
@@ -77,7 +77,8 @@ class DeleteCreator implements OperationCreator
                 /** @var DataObject[] $resultsList */
                 $resultsList = $results->toArray();
                 foreach ($resultsList as $obj) {
-                    if (!$obj->canDelete($context[QueryHandler::CURRENT_USER])) {
+                    $member = UserContextProvider::get($context);
+                    if (!$obj->canDelete($member)) {
                         throw new PermissionsException(sprintf(
                             'Cannot delete %s with ID %s',
                             $dataClass,

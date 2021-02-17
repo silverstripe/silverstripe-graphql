@@ -8,7 +8,7 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
 
-abstract class AbstractConfiguration
+class Configuration
 {
     use Injectable;
 
@@ -57,7 +57,7 @@ abstract class AbstractConfiguration
      * @return $this
      * @throws SchemaBuilderException
      */
-    public function set($path, $value)
+    public function set($path, $value): self
     {
         if (is_string($path)) {
             $path = explode('.', $path);
@@ -91,5 +91,13 @@ abstract class AbstractConfiguration
         $this->settings = Priority::mergeArray($settings, $this->settings);
 
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return $this->settings;
     }
 }

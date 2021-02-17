@@ -9,16 +9,20 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
+use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\SchemaFactory;
+use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStoreCreator;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
+use SilverStripe\GraphQL\Tests\Fake\FakeProduct;
+use SilverStripe\GraphQL\Tests\Fake\FakeProductPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
+use SilverStripe\GraphQL\Tests\Fake\FakeReview;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 use SilverStripe\GraphQL\Tests\Fake\IntegrationTestResolver;
 use SilverStripe\Security\Member;
@@ -34,12 +38,16 @@ class IntegrationTest extends SapphireTest
         DataObjectFake::class,
         FakeSiteTree::class,
         FakeRedirectorPage::class,
+        FakeProductPage::class,
+        FakeProduct::class,
+        FakeReview::class,
+        Member::class,
     ];
 
     protected function setUp()
     {
         parent::setUp();
-        TestSchemaFactory::$dir = __DIR__;
+        TestStoreCreator::$dir = __DIR__;
     }
 
     protected function tearDown()
@@ -53,7 +61,7 @@ class IntegrationTest extends SapphireTest
 
     public function testSimpleType()
     {
-        $factory = new TestSchemaFactory(['_' . __FUNCTION__]);
+        $factory = new TestSchemaBuilder(['_' . __FUNCTION__]);
         $factory->resolvers = [IntegrationTestResolver::class];
         $schema = $this->createSchema($factory);
         $query = <<<GRAPHQL
@@ -102,7 +110,7 @@ GRAPHQL;
             '_' . __FUNCTION__ . '-b',
         ];
         // The second config (test2a) redefines the field types on the same MyType.
-        $factory = new TestSchemaFactory($dirs);
+        $factory = new TestSchemaBuilder($dirs);
         $factory->resolvers = [IntegrationTestResolver::class];
         $schema = $this->createSchema($factory);
         $query = <<<GRAPHQL
@@ -126,7 +134,7 @@ GRAPHQL;
 
     public function testModelConfig()
     {
-        $schema = $this->createSchema(new TestSchemaFactory(['_' . __FUNCTION__]));
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
         // Uses type_formatter with sttrev. See FakeFunctions::fakeFormatter
         $this->assertSchemaHasType($schema, 'TestekaFtcejbOataD');
     }
@@ -134,7 +142,7 @@ GRAPHQL;
     public function testModelPlugins()
     {
         $testDir = '_' . __FUNCTION__;
-        $schema = $this->createSchema($factory = new TestSchemaFactory([$testDir]));
+        $schema = $this->createSchema($factory = new TestSchemaBuilder([$testDir]));
         $this->assertSchemaHasType($schema, 'FakePage');
 
         // disable versioning as a global plugin
@@ -173,7 +181,7 @@ GRAPHQL;
 
     public function testPluginOverride()
     {
-        $schema = $this->createSchema(new TestSchemaFactory(['_' . __FUNCTION__]));
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
         $this->assertSchemaHasType($schema, 'FakePage');
         $this->assertSchemaHasType($schema, 'FakeRedirectorPage');
         $this->assertSchemaNotHasType($schema, 'FakeSiteTree');
@@ -250,7 +258,7 @@ GRAPHQL;
 
     public function testFieldInclusion()
     {
-        $schema = $this->createSchema(new TestSchemaFactory(['_' . __FUNCTION__]));
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
         $this->assertSchemaHasType($schema, 'DataObjectFake');
         $fake = DataObjectFake::create(['MyField' => 'test', 'MyInt' => 5]);
         $fake->write();
@@ -265,7 +273,7 @@ GRAPHQL;
         $result = $this->querySchema($schema, $query);
         $this->assertSuccess($result);
         $this->assertResult('readOneDataObjectFake.myField', 'test', $result);
-        $factory = new TestSchemaFactory();
+        $factory = new TestSchemaBuilder();
         $factory->extraConfig = [
             'models' => [
                 DataObjectFake::class => [
@@ -284,7 +292,7 @@ GRAPHQL;
         $this->assertFailure($result);
         $this->assertMissingField($result, 'id');
 
-        $factory = new TestSchemaFactory();
+        $factory = new TestSchemaBuilder();
         $factory->extraConfig = [
             'models' => [
                 DataObjectFake::class => [
@@ -314,7 +322,7 @@ GRAPHQL;
         $result = $this->querySchema($schema, $query);
         $this->assertSuccess($result);
         $this->assertResult('readOneDataObjectFake.myInt', 5, $result);
-        $factory = new TestSchemaFactory();
+        $factory = new TestSchemaBuilder();
         $factory->extraConfig = [
             'models' => [
                 DataObjectFake::class => [
@@ -327,8 +335,9 @@ GRAPHQL;
             ]
         ];
         $schema = $this->createSchema($factory);
-        $queryType = $schema->getQueryType();
-        $mutationType = $schema->getMutationType();
+        $gql = $factory->fetchSchema($schema);
+        $queryType = $gql->getQueryType();
+        $mutationType = $gql->getMutationType();
         $queries = $queryType->getFields();
         $mutations = $mutationType->getFields();
 
@@ -352,7 +361,7 @@ GRAPHQL;
 
         $dataObject->Files()->add($file);
 
-        $schema = $this->createSchema(new TestSchemaFactory(['_' . __FUNCTION__]));
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
 
         $query = <<<GRAPHQL
 query {
@@ -422,7 +431,7 @@ GRAPHQL;
         $id1 = $dataObject1->ID;
         $id2 = $dataObject2->ID;
 
-        $schema = $this->createSchema(new TestSchemaFactory([$dir]));
+        $schema = $this->createSchema(new TestSchemaBuilder([$dir]));
 
         $query = <<<GRAPHQL
 query {
@@ -522,7 +531,7 @@ GRAPHQL;
         $dataObject2 = DataObjectFake::create(['MyField' => 'test2', 'AuthorID' => $author->ID]);
         $dataObject2->write();
 
-        $factory = new TestSchemaFactory();
+        $factory = new TestSchemaBuilder();
         $factory->extraConfig = [
             'models' => [
                 DataObjectFake::class => [
@@ -614,7 +623,7 @@ GRAPHQL;
 
         $dataObject1->write();
 
-        $factory = new TestSchemaFactory();
+        $factory = new TestSchemaBuilder();
         $factory->extraConfig = [
             'models' => [
                 DataObjectFake::class => [
@@ -697,7 +706,7 @@ GRAPHQL;
 
     public function testBasicPaginator()
     {
-        $factory = new TestSchemaFactory(['_' . __FUNCTION__]);
+        $factory = new TestSchemaBuilder(['_' . __FUNCTION__]);
         $factory->resolvers = [IntegrationTestResolver::class];
         $schema = $this->createSchema($factory);
         $query = <<<GRAPHQL
@@ -759,27 +768,262 @@ GRAPHQL;
         ], $records);
     }
 
+    public function testQueriesAndMutations()
+    {
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
+
+        // Create a couple of product pages
+        $productPageIDs = [];
+        foreach (range(1, 2) as $num) {
+            $query = <<<GRAPHQL
+mutation {
+  createFakeProductPage(input: {
+    title: "Product page $num"
+  }) {
+    id
+  }
+}
+GRAPHQL;
+            $result = $this->querySchema($schema, $query);
+            $this->assertSuccess($result);
+            $productPageIDs[] = $result['data']['createFakeProductPage']['id'];
+        }
+        // Create products for each product page
+        $productIDs = [];
+        foreach ($productPageIDs as $productPageID) {
+            foreach (range(1, 5) as $num) {
+                $query = <<<GRAPHQL
+mutation {
+  createFakeProduct(input: {
+    parentID: $productPageID,
+    title: "Product $num on page $productPageID",
+    price: $num
+  }) {
+    id
+  }
+}
+GRAPHQL;
+                $result = $this->querySchema($schema, $query);
+                $this->assertSuccess($result);
+                $productIDs[] = $productPageID . '__' . $result['data']['createFakeProduct']['id'];
+            }
+        }
+
+        // Create reviews for reach product
+        $reviewIDs = [];
+        foreach ($productIDs as $sku) {
+            list($productPageID, $productID) = explode('__', $sku);
+            foreach (range(1, 5) as $num) {
+                $query = <<<GRAPHQL
+mutation {
+  createFakeReview(input: {
+    productID: $productID,
+    content: "Review $num on product $productID",
+    score: $num
+  }) {
+    id
+  }
+}
+GRAPHQL;
+                $result = $this->querySchema($schema, $query);
+                $this->assertSuccess($result);
+                $reviewIDs[] = $productPageID . '__' . $productID . '__' . $result['data']['createFakeReview']['id'];
+            }
+        }
+
+        // Add authors to reviews
+        $this->logInWithPermission();
+        foreach ($reviewIDs as $sku) {
+            list ($productPageID, $productID, $reviewID) = explode('__', $sku);
+            $query = <<<GRAPHQL
+mutation {
+  createMember(input: { firstName: "Member $num" }) {
+    id
+  }
+}
+GRAPHQL;
+            $result = $this->querySchema($schema, $query);
+            $this->assertSuccess($result);
+
+            $memberID = $result['data']['createMember']['id'];
+
+            $query = <<<GRAPHQL
+mutation {
+  updateFakeReview(
+    input: { id: $reviewID, authorID: $memberID }
+  ) {
+    authorID
+  }
+}
+GRAPHQL;
+            $result = $this->querySchema($schema, $query);
+            $this->assertSuccess($result);
+            $this->assertEquals($memberID, $result['data']['updateFakeReview']['authorID']);
+        }
+
+        // Check the counts
+        $query = <<<GRAPHQL
+query {
+  readFakeProductPages(sort: { title: ASC }) {
+    nodes {
+      title
+      products {
+        nodes {
+        	reviews {
+            pageInfo {
+              totalCount
+            }
+          }
+        }
+        pageInfo {
+          totalCount
+        }
+      }
+    }
+    pageInfo {
+      totalCount
+    }
+  }
+}
+GRAPHQL;
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $this->assertResult('readFakeProductPages.pageInfo.totalCount', 2, $result);
+        $this->assertResult('readFakeProductPages.nodes.0.products.pageInfo.totalCount', 5, $result);
+        $this->assertResult('readFakeProductPages.nodes.1.products.pageInfo.totalCount', 5, $result);
+        $this->assertResult('readFakeProductPages.nodes.0.products.nodes.0.reviews.pageInfo.totalCount', 5, $result);
+        $this->assertResult('readFakeProductPages.nodes.1.products.nodes.0.reviews.pageInfo.totalCount', 5, $result);
+        $this->assertResult('readFakeProductPages.nodes.1.products.nodes.0.reviews.pageInfo.totalCount', 5, $result);
+        $this->assertResult('readFakeProductPages.nodes.1.products.nodes.1.reviews.pageInfo.totalCount', 5, $result);
+        $this->assertResult('readFakeProductPages.nodes.0.title', 'Product page 1', $result);
+        $this->assertResult('readFakeProductPages.nodes.1.title', 'Product page 2', $result);
+
+        // Get all the product pages that have a product with "on product page 2"
+        $secondProductPageID = $productPageIDs[1];
+        $query = <<<GRAPHQL
+query {
+  readFakeProductPages(
+    filter: {
+        products: {
+            title: { endswith: "on page $secondProductPageID" }
+        }
+    },
+    sort: { title: DESC }
+  ) {
+    pageInfo {
+      totalCount
+    }
+    nodes {
+      id
+      title
+      products(
+        sort: { title: ASC },
+        filter: {
+          reviews: {
+            score: { gt: 3 }
+          }
+        }
+      ) {
+        nodes {
+          id
+          title
+          reviews {
+            nodes {
+              score
+              author {
+                firstName
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+GRAPHQL;
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $this->assertResult('readFakeProductPages.pageInfo.totalCount', 1, $result);
+        $this->assertResult('readFakeProductPages.nodes.0.title', 'Product page 2', $result);
+        $this->assertCount(5, $result['data']['readFakeProductPages']['nodes'][0]['products']['nodes']);
+        $this->assertResult(
+            'readFakeProductPages.nodes.0.products.nodes.2.title',
+            'Product 3 on page ' . $secondProductPageID,
+            $result
+        );
+
+        $query = <<<GRAPHQL
+query {
+  readFakeProductPages(
+    filter: { id: { eq: $productPageIDs[0] } },
+    sort: { title: DESC }
+  ) {
+    nodes {
+      id
+      title
+      products(
+        sort: { title: ASC }
+      ) {
+        nodes {
+          id
+          title
+          highestReview
+          reviews(filter: { score: { gt: 3 } }) {
+            nodes {
+              score
+              author {
+                firstName
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+GRAPHQL;
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $products = $result['data']['readFakeProductPages']['nodes'][0]['products']['nodes'];
+        foreach ($products as $product) {
+            $this->assertEquals(5, $product['highestReview']);
+            foreach ($product['reviews']['nodes'] as $review) {
+                $this->assertGreaterThan(3, $review['score']);
+            }
+        }
+    }
+
     /**
-     * @param SchemaFactory $factory
-     * @return GraphQLSchema
+     * @param TestSchemaBuilder $factory
+     * @return Schema
      * @throws SchemaBuilderException
      * @throws SchemaNotFoundException
      */
-    private function createSchema(SchemaFactory $factory): GraphQLSchema
+    private function createSchema(TestSchemaBuilder $factory): Schema
     {
         $this->clean();
-        Schema::quiet();
         $schema = $factory->boot();
-        $schema->save();
+        $factory->build($schema, true);
 
-        return $schema->fetch();
+        return $schema;
     }
 
-    private function querySchema(GraphQLSchema $schema, string $query, array $variables = [])
+    /**
+     * @param Schema $schema
+     * @param string $query
+     * @param array $variables
+     * @return array
+     * @throws SchemaNotFoundException
+     */
+    private function querySchema(Schema $schema, string $query, array $variables = [])
     {
+        $builder = new TestSchemaBuilder();
+        $graphQLSchena = $builder->fetchSchema($schema);
         $handler = new QueryHandler();
+        $schemaContext = $builder->getConfig($schema->getSchemaKey());
+        $handler->addContextProvider(SchemaContextProvider::create($schemaContext));
         try {
-            return $handler->query($schema, $query, $variables);
+            return $handler->query($graphQLSchena, $query, $variables);
         } catch (Exception $e) {
             return [
                 'error' => $e->getMessage(),
@@ -797,7 +1041,7 @@ GRAPHQL;
     {
         $errors = $result['errors'] ?? [];
         if (!empty($errors)) {
-            $this->fail('Failed to assert successful query. Got errors: ' . json_encode($errors));
+            $this->fail('Failed to assert successful query. Got errors: ' . json_encode($errors, JSON_PRETTY_PRINT));
         }
         $error = $result['error'] ?? null;
         if ($error) {
@@ -830,20 +1074,21 @@ GRAPHQL;
         $this->assertEquals(json_encode($expected), json_encode($actual));
     }
 
-    private function assertSchemaHasType(GraphQLSchema $schema, string $type)
+    private function assertSchemaHasType(Schema $schema, string $type)
     {
         try {
-            $result = $schema->getType($type);
+            $graphQLSchema = (new TestSchemaBuilder())->fetchSchema($schema);
+            $result = $graphQLSchema->getType($type);
             $this->assertInstanceOf(ObjectType::class, $result);
         } catch (\Exception $e) {
             $this->fail('Schema does not have type "' . $type . '"');
         }
     }
 
-    private function assertSchemaNotHasType(GraphQLSchema $schema, string $type)
+    private function assertSchemaNotHasType(Schema $schema, string $type)
     {
         try {
-            $schema->getType($type);
+            (new TestSchemaBuilder())->fetchSchema($schema)->getType($type);
             $this->fail('Failed to assert that schema does not have type "' . $type . '"');
         } catch (\Exception $e) {
         }

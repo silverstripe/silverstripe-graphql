@@ -41,7 +41,7 @@ class ReadOneCreator implements OperationCreator
         return ModelQuery::create($model, $queryName)
             ->setType($typeName)
             ->setPlugins($plugins)
-            ->setDefaultResolver([ReadCreator::class, 'resolve'])
+            ->setResolver([ReadCreator::class, 'resolve'])
             ->setResolverContext([
                 'dataClass' => $model->getSourceClass()
             ]);

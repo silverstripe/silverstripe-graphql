@@ -4,8 +4,6 @@ namespace SilverStripe\GraphQL\Tests\Schema;
 
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
-use SilverStripe\GraphQL\Config\ModelConfiguration;
-use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\DataObject\ModelCreator;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -13,7 +11,7 @@ use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\SchemaContext;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
@@ -22,7 +20,6 @@ use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\UnionType;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
-use ReflectionMethod;
 
 class SchemaTest extends SapphireTest
 {
@@ -37,18 +34,11 @@ class SchemaTest extends SapphireTest
         ]);
     }
 
-    protected function tearDown()
-    {
-        parent::tearDown();
-        BuildState::clear();
-    }
-
     public function testConstructor()
     {
         $schema = $this->buildSchema('test');
         $this->assertEquals('test', $schema->getSchemaKey());
-        $this->assertInstanceOf(SchemaContext::class, $schema->getSchemaContext());
-        $this->assertInstanceOf(SchemaStorageInterface::class, $schema->getStore());
+        $this->assertInstanceOf(SchemaConfig::class, $schema->getConfig());
     }
 
     public function testApplyConfig()
@@ -83,7 +73,6 @@ class SchemaTest extends SapphireTest
             ->method('addScalar')
             ->with($this->isInstanceOf(Scalar::class));
 
-        BuildState::activate($mock);
         $config = $this->getValidConfig();
         $mock->applyConfig($config);
     }
@@ -107,54 +96,6 @@ class SchemaTest extends SapphireTest
     }
 
 
-    public function testSave()
-    {
-        $schema = $this->buildSchema();
-        $schema->addQuery(Query::create('myQuery')->setType('TestType'));
-        $schema->getStore()->expects($this->once())
-            ->method('persistSchema')
-            ->with($this->equalTo($schema));
-        $schema->save();
-    }
-
-    public function testMapTypeNames()
-    {
-        $schema = $this->buildSchema();
-        $modelType1 = new ModelType(DataObjectModel::create(DataObjectFake::class, new ModelConfiguration()));
-        $modelType2 = new ModelType(DataObjectModel::create(FakeSiteTree::class, new ModelConfiguration()));
-        $schema->addModel($modelType1);
-        $schema->addModel($modelType2);
-        $mapping = $schema->mapTypeNames();
-        $expect = [
-            DataObjectFake::class => $modelType1->getName(),
-            FakeSiteTree::class => $modelType2->getName(),
-        ];
-        $this->assertEquals($expect, $mapping);
-    }
-
-    public function testGetTypeNameForClass()
-    {
-        $schema = $this->buildSchema();
-        $modelType1 = new ModelType(DataObjectModel::create(DataObjectFake::class, new ModelConfiguration()));
-        $modelType2 = new ModelType(DataObjectModel::create(FakeSiteTree::class, new ModelConfiguration()));
-        // Only add one model
-        $schema->addModel($modelType1);
-        $this->assertEquals($modelType1->getName(), $schema->getTypeNameForClass(DataObjectFake::class));
-
-        // Rely on model creation for second model
-        $this->assertEquals($modelType2->getName(), $schema->getTypeNameForClass(FakeSiteTree::class));
-    }
-
-    public function testFetch()
-    {
-        $schema = $this->buildSchema();
-        $mock = $this->getMockBuilder(SchemaStorageInterface::class)
-            ->getMock();
-        $mock->expects($this->once())
-            ->method('getSchema');
-        $schema->setStore($mock);
-        $schema->fetch();
-    }
 
     public function testExists()
     {
@@ -170,21 +111,6 @@ class SchemaTest extends SapphireTest
         $this->assertTrue($schema->exists());
     }
 
-    public function testValidation()
-    {
-        $this->expectException(SchemaBuilderException::class);
-        $schema = $this->buildSchema();
-        $schema->addType(Type::create('TestType'));
-        $schema->addInterface(InterfaceType::create('TestType'));
-        $schema->validate();
-
-        $schema = $this->buildSchema();
-        $schema->addQuery(Query::create('myQuery', ['type' => 'MyType']));
-        $schema->addType(Type::create('TestType'));
-        $schema->addInterface(InterfaceType::create('TestInterface'));
-        $schema->validate();
-    }
-
     public function testSchemaKey()
     {
         $schema = $this->buildSchema('test');
@@ -195,7 +121,7 @@ class SchemaTest extends SapphireTest
     {
         $context = $this->createSchemaContext();
         $schema = new Schema('test', $context);
-        $this->assertSame($context, $schema->getSchemaContext());
+        $this->assertSame($context, $schema->getConfig());
     }
 
     public function testAddQueriesAndMutations()
@@ -203,11 +129,11 @@ class SchemaTest extends SapphireTest
         $schema = $this->buildSchema();
         $schema->addQuery(Query::create('foo', ['type' => 'foo']));
         $schema->addMutation(Mutation::create('bar', ['type' => 'foo']));
-        $schema->save();
-
-        $queryType = $schema->getType(Schema::QUERY_TYPE);
+        $storableSchema = $schema->createStoreableSchema();
+        $types = $storableSchema->getTypes();
+        $queryType = $types[Schema::QUERY_TYPE] ?? null;
         $this->assertInstanceOf(Type::class, $queryType);
-        $mutationType = $schema->getType(Schema::MUTATION_TYPE);
+        $mutationType = $types[Schema::MUTATION_TYPE] ?? null;
         $this->assertInstanceOf(Type::class, $mutationType);
 
         $this->assertInstanceOf(Query::class, $queryType->getFieldByName('foo'));
@@ -337,15 +263,9 @@ class SchemaTest extends SapphireTest
     {
     }
 
-    private function buildSchema(string $key = 'test', SchemaContext $context = null): Schema
+    private function buildSchema(string $key = 'test', SchemaConfig $context = null): Schema
     {
-        // Stub the store so it doesn't generate artefacts
-        $store = $this->getMockBuilder(SchemaStorageInterface::class)
-            ->getMock();
         $schema = new Schema($key, $this->createSchemaContext());
-        $schema->setStore($store);
-
-        BuildState::activate($schema);
 
         return $schema;
     }
@@ -424,11 +344,11 @@ class SchemaTest extends SapphireTest
     }
 
     /**
-     * @return SchemaContext
+     * @return SchemaConfig
      */
-    private function createSchemaContext(): SchemaContext
+    private function createSchemaContext(): SchemaConfig
     {
-        return new SchemaContext([
+        return new SchemaConfig([
             'modelCreators' => [ModelCreator::class],
         ]);
     }

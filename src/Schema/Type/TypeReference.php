@@ -8,6 +8,7 @@ use GraphQL\Language\AST\Node;
 use GraphQL\Language\AST\NodeKind;
 use GraphQL\Language\Parser;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\Schema\Schema;
 
 /**
  * Uniform way of referring to a type as a string. Accepts default value syntax
@@ -114,5 +115,14 @@ class TypeReference
     public function getRawType(): string
     {
         return $this->typeStr;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isInternal(): bool
+    {
+        $type = $this->getNamedType();
+        return Schema::isInternalType($type);
     }
 }

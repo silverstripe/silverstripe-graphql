@@ -3,21 +3,31 @@
 
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
+use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\FieldFilterRegistry;
 use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\FilterRegistryInterface;
 use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\ListFieldFilterInterface;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\Field;
+use SilverStripe\GraphQL\Schema\Field\ModelField;
+use SilverStripe\GraphQL\Schema\Field\ModelQuery;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\Services\NestedInputBuilder;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
+use SilverStripe\GraphQL\Schema\Type\Type;
 
 /**
  * Generic plugin that can be used for filter inputs
  */
-abstract class AbstractQueryFilterPlugin extends AbstractNestedInputPlugin implements SchemaUpdater
+abstract class AbstractQueryFilterPlugin implements SchemaUpdater, ModelQueryPlugin
 {
+    use Injectable;
+    use Configurable;
 
     /**
      * @var string
@@ -60,12 +70,37 @@ abstract class AbstractQueryFilterPlugin extends AbstractNestedInputPlugin imple
     }
 
     /**
-     * @param ModelType $modelType
+     * @param ModelQuery $query
+     * @param Schema $schema
+     * @param array $config
+     * @throws SchemaBuilderException
+     */
+    public function apply(ModelQuery $query, Schema $schema, array $config = []): void
+    {
+        $fields = $config['fields'] ?? Schema::ALL;
+        $builder = NestedInputBuilder::create($query, $schema, $fields);
+        $this->updateInputBuilder($builder);
+        $builder->populateSchema();
+        if (!$builder->getRootType()) {
+            return;
+        }
+        $query->addArg($this->getFieldName(), $builder->getRootType()->getName());
+        $query->addResolverAfterware(
+            $this->getResolver($config),
+            [
+                'fieldName' => $this->getFieldName(),
+                'rootType' => $query->getNamedType(),
+            ]
+        );
+    }
+
+    /**
+     * @param Type $type
      * @return string
      */
-    public static function getTypeName(ModelType $modelType): string
+    public static function getTypeName(Type $type): string
     {
-        $modelTypeName = $modelType->getModel()->getTypeName();
+        $modelTypeName = $type->getName();
         return $modelTypeName . 'FilterFields';
     }
 
@@ -73,8 +108,23 @@ abstract class AbstractQueryFilterPlugin extends AbstractNestedInputPlugin imple
      * @param string $internalType
      * @return string
      */
-    protected static function getLeafNodeType(string $internalType): string
+    public static function getLeafNodeType(string $internalType): string
     {
         return sprintf('QueryFilter%sComparator', $internalType);
     }
+
+    /**
+     * @param NestedInputBuilder $builder
+     */
+    protected function updateInputBuilder(NestedInputBuilder $builder): void
+    {
+        $builder->setLeafNodeHandler([static::class, 'getLeafNodeType'])
+            ->setTypeNameHandler([static::class, 'getTypeName']);
+    }
+
+    /**
+     * @param array $config
+     * @return array
+     */
+    abstract protected function getResolver(array $config): array;
 }

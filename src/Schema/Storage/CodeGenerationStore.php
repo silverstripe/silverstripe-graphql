@@ -4,14 +4,16 @@ namespace SilverStripe\GraphQL\Schema\Storage;
 
 use Exception;
 use GraphQL\Type\Schema as GraphQLSchema;
-use GraphQL\Type\SchemaConfig;
+use GraphQL\Type\SchemaConfig as GraphqLSchemaConfig;
 use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Path;
-use SilverStripe\GraphQL\Dev\Benchmark;
+use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
+use SilverStripe\GraphQL\Schema\StorableSchema;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\Type;
@@ -44,7 +46,7 @@ class CodeGenerationStore implements SchemaStorageInterface
      * @var string
      * @config
      */
-    private static $typeMappingFilename = '__type-mapping.php';
+    private static $configFilename = '__schema-config.php';
 
     /**
      * @var string
@@ -74,6 +76,11 @@ class CodeGenerationStore implements SchemaStorageInterface
     private $rootDir = BASE_PATH;
 
     /**
+     * @var SchemaConfig|null
+     */
+    private $cachedConfig;
+
+    /**
      * @param string $name
      * @param CacheInterface $cache
      */
@@ -84,13 +91,22 @@ class CodeGenerationStore implements SchemaStorageInterface
     }
 
     /**
-     * @param Schema $schema
+     * @param StorableSchema $schema
      * @throws Exception
      * @throws InvalidArgumentException
      * @throws RuntimeException
+     * @throws EmptySchemaException
      */
-    public function persistSchema(Schema $schema): void
+    public function persistSchema(StorableSchema $schema): void
     {
+        if (!$schema->exists()) {
+            throw new EmptySchemaException(sprintf(
+                'Schema %s is empty',
+                $this->name
+            ));
+        }
+        $schema->validate();
+
         $fs = new Filesystem();
         $finder = new Finder();
         $temp = $this->getTempDirectory();
@@ -124,22 +140,22 @@ class CodeGenerationStore implements SchemaStorageInterface
             'namespace' => $this->getNamespace(),
         ];
 
-        $typeMapping = $schema->mapTypeNames();
-        $typeMappingFile = $this->getTempTypeMappingFilename();
+        $config = $schema->getConfig()->toArray();
+        $configFile = $this->getTempConfigFilename();
 
         try {
             $fs->dumpFile(
-                $typeMappingFile,
+                $configFile,
                 '<?php ' .
                 PHP_EOL .
                 'return ' .
-                var_export($typeMapping, true) .
+                var_export($config, true) .
                 ';'
             );
         } catch (IOException $e) {
             throw new RuntimeException(sprintf(
-                'Could not persist type mapping. Failed to write to file %s. Full message: %s',
-                $typeMappingFile,
+                'Could not persist schema context. Failed to write to file %s. Full message: %s',
+                $configFile,
                 $e->getMessage()
             ));
         }
@@ -204,7 +220,7 @@ class CodeGenerationStore implements SchemaStorageInterface
             ->in($temp)
             ->name('*.php')
             ->notName($this->config()->get('schemaFilename'))
-            ->notName($this->config()->get('typeMappingFilename'));
+            ->notName($this->config()->get('configFilename'));
 
         /* @var SplFileInfo $file */
         foreach ($currentFiles as $file) {
@@ -266,7 +282,7 @@ class CodeGenerationStore implements SchemaStorageInterface
 
         $registryClass = $this->getClassName(self::TYPE_CLASS_NAME);
         $hasMutations = method_exists($registryClass, Schema::MUTATION_TYPE);
-        $schemaConfig = new SchemaConfig();
+        $schemaConfig = new GraphqLSchemaConfig();
         $callback = call_user_func([$registryClass, Schema::QUERY_TYPE]);
         $schemaConfig->setQuery($callback);
         $schemaConfig->setTypeLoader([$registryClass, 'get']);
@@ -278,17 +294,20 @@ class CodeGenerationStore implements SchemaStorageInterface
     }
 
     /**
-     * @return array
+     * @return SchemaConfig
      */
-    public function getTypeMapping(): array
+    public function getConfig(): SchemaConfig
     {
-        if (file_exists($this->getTypeMappingFilename())) {
-            $mapping = require($this->getTypeMappingFilename());
-
-            return $mapping;
+        if ($this->cachedConfig) {
+            return $this->cachedConfig;
         }
+        $context = [];
+        if (file_exists($this->getConfigFilename())) {
+            $context = require($this->getConfigFilename());
+        }
+        $this->cachedConfig = new SchemaConfig($context);
 
-        return [];
+        return $this->cachedConfig;
     }
 
     public function clear(): void
@@ -296,6 +315,19 @@ class CodeGenerationStore implements SchemaStorageInterface
         $fs = new Filesystem();
         $fs->remove($this->getDirectory());
         $this->getCache()->clear();
+    }
+
+    /**
+     * @return bool
+     */
+    public function exists(): bool
+    {
+        try {
+            $this->getSchema();
+            return true;
+        } catch (SchemaNotFoundException $e) {
+            return false;
+        }
     }
 
     /**
@@ -397,11 +429,11 @@ class CodeGenerationStore implements SchemaStorageInterface
     /**
      * @return string
      */
-    private function getTypeMappingFilename(): string
+    private function getConfigFilename(): string
     {
         return Path::join(
             $this->getDirectory(),
-            $this->config()->get('typeMappingFilename')
+            $this->config()->get('configFilename')
         );
     }
 
@@ -419,11 +451,11 @@ class CodeGenerationStore implements SchemaStorageInterface
     /**
      * @return string
      */
-    private function getTempTypeMappingFilename(): string
+    private function getTempConfigFilename(): string
     {
         return Path::join(
             $this->getTempDirectory(),
-            $this->config()->get('typeMappingFilename')
+            $this->config()->get('configFilename')
         );
     }
 

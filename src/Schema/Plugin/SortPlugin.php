@@ -5,14 +5,18 @@ namespace SilverStripe\GraphQL\Schema\Plugin;
 
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\GraphQL\Schema\DataObject\Plugin\QuerySort;
+use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
+use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\Services\NestedInputBuilder;
 use SilverStripe\GraphQL\Schema\Type\InputType;
+use SilverStripe\ORM\Sortable;
+use Closure;
 
 class SortPlugin implements FieldPlugin, SchemaUpdater
 {
@@ -31,7 +35,7 @@ class SortPlugin implements FieldPlugin, SchemaUpdater
      * @var array
      * @config
      */
-    private static $resolver = [QuerySort::class, 'sort'];
+    private static $resolver = [__CLASS__, 'sort'];
 
     /**
      * @return string
@@ -67,7 +71,6 @@ class SortPlugin implements FieldPlugin, SchemaUpdater
         );
         $sortFieldName = $this->config()->get('field_name');
         $input = InputType::create($name);
-        $mapping = [];
         foreach ($fields as $fieldName => $data) {
             if ($data === false) {
                 continue;
@@ -76,19 +79,38 @@ class SortPlugin implements FieldPlugin, SchemaUpdater
                 $input->addField($fieldName, 'SortDirection');
             } elseif (is_string($data)) {
                 $input->addField($fieldName, 'SortDirection');
-                $mapping[$fieldName] = $data;
             }
         }
 
         $field->addResolverAfterware(
             $this->getResolver($config),
             [
-                'fieldMapping' => $mapping,
+                'rootType' => $field->getNamedType(),
                 'fieldName' => $sortFieldName,
             ]
         );
         $schema->addType($input);
         $field->addArg($sortFieldName, $input->getName());
+    }
+
+    /**
+     * @param array $context
+     * @return Closure
+     */
+    public static function sort(array $context): Closure
+    {
+        $fieldName = $context['fieldName'];
+        return function (?Sortable $list, array $args) use ($fieldName) {
+            if ($list === null) {
+                return null;
+            }
+            $sortArgs = $args[$fieldName] ?? [];
+            foreach ($sortArgs as $field => $dir) {
+                $list = $list->sort($field, $dir);
+            }
+
+            return $list;
+        };
     }
 
     /**

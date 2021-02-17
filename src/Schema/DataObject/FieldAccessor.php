@@ -100,6 +100,50 @@ class FieldAccessor
     }
 
     /**
+     * Returns true if the field is part of the ORM data structure
+     * @param DataObject $dataObject
+     * @param string $field
+     * @param bool $includeUnary
+     * @param bool $includeList
+     * @return bool
+     */
+    public function hasNativeField(
+        DataObject $dataObject,
+        string $field,
+        bool $includeUnary = true,
+        bool $includeList = true
+    ): bool {
+        $schema = DataObject::getSchema();
+        $class = get_class($dataObject);
+        $normalised = $this->normaliseField($dataObject, $field);
+        if (!$normalised) {
+            return false;
+        }
+        if ($schema->databaseField($class, $normalised)) {
+            return true;
+        }
+        if ($includeUnary && $schema->unaryComponent($class, $normalised)) {
+            return true;
+        }
+        if (!$includeList) {
+            return false;
+        }
+
+        return (
+            $schema->manyManyComponent($class, $normalised) ||
+            $schema->hasManyComponent($class, $normalised)
+        );
+    }
+
+    /**
+     * Resolves complex dot syntax references.
+     *
+     * Image.URL (String)
+     * FeaturedProduct.Categories.Title ([String] ->column('Title'))
+     * FeaturedProduct.Categories.Count() (Int)
+     * FeaturedProduct.Categories.Products.Max(Price)
+     * Category.Products.Reviews ([Review])
+     *
      * @param DataObject $dataObject
      * @param string $field
      * @return DBField|SS_List|DataObject|null
@@ -199,13 +243,6 @@ class FieldAccessor
     }
 
     /**
-     * Resolves complex dot syntax references.
-     *
-     * Image.URL (String)
-     * FeaturedProduct.Categories.Title ([String] ->column('Title'))
-     * FeaturedProduct.Categories.Count() (Int)
-     * FeaturedProduct.Categories.Products.Max(Price)
-     * Category.Products.Reviews ([Review])
      *
      * @param DataObject|DataList|DBField $subject
      * @param array $path

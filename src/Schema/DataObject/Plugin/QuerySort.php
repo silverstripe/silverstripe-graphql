@@ -4,16 +4,20 @@
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
+use SilverStripe\GraphQL\Schema\Type\Type;
+use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Plugin\AbstractQuerySortPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\Services\NestedInputBuilder;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
-use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use Closure;
 use SilverStripe\ORM\Sortable;
+use Exception;
 
 /**
  * Adds a sort parameter to a DataObject query
@@ -39,12 +43,12 @@ class QuerySort extends AbstractQuerySortPlugin
     }
 
     /**
-     * @param ModelField $query
+     * @param ModelQuery $query
      * @param Schema $schema
      * @param array $config
      * @throws SchemaBuilderException
      */
-    public function apply(ModelField $query, Schema $schema, array $config = []): void
+    public function apply(ModelQuery $query, Schema $schema, array $config = []): void
     {
         Schema::invariant(
             is_subclass_of(
@@ -91,49 +95,58 @@ class QuerySort extends AbstractQuerySortPlugin
 
 
     /**
-     * @param string $class
-     * @param string $fieldName
-     * @param Schema $schema
-     * @return string
-     */
-    protected static function getObjectProperty(string $class, string $fieldName, Schema $schema): string
-    {
-        $modelType = $schema->getModelByClassName($class);
-        if ($modelType) {
-            /* @var ModelField $field */
-            $field = $modelType->getFieldByName($fieldName);
-            if ($field) {
-                $prop = $field->getPropertyName();
-                $sng = DataObject::singleton($class);
-                return FieldAccessor::singleton()->normaliseField($sng, $prop) ?: $fieldName;
-            }
-        }
-
-        return $fieldName;
-    }
-
-    /**
      * @param array $context
      * @return Closure
      */
     public static function sort(array $context): closure
     {
-        $mapping = $context['fieldMapping'] ?? [];
         $fieldName = $context['fieldName'];
-
-        return function (?Sortable $list, array $args) use ($mapping, $fieldName) {
+        $rootType = $context['rootType'];
+        return function (?Sortable $list, array $args, array $context) use ($fieldName, $rootType) {
             if ($list === null) {
                 return null;
             }
             $filterArgs = $args[$fieldName] ?? [];
-            $paths = static::buildPathsFromArgs($filterArgs);
+            $paths = NestedInputBuilder::buildPathsFromArgs($filterArgs);
+            $schemaContext = SchemaContextProvider::get($context);
+            if (!$schemaContext) {
+                throw new Exception(sprintf(
+                    'No schemaContext was present in the resolver context. Make sure the %s class is added
+                    to the query handler',
+                    SchemaContextProvider::class
+                ));
+            }
+
             foreach ($paths as $path => $value) {
-                $normalised = $mapping[$path] ?? $path;
+                $normalised = $schemaContext->mapPath($rootType, $path);
+                Schema::invariant(
+                    $normalised,
+                    'Plugin %s could not map path %s on %s',
+                    static::IDENTIFIER,
+                    $path,
+                    $rootType
+                );
                 $list = $list->sort($normalised, $value);
             }
 
             return $list;
         };
+    }
+
+    /**
+     * @param NestedInputBuilder $builder
+     */
+    protected function updateInputBuilder(NestedInputBuilder $builder): void
+    {
+        parent::updateInputBuilder($builder);
+        $builder->setFieldFilter(function (Type $type, Field $field) {
+            if (!$type instanceof ModelType) {
+                return false;
+            }
+            $dataObject = DataObject::singleton($type->getModel()->getSourceClass());
+            $fieldName = $field instanceof ModelField ? $field->getPropertyName() : $field->getName();
+            return FieldAccessor::singleton()->hasNativeField($dataObject, $fieldName);
+        });
     }
 
     /**

@@ -6,9 +6,10 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
+use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\ORM\DataObject;
 use ReflectionException;
@@ -150,11 +151,12 @@ class InheritanceChain
     }
 
     /**
+     * @param SchemaConfig $schemaContext
      * @return array|null
      * @throws ReflectionException
      * @throws SchemaBuilderException
      */
-    public function getExtensionType(): ?array
+    public function getExtensionType(SchemaConfig $schemaContext): ?array
     {
         if ($this->descendantTypeResult) {
             return $this->descendantTypeResult;
@@ -164,14 +166,18 @@ class InheritanceChain
         }
         $typeName = call_user_func_array(
             $this->config()->get('descendant_typename_creator'),
-            [$this->inst]
+            [$this->inst, $schemaContext]
         );
 
         $nameCreator = $this->config()->get('subtype_name_creator');
 
         $subtypes = [];
         foreach ($this->getDescendantModels() as $className) {
-            $modelType = BuildState::requireActiveBuild()->createModel($className);
+            $model = $schemaContext->createModel($className);
+            if (!$model) {
+                continue;
+            }
+            $modelType = ModelType::create($model);
             $originalName = $modelType->getName();
             $newName = call_user_func_array($nameCreator, [$originalName]);
             $modelType->setName($newName);
@@ -187,14 +193,17 @@ class InheritanceChain
         return $this->descendantTypeResult;
     }
 
+
+
     /**
      * @param DataObject $dataObject
+     * @param SchemaConfig $schemaContext
      * @return string
      * @throws SchemaBuilderException
      */
-    public static function createDescendantTypename(DataObject $dataObject): string
+    public static function createDescendantTypename(DataObject $dataObject, SchemaConfig $schemaContext): string
     {
-        $model = BuildState::requireActiveBuild()->getSchemaContext()->createModel(get_class($dataObject));
+        $model = $schemaContext->createModel(get_class($dataObject));
         Schema::invariant(
             $model,
             'No model defined for %s. Cannot create inheritance typename',

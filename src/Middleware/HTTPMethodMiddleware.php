@@ -4,6 +4,7 @@ namespace SilverStripe\GraphQL\Middleware;
 
 use Exception;
 use GraphQL\Type\Schema;
+use SilverStripe\GraphQL\QueryHandler\RequestContextProvider;
 
 /**
  * Ensures mutations use POST requests
@@ -17,10 +18,10 @@ class HTTPMethodMiddleware implements QueryMiddleware
     {
         $isGET = false;
         $isPOST = false;
-
-        if (isset($context['httpMethod'])) {
-            $isGET = $context['httpMethod'] === 'GET';
-            $isPOST = $context['httpMethod'] === 'POST';
+        $method = RequestContextProvider::get($context);
+        if ($method) {
+            $isGET = $method === 'GET';
+            $isPOST = $method === 'POST';
         }
 
         if (!$isGET && !$isPOST) {

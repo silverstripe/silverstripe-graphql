@@ -5,7 +5,6 @@ namespace SilverStripe\GraphQL\Schema\Field;
 use GraphQL\Language\Token;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\GraphQL\Dev\BuildState;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
@@ -53,6 +52,11 @@ class Field implements
     private $type;
 
     /**
+     * @var string
+     */
+    private $typeAsModel;
+
+    /**
      * @var string|null
      */
     private $description;
@@ -61,11 +65,6 @@ class Field implements
      * @var ResolverReference|null
      */
     private $resolver;
-
-    /**
-     * @var ResolverReference|null
-     */
-    private $defaultResolver;
 
     /**
      * Key/value pairs to pass to the resolver. This is useful for creating a dynamic resolver
@@ -172,14 +171,13 @@ class Field implements
             'description',
             'resolver',
             'resolverContext',
-            'defaultResolver',
             'plugins',
         ]);
 
         $type = $config['type'] ?? null;
         $modelTypeDef = $config['model'] ?? null;
         if ($modelTypeDef) {
-            $this->setTypeByModel($modelTypeDef);
+            $this->setTypeAsModel($modelTypeDef);
         }
         if ($type) {
             $this->setType($type);
@@ -190,9 +188,6 @@ class Field implements
         }
         if (isset($config['resolver'])) {
             $this->setResolver($config['resolver']);
-        }
-        if (isset($config['defaultResolver'])) {
-            $this->setDefaultResolver($config['defaultResolver']);
         }
         if (isset($config['resolverContext'])) {
             $this->setResolverContext($config['resolverContext']);
@@ -308,25 +303,20 @@ class Field implements
     /**
      * @param string $modelTypeDef
      * @return $this
-     * @throws SchemaBuilderException
      */
-    public function setTypeByModel(string $modelTypeDef): self
+    public function setTypeAsModel(string $modelTypeDef): self
     {
-        $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
-        $safeNamedClass = TypeReference::create($safeModelTypeDef)->getNamedType();
-        $namedClass = str_replace('__', '\\', $safeNamedClass);
-        $model = BuildState::requireActiveBuild()->getSchemaContext()->createModel($namedClass);
-        Schema::invariant(
-            $model,
-            'No model found for %s on %s',
-            $namedClass,
-            $this->getName()
-        );
+        $this->typeAsModel = $modelTypeDef;
 
-        $typeName = $model->getTypeName();
-        $wrappedTypeName = str_replace($namedClass, $typeName, $modelTypeDef);
+        return $this;
+    }
 
-        return $this->setType($wrappedTypeName);
+    /**
+     * @return string|null
+     */
+    public function getTypeAsModel(): ?string
+    {
+        return $this->typeAsModel;
     }
 
     /**
@@ -348,9 +338,9 @@ class Field implements
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getType(): string
+    public function getType(): ?string
     {
         return $this->type;
     }
@@ -392,16 +382,17 @@ class Field implements
     /**
      * @param string|null $typeName
      * @return EncodedResolver
-     * @throws SchemaBuilderException
      */
     public function getEncodedResolver(?string $typeName = null): EncodedResolver
     {
-        if ($this->getResolver()) {
-            $encodedResolver = EncodedResolver::create($this->getResolver(), $this->getResolverContext());
-        } else {
-            $resolver = BuildState::requireActiveBuild()->getSchemaContext()->discoverResolver($typeName, $this);
-            $encodedResolver = EncodedResolver::create($resolver, $this->getResolverContext());
-        }
+        $resolver = $this->getResolver();
+        Schema::invariant(
+            $resolver,
+            'Cannot get encoded resolver before one has been assigned on type %s, field %s',
+            $typeName,
+            $this->getName()
+        );
+        $encodedResolver = EncodedResolver::create($resolver, $this->getResolverContext());
 
         foreach ($this->resolverMiddlewares as $middlewareRef) {
             $encodedResolver->addMiddleware($middlewareRef);
@@ -450,31 +441,6 @@ class Field implements
                 : ResolverReference::create($resolver);
         } else {
             $this->resolver = null;
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return ResolverReference|null
-     */
-    public function getDefaultResolver(): ?ResolverReference
-    {
-        return $this->defaultResolver;
-    }
-
-    /**
-     * @param array|string|ResolverReference|null $defaultResolver
-     * @return Field
-     */
-    public function setDefaultResolver($defaultResolver): self
-    {
-        if ($defaultResolver) {
-            $this->defaultResolver = $defaultResolver instanceof ResolverReference
-                ? $defaultResolver
-                : ResolverReference::create($defaultResolver);
-        } else {
-            $this->defaultResolver = null;
         }
 
         return $this;

@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Middleware;
 use Exception;
 use GraphQL\Type\Schema;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
+use SilverStripe\GraphQL\QueryHandler\TokenContextProvider;
 use SilverStripe\Security\SecurityToken;
 
 /**
@@ -23,7 +24,7 @@ class CSRFMiddleware implements QueryMiddleware
             if (empty($context['token'])) {
                 throw new Exception('Mutations must provide a CSRF token in the X-CSRF-TOKEN header');
             }
-            $token = $context['token'];
+            $token = TokenContextProvider::get($context);
 
             if (!SecurityToken::inst()->check($token)) {
                 throw new Exception('Invalid CSRF token');

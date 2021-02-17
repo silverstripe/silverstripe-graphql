@@ -2,18 +2,10 @@
 
 namespace SilverStripe\GraphQL\Schema;
 
-use GraphQL\Type\Schema as GraphQLSchema;
-use M1\Env\Exception\ParseException;
-use SilverStripe\Config\MergeStrategy\Priority;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\Core\Injector\Injector;
-use SilverStripe\Core\Manifest\ModuleResourceLoader;
-use SilverStripe\Core\Path;
-use SilverStripe\GraphQL\Dev\Benchmark;
-use SilverStripe\GraphQL\Dev\BuildState;
-use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
+use SilverStripe\GraphQL\Config\Configuration;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -22,39 +14,33 @@ use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
-use SilverStripe\GraphQL\Schema\Interfaces\ModelConfigurationProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelTypePlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\MutationPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\QueryPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaComponent;
-use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
-use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
-use SilverStripe\GraphQL\Schema\Interfaces\SettingsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\TypePlugin;
-use SilverStripe\GraphQL\Schema\Registry\SchemaModelCreatorRegistry;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\Scalar;
 use SilverStripe\GraphQL\Schema\Type\Type;
+use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\GraphQL\Schema\Type\UnionType;
-use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\ORM\ArrayLib;
 use Exception;
-use Symfony\Component\Finder\Finder;
-use Symfony\Component\Finder\SplFileInfo;
-use Symfony\Component\Yaml\Yaml;
 use TypeError;
 
 /**
- * The main Schema definition. A docking station for all type, model, interface, etc., abstractions.
+ * The main Schema definition. A docking station for all type, model and interface abstractions.
  * Applies plugins, validates, and persists to code.
  *
+ * Use {@link SchemaBuilder} to create functional instances of this type
+ * based on YAML configuration.
  */
-class Schema implements ConfigurationApplier, SchemaValidator
+class Schema implements ConfigurationApplier
 {
     use Injectable;
     use Configurable;
@@ -82,7 +68,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
     /**
      * @var bool
      */
-    private static $verbose = true;
+    private static $verbose = false;
 
     /**
      * @var string
@@ -120,58 +106,44 @@ class Schema implements ConfigurationApplier, SchemaValidator
     private $scalars = [];
 
     /**
-     * @var Query
+     * @var Type
      */
     private $queryType;
 
     /**
-     * @var Mutation
+     * @var Type
      */
     private $mutationType;
 
     /**
-     * @var SchemaStorageInterface
+     * @var SchemaConfig
      */
-    private $schemaStore;
+    private $schemaConfig;
 
     /**
-     * @var SchemaContext
+     * @var Configuration
      */
-    private $schemaContext;
+    private $state;
 
     /**
-     * @var bool See constructor for details about booting.
-     */
-    private $_booted = false;
-
-    /**
-     * In order to trigger auto-discovery of the schema configuration
-     * in Silverstripe's config system, call {@link boot()} before using.
-     * Since booting has a performance impact, some functionality is
-     * available without booting (e.g. fetching an already persisted schema).
-     *
      * @param string $schemaKey
-     * @param SchemaContext|null $schemaContext
-     * @throws SchemaBuilderException
+     * @param SchemaConfig|null $schemaConfig
      */
-    public function __construct(string $schemaKey, SchemaContext $schemaContext = null)
+    public function __construct(string $schemaKey, SchemaConfig $schemaConfig = null)
     {
         $this->schemaKey = $schemaKey;
         $this->queryType = Type::create(self::QUERY_TYPE);
         $this->mutationType = Type::create(self::MUTATION_TYPE);
 
-        $this->schemaContext = $schemaContext ?: SchemaContext::create();
-
-        $store = Injector::inst()->get(SchemaStorageCreator::class)
-            ->createStore($schemaKey);
-        $this->setStore($store);
+        $this->schemaConfig = $schemaConfig ?: SchemaConfig::create();
+        $this->state = Configuration::create();
     }
 
     /**
      * Converts a configuration array to instance state.
      * This is only needed for deeper customisations,
      * since the configuration is auto-discovered and applied
-     * through the {@link boot()} step.
+     * through the {@link SchemaBuilder::boot()} step.
      *
      * @param array $schemaConfig
      * @return Schema
@@ -182,6 +154,22 @@ class Schema implements ConfigurationApplier, SchemaValidator
         if (empty($schemaConfig)) {
             return $this;
         }
+
+        $validConfigKeys = [
+            self::TYPES,
+            self::QUERIES,
+            self::MUTATIONS,
+            self::INTERFACES,
+            self::UNIONS,
+            self::MODELS,
+            self::ENUMS,
+            self::SCALARS,
+            self::SCHEMA_CONFIG,
+            'execute',
+            'src',
+        ];
+        static::assertValidConfig($schemaConfig, $validConfigKeys);
+
         $types = $schemaConfig[self::TYPES] ?? [];
         $queries = $schemaConfig[self::QUERIES] ?? [];
         $mutations = $schemaConfig[self::MUTATIONS] ?? [];
@@ -192,7 +180,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
         $scalars = $schemaConfig[self::SCALARS] ?? [];
         $config = $schemaConfig[self::SCHEMA_CONFIG] ?? [];
 
-        $this->getSchemaContext()->apply($config);
+        $this->getConfig()->apply($config);
 
         static::assertValidConfig($types);
         foreach ($types as $typeName => $typeConfig) {
@@ -262,15 +250,63 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @return bool
+     * Fills in values for types with lazy definitions, e.g. type expressed as class name
+     *
+     * @throws SchemaBuilderException
      */
-    public function isStored(): bool
+    private function processTypes(): void
     {
-        try {
-            $this->fetch();
-            return true;
-        } catch (SchemaNotFoundException $e) {
-            return false;
+        $types = array_merge(
+            $this->getTypes(),
+            [$this->queryType, $this->mutationType]
+        );
+        foreach ($types as $type) {
+            foreach ($type->getFields() as $fieldObj) {
+                $modelTypeDef = $fieldObj->getTypeAsModel();
+                if (!$modelTypeDef || $fieldObj->getType()) {
+                    continue;
+                }
+                $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
+                $safeNamedClass = TypeReference::create($safeModelTypeDef)->getNamedType();
+                $namedClass = str_replace('__', '\\', $safeNamedClass);
+                $model = $this->getConfig()->createModel($namedClass);
+                Schema::invariant(
+                    $model,
+                    'No model found for %s',
+                    $namedClass
+                );
+
+                $typeName = $model->getTypeName();
+                $wrappedTypeName = str_replace($namedClass, $typeName, $modelTypeDef);
+
+                $fieldObj->setType($wrappedTypeName);
+            }
+        }
+    }
+
+    /**
+     * Apply resolver discovery
+     * @throws SchemaBuilderException
+     */
+    private function processFields(): void
+    {
+        $types = array_merge(
+            $this->getTypes(),
+            $this->getInterfaces()
+        );
+        foreach ($types as $type) {
+            foreach ($type->getFields() as $fieldObj) {
+                if (!$fieldObj->getResolver()) {
+                    $discoveredResolver = $this->getConfig()->discoverResolver($type, $fieldObj);
+                    Schema::invariant(
+                        $discoveredResolver,
+                        'Could not discover a resolver for field %s on type %s',
+                        $fieldObj->getName(),
+                        $type->getName()
+                    );
+                    $fieldObj->setResolver($discoveredResolver);
+                }
+            }
         }
     }
 
@@ -282,10 +318,8 @@ class Schema implements ConfigurationApplier, SchemaValidator
         foreach ($this->getModels() as $modelType) {
             // Apply default plugins
             $model = $modelType->getModel();
-            if ($model instanceof ModelConfigurationProvider) {
-                $plugins = $model->getModelConfig()->get('plugins', []);
-                $modelType->setDefaultPlugins($plugins);
-            }
+            $plugins = $model->getModelConfiguration()->get('plugins', []);
+            $modelType->setDefaultPlugins($plugins);
             $modelType->buildOperations();
 
             foreach ($modelType->getOperations() as $operationName => $operationType) {
@@ -322,6 +356,33 @@ class Schema implements ConfigurationApplier, SchemaValidator
             );
             $builderClass::updateSchema($this);
         }
+    }
+
+    /**
+     * @throws SchemaBuilderException
+     */
+    private function processConfig(): void
+    {
+        $typeMapping = [];
+        $fieldMapping = [];
+        foreach ($this->getModels() as $modelType) {
+            $class = $modelType->getModel()->getSourceClass();
+            if (!isset($typeMapping[$class])) {
+                $typeMapping[$class] = $modelType->getName();
+            }
+            $fields = [];
+            /* @var ModelField $modelField */
+            foreach ($modelType->getFields() as $modelField) {
+                $relatedModel = $modelField->getModelType();
+                $model = $relatedModel ?: $modelType;
+                $fields[$modelField->getName()] = [$model->getName(), $modelField->getPropertyName()];
+            }
+            $fieldMapping[$modelType->getName()] = $fields;
+        }
+
+        $this->getConfig()
+            ->setTypeMapping($typeMapping)
+            ->setFieldMapping($fieldMapping);
     }
 
     /**
@@ -443,10 +504,10 @@ class Schema implements ConfigurationApplier, SchemaValidator
                 ));
             } catch (TypeError $e) {
                 throw new SchemaBuilderException(sprintf(
-                    'Plugin %s does not apply to component "%s" (category: %s)',
+                    'Error applying plugin %s to component "%s": %s',
                     $plugin->getIdentifier(),
                     $component->getName(),
-                    $name
+                    $e->getMessage()
                 ));
             }
         }
@@ -472,68 +533,61 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @throws SchemaBuilderException
+     * Process any lazy defined properties (types and modules),
+     * and execute plugins. This step is automatically taken during {@link save()},
+     * but can be useful to execute separately in order to determine if the schema
+     * is valid before saving.
+     *
+     * @return void
      */
-    public function save(): void
+    private function process(): void
     {
+        // Fill in lazily defined type properties, e.g. fields with a classname as a type
+        $this->processTypes();
+        // Create operations, add default plugins
         $this->processModels();
+        // Execute plugins
         $this->applySchemaUpdates();
 
+        // Map types and fields
+        $this->processConfig();
+
+        // Models have expressed all they can now. They can graduate to actual types.
         foreach ($this->models as $modelType) {
             $this->addType($modelType);
         }
-
 
         $this->types[self::QUERY_TYPE] = $this->queryType;
         if ($this->mutationType->exists()) {
             $this->types[self::MUTATION_TYPE] = $this->mutationType;
         }
 
-        $this->validate();
-        $this->getStore()->persistSchema($this);
+        // Resolver discovery
+        $this->processFields();
     }
 
     /**
-     * @return array
+     * Creates a readonly object that can be used by a storage service.
+     * Processes all of the types, fields, models, etc to end up with a coherent,
+     * schema that can be validated and stored.
+     *
+     * @return StorableSchema
      */
-    public function mapTypeNames(): array
+    public function createStoreableSchema(): StorableSchema
     {
-        $typeMapping = [];
-        foreach ($this->getModels() as $modelType) {
-            $typeMapping[$modelType->getModel()->getSourceClass()] = $modelType->getName();
-        }
+        $this->process();
+        $schema = StorableSchema::create(
+            [
+                self::TYPES => $this->getTypes(),
+                self::ENUMS => $this->getEnums(),
+                self::INTERFACES => $this->getInterfaces(),
+                self::UNIONS => $this->getUnions(),
+                self::SCALARS => $this->getScalars()
+            ],
+            $this->getConfig()
+        );
 
-        return $typeMapping;
-    }
-
-    /**
-     * @param string $class
-     * @return string|null
-     * @throws SchemaBuilderException
-     */
-    public function getTypeNameForClass(string $class): ?string
-    {
-        $mapping = $this->getStore()->getTypeMapping();
-        $typeName = $mapping[$class] ?? null;
-        if ($typeName) {
-            return $typeName;
-        }
-
-        $model = $this->getSchemaContext()->createModel($class);
-        if ($model) {
-            return $model->getTypeName();
-        }
-
-        return null;
-    }
-
-    /**
-     * @return GraphQLSchema
-     * @throws SchemaNotFoundException
-     */
-    public function fetch(): GraphQLSchema
-    {
-        return $this->getStore()->getSchema();
+        return $schema;
     }
 
     /**
@@ -545,51 +599,6 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @throws SchemaBuilderException
-     */
-    public function validate(): void
-    {
-        $allNames = array_merge(
-            array_keys($this->types),
-            array_keys($this->enums),
-            array_keys($this->interfaces),
-            array_keys($this->unions),
-            array_keys($this->scalars)
-        );
-        $dupes = [];
-        foreach (array_count_values($allNames) as $val => $count) {
-            if ($count > 1) {
-                $dupes[] = $val;
-            }
-        }
-
-        static::invariant(
-            empty($dupes),
-            'Your schema has multiple types with the same name. See %s',
-            implode(', ', $dupes)
-        );
-
-        static::invariant(
-            $this->exists(),
-            'Your schema must contain at least one type and at least one query'
-        );
-
-        $validators = array_merge(
-            $this->types,
-            $this->queryType->getFields(),
-            $this->mutationType->getFields(),
-            $this->enums,
-            $this->interfaces,
-            $this->unions,
-            $this->scalars
-        );
-        /* @var SchemaValidator $validator */
-        foreach ($validators as $validator) {
-            $validator->validate();
-        }
-    }
-
-    /**
      * @return string
      */
     public function getSchemaKey(): string
@@ -598,11 +607,19 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @return SchemaContext
+     * @return SchemaConfig
      */
-    public function getSchemaContext(): SchemaContext
+    public function getConfig(): SchemaConfig
     {
-        return $this->schemaContext;
+        return $this->schemaConfig;
+    }
+
+    /**
+     * @return Configuration
+     */
+    public function getState(): Configuration
+    {
+        return $this->state;
     }
 
     /**
@@ -675,6 +692,32 @@ class Schema implements ConfigurationApplier, SchemaValidator
     public function getTypes(): array
     {
         return $this->types;
+    }
+
+    /**
+     * @return Type
+     */
+    public function getQueryType(): Type
+    {
+        return $this->queryType;
+    }
+
+    /**
+     * @return Type
+     */
+    public function getMutationType(): Type
+    {
+        return $this->mutationType;
+    }
+
+
+    /**
+     * @param string $name
+     * @return Type|null
+     */
+    public function getTypeOrModel(string $name): ?Type
+    {
+        return $this->getType($name) ?: $this->getModel($name);
     }
 
     /**
@@ -771,17 +814,24 @@ class Schema implements ConfigurationApplier, SchemaValidator
 
     /**
      * @param string $class
+     * @param callable|null $callback
      * @return $this
      * @throws SchemaBuilderException
      */
-    public function addModelbyClassName(string $class): self
+    public function addModelbyClassName(string $class, ?callable $callback = null): self
     {
         $model = $this->createModel($class);
         Schema::invariant(
             $model,
-            'Could not add class %s to schema. No model exists.'
+            sprintf(
+                'Could not add class %s to schema. No model exists.',
+                $class
+            )
         );
 
+        if ($callback) {
+            $callback($model);
+        }
         return $this->addModel($model);
     }
 
@@ -808,7 +858,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function createModel(string $class, array $config = []): ?ModelType
     {
-        $model = $this->getSchemaContext()->createModel($class);
+        $model = $this->getConfig()->createModel($class);
         if (!$model) {
             return null;
         }
@@ -935,7 +985,7 @@ class Schema implements ConfigurationApplier, SchemaValidator
      */
     public function pluralise($typeName): string
     {
-        $callable = $this->getSchemaContext()->getPluraliser();
+        $callable = $this->getConfig()->getPluraliser();
         Schema::invariant(
             is_callable($callable),
             'Schema does not have a valid callable "pluraliser" property set in its config'
@@ -1007,30 +1057,12 @@ class Schema implements ConfigurationApplier, SchemaValidator
     }
 
     /**
-     * @return SchemaStorageInterface
+     * @param bool $verbose
+     * @return void
      */
-    public function getStore(): SchemaStorageInterface
+    public static function setVerbose(bool $verbose): void
     {
-        return $this->schemaStore;
-    }
-
-    /**
-     * @param SchemaStorageInterface $store
-     * @return $this
-     */
-    public function setStore(SchemaStorageInterface $store): self
-    {
-        $this->schemaStore = $store;
-
-        return $this;
-    }
-
-    /**
-     * Turns off messaging
-     */
-    public static function quiet(): void
-    {
-        self::$verbose = false;
+        self::$verbose = $verbose;
     }
 
     /**

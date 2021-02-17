@@ -7,6 +7,7 @@
 namespace <?=$globals['namespace'] ?>;
 
 use GraphQL\Type\Definition\UnionType;
+use SilverStripe\GraphQL\Schema\Resolver\ComposedResolver;
 
 class <?=$union->getName() ?> extends UnionType
 {
@@ -20,7 +21,8 @@ class <?=$union->getName() ?> extends UnionType
                 }, <?=$union->getEncodedTypes(); ?>);
             },
             'resolveType' => function ($obj) {
-                $type = call_user_func_array(<?=$union->getEncodedTypeResolver()->encode(); ?>, [$obj]);
+                $resolver = <?=$union->getEncodedTypeResolver()->encode(); ?>;
+                $type = call_user_func_array($resolver->toClosure(), [$obj]);
                 return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName'] ?>', $type]);
             },
         <?php if (!empty($union->getDescription())) : ?>
