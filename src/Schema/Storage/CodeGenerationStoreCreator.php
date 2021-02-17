@@ -14,10 +14,11 @@ class CodeGenerationStoreCreator implements SchemaStorageCreator
 {
     public function createStore(string $name): SchemaStorageInterface
     {
-        $factory = Injector::inst()->create(CacheFactory::class, [
-            'namespace' => $name
-        ]);
-        $cache = $factory->create(CacheInterface::class);
+        $factory = Injector::inst()->create(CacheFactory::class);
+        $cache = $factory->create(
+            CacheInterface::class,
+            ['namespace' => 'graphql-schema-' . $name]
+        );
         return CodeGenerationStore::create($name, $cache);
     }
 }
