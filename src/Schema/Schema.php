@@ -126,11 +126,6 @@ class Schema implements ConfigurationApplier
     private $state;
 
     /**
-     * @var boolean
-     */
-    private $_isProcessed = false;
-
-    /**
      * @param string $schemaKey
      * @param SchemaConfig|null $schemaConfig
      */
@@ -569,16 +564,18 @@ class Schema implements ConfigurationApplier
 
         // Resolver discovery
         $this->processFields();
-
-        $this->_isProcessed = true;
     }
 
-    public function getStoreableSchema(): StorableSchema
+    /**
+     * Creates a readonly object that can be used by a storage service.
+     * Processes all of the types, fields, models, etc to end up with a coherent,
+     * schema that can be validated and stored.
+     * 
+     * @return StorableSchema
+     */
+    public function createStoreableSchema(): StorableSchema
     {
-        if (!$this->_isProcessed) {
-            $this->process();
-        }
-
+        $this->process();
         $schema = StorableSchema::create(
             [
                 self::TYPES => $this->getTypes(),

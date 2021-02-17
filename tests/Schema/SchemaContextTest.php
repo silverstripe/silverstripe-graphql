@@ -29,7 +29,7 @@ class SchemaContextTest extends SapphireTest
         );
         // Only add one model
         $schema->addModel($modelType1);
-        $storeableSchema = $schema->getStoreableSchema();
+        $storeableSchema = $schema->createStoreableSchema();
         $this->assertEquals(
             $modelType1->getName(),
             $storeableSchema->getConfig()->getTypeNameForClass(DataObjectFake::class)

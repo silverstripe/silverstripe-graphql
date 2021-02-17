@@ -129,7 +129,7 @@ class SchemaTest extends SapphireTest
         $schema = $this->buildSchema();
         $schema->addQuery(Query::create('foo', ['type' => 'foo']));
         $schema->addMutation(Mutation::create('bar', ['type' => 'foo']));
-        $storableSchema = $schema->getStoreableSchema();
+        $storableSchema = $schema->createStoreableSchema();
         $types = $storableSchema->getTypes();
         $queryType = $types[Schema::QUERY_TYPE] ?? null;
         $this->assertInstanceOf(Type::class, $queryType);

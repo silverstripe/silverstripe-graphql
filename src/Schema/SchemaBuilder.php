@@ -88,7 +88,7 @@ class SchemaBuilder
         if ($clear) {
             $store->clear();
         }
-        $store->persistSchema($schema->getStoreableSchema());
+        $store->persistSchema($schema->createStoreableSchema());
 
         Dispatcher::singleton()->trigger(
             'graphqlSchemaBuild.' . $schema->getSchemaKey(),

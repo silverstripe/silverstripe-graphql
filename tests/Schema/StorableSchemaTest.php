@@ -18,12 +18,12 @@ class StorableSchemaTest extends SapphireTest
         $schema = Schema::create('test');
         $schema->addType(Type::create('TestType'));
         $schema->addInterface(InterfaceType::create('TestType'));
-        $schema->getStoreableSchema()->validate();
+        $schema->createStoreableSchema()->validate();
 
         $schema = Schema::create('test');
         $schema->addQuery(Query::create('myQuery', ['type' => 'MyType']));
         $schema->addType(Type::create('TestType'));
         $schema->addInterface(InterfaceType::create('TestInterface'));
-        $schema->getStoreableSchema()->validate();
+        $schema->createStoreableSchema()->validate();
     }
 }

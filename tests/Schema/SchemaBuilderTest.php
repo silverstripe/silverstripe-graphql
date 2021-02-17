@@ -55,7 +55,7 @@ class SchemaBuilderTest extends SapphireTest
         $schema->addType($type = Type::create('MyType'));
         $type->addField('myField', 'String');
         SchemaBuilder::singleton()->build($schema, true);
-        
+
         $schema = SchemaBuilder::singleton()->getSchema('my-schema-' . $id);
         $this->assertInstanceOf(GraphQLSchema::class, $schema);
     }
@@ -92,7 +92,7 @@ class SchemaBuilderTest extends SapphireTest
         $schema->addQuery(Query::create('myQuery')->setType('TestType'));
         $fakeStore->expects($this->once())
             ->method('persistSchema')
-            ->with($this->equalTo($schema->getStoreableSchema()));
+            ->with($this->equalTo($schema->createStoreableSchema()));
 
         $builder->build($schema);
     }
