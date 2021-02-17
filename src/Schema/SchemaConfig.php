@@ -60,24 +60,15 @@ class SchemaConfig extends Configuration
         if ($cached) {
             return $cached;
         }
-        /* @var ModelCreator $creator */
-        foreach ($this->get('modelCreators', []) as $creatorClass) {
-            $creator = Injector::inst()->create($creatorClass);
-            Schema::invariant(
-                $creator instanceof ModelCreator,
-                'Class %s is not an instance of %s',
-                $creatorClass,
-                ModelCreator::class
-            );
-            if ($creator->appliesTo($class)) {
-                $model = $creator->createModel($class, $this);
-                $this->__modelCache[$class] = $model;
-
-                return $model;
-            }
+        $creator = $this->getModelCreatorForClass($class);
+        if (!$creator) {
+            return null;
         }
 
-        return null;
+        $model = $creator->createModel($class, $this);
+        $this->__modelCache[$class] = $model;
+
+        return $model;
     }
 
     /**
@@ -170,7 +161,11 @@ class SchemaConfig extends Configuration
         if ($name) {
             return $name;
         }
-        $model = $this->createModel($class);
+        $creator = $this->getModelCreatorForClass($class);
+        if (!$creator) {
+            return null;
+        }
+        $model = $creator->createModel($class, $this);
         if ($model) {
             return $model->getTypeName();
         }
@@ -225,5 +220,29 @@ class SchemaConfig extends Configuration
         }
 
         return implode('.', $map);
+    }
+
+    /**
+     * @param string $class
+     * @return ModelCreator|null
+     * @throws SchemaBuilderException
+     */
+    private function getModelCreatorForClass(string $class): ?ModelCreator
+    {
+        /* @var ModelCreator $creator */
+        foreach ($this->get('modelCreators', []) as $creatorClass) {
+            $creator = Injector::inst()->create($creatorClass);
+            Schema::invariant(
+                $creator instanceof ModelCreator,
+                'Class %s is not an instance of %s',
+                $creatorClass,
+                ModelCreator::class
+            );
+            if ($creator->appliesTo($class)) {
+                return $creator;
+            }
+        }
+
+        return null;
     }
 }
