@@ -119,6 +119,28 @@ class StorableSchema implements SchemaValidator
     }
 
     /**
+     * @return bool
+     */
+    public function exists(): bool
+    {
+        $queryType = $this->types[Schema::QUERY_TYPE] ?? null;
+        if (!$queryType) {
+            return false;
+        }
+        $fields = $queryType->getFields();
+        if (empty($fields)) {
+            return false;
+        }
+        $otherTypes = array_filter(array_keys($this->types), function ($key) {
+            return $key !== Schema::QUERY_TYPE;
+        });
+        if (empty($otherTypes)) {
+            return false;
+        }
+
+        return true;
+    }
+    /**
      * @throws SchemaBuilderException
      */
     public function validate(): void

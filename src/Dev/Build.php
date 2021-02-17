@@ -7,6 +7,7 @@ use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Dev\DebugView;
+use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -63,14 +64,11 @@ class Build extends Controller
             Schema::message(sprintf('--- Building schema "%s" ---', $key));
             $builder = SchemaBuilder::singleton();
             $schema = $builder->boot($key);
-            // Allow for "empty" schemas which don't have any types defined.
-            // This enables baseline configuration of the "default" schema.
-            if (!$schema->exists()) {
-                Schema::message('No types defined, skipping');
-                continue;
+            try {
+                $builder->build($schema, $clear);
+            } catch (EmptySchemaException $e) {
+                Schema::message('Schema ' . $key . ' is empty. Skipping.');
             }
-
-            $builder->build($schema, $clear);
 
             Schema::message(
                 Benchmark::end('build-schema-' . $key, 'Built schema in %sms.')

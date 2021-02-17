@@ -9,6 +9,7 @@ use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Path;
+use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
@@ -94,9 +95,16 @@ class CodeGenerationStore implements SchemaStorageInterface
      * @throws Exception
      * @throws InvalidArgumentException
      * @throws RuntimeException
+     * @throws EmptySchemaException
      */
     public function persistSchema(StorableSchema $schema): void
     {
+        if (!$schema->exists()) {
+            throw new EmptySchemaException(sprintf(
+                'Schema %s is empty',
+                $this->name
+            ));
+        }
         $schema->validate();
 
         $fs = new Filesystem();

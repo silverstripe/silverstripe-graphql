@@ -366,7 +366,7 @@ class Schema implements ConfigurationApplier
     /**
      * @throws SchemaBuilderException
      */
-    private function processContext(): void
+    private function processConfig(): void
     {
         $typeMapping = [];
         $fieldMapping = [];
@@ -555,7 +555,7 @@ class Schema implements ConfigurationApplier
         $this->applySchemaUpdates();
 
         // Map types and fields
-        $this->processContext();
+        $this->processConfig();
 
         // Models have expressed all they can now. They can graduate to actual types.
         foreach ($this->models as $modelType) {

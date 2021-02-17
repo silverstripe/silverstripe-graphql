@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema;
 
-
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -58,5 +57,4 @@ class NaiveSchemaBuilder extends SchemaBuilder
             ]
         ]);
     }
-
 }

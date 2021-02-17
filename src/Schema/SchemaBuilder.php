@@ -12,6 +12,7 @@ use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Core\Path;
 use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
 use SilverStripe\EventDispatcher\Symfony\Event;
+use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
@@ -79,6 +80,7 @@ class SchemaBuilder
      * @param bool $clear If true, clear the cache
      * @return GraphQLSchema
      * @throws SchemaNotFoundException
+     * @throws EmptySchemaException
      */
     public function build(Schema $schema, $clear = false): GraphQLSchema
     {
@@ -90,7 +92,7 @@ class SchemaBuilder
 
         Dispatcher::singleton()->trigger(
             'graphqlSchemaBuild.' . $schema->getSchemaKey(),
-            Event::create($schema->getSchemaKey(),[
+            Event::create($schema->getSchemaKey(), [
                 'schema' => $schema
             ])
         );
