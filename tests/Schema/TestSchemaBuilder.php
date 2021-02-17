@@ -95,7 +95,7 @@ class TestSchemaBuilder extends SchemaBuilder
             [
                 'properties' => [
                     'handlers' => [
-                        'graphqlSchemaBuild' => [
+                        'graphqlTranscribe' => [
                             'off' => ['graphqlSchemaBuild']
                         ],
                     ],
