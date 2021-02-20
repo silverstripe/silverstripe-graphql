@@ -182,6 +182,10 @@ class NestedInputBuilder
             }
             // If we've already seen this input, it can only be added to, not mutated.
             if ($inputType->getFieldByName($fieldName)) {
+                if ($inputType->exists() && $parentType && $parentField) {
+                    $this->schema->addType($inputType);
+                    $parentType->addField($parentField, $inputType->getName());
+                }
                 continue;
             }
 
