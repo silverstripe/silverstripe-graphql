@@ -4,6 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
 use SilverStripe\Core\Config\Configurable;
+use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
@@ -19,6 +20,7 @@ use Countable;
 class PaginationPlugin implements FieldPlugin, SchemaUpdater
 {
     use Configurable;
+    use Injectable;
 
     const IDENTIFIER = 'paginate';
 
