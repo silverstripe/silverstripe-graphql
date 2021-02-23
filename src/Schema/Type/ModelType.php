@@ -3,8 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Type;
 
-use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Dev\Build;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelAware;

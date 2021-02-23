@@ -6,7 +6,6 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
-use SilverStripe\ORM\DataObject;
 
 trait FieldReconciler
 {
@@ -26,28 +25,19 @@ trait FieldReconciler
             Schema::assertValidConfig($configFields);
             foreach ($configFields as $fieldName => $bool) {
                 if ($bool === false) {
-                    continue;
+                    $fields = array_filter($fields, function ($field) use ($fieldName) {
+                        return $field !== $fieldName;
+                    });
+                } elseif ($fieldName === Schema::ALL) {
+                    $fields = array_merge($fields, array_keys($modelType->getFields()));
+                } else {
+                    $fields[] = $fieldName;
                 }
-                $fields[] = $fieldName;
             }
         } else {
             $fields = array_keys($modelType->getFields());
         }
-        $configExclude = $config['exclude'] ?? null;
-        $excluded = [];
-        if ($configExclude) {
-            Schema::assertValidConfig($configExclude);
-            foreach ($configExclude as $fieldName => $bool) {
-                if ($bool === false) {
-                    continue;
-                }
-                $excluded[] = $fieldName;
-            }
-            $includedFields = array_diff($fields, $excluded);
-        } else {
-            $includedFields = $fields;
-        }
 
-        return $includedFields;
+        return $fields;
     }
 }
