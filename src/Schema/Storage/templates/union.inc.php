@@ -20,9 +20,9 @@ class <?=$union->getName() ?> extends UnionType
                     return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName'] ?>', $type]);
                 }, <?=$union->getEncodedTypes(); ?>);
             },
-            'resolveType' => function ($obj) {
+            'resolveType' => function (...$args) {
                 $resolver = <?=$union->getEncodedTypeResolver()->encode(); ?>;
-                $type = call_user_func_array($resolver->toClosure(), [$obj]);
+                $type = call_user_func_array($resolver->toClosure(), $args);
                 return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName'] ?>', $type]);
             },
         <?php if (!empty($union->getDescription())) : ?>
