@@ -75,6 +75,46 @@ class NestedInputBuilderTest extends SapphireTest
             ],
         ], $schema);
     }
+    
+    /**
+     * @throws SchemaBuilderException
+     */
+    public function testNestedInputBuilderBuildsCyclic()
+    {
+        $schema = (new TestSchemaBuilder())->boot('inputBuilderTest');
+        $schema
+            ->addModelbyClassName(FakeProductPage::class, function (ModelType $model) {
+                $model->addField('title');
+                $model->addField('products');
+                $model->addAllOperations();
+            })
+            ->addModelbyClassName(FakeProduct::class, function (ModelType $model) {
+                $model->addField('title');
+                $model->addField('parent');
+                $model->addField('reviews');
+                $model->addField('relatedProducts');
+            })
+            ->addModelbyClassName(FakeReview::class, function (ModelType $model) {
+                $model->addField('content');
+                $model->addField('author');
+                $model->addAllOperations();
+            })
+            ->addModelbyClassName(Member::class, function (ModelType $model) {
+                $model->addField('firstName');
+            });
+        $root = $schema->getModelByClassName(FakeProductPage::class);
+        $query = Query::create('myQuery', '[' . $root->getName() . ']');
+
+        $builder = NestedInputBuilder::create($query, $schema);
+        $builder->populateSchema();
+        $this->assertSchema([
+            'FakeReviewFilterFieldsType' => [
+                'id' => 'QueryFilterIDComparator',
+                'content' => 'QueryFilterStringComparator',
+                'author' => 'MemberFilterFieldsType'
+            ]
+        ], $schema);
+    }
 
     private function assertSchema(array $graph, Schema $schema)
     {
