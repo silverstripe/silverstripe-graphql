@@ -123,11 +123,14 @@ class NestedInputBuilder
      * @return array
      * @throws SchemaBuilderException
      */
-    protected function buildAllFieldsConfig(Type $type, int $level = 0): array
-    {
+     protected function buildAllFieldsConfig(Type $type, int $level = 0, array &$seenConnections = []): array
+     {
         $existing = $this->fetch($type->getName());
         if ($existing) {
             return $existing;
+        }
+        if (!isset($seenConnections[$type->getName()])) {
+            $seenConnections[$type->getName()] = [];
         }
         $level++;
         $map = [];
@@ -138,23 +141,25 @@ class NestedInputBuilder
             $namedType = $fieldObj->getNamedType();
             $nestedType = $this->schema->getTypeOrModel($namedType);
             if ($nestedType) {
-                if ($level > $this->config()->get('max_nesting')) {
-                    continue;
-                }
+                // if ($level > $this->config()->get('max_nesting')) {
+                //     continue;
+                // }
                 // Prevent stupid recursion in self-referential relationships, e.g. Parent
                 if ($namedType === $type->getName()) {
                     $map[$fieldObj->getName()] = self::SELF_REFERENTIAL;
+                } elseif (isset($seenConnections[$type->getName()][$fieldObj->getName()])) {
+                    continue;
                 } else {
-                    $map[$fieldObj->getName()] = $this->buildAllFieldsConfig($nestedType, $level);
+                    $seenConnections[$type->getName()][$fieldObj->getName()] = true;
+                    $map[$fieldObj->getName()] = $this->buildAllFieldsConfig($nestedType, $level, $seenConnections);
                 }
             } else {
                 $map[$fieldObj->getName()] = true;
             }
         }
         $this->persist($type->getName(), $map);
-
         return $map;
-    }
+     }
 
     /**
      * @param Type $type
