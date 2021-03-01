@@ -123,8 +123,8 @@ class NestedInputBuilder
      * @return array
      * @throws SchemaBuilderException
      */
-     protected function buildAllFieldsConfig(Type $type, int $level = 0, array &$seenConnections = []): array
-     {
+    protected function buildAllFieldsConfig(Type $type, int $level = 0, array &$seenConnections = []): array
+    {
         $existing = $this->fetch($type->getName());
         if ($existing) {
             return $existing;
@@ -159,7 +159,7 @@ class NestedInputBuilder
         }
         $this->persist($type->getName(), $map);
         return $map;
-     }
+    }
 
     /**
      * @param Type $type
