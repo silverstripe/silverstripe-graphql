@@ -176,6 +176,26 @@ class UnionType implements
     }
 
     /**
+     * @param UnionType $existing
+     * @throws SchemaBuilderException
+     */
+    public function mergeWith(UnionType $existing)
+    {
+        $this->setName($existing->getName());
+        $this->setTypes(array_unique(
+            array_merge(
+                $this->getTypes(),
+                $existing->getTypes()
+            )
+        ));
+        if ($existing->getTypeResolver()) {
+            $this->setTypeResolver($existing->getTypeResolver());
+        }
+
+        return $this;
+    }
+
+    /**
      * @throws SchemaBuilderException
      */
     public function validate(): void
