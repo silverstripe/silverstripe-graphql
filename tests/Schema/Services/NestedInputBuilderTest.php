@@ -75,18 +75,17 @@ class NestedInputBuilderTest extends SapphireTest
             ],
         ], $schema);
     }
-    
+
     /**
      * @throws SchemaBuilderException
      */
-    public function testNestedInputBuilderBuildsCyclic()
+    public function testNestedInputBuilderBuildsCyclicFilterFields()
     {
-        $schema = (new TestSchemaBuilder())->boot('inputBuilderTest');
+        $schema = (new TestSchemaBuilder())->boot('filterfieldbuilder');
         $schema
             ->addModelbyClassName(FakeProductPage::class, function (ModelType $model) {
                 $model->addField('title');
-                $model->addField('products');
-                $model->addAllOperations();
+                $model->addField('products', ['plugins' => ['filter' => true]]);
             })
             ->addModelbyClassName(FakeProduct::class, function (ModelType $model) {
                 $model->addField('title');
@@ -97,21 +96,16 @@ class NestedInputBuilderTest extends SapphireTest
             ->addModelbyClassName(FakeReview::class, function (ModelType $model) {
                 $model->addField('content');
                 $model->addField('author');
-                $model->addAllOperations();
             })
             ->addModelbyClassName(Member::class, function (ModelType $model) {
                 $model->addField('firstName');
             });
-        $root = $schema->getModelByClassName(FakeProductPage::class);
-        $query = Query::create('myQuery', '[' . $root->getName() . ']');
-
-        $builder = NestedInputBuilder::create($query, $schema);
-        $builder->populateSchema();
+        $schema->createStoreableSchema();
         $this->assertSchema([
-            'FakeReviewFilterFieldsType' => [
+            'FakeReviewFilterFields' => [
                 'id' => 'QueryFilterIDComparator',
                 'content' => 'QueryFilterStringComparator',
-                'author' => 'MemberFilterFieldsType'
+                'author' => 'MemberFilterFields'
             ]
         ], $schema);
     }
