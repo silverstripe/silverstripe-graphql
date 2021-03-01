@@ -36,6 +36,7 @@ class InheritedPlugins implements ModelTypePlugin
      */
     public function apply(ModelType $type, Schema $schema, array $config = []): void
     {
+        return;
         $sourceClass = $type->getModel()->getSourceClass();
         Schema::invariant(
             is_subclass_of($sourceClass, DataObject::class),
