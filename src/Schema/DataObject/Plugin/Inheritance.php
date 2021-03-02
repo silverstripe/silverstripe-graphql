@@ -3,9 +3,7 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
-use SilverStripe\Core\Convert;
 use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
-use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceChain;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
@@ -13,12 +11,13 @@ use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\PluginInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\Type\InterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelInterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\ModelUnionType;
-use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\ORM\DataObject;
 use ReflectionException;
+use Exception;
 
 /**
  * Adds inheritance fields to a DataObject type, and exposes its ancestry
@@ -65,9 +64,19 @@ class Inheritance implements PluginInterface, SchemaUpdater
             self::fillAncestry($schema, $leafClass);
         }
         foreach ($baseModels as $class) {
+            self::fillDescendants($schema, $class);
             self::createInterfaces($schema, $class);
         }
+        $baseInterface = self::createBaseInterface($schema, $baseModels);
+        if ($baseInterface) {
+            $schema->addInterface($baseInterface);
+            foreach ($dataobjectTypes as $modelType) {
+                $modelType->addInterface($baseInterface->getName());
+            }
+        }
+
         self::createUnions($schema, $dataobjectTypes);
+        self::applyUnions($schema);
     }
 
     /**
@@ -75,36 +84,93 @@ class Inheritance implements PluginInterface, SchemaUpdater
      * @param $context
      * @return string
      * @throws SchemaBuilderException
+     * @throws Exception
      */
-    public static function resolveUnion($obj, $context): string
+    public static function resolveType($obj, $context): string
     {
+        $class = get_class($obj);
         $schemaContext = SchemaContextProvider::get($context);
-        return $schemaContext->getTypeNameForClass(get_class($obj));
+
+        while (!$schemaContext->hasModel($class)) {
+            if ($class === DataObject::class) {
+                throw new Exception(sprintf(
+                    'No models were registered in the ancestry of %s',
+                    get_class($obj)
+                ));
+            }
+            $class = get_parent_class($class);
+        }
+        return $schemaContext->getTypeNameForClass($class);
+    }
+
+    /**
+     * @param ModelType $model
+     * @return string
+     */
+    public static function modelToInterface(ModelType $model): string
+    {
+        return $model->getName() . 'Interface';
+    }
+
+    /**
+     * @param ModelType $model
+     * @return string
+     */
+    public static function modelToUnion(ModelType $model): string
+    {
+        return $model->getName() . 'InheritanceUnion';
     }
 
     /**
      * @param Schema $schema
-     * @param string $leafClass
+     * @param string $class
      * @throws SchemaBuilderException
      */
-    private static function fillAncestry(Schema $schema, string $leafClass): void
+    private static function fillAncestry(Schema $schema, string $class): void
     {
-        $chain = InheritanceChain::create($leafClass);
-        $leafModel = $schema->getModelByClassName($leafClass);
-        foreach ($chain->getAncestralModels() as $class) {
-            $parentModel = $schema->findOrMakeModel($class);
-            // Merge descendant fields up into the ancestor
-            foreach ($leafModel->getFields() as $fieldObj) {
-                // If the field already exists on the ancestor, skip it
-                if ($parentModel->getFieldByName($fieldObj->getName())) {
-                    continue;
-                }
-                $fieldName = $fieldObj instanceof ModelField ? $fieldObj->getPropertyName() : $fieldObj->getName();
-                // If the field is unique to the descendant, skip it.
-                if ($parentModel->getModel()->hasField($fieldName)) {
+        $chain = InheritanceChain::create($class);
+        $model = $schema->getModelByClassName($class);
+        $ancestors = $chain->getAncestralModels();
+        if (empty($ancestors)) {
+            return;
+        }
+        $parent = $ancestors[0];
+        $parentModel = $schema->findOrMakeModel($parent);
+        // Merge descendant fields up into the ancestor
+        foreach ($model->getFields() as $fieldObj) {
+            // If the field already exists on the ancestor, skip it
+            if ($parentModel->getFieldByName($fieldObj->getName())) {
+                continue;
+            }
+            $fieldName = $fieldObj instanceof ModelField ? $fieldObj->getPropertyName() : $fieldObj->getName();
+            // If the field is unique to the descendant, skip it.
+            if ($parentModel->getModel()->hasField($fieldName)) {
+                $clone = clone $fieldObj;
+                $parentModel->addField($fieldObj->getName(), $clone);
+            }
+        }
+        self::fillAncestry($schema, $parent);
+    }
+
+    private static function fillDescendants(Schema $schema, string $class)
+    {
+        $chain = InheritanceChain::create($class);
+        $model = $schema->getModelByClassName($class);
+        $descendants = $chain->getDirectDescendants();
+        if (empty($descendants)) {
+            return;
+        }
+        foreach ($descendants as $descendant) {
+            $descendantModel = $schema->getModelByClassName($descendant);
+            if ($descendantModel) {
+                foreach ($model->getFields() as $fieldObj) {
+                    if ($descendantModel->getFieldByName($fieldObj->getName())) {
+                        continue;
+                    }
                     $clone = clone $fieldObj;
-                    $parentModel->addField($clone);
+                    $descendantModel->addField($fieldObj->getName(), $clone);
                 }
+                self::fillDescendants($schema, $descendant);
             }
         }
     }
@@ -112,46 +178,78 @@ class Inheritance implements PluginInterface, SchemaUpdater
     /**
      * @param Schema $schema
      * @param string $class
-     * @param ModelType[] $stack
+     * @param ModelType[] $modelStack
+     * @param ModelInterfaceType[] $interfaceStack
      * @throws ReflectionException
      * @throws SchemaBuilderException
      */
-    private static function createInterfaces(Schema $schema, string $class, array $stack = [])
-    {
-        $ancestorInterfaces = array_map(function (ModelType $model) use ($schema) {
-            $interfaceName = self::modelToInterface($model);
-            $ancestorInterface = $schema->getInterface($interfaceName);
-            Schema::invariant(
-                $ancestorInterface,
-                'Could not find ancestor interface %s for model %s',
-                $interfaceName,
-                $model->getName()
-            );
-            return $ancestorInterface;
-        }, $stack);
-
+    private static function createInterfaces(
+        Schema $schema,
+        string $class,
+        array $modelStack = [],
+        array $interfaceStack = []
+    ) {
         $modelType = $schema->getModelByClassName($class);
-        foreach ($ancestorInterfaces as $ancestor) {
-            $modelType->addInterface($ancestor);
+        if (!$modelType) {
+            return;
+        }
+
+        foreach ($interfaceStack as $ancestorInterface) {
+            $modelType->addInterface($ancestorInterface->getName());
         }
         if (self::isLeafModel($class, $schema)) {
             return;
         }
 
-        $stack[] = $modelType;
-        $interface = ModelInterfaceType::create($modelType->getModel(), self::modelToInterface($modelType));
+        $modelStack[] = $modelType;
+        $interface = ModelInterfaceType::create($modelType->getModel(), static::modelToInterface($modelType));
+        $interface->setTypeResolver([static::class, 'resolveType']);
         foreach ($modelType->getFields() as $fieldObj) {
             $interface->addField($fieldObj->getName(), $fieldObj->getType());
         }
-        foreach ($ancestorInterfaces as $ancestor) {
-            foreach ($ancestor->getFields() as $fieldObj) {
+        foreach ($interfaceStack as $ancestorInterface) {
+            foreach ($ancestorInterface->getFields() as $fieldObj) {
                 $interface->removeField($fieldObj->getName());
             }
         }
-        $schema->addInterface($interface);
-        $modelType->addInterface($interface);
+        if (!empty($interface->getFields())) {
+            $schema->addInterface($interface);
+            $interfaceStack[] = $interface;
+            $modelType->addInterface($interface->getName());
+        }
 
-        self::createInterfaces($schema, $class, $stack);
+        foreach (InheritanceChain::create($class)->getDirectDescendants() as $class) {
+            self::createInterfaces($schema, $class, $modelStack, $interfaceStack);
+        }
+    }
+
+    /**
+     * @param Schema $schema
+     * @param string[] $baseModels
+     * @return InterfaceType|null
+     */
+    private static function createBaseInterface(Schema $schema, array $baseModels): ?InterfaceType
+    {
+        $allFields = [];
+        foreach ($baseModels as $class) {
+            $fields = [];
+            $modelType = $schema->getModelByClassName($class);
+            foreach ($modelType->getFields() as $fieldObj) {
+                $fields[$fieldObj->getName()] = $fieldObj->getType();
+            }
+            $allFields[] = $fields;
+        }
+        $commonFields = array_intersect_assoc(...$allFields);
+        if (empty($commonFields)) {
+            return null;
+        }
+
+        $interface = InterfaceType::create('DataObjectInterface');
+        $interface->applyConfig(['fields' => $commonFields]);
+        $interface->setDescription('The common interface shared by all DataObject types');
+        $interface->setTypeResolver([static::class, 'resolveType']);
+
+        return $interface;
     }
 
     /**
@@ -162,7 +260,8 @@ class Inheritance implements PluginInterface, SchemaUpdater
     {
         $graph = [];
         foreach ($types as $modelType) {
-            foreach ($modelType->getInterfaces() as $interface) {
+            foreach ($modelType->getInterfaces() as $interfaceName) {
+                $interface = $schema->getInterface($interfaceName);
                 if (!$interface instanceof ModelInterfaceType) {
                     continue;
                 }
@@ -173,16 +272,53 @@ class Inheritance implements PluginInterface, SchemaUpdater
             }
         }
         foreach ($graph as $interfaceName => $implementations) {
-            if (count($implementations) < 2) {
+            /* @var ModelInterfaceType $modelInterface */
+            $modelInterface = $schema->getInterface($interfaceName);
+            $modelName = $modelInterface->getModel()->getTypeName();
+            $modelType = $schema->getModel($modelName);
+            $name = static::modelToUnion($modelType);
+            $union = ModelUnionType::create($modelInterface, $name);
+            $implementations[] = $modelName;
+            $union->setTypes($implementations);
+            $union->setTypeResolver([static::class, 'resolveType']);
+            $schema->addUnion($union);
+        }
+    }
+
+    /**
+     * @param Schema $schema
+     * @throws SchemaBuilderException
+     */
+    private static function applyUnions(Schema $schema): void
+    {
+        $queries = [];
+        foreach ($schema->getQueryType()->getFields() as $field) {
+            if ($field instanceof ModelQuery) {
+                $queries[] = $field;
+            }
+        }
+        foreach ($schema->getModels() as $model) {
+            foreach ($model->getFields() as $field) {
+                if ($field instanceof ModelQuery) {
+                    $queries[] = $field;
+                }
+            }
+        }
+        /* @var ModelQuery $query */
+        foreach ($queries as $query) {
+            $typeName = $query->getNamedType();
+            $modelType = $schema->getModel($typeName);
+            // Type was customised. Ignore.
+            if (!$modelType) {
                 continue;
             }
-            $union = ModelUnionType::create(
-                $schema->getInterface($interfaceName),
-                $interfaceName . 'InheritanceUnion'
-            );
-            $union->setTypes($implementations);
-            $union->setTypeResolver([static::class, 'resolveUnion']);
-            $schema->addUnion($union);
+            $unionName = static::modelToUnion($modelType);
+            if ($union = $schema->getUnion($unionName)) {
+                $currentType = $query->getName();
+                // [MyType!]! becomes [MyNewType!]!
+                $newType = preg_replace('/[A-Za-z_]+/', $unionName, $currentType);
+                $query->setType($newType);
+            }
         }
     }
 
@@ -234,14 +370,5 @@ class Inheritance implements PluginInterface, SchemaUpdater
         });
 
         return empty($registeredDescendants);
-    }
-
-    /**
-     * @param ModelType $model
-     * @return string
-     */
-    private static function modelToInterface(ModelType $model): string
-    {
-        return $model->getName() . 'Interface';
     }
 }

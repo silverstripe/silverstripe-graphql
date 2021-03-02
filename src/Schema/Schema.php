@@ -24,7 +24,9 @@ use SilverStripe\GraphQL\Schema\Interfaces\TypePlugin;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
+use SilverStripe\GraphQL\Schema\Type\ModelInterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
+use SilverStripe\GraphQL\Schema\Type\ModelUnionType;
 use SilverStripe\GraphQL\Schema\Type\Scalar;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
@@ -685,6 +687,33 @@ class Schema implements ConfigurationApplier
 
         return $this->getType($name);
     }
+
+    /**
+     * Given a type name, try to resolve it to any model-implementing component
+     *
+     * @param string $typeName
+     * @return Type|null
+     */
+    public function getCanonicalType(string $typeName): ?Type
+    {
+        $type = $this->getTypeOrModel($typeName);
+        if ($type) {
+            return $type;
+        }
+
+        $union = $this->getUnion($typeName);
+        if ($union instanceof ModelUnionType) {
+            return $this->getTypeOrModel($union->getInterface()->getModel()->getTypeName());
+        }
+
+        $interface = $this->getInterface($typeName);
+        if ($interface instanceof ModelInterfaceType) {
+            return $this->getTypeOrModel($interface->getModel()->getTypeName());
+        }
+
+        return null;
+    }
+
 
     /**
      * @return Type[]

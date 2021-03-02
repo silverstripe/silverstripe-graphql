@@ -34,29 +34,6 @@ class InheritanceChain
     private $inst;
 
     /**
-     * @var string
-     * @config
-     */
-    private static $field_name = '_extend';
-
-    /**
-     * @var callable
-     * @config
-     */
-    private static $descendant_typename_creator = [ self::class, 'createDescendantTypename' ];
-
-    /**
-     * @var callable
-     * @config
-     */
-    private static $subtype_name_creator = [ self::class, 'createSubtypeName' ];
-
-    /**
-     * @var array
-     */
-    private $descendantTypeResult;
-
-    /**
      * InheritanceChain constructor.
      * @param string $dataObjectClass
      * @throws SchemaBuilderException
@@ -71,14 +48,6 @@ class InheritanceChain
             DataObject::class
         );
         $this->inst = DataObject::singleton($this->dataObjectClass);
-    }
-
-    /**
-     * @return string
-     */
-    public static function getName(): string
-    {
-        return static::config()->get('field_name');
     }
 
     /**
@@ -148,87 +117,5 @@ class InheritanceChain
     public function getBaseClass(): string
     {
         return $this->inst->baseClass();
-    }
-
-    /**
-     * @param SchemaConfig $schemaContext
-     * @return array|null
-     * @throws ReflectionException
-     * @throws SchemaBuilderException
-     */
-    public function getExtensionType(SchemaConfig $schemaContext): ?array
-    {
-        if ($this->descendantTypeResult) {
-            return $this->descendantTypeResult;
-        }
-        if (empty($this->getDescendantModels())) {
-            return null;
-        }
-        $typeName = call_user_func_array(
-            $this->config()->get('descendant_typename_creator'),
-            [$this->inst, $schemaContext]
-        );
-
-        $nameCreator = $this->config()->get('subtype_name_creator');
-
-        $subtypes = [];
-        foreach ($this->getDescendantModels() as $className) {
-            $model = $schemaContext->createModel($className);
-            if (!$model) {
-                continue;
-            }
-            $modelType = ModelType::create($model);
-            $originalName = $modelType->getName();
-            $newName = call_user_func_array($nameCreator, [$originalName]);
-            $modelType->setName($newName);
-            $subtypes[$originalName] = $modelType;
-        }
-
-        $descendantType = Type::create($typeName, [
-            'fieldResolver' => [static::class, 'resolveExtensionType'],
-        ]);
-
-        $this->descendantTypeResult = [$descendantType, $subtypes];
-
-        return $this->descendantTypeResult;
-    }
-
-
-
-    /**
-     * @param DataObject $dataObject
-     * @param SchemaConfig $schemaContext
-     * @return string
-     * @throws SchemaBuilderException
-     */
-    public static function createDescendantTypename(DataObject $dataObject, SchemaConfig $schemaContext): string
-    {
-        $model = $schemaContext->createModel(get_class($dataObject));
-        Schema::invariant(
-            $model,
-            'No model defined for %s. Cannot create inheritance typename',
-            get_class($dataObject)
-        );
-
-        return $model->getTypeName() . 'Descendants';
-    }
-
-    /**
-     * @param string $modelTypeName
-     * @return string
-     */
-    public static function createSubtypeName(string $modelTypeName): string
-    {
-        return $modelTypeName . 'ExtensionType';
-    }
-
-    /**
-     * Noop, because __extends is just structure
-     * @param $obj
-     * @return DataObject|null
-     */
-    public static function resolveExtensionType($obj): ?DataObject
-    {
-        return $obj;
     }
 }
