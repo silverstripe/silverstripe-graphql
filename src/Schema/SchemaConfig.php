@@ -149,6 +149,16 @@ class SchemaConfig extends Configuration
         return $this->set('fieldMapping', $fields);
     }
 
+    /**
+     * @param string $class
+     * @return bool
+     * @throws SchemaBuilderException
+     */
+    public function hasModel(string $class): bool
+    {
+        return (bool) $this->get(['typeMapping', $class]);
+    }
+
 
     /**
      * @param string $class

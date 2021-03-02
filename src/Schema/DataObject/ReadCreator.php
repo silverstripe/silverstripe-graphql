@@ -36,6 +36,7 @@ class ReadCreator implements OperationCreator
         $plugins = $config['plugins'] ?? [];
         $queryName = $config['name'] ?? null;
         $resolver = $config['resolver'] ?? null;
+        $useUnion = $config['preferUnion'] ?? true;
 
         if (!$queryName) {
             $pluraliser = $model->getSchemaConfig()->getPluraliser();

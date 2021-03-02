@@ -21,19 +21,19 @@ class ResolverFailure extends Exception
         $args = $resolverArgs[1] ?? null;
         $info = $resolverArgs[3] ?? null;
         $message = sprintf(
-            'Failed to resolve field %s on %s.\n\n
-            Path: %s)\n\n
+            'Failed to resolve field %s returning %s.\n\n
+            Got error: %s\n\n
+            Path: %s\n\n
             Resolver %s failed in execution chain:\n\n
             %s\n\n
-            Args: %s\n\n
-            Got error: %s',
+            Args: %s\n\n',
             $this->fieldName($info),
             $this->returnType($info),
+            $error,
             $this->path($info),
             $this->resolver($callable),
             $this->executionChain($info),
-            $this->args($args),
-            $error
+            $this->args($args)
         );
         parent::__construct($message);
     }

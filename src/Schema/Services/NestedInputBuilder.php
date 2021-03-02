@@ -9,7 +9,9 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\InputType;
+use SilverStripe\GraphQL\Schema\Type\ModelInterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
+use SilverStripe\GraphQL\Schema\Type\ModelUnionType;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\ORM\ArrayLib;
@@ -99,7 +101,7 @@ class NestedInputBuilder
     public function populateSchema()
     {
         $typeName = TypeReference::create($this->root->getType())->getNamedType();
-        $type = $this->schema->getTypeOrModel($typeName);
+        $type = $this->schema->getCanonicalType($typeName);
         Schema::invariant(
             $type,
             'Could not find type for query that uses %s. Were plugins applied before the schema was done loading?',
@@ -335,6 +337,8 @@ class NestedInputBuilder
 
         return $fieldName;
     }
+
+
 
     /**
      * @param string $key
