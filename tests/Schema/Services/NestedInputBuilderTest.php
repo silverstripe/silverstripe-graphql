@@ -105,7 +105,7 @@ class NestedInputBuilderTest extends SapphireTest
         $this->assertNotNull($filterType, "Type FakeReviewFilterFields not found in schema");
         $filterFieldObj = $filterType->getFieldByName('author');
         $this->assertNotNull($filterFieldObj, "Field author not found on {$filterType->getName()}");
-        $this->assertEquals('MemberFilterFields', $fieldObj->filterFieldObj());
+        $this->assertEquals('MemberFilterFields', $filterFieldObj->filterFieldObj());
     }
 
     private function assertSchema(array $graph, Schema $schema)
