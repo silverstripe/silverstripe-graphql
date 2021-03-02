@@ -27,12 +27,6 @@ class NestedInputBuilder
     const SELF_REFERENTIAL = '--self--';
 
     /**
-     * @var int
-     * @config
-     */
-    private static $max_nesting = 3;
-
-    /**
      * @var string
      * @config
      */
