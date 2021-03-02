@@ -156,7 +156,7 @@ class NestedInputBuilder
         }
         $this->persist($type->getName(), $map);
         return $map;
-     }
+    }
 
     /**
      * @param Type $type
