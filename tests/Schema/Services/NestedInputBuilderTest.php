@@ -101,13 +101,11 @@ class NestedInputBuilderTest extends SapphireTest
                 $model->addField('firstName');
             });
         $schema->createStoreableSchema();
-        $this->assertSchema([
-            'FakeReviewFilterFields' => [
-                'id' => 'QueryFilterIDComparator',
-                'content' => 'QueryFilterStringComparator',
-                'author' => 'MemberFilterFields'
-            ]
-        ], $schema);
+        $filterType = $schema->getType('FakeReviewFilterFields');
+        $this->assertNotNull($filterType, "Type FakeReviewFilterFields not found in schema");
+        $filterFieldObj = $filterType->getFieldByName('author');
+        $this->assertNotNull($filterFieldObj, "Field author not found on {$filterType->getName()}");
+        $this->assertEquals('MemberFilterFields', $fieldObj->filterFieldObj());
     }
 
     private function assertSchema(array $graph, Schema $schema)
