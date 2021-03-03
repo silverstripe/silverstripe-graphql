@@ -16,8 +16,8 @@ class <?=$interface->getName(); ?> extends InterfaceType
         $resolver = <?=$interface->getEncodedTypeResolver()->encode(); ?>;
         parent::__construct([
             'name' => '<?=$interface->getName(); ?>',
-            'resolveType' => function ($obj) use ($resolver) {
-                $type = call_user_func_array($resolver->toClosure(), [$obj]);
+            'resolveType' => function (...$args) use ($resolver) {
+                $type = call_user_func_array($resolver->toClosure(), $args);
                 return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName']; ?>', $type]);
             },
         <?php if (!empty($interface->getDescription())) : ?>

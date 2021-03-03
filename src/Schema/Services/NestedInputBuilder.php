@@ -27,12 +27,6 @@ class NestedInputBuilder
     const SELF_REFERENTIAL = '--self--';
 
     /**
-     * @var int
-     * @config
-     */
-    private static $max_nesting = 3;
-
-    /**
      * @var string
      * @config
      */
@@ -119,17 +113,15 @@ class NestedInputBuilder
 
     /**
      * @param Type $type
-     * @param int $level
      * @return array
      * @throws SchemaBuilderException
      */
-    protected function buildAllFieldsConfig(Type $type, int $level = 0): array
+    protected function buildAllFieldsConfig(Type $type): array
     {
         $existing = $this->fetch($type->getName());
         if ($existing) {
             return $existing;
         }
-        $level++;
         $map = [];
         foreach ($type->getFields() as $fieldObj) {
             if (!$this->shouldAddField($type, $fieldObj)) {
@@ -138,21 +130,31 @@ class NestedInputBuilder
             $namedType = $fieldObj->getNamedType();
             $nestedType = $this->schema->getTypeOrModel($namedType);
             if ($nestedType) {
-                if ($level > $this->config()->get('max_nesting')) {
-                    continue;
-                }
+                $seen = $this->schema->getState()->get([
+                  static::class,
+                  'seenConnections',
+                  $type->getName(),
+                  $fieldObj->getName()
+                ]);
                 // Prevent stupid recursion in self-referential relationships, e.g. Parent
                 if ($namedType === $type->getName()) {
                     $map[$fieldObj->getName()] = self::SELF_REFERENTIAL;
+                } elseif ($seen) {
+                    continue;
                 } else {
-                    $map[$fieldObj->getName()] = $this->buildAllFieldsConfig($nestedType, $level);
+                    $this->schema->getState()->set([
+                      static::class,
+                      'seenConnections',
+                      $type->getName(),
+                      $fieldObj->getName()
+                    ], true);
+                    $map[$fieldObj->getName()] = $this->buildAllFieldsConfig($nestedType);
                 }
             } else {
                 $map[$fieldObj->getName()] = true;
             }
         }
         $this->persist($type->getName(), $map);
-
         return $map;
     }
 

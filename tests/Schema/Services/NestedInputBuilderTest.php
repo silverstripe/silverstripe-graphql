@@ -79,29 +79,33 @@ class NestedInputBuilderTest extends SapphireTest
     /**
      * @throws SchemaBuilderException
      */
-    public function testNestedInputBuilderBuildsRepeatedRelationsFilter()
+    public function testNestedInputBuilderBuildsCyclicFilterFields()
     {
-        $schema = (new TestSchemaBuilder())->boot('multiConnectionBuilder');
+        $schema = (new TestSchemaBuilder())->boot('filterfieldbuilder');
         $schema
             ->addModelbyClassName(FakeProductPage::class, function (ModelType $model) {
                 $model->addField('title');
                 $model->addField('products', ['plugins' => ['filter' => true]]);
-                $model->addField('featuredProducts', ['plugins' => ['filter' => true]]);
             })
             ->addModelbyClassName(FakeProduct::class, function (ModelType $model) {
                 $model->addField('title');
                 $model->addField('parent');
-                $model->addField('featuredOn');
+                $model->addField('reviews');
+                $model->addField('relatedProducts');
+            })
+            ->addModelbyClassName(FakeReview::class, function (ModelType $model) {
+                $model->addField('content');
+                $model->addField('author');
+            })
+            ->addModelbyClassName(Member::class, function (ModelType $model) {
+                $model->addField('firstName');
             });
         $schema->createStoreableSchema();
-        $filterType = $schema->getType('FakeProductPageFilterFields');
-        $this->assertNotNull($filterType, "Type FakeProductPageFilterFields not found in schema");
-        $productsFilter = $filterType->getFieldByName('products');
-        $this->assertNotNull($productsFilter, "Field products not found on {$filterType->getName()}");
-        $this->assertEquals('FakeProductFilterFields', $productsFilter->getType());
-        $featuredFilter = $filterType->getFieldByName('featuredProducts');
-        $this->assertNotNull($featuredFilter, "Field featuredProducts not found on {$filterType->getName()}");
-        $this->assertEquals('FakeProductFilterFields', $featuredFilter->getType());
+        $filterType = $schema->getType('FakeReviewFilterFields');
+        $this->assertNotNull($filterType, "Type FakeReviewFilterFields not found in schema");
+        $filterFieldObj = $filterType->getFieldByName('author');
+        $this->assertNotNull($filterFieldObj, "Field author not found on {$filterType->getName()}");
+        $this->assertEquals('MemberFilterFields', $filterFieldObj->getType());
     }
 
     private function assertSchema(array $graph, Schema $schema)
