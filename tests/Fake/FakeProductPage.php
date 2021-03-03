@@ -22,8 +22,8 @@ class FakeProductPage extends DataObject implements TestOnly
     private static $table_name = 'FakeProductPage_Test';
 
     private static $has_many = [
-        'Products' => FakeProduct::class,
-        'FeaturedProducts' => FakeProduct::class,
+        'Products' => FakeProduct::class . '.Parent',
+        'FeaturedProducts' => FakeProduct::class . '.FeaturedOn',
     ];
 
     private static $owns = [
