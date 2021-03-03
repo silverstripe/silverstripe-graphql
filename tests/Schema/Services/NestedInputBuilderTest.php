@@ -135,7 +135,7 @@ class NestedInputBuilderTest extends SapphireTest
         $this->assertNotNull($featuredFilter, "Field featuredProducts not found on {$filterType->getName()}");
         $this->assertEquals('FakeProductFilterFields', $featuredFilter->getType());
     }
-
+  
     private function assertSchema(array $graph, Schema $schema)
     {
         foreach ($graph as $typeName => $fields) {
