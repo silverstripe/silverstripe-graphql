@@ -76,6 +76,38 @@ class NestedInputBuilderTest extends SapphireTest
         ], $schema);
     }
 
+    /**
+     * @throws SchemaBuilderException
+     */
+    public function testNestedInputBuilderBuildsCyclicFilterFields()
+    {
+        $schema = (new TestSchemaBuilder())->boot('filterfieldbuilder');
+        $schema
+            ->addModelbyClassName(FakeProductPage::class, function (ModelType $model) {
+                $model->addField('title');
+                $model->addField('products', ['plugins' => ['filter' => true]]);
+            })
+            ->addModelbyClassName(FakeProduct::class, function (ModelType $model) {
+                $model->addField('title');
+                $model->addField('parent');
+                $model->addField('reviews');
+                $model->addField('relatedProducts');
+            })
+            ->addModelbyClassName(FakeReview::class, function (ModelType $model) {
+                $model->addField('content');
+                $model->addField('author');
+            })
+            ->addModelbyClassName(Member::class, function (ModelType $model) {
+                $model->addField('firstName');
+            });
+        $schema->createStoreableSchema();
+        $filterType = $schema->getType('FakeReviewFilterFields');
+        $this->assertNotNull($filterType, "Type FakeReviewFilterFields not found in schema");
+        $filterFieldObj = $filterType->getFieldByName('author');
+        $this->assertNotNull($filterFieldObj, "Field author not found on {$filterType->getName()}");
+        $this->assertEquals('MemberFilterFields', $filterFieldObj->getType());
+    }
+
     private function assertSchema(array $graph, Schema $schema)
     {
         foreach ($graph as $typeName => $fields) {
