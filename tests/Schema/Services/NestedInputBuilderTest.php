@@ -108,6 +108,34 @@ class NestedInputBuilderTest extends SapphireTest
         $this->assertEquals('MemberFilterFields', $filterFieldObj->getType());
     }
 
+    /**
+     * @throws SchemaBuilderException
+     */
+    public function testNestedInputBuilderBuildsRepeatedRelationsFilter()
+    {
+        $schema = (new TestSchemaBuilder())->boot('multiConnectionBuilder');
+        $schema
+            ->addModelbyClassName(FakeProductPage::class, function (ModelType $model) {
+                $model->addField('title');
+                $model->addField('products', ['plugins' => ['filter' => true]]);
+                $model->addField('featuredProducts', ['plugins' => ['filter' => true]]);
+            })
+            ->addModelbyClassName(FakeProduct::class, function (ModelType $model) {
+                $model->addField('title');
+                $model->addField('parent');
+                $model->addField('featuredOn');
+            });
+        $schema->createStoreableSchema();
+        $filterType = $schema->getType('FakeProductPageFilterFields');
+        $this->assertNotNull($filterType, "Type FakeProductPageFilterFields not found in schema");
+        $productsFilter = $filterType->getFieldByName('products');
+        $this->assertNotNull($productsFilter, "Field products not found on {$filterType->getName()}");
+        $this->assertEquals('FakeProductFilterFields', $productsFilter->getType());
+        $featuredFilter = $filterType->getFieldByName('featuredProducts');
+        $this->assertNotNull($featuredFilter, "Field featuredProducts not found on {$filterType->getName()}");
+        $this->assertEquals('FakeProductFilterFields', $featuredFilter->getType());
+    }
+  
     private function assertSchema(array $graph, Schema $schema)
     {
         foreach ($graph as $typeName => $fields) {
