@@ -222,7 +222,14 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
 
         $this->mergePlugins($type->getPlugins());
 
-        $this->setInterfaces(array_merge($this->interfaces, $type->getInterfaces()));
+        $this->setInterfaces(
+            array_unique(
+                array_merge(
+                    $this->interfaces,
+                    $type->getInterfaces()
+                )
+            )
+        );
 
         return $this;
     }

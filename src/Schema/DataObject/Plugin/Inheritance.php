@@ -43,11 +43,7 @@ class Inheritance implements PluginInterface, SchemaUpdater
     {
         $baseModels = [];
         $leafModels = [];
-        $dataobjectTypes = array_filter($schema->getModels(), function (ModelType $modelType) {
-            $class = $modelType->getModel()->getSourceClass();
-            return is_subclass_of($class, DataObject::class);
-        });
-        foreach ($dataobjectTypes as $modelType) {
+        foreach (self::getDataObjectTypes($schema) as $modelType) {
             $class = $modelType->getModel()->getSourceClass();
             if (!is_subclass_of($class, DataObject::class)) {
                 continue;
@@ -67,15 +63,10 @@ class Inheritance implements PluginInterface, SchemaUpdater
             self::fillDescendants($schema, $class);
             self::createInterfaces($schema, $class);
         }
-        $baseInterface = self::createBaseInterface($schema, $baseModels);
-        if ($baseInterface) {
-            $schema->addInterface($baseInterface);
-            foreach ($dataobjectTypes as $modelType) {
-                $modelType->addInterface($baseInterface->getName());
-            }
-        }
 
-        self::createUnions($schema, $dataobjectTypes);
+        self::applyBaseInterface($schema, $baseModels);
+
+        self::createUnions($schema);
         self::applyUnions($schema);
     }
 
@@ -123,6 +114,18 @@ class Inheritance implements PluginInterface, SchemaUpdater
 
     /**
      * @param Schema $schema
+     * @return ModelType[]
+     */
+    private static function getDataObjectTypes(Schema $schema): array
+    {
+        return array_filter($schema->getModels(), function (ModelType $modelType) {
+            $class = $modelType->getModel()->getSourceClass();
+            return is_subclass_of($class, DataObject::class);
+        });
+    }
+
+    /**
+     * @param Schema $schema
      * @param string $class
      * @throws SchemaBuilderException
      */
@@ -142,7 +145,9 @@ class Inheritance implements PluginInterface, SchemaUpdater
             if ($parentModel->getFieldByName($fieldObj->getName())) {
                 continue;
             }
-            $fieldName = $fieldObj instanceof ModelField ? $fieldObj->getPropertyName() : $fieldObj->getName();
+            $fieldName = $fieldObj instanceof ModelField
+                ? $fieldObj->getPropertyName()
+                : $fieldObj->getName();
             // If the field is unique to the descendant, skip it.
             if ($parentModel->getModel()->hasField($fieldName)) {
                 $clone = clone $fieldObj;
@@ -197,21 +202,33 @@ class Inheritance implements PluginInterface, SchemaUpdater
         foreach ($interfaceStack as $ancestorInterface) {
             $modelType->addInterface($ancestorInterface->getName());
         }
+        // Models with no exposed subclasses don't get interfaces. There's no
+        // value since it can never be reused.
         if (self::isLeafModel($class, $schema)) {
             return;
         }
 
         $modelStack[] = $modelType;
-        $interface = ModelInterfaceType::create($modelType->getModel(), static::modelToInterface($modelType));
+        $interface = ModelInterfaceType::create(
+            $modelType->getModel(),
+            static::modelToInterface($modelType)
+        );
         $interface->setTypeResolver([static::class, 'resolveType']);
+
+        // Start by adding all the fields in the model
         foreach ($modelType->getFields() as $fieldObj) {
             $interface->addField($fieldObj->getName(), $fieldObj->getType());
         }
+
+        // Remove any fields that are exposed in ancestors, ensuring
+        // each interface only contains "native" fields
         foreach ($interfaceStack as $ancestorInterface) {
             foreach ($ancestorInterface->getFields() as $fieldObj) {
                 $interface->removeField($fieldObj->getName());
             }
         }
+
+        // If the interface has no fields, just skip it and proceed down the tree
         if (!empty($interface->getFields())) {
             $schema->addInterface($interface);
             $interfaceStack[] = $interface;
@@ -226,10 +243,14 @@ class Inheritance implements PluginInterface, SchemaUpdater
     /**
      * @param Schema $schema
      * @param string[] $baseModels
-     * @return InterfaceType|null
+     * @return void
      */
-    private static function createBaseInterface(Schema $schema, array $baseModels): ?InterfaceType
+    private static function applyBaseInterface(
+        Schema $schema,
+        array $baseModels
+    ): void
     {
+        $allTypes = self::getDataObjectTypes($schema);
         $allFields = [];
         foreach ($baseModels as $class) {
             $fields = [];
@@ -239,27 +260,44 @@ class Inheritance implements PluginInterface, SchemaUpdater
             }
             $allFields[] = $fields;
         }
-        $commonFields = array_intersect_assoc(...$allFields);
+        if (count($allFields) < 2) {
+            return;
+        }
+        $compare = array_shift($allFields);
+        $commonFields = array_intersect_assoc($compare, ...$allFields);
         if (empty($commonFields)) {
-            return null;
+            return;
         }
 
-        $interface = InterfaceType::create('DataObjectInterface');
-        $interface->applyConfig(['fields' => $commonFields]);
-        $interface->setDescription('The common interface shared by all DataObject types');
-        $interface->setTypeResolver([static::class, 'resolveType']);
+        $baseInterface = InterfaceType::create('DataObjectInterface');
+        $baseInterface->applyConfig(['fields' => $commonFields]);
+        $baseInterface->setDescription('The common interface shared by all DataObject types');
+        $baseInterface->setTypeResolver([static::class, 'resolveType']);
+        $schema->addInterface($baseInterface);
+        foreach ($allTypes as $modelType) {
+            $modelType->addInterface($baseInterface->getName());
+        }
 
-        return $interface;
+        // All the fields that were found to be common to the base interface
+        // should be removed from all the base models, as they've been promoted to god level
+        foreach ($baseModels as $class) {
+            $modelType = $schema->getModelByClassName($class);
+            $interface = $schema->getInterface(static::modelToInterface($modelType));
+            if ($interface) {
+                foreach ($baseInterface->getFields() as $fieldObj) {
+                    $interface->removeField($fieldObj->getName());
+                }
+            }
+        }
     }
 
     /**
      * @param Schema $schema
-     * @param ModelType[] $types
      */
-    private static function createUnions(Schema $schema, array $types)
+    private static function createUnions(Schema $schema)
     {
         $graph = [];
-        foreach ($types as $modelType) {
+        foreach (self::getDataObjectTypes($schema) as $modelType) {
             foreach ($modelType->getInterfaces() as $interfaceName) {
                 $interface = $schema->getInterface($interfaceName);
                 if (!$interface instanceof ModelInterfaceType) {
@@ -278,7 +316,7 @@ class Inheritance implements PluginInterface, SchemaUpdater
             $modelType = $schema->getModel($modelName);
             $name = static::modelToUnion($modelType);
             $union = ModelUnionType::create($modelInterface, $name);
-            $implementations[] = $modelName;
+            //$implementations[] = $modelName;
             $union->setTypes($implementations);
             $union->setTypeResolver([static::class, 'resolveType']);
             $schema->addUnion($union);
@@ -332,27 +370,35 @@ class Inheritance implements PluginInterface, SchemaUpdater
      */
     private static function isBaseModel(string $class, Schema $schema): bool
     {
+        // If this is the base class, and it's readable, it's a base model
         $chain = InheritanceChain::create($class, $schema);
         if ($chain->getBaseClass() === $class) {
-            return true;
+            return self::isReadable($schema, $class);
         }
 
-        // Check if any ancestors are queryable.
+        // This is a subclass. If any ancestors are readable, it's not a base model.
         $ancestors = $chain->getAncestralModels();
-        $hasReadableAncestor = false;
         foreach ($ancestors as $ancestor) {
-            $existing = $schema->getModelByClassName($ancestor);
-            if ($existing) {
-                foreach ($existing->getOperations() as $operation) {
-                    if ($operation instanceof ModelQuery) {
-                        $hasReadableAncestor = true;
-                        break 2;
-                    }
-                }
+            if (self::isReadable($schema, $ancestor)) {
+                return false;
             }
         }
+        // Subclass with no readable ancestors. If it's readable, it's the base model.
+        return self::isReadable($schema, $class);
+    }
 
-        return !$hasReadableAncestor;
+    private static function isReadable(Schema $schema, string $class): bool
+    {
+        $type = $schema->getModelByClassName($class);
+        if (!$type) {
+            return false;
+        }
+        foreach ($type->getOperations() as $operation) {
+            if ($operation instanceof ModelQuery) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
