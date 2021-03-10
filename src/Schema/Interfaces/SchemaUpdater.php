@@ -11,5 +11,5 @@ use SilverStripe\GraphQL\Schema\Schema;
  */
 interface SchemaUpdater
 {
-    public static function updateSchema(Schema $schema): void;
+    public static function updateSchema(Schema $schem, array $config = []): void;
 }

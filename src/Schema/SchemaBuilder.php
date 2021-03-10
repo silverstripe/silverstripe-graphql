@@ -108,6 +108,7 @@ class SchemaBuilder
      * @return GraphQLSchema
      * @throws SchemaBuilderException
      * @throws SchemaNotFoundException
+     * @throws EmptySchemaException
      */
     public function buildByName(string $key, $clear = false): GraphQLSchema
     {

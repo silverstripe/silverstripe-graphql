@@ -16,12 +16,12 @@ use SilverStripe\EventDispatcher\Symfony\Event;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\PersistedQuery\RequestProcessor;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
+use SilverStripe\GraphQL\QueryHandler\QueryStateProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\QueryHandler\RequestContextProvider;
-use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
+use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\QueryHandler\TokenContextProvider;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
-use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
@@ -305,8 +305,9 @@ class Controller extends BaseController
                 ->addContextProvider(RequestContextProvider::create($request));
         $schemaContext = SchemaBuilder::singleton()->getConfig($this->getSchemaKey());
         if ($schemaContext) {
-            $handler->addContextProvider(SchemaContextProvider::create($schemaContext));
+            $handler->addContextProvider(SchemaConfigProvider::create($schemaContext));
         }
+        $handler->addContextProvider(QueryStateProvider::create());
     }
 
     /**

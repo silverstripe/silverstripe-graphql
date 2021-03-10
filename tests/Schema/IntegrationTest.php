@@ -9,7 +9,7 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
-use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
+use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\Query;
@@ -1021,7 +1021,7 @@ GRAPHQL;
         $graphQLSchena = $builder->fetchSchema($schema);
         $handler = new QueryHandler();
         $schemaContext = $builder->getConfig($schema->getSchemaKey());
-        $handler->addContextProvider(SchemaContextProvider::create($schemaContext));
+        $handler->addContextProvider(SchemaConfigProvider::create($schemaContext));
         try {
             return $handler->query($graphQLSchena, $query, $variables);
         } catch (Exception $e) {

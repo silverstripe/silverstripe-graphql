@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Type\Type;
-use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
+use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
@@ -108,12 +108,12 @@ class QuerySort extends AbstractQuerySortPlugin
             }
             $filterArgs = $args[$fieldName] ?? [];
             $paths = NestedInputBuilder::buildPathsFromArgs($filterArgs);
-            $schemaContext = SchemaContextProvider::get($context);
+            $schemaContext = SchemaConfigProvider::get($context);
             if (!$schemaContext) {
                 throw new Exception(sprintf(
                     'No schemaContext was present in the resolver context. Make sure the %s class is added
                     to the query handler',
-                    SchemaContextProvider::class
+                    SchemaConfigProvider::class
                 ));
             }
 
