@@ -22,7 +22,7 @@ class Resolver
      * @return array|bool|int|mixed|DataList|DataObject|DBField|SS_List|string|null
      * @throws SchemaBuilderException
      */
-    public static function resolve($obj, array $args = [], array $context = [], ?ResolveInfo $info = null)
+    public static function resolve($obj, $args = [], $context = [], ?ResolveInfo $info = null)
     {
         $fieldName = $info->fieldName;
         $context = SchemaContextProvider::get($context);

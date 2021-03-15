@@ -4,16 +4,25 @@ Name: 'graphql-schema-global'
 SilverStripe\GraphQL\Schema\Schema:
   schemas:
     '*':
+      scalars:
+        JSON:
+          serialiser: 'SilverStripe\GraphQL\Schema\Resolver\JSONResolver::serialise'
+          valueParser: 'SilverStripe\GraphQL\Schema\Resolver\JSONResolver::parseValue'
+          literalParser: 'SilverStripe\GraphQL\Schema\Resolver\JSONResolver::parseLiteral'
       config:
         resolverStrategy: 'SilverStripe\GraphQL\Schema\Resolver\DefaultResolverStrategy::getResolverMethod'
         defaultResolver: 'SilverStripe\GraphQL\Schema\Resolver\DefaultResolver::defaultFieldResolver'
         modelCreators:
           - 'SilverStripe\GraphQL\Schema\DataObject\ModelCreator'
+        inheritance:
+          useUnionQueries: true
         modelConfig:
           DataObject:
             type_formatter: 'SilverStripe\Core\ClassInfo::shortName'
             type_prefix: ''
             type_mapping: []
+            default_fields:
+              ID: ID
             plugins:
               inheritance: true
               inheritedPlugins:

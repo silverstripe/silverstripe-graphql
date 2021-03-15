@@ -205,16 +205,6 @@ class QueryHandler implements
     }
 
     /**
-     * @return array
-     */
-    protected function getContextDefaults(): array
-    {
-        return [
-            self::CURRENT_USER => $this->getMemberContext(),
-        ];
-    }
-
-    /**
      * Call middleware to evaluate a graphql query
      *
      * @param GraphQLSchema $schema

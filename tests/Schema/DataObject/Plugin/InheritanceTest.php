@@ -222,19 +222,19 @@ class InheritanceTest extends SapphireTest
         $a1a = $schema->getModelByClassName(A1a::class);
         $this->assertNotNull($a1a);
         // A1a is a leaf. No interface.
-        $this->assertNull($schema->getInterface(Inheritance::modelToInterface($a1a)));
+        $this->assertNull($schema->getInterface(Inheritance::interfaceName($a1a->getName())));
         $this->assertInterfaces(['DataObjectInterface', 'A1Interface', 'AInterface'], $a1a);
 
         $a1 = $schema->getModelByClassName(A1::class);
         $this->assertNotNull($a1);
-        $interface = $schema->getInterface(Inheritance::modelToInterface($a1));
+        $interface = $schema->getInterface(Inheritance::interfaceName($a1->getName()));
         $this->assertNotNull($interface);
         $this->assertFields(['A1Field'], $interface);
         $this->assertInterfaces(['DataObjectInterface', 'A1Interface', 'AInterface'], $a1);
 
         $a = $schema->getModelByClassName(A::class);
         $this->assertNotNull($a);
-        $interface = $schema->getInterface(Inheritance::modelToInterface($a));
+        $interface = $schema->getInterface(Inheritance::interfaceName($a->getName()));
         $this->assertNotNull($interface);
         $this->assertFields(['AField'], $interface);
         $this->assertInterfaces(['DataObjectInterface', 'AInterface'], $a);
@@ -244,50 +244,50 @@ class InheritanceTest extends SapphireTest
 
         $a2 = $schema->getModelByClassName(A2::class);
         $this->assertNotNull($a2);
-        $interface = $schema->getInterface(Inheritance::modelToInterface($a2));
+        $interface = $schema->getInterface(Inheritance::interfaceName($a2->getName()));
         // There is no interface for A2 because it's a leaf. A2a was never added.
         $this->assertNull($interface);
         $this->assertInterfaces(['DataObjectInterface', 'AInterface'], $a2);
 
         $b1a = $schema->getModelByClassName(B1a::class);
         $this->assertNotNull($b1a);
-        $interface = $schema->getInterface(Inheritance::modelToInterface($b1a));
+        $interface = $schema->getInterface(Inheritance::interfaceName($b1a->getName()));
         $this->assertNull($interface);
         $this->assertInterfaces(['DataObjectInterface', 'BInterface'], $b1a);
 
         $b1 = $schema->getModelByClassName(B1::class);
         $this->assertNotNull($b1);
-        $interface = $schema->getInterface(Inheritance::modelToInterface($b1));
+        $interface = $schema->getInterface(Inheritance::interfaceName($b1->getName()));
         $this->assertNull($interface);
 
         $b = $schema->getModelByClassName(B::class);
         $this->assertNotNull($b);
-        $interface = $schema->getInterface(Inheritance::modelToInterface($b));
+        $interface = $schema->getInterface(Inheritance::interfaceName($b->getName()));
         $this->assertNotNull($interface);
         $this->assertFields(['BField'], $interface);
         $this->assertInterfaces(['DataObjectInterface', 'BInterface'], $b);
 
         $b1b = $schema->getModelByClassName(B1b::class);
         $this->assertNotNull($b1b);
-        $interface = $schema->getInterface(Inheritance::modelToInterface($b1b));
+        $interface = $schema->getInterface(Inheritance::interfaceName($b1b->getName()));
         $this->assertNull($interface);
         $this->assertInterfaces(['DataObjectInterface', 'BInterface'], $b1b);
 
         $c1 = $schema->getModelByClassName(C1::class);
         $this->assertNotNull($c1);
-        $interface = $schema->getInterface(Inheritance::modelToInterface($c1));
+        $interface = $schema->getInterface(Inheritance::interfaceName($c1->getName()));
         $this->assertNull($interface);
         $this->assertInterfaces(['DataObjectInterface', 'CInterface'], $c1);
 
         $c2a = $schema->getModelByClassName(C2a::class);
         $this->assertNotNull($c2a);
-        $interface = $schema->getInterface(Inheritance::modelToInterface($c2a));
+        $interface = $schema->getInterface(Inheritance::interfaceName($c2a->getName()));
         $this->assertNull($interface);
         $this->assertInterfaces(['DataObjectInterface', 'C2Interface', 'CInterface'], $c2a);
 
         $c2 = $schema->getModelByClassName(C2::class);
         $this->assertNotNull($c2);
-        $interface = $schema->getInterface(Inheritance::modelToInterface($c2));
+        $interface = $schema->getInterface(Inheritance::interfaceName($c2->getName()));
         $this->assertFields(['C2Field'], $interface);
         $this->assertInterfaces(['DataObjectInterface', 'C2Interface', 'CInterface'], $c2);
     }

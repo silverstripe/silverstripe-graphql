@@ -141,13 +141,21 @@ class DataObjectModel implements
 
     /**
      * @return array
+     * @throws SchemaBuilderException
      */
     public function getDefaultFields(): array
     {
-        $idField = $this->getFieldAccessor()->formatField('ID');
-        return [
-            $idField => 'ID',
-        ];
+        $fields = $this->getModelConfiguration()->getDefaultFields();
+        $map = [];
+        foreach ($fields as $name => $type) {
+            if ($type === false) {
+                continue;
+            }
+            $formatted = $this->getFieldAccessor()->formatField($name);
+            $map[$formatted] = $type;
+        }
+
+        return $map;
     }
 
     /**

@@ -65,6 +65,15 @@ class ModelConfiguration extends Configuration
     }
 
     /**
+     * @return array
+     * @throws SchemaBuilderException
+     */
+    public function getDefaultFields(): array
+    {
+        return $this->get('default_fields', []);
+    }
+
+    /**
      * @param string $class
      * @return string
      * @throws SchemaBuilderException

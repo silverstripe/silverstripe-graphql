@@ -3,6 +3,8 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceChain;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -18,6 +20,7 @@ use SilverStripe\GraphQL\Schema\Type\ModelUnionType;
 use SilverStripe\ORM\DataObject;
 use ReflectionException;
 use Exception;
+use SilverStripe\ORM\SS_List;
 
 /**
  * Adds inheritance fields to a DataObject type, and exposes its ancestry
@@ -67,7 +70,9 @@ class Inheritance implements PluginInterface, SchemaUpdater
         self::applyBaseInterface($schema, $baseModels);
 
         self::createUnions($schema);
-        self::applyUnions($schema);
+        if ($schema->getConfig()->get('inheritance.useUnionQueries')) {
+            self::applyUnions($schema);
+        }
     }
 
     /**
@@ -80,9 +85,9 @@ class Inheritance implements PluginInterface, SchemaUpdater
     public static function resolveType($obj, $context): string
     {
         $class = get_class($obj);
-        $schemaContext = SchemaContextProvider::get($context);
+        $schemaContext = SchemaConfigProvider::get($context);
 
-        while (!$schemaContext->hasModel($class)) {
+        while ($class && !$schemaContext->hasModel($class)) {
             if ($class === DataObject::class) {
                 throw new Exception(sprintf(
                     'No models were registered in the ancestry of %s',
@@ -90,26 +95,31 @@ class Inheritance implements PluginInterface, SchemaUpdater
                 ));
             }
             $class = get_parent_class($class);
+            Schema::invariant(
+                $class,
+                'Could not resolve type for %s.',
+                get_class($obj)
+            );
         }
         return $schemaContext->getTypeNameForClass($class);
     }
 
     /**
-     * @param ModelType $model
+     * @param string $modelName
      * @return string
      */
-    public static function modelToInterface(ModelType $model): string
+    public static function interfaceName(string $modelName): string
     {
-        return $model->getName() . 'Interface';
+        return $modelName . 'Interface';
     }
 
     /**
-     * @param ModelType $model
+     * @param string $modelName
      * @return string
      */
-    public static function modelToUnion(ModelType $model): string
+    public static function unionName(string $modelName): string
     {
-        return $model->getName() . 'InheritanceUnion';
+        return $modelName . 'InheritanceUnion';
     }
 
     /**
@@ -211,7 +221,7 @@ class Inheritance implements PluginInterface, SchemaUpdater
         $modelStack[] = $modelType;
         $interface = ModelInterfaceType::create(
             $modelType->getModel(),
-            static::modelToInterface($modelType)
+            static::interfaceName($modelType->getName())
         );
         $interface->setTypeResolver([static::class, 'resolveType']);
 
@@ -282,7 +292,7 @@ class Inheritance implements PluginInterface, SchemaUpdater
         // should be removed from all the base models, as they've been promoted to god level
         foreach ($baseModels as $class) {
             $modelType = $schema->getModelByClassName($class);
-            $interface = $schema->getInterface(static::modelToInterface($modelType));
+            $interface = $schema->getInterface(static::interfaceName($modelType->getName()));
             if ($interface) {
                 foreach ($baseInterface->getFields() as $fieldObj) {
                     $interface->removeField($fieldObj->getName());
@@ -314,7 +324,7 @@ class Inheritance implements PluginInterface, SchemaUpdater
             $modelInterface = $schema->getInterface($interfaceName);
             $modelName = $modelInterface->getModel()->getTypeName();
             $modelType = $schema->getModel($modelName);
-            $name = static::modelToUnion($modelType);
+            $name = static::unionName($modelType->getName());
             $union = ModelUnionType::create($modelInterface, $name);
             //$implementations[] = $modelName;
             $union->setTypes($implementations);
@@ -350,11 +360,11 @@ class Inheritance implements PluginInterface, SchemaUpdater
             if (!$modelType) {
                 continue;
             }
-            $unionName = static::modelToUnion($modelType);
+            $unionName = static::unionName($modelType->getName());
             if ($union = $schema->getUnion($unionName)) {
-                $currentType = $query->getName();
+                $currentType = $query->getType();
                 // [MyType!]! becomes [MyNewType!]!
-                $newType = preg_replace('/[A-Za-z_]+/', $unionName, $currentType);
+                $newType = preg_replace('/[A-Za-z_]+/', $unionName, $currentType    );
                 $query->setType($newType);
             }
         }
