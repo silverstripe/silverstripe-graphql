@@ -7,7 +7,7 @@
         "silverstripe/framework": "^4",
         "silverstripe/vendor-plugin": "^1.0",
         "webonyx/graphql-php": "^14.0",
-        "silverstripe/event-dispatcher": "^0.1.0"
+        "silverstripe/event-dispatcher": "^0.1.1"
     },
     "require-dev": {
         "sminnee/phpunit": "^5.7",
