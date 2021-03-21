@@ -664,6 +664,17 @@ class Schema implements ConfigurationApplier
     }
 
     /**
+     * @param string $type
+     * @return $this
+     */
+    public function removeType(string $type): Schema
+    {
+        unset($this->types[$type]);
+
+        return $this;
+    }
+
+    /**
      * @param string $name
      * @return Type|null
      */
@@ -703,12 +714,12 @@ class Schema implements ConfigurationApplier
 
         $union = $this->getUnion($typeName);
         if ($union instanceof ModelUnionType) {
-            return $this->getTypeOrModel($union->getInterface()->getModel()->getTypeName());
+            return $union->getCanonicalModel();
         }
 
         $interface = $this->getInterface($typeName);
         if ($interface instanceof ModelInterfaceType) {
-            return $this->getTypeOrModel($interface->getModel()->getTypeName());
+            return $interface;
         }
 
         return null;
@@ -761,6 +772,17 @@ class Schema implements ConfigurationApplier
     }
 
     /**
+     * @param string $name
+     * @return $this
+     */
+    public function removeEnum(string $name): self
+    {
+        unset($this->enums[$name]);
+
+        return $this;
+    }
+
+    /**
      * @return Enum[]
      */
     public function getEnums(): array
@@ -801,6 +823,17 @@ class Schema implements ConfigurationApplier
     public function addScalar(Scalar $scalar): self
     {
         $this->scalars[$scalar->getName()] = $scalar;
+
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return $this
+     */
+    public function removeScalar(string $name): self
+    {
+        unset($this->scalars[$name]);
 
         return $this;
     }
@@ -862,6 +895,30 @@ class Schema implements ConfigurationApplier
             $callback($model);
         }
         return $this->addModel($model);
+    }
+
+    /**
+     * @param string $class
+     * @return $this
+     */
+    public function removeModelByClassName(string $class): self
+    {
+        if ($model = $this->getModelByClassName($class)) {
+            $this->removeModel($model->getName());
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return $this
+     */
+    public function removeModel(string $name): self
+    {
+        unset($this->models[$name]);
+
+        return $this;
     }
 
     /**
@@ -940,6 +997,17 @@ class Schema implements ConfigurationApplier
 
     /**
      * @param string $name
+     * @return $this
+     */
+    public function removeInterface(string $name): self
+    {
+        unset($this->interfaces[$name]);
+
+        return $this;
+    }
+
+    /**
+     * @param string $name
      * @return InterfaceType|null
      */
     public function getInterface(string $name): ?InterfaceType
@@ -968,6 +1036,17 @@ class Schema implements ConfigurationApplier
         if ($callback) {
             $callback($typeObj);
         }
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return $this
+     */
+    public function removeUnion(string $name): self
+    {
+        unset($this->unions[$name]);
+
         return $this;
     }
 

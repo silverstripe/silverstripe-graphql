@@ -23,6 +23,13 @@ class <?=$interface->getName(); ?> extends InterfaceType
         <?php if (!empty($interface->getDescription())) : ?>
             'description' => '<?=addslashes($interface->getDescription()); ?>',
         <?php endif; ?>
+        <?php if (!empty($interface->getInterfaces())) : ?>
+            'interfaces' => function () {
+                return array_map(function ($interface) {
+                    return call_user_func([__NAMESPACE__ . '\\<?=$globals['typeClassName']; ?>', $interface]);
+                }, <?=$interface->getEncodedInterfaces(); ?>);
+            },
+        <?php endif; ?>
             'fields' => function () {
                 return [
                 <?php foreach ($interface->getFields() as $field) : ?>

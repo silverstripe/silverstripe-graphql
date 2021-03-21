@@ -5,7 +5,7 @@ SilverStripe\GraphQL\Schema\Schema:
   schemas:
     '*':
       scalars:
-        JSON:
+        JSONBlob:
           serialiser: 'SilverStripe\GraphQL\Schema\Resolver\JSONResolver::serialise'
           valueParser: 'SilverStripe\GraphQL\Schema\Resolver\JSONResolver::parseValue'
           literalParser: 'SilverStripe\GraphQL\Schema\Resolver\JSONResolver::parseLiteral'
@@ -21,7 +21,7 @@ SilverStripe\GraphQL\Schema\Schema:
             type_formatter: 'SilverStripe\Core\ClassInfo::shortName'
             type_prefix: ''
             type_mapping: []
-            default_fields:
+            base_fields:
               ID: ID
             plugins:
               inheritance: true

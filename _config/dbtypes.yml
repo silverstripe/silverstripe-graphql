@@ -13,6 +13,6 @@ SilverStripe\ORM\FieldType\DBFloat:
 SilverStripe\ORM\FieldType\DBDecimal:
   graphql_type: Float
 SilverStripe\ORM\FieldType\DBPrimaryKey:
-  graphql_type: ID
+  graphql_type: ID!
 SilverStripe\ORM\FieldType\DBForeignKey:
-  graphql_type: ID
+  graphql_type: ID!

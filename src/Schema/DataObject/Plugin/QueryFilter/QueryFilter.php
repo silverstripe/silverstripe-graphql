@@ -99,6 +99,9 @@ class QueryFilter extends AbstractQueryFilterPlugin
                 ));
             }
             $filterArgs = $args[$fieldName] ?? [];
+            if (empty($filterArgs)) {
+                return $list;
+            }
             /* @var FilterRegistryInterface $registry */
             $registry = Injector::inst()->get(FilterRegistryInterface::class);
             $paths = NestedInputBuilder::buildPathsFromArgs($filterArgs);

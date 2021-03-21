@@ -112,6 +112,24 @@ class InheritanceChain
     }
 
     /**
+     * @return bool
+     * @throws ReflectionException
+     */
+    public function hasInheritance(): bool
+    {
+        return $this->hasDescendants() || $this->hasAncestors();
+    }
+
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    public function getInheritance(): array
+    {
+        return array_merge($this->getAncestralModels(), $this->getDescendantModels());
+    }
+
+    /**
      * @return string
      */
     public function getBaseClass(): string

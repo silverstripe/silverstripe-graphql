@@ -380,8 +380,22 @@ class Field implements
     }
 
     /**
+     * [MyType!]! becomes [MyNewType!]!
+     * @param string $name
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function setNamedType(string $name): self
+    {
+        $currentType = $this->getType();
+        $newType = preg_replace('/[A-Za-z_]+/', $name, $currentType);
+        return $this->setType($newType);
+    }
+
+    /**
      * @param string|null $typeName
      * @return EncodedResolver
+     * @throws SchemaBuilderException
      */
     public function getEncodedResolver(?string $typeName = null): EncodedResolver
     {

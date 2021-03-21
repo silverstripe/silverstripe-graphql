@@ -11,42 +11,39 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 class ModelUnionType extends UnionType
 {
     /**
-     * @var ModelInterfaceType
+     * @var ModelType
      */
-    private $interface;
+    private $canonicalModel;
 
     /**
      * ModelUnionType constructor.
-     * @param ModelInterfaceType $interface
+     * @param ModelType $canonicalModel
      * @param string $name
      * @param array|null $config
      * @throws SchemaBuilderException
      */
-    public function __construct(ModelInterfaceType $interface, string $name, ?array $config = null)
+    public function __construct(ModelType $canonicalModel, string $name, ?array $config = null)
     {
-        $this->setInterface($interface);
+        $this->setCanonicalModel($canonicalModel);
         parent::__construct($name, $config);
     }
 
     /**
-     * @return ModelInterfaceType
+     * @return ModelType
      */
-    public function getInterface(): ModelInterfaceType
+    public function getCanonicalModel(): ModelType
     {
-        return $this->interface;
+        return $this->canonicalModel;
     }
 
     /**
-     * @param ModelInterfaceType $interface
+     * @param ModelType $modelType
      * @return $this
      */
-    public function setInterface(ModelInterfaceType  $interface): self
+    public function setCanonicalModel(ModelType  $modelType): self
     {
-        $this->interface = $interface;
+        $this->canonicalModel = $modelType;
 
         return $this;
     }
-
-
-
 }

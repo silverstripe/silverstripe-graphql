@@ -74,4 +74,5 @@ interface SchemaModelInterface
      * @return string
      */
     public function getPropertyForField(string $field): string;
+
 }
