@@ -66,6 +66,7 @@ class Inheritance implements PluginInterface, SchemaUpdater
 
         self::createUnions($schema);
         self::applyUnions($schema);
+
     }
 
     /**
@@ -377,6 +378,54 @@ class Inheritance implements PluginInterface, SchemaUpdater
             $unionName = static::unionName($modelType->getName(), $schema->getConfig());
             if ($union = $schema->getUnion($unionName)) {
                 $query->setNamedType($unionName);
+            }
+        }
+    }
+
+    /**
+     * @param Schema $schema
+     * @throws SchemaBuilderException
+     */
+    private static function applyInterfaces(Schema $schema): void
+    {
+        $queries = [];
+        foreach ($schema->getQueryType()->getFields() as $field) {
+            if ($field instanceof ModelQuery) {
+                $queries[] = $field;
+            }
+        }
+        foreach ($schema->getModels() as $model) {
+            foreach ($model->getFields() as $field) {
+                if ($field instanceof ModelQuery) {
+                    $queries[] = $field;
+                }
+            }
+        }
+        foreach ($schema->getInterfaces() as $interface) {
+            if (!$interface instanceof ModelInterfaceType) {
+                continue;
+            }
+            foreach ($interface->getFields() as $field) {
+                if ($field instanceof ModelQuery) {
+                    $queries[] = $field;
+                }
+            }
+        }
+        /* @var ModelQuery $query */
+        foreach ($queries as $query) {
+            $typeName = $query->getNamedType();
+            $modelType = $schema->getModel($typeName);
+            // Type was customised. Ignore.
+            if (!$modelType) {
+                continue;
+            }
+            if (!$modelType->getModel() instanceof DataObjectModel) {
+                continue;
+            }
+
+            $interfaceName = static::interfaceName($modelType->getName(), $schema->getConfig());
+            if ($interface = $schema->getInterface($interfaceName)) {
+                $query->setNamedType($interfaceName);
             }
         }
     }

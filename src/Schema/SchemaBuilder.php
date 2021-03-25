@@ -136,7 +136,6 @@ class SchemaBuilder
     public function boot(string $key): Schema
     {
         $schemaObj = Schema::create($key);
-
         $schemas = $schemaObj->config()->get('schemas') ?: [];
 
         if (!array_key_exists($key, $schemas)) {
