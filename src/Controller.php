@@ -3,6 +3,8 @@
 namespace SilverStripe\GraphQL;
 
 use Exception;
+use GraphQL\Language\Parser;
+use GraphQL\Language\Source;
 use InvalidArgumentException;
 use LogicException;
 use SilverStripe\Control\Controller as BaseController;
@@ -15,6 +17,7 @@ use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
 use SilverStripe\EventDispatcher\Symfony\Event;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\PersistedQuery\RequestProcessor;
+use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
 use SilverStripe\GraphQL\QueryHandler\QueryStateProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -128,21 +131,23 @@ class Controller extends BaseController
             }
             $handler = $this->getQueryHandler();
             $this->applyContext($handler);
-
+            $queryDocument = Parser::parse(new Source($query));
             $ctx = $handler->getContext();
+            $result = $handler->query($graphqlSchema, $query, $variables);
+
+            // Fire an event
             $eventContext = [
                 'schema' => $graphqlSchema,
+                'schemaKey' => $this->getSchemaKey(),
                 'query' => $query,
                 'context' => $ctx,
                 'variables' => $variables,
+                'result' => $result,
             ];
+            $event = QueryHandler::isMutation($query) ? 'onGraphQLMutation' : 'onGraphQLQuery';
+            $operationName = QueryHandler::getOperationName($queryDocument);
+            Dispatcher::singleton()->trigger($event, Event::create($operationName, $eventContext));
 
-            Dispatcher::singleton()->trigger('onGraphQLQuery', Event::create($this->getSchemaKey(), $eventContext));
-
-            $result = $handler->query($graphqlSchema, $query, $variables);
-            $eventContext['result'] = $result;
-
-            Dispatcher::singleton()->trigger('onGraphQLResponse', Event::create($this->getSchemaKey(), $eventContext));
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
 

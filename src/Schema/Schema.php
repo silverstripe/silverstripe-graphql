@@ -725,6 +725,18 @@ class Schema implements ConfigurationApplier
         return null;
     }
 
+    /**
+     * Gets all the models that were generated from a given ancestor, e.g. DataObject
+     * @param string $class
+     * @return ModelType[]
+     */
+    public function getModelTypesFromClass(string $class): array
+    {
+        return array_filter($this->getModels(), function (ModelType $modelType) use ($class) {
+            $source = $modelType->getModel()->getSourceClass();
+            return $source === $class || is_subclass_of($source, $class);
+        });
+    }
 
     /**
      * @return Type[]

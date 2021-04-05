@@ -7,6 +7,7 @@ use GraphQL\Error\Error;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\GraphQL;
+use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\NodeKind;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Source;
@@ -22,6 +23,7 @@ use SilverStripe\GraphQL\Permission\MemberAware;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
+use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\ValidationException;
 
 /**
@@ -69,11 +71,11 @@ class QueryHandler implements
 
     /**
      * @param GraphQLSchema $schema
-     * @param string $query
+     * @param string|DocumentNode $query
      * @param array|null $vars
      * @return array
      */
-    public function query(GraphQLSchema $schema, string $query, ?array $vars = []): array
+    public function query(GraphQLSchema $schema, $query, ?array $vars = []): array
     {
         $executionResult = $this->queryAndReturnResult($schema, $query, $vars);
 
@@ -86,11 +88,11 @@ class QueryHandler implements
 
     /**
      * @param GraphQLSchema $schema
-     * @param string $query
+     * @param string|DocumentNode $query
      * @param array|null $vars
      * @return array|ExecutionResult
      */
-    public function queryAndReturnResult(GraphQLSchema $schema, string $query, ?array $vars = [])
+    public function queryAndReturnResult(GraphQLSchema $schema, $query, ?array $vars = [])
     {
         $context = $this->getContext();
         $last = function ($schema, $query, $context, $vars) {
@@ -286,7 +288,7 @@ class QueryHandler implements
         }
 
         // Otherwise, bring in the big guns.
-        $document = Parser::parse(new Source($query ?: 'GraphQL'));
+        $document = Parser::parse(new Source($query));
         $defs = $document->definitions;
         foreach ($defs as $statement) {
             $options = [
@@ -303,4 +305,42 @@ class QueryHandler implements
 
         return false;
     }
+
+    /**
+     * @param DocumentNode $document
+     * @param bool $preferStatementName If true, use query <MyQueryName(Vars..)>. If false, use the actual field name.
+     * @return string
+     */
+    public static function getOperationName(DocumentNode $document, bool $preferStatementName = true): string
+    {
+        $defs = $document->definitions;
+        foreach ($defs as $statement) {
+            $options = [
+                NodeKind::OPERATION_DEFINITION,
+                NodeKind::OPERATION_TYPE_DEFINITION
+            ];
+            if (!in_array($statement->kind, $options, true)) {
+                continue;
+            }
+            if (in_array($statement->operation, ['query', 'mutation'])) {
+                // If the operation was given a name, use that
+                $name = $statement->name;
+                if ($name && $name->value && $preferStatementName) {
+                    return $name->value;
+                }
+                $selectionSet = $statement->selectionSet;
+                if ($selectionSet) {
+                    $selections = $selectionSet->selections;
+                    if (!empty($selections)) {
+                        $firstField = $selections[0];
+
+                        return $firstField->name->value;
+                    }
+                }
+                return $statement->operation;
+            }
+        }
+        return 'graphql';
+    }
+
 }

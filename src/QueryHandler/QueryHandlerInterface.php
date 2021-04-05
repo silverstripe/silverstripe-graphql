@@ -4,6 +4,7 @@
 namespace SilverStripe\GraphQL\QueryHandler;
 
 use GraphQL\Executor\ExecutionResult;
+use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Type\Schema;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
 
@@ -13,7 +14,13 @@ use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
  */
 interface QueryHandlerInterface
 {
-    public function query(Schema $schema, string $query, array $params = []): array;
+    /**
+     * @param Schema $schema
+     * @param string|DocumentNode $query
+     * @param array $params
+     * @return array
+     */
+    public function query(Schema $schema, $query, array $params = []): array;
 
     /**
      * Serialise a Graphql result object for output
