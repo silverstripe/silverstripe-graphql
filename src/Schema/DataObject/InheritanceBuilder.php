@@ -148,6 +148,4 @@ class InheritanceBuilder
         $this->schema = $schema;
         return $this;
     }
-
-
 }

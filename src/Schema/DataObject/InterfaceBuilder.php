@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
-
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -46,7 +45,8 @@ class InterfaceBuilder
      * @throws ReflectionException
      * @throws SchemaBuilderException
      */
-    public function createInterfaces(ModelType $modelType, array $interfaceStack = []): void {
+    public function createInterfaces(ModelType $modelType, array $interfaceStack = []): void
+    {
         $interface = ModelInterfaceType::create(
             $modelType->getModel(),
             self::interfaceName($modelType->getName(), $this->getSchema()->getConfig())
@@ -149,5 +149,4 @@ class InterfaceBuilder
     {
         return $modelName . 'Interface';
     }
-
 }

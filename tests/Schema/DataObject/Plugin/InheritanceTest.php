@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema\DataObject\Plugin;
 
-
 use SilverStripe\Core\Injector\Factory;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
@@ -96,7 +95,6 @@ class InheritanceTest extends SapphireTest
             ['A', 'B', 'C'],
             FakeInterfaceBuilder::$createCalls
         );
-
     }
 
     /**
@@ -111,5 +109,4 @@ class InheritanceTest extends SapphireTest
         $this->assertEmpty(array_diff($expected, $compare));
         $this->assertEmpty(array_diff($compare, $expected));
     }
-
 }

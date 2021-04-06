@@ -1,5 +1,6 @@
 SilverStripe\GraphQL\Tests\Fake\DataObjectFake:
   fields:
     myField: true
+    myInt: true
   operations:
     readOne: true

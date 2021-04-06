@@ -147,7 +147,6 @@ class Controller extends BaseController
             $event = QueryHandler::isMutation($query) ? 'onGraphQLMutation' : 'onGraphQLQuery';
             $operationName = QueryHandler::getOperationName($queryDocument);
             Dispatcher::singleton()->trigger($event, Event::create($operationName, $eventContext));
-
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
 

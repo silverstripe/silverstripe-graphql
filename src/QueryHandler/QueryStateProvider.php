@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\QueryHandler;
 
-
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Config\Configuration;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
@@ -50,5 +49,4 @@ class QueryStateProvider implements ContextProvider
             self::KEY => $this->queryState,
         ];
     }
-
 }

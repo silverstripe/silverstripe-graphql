@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
-
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
@@ -50,6 +49,9 @@ class InheritanceUnionBuilder
         /* @var ModelInterfaceType $interface */
         foreach ($dataObjects as $modelType) {
             $chain = InheritanceChain::create($modelType->getModel()->getSourceClass());
+            if (!$chain->hasDescendants()) {
+                continue;
+            }
             $name = static::unionName($modelType->getName(), $schema->getConfig());
             $union = ModelUnionType::create($modelType, $name);
 
@@ -58,7 +60,11 @@ class InheritanceUnionBuilder
                     return null;
                 }
                 return $schema->getConfig()->getTypeNameForClass($class);
-            }, $chain->getInheritance()));
+            }, $chain->getDescendantModels()));
+
+            if (empty($types)) {
+                continue;
+            }
 
             $types[] = $modelType->getName();
 
@@ -159,6 +165,4 @@ class InheritanceUnionBuilder
         $this->schema = $schema;
         return $this;
     }
-
-
 }

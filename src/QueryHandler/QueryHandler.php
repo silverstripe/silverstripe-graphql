@@ -342,5 +342,4 @@ class QueryHandler implements
         }
         return 'graphql';
     }
-
 }

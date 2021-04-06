@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema\DataObject;
 
-
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Schema\DataObject\InterfaceBuilder;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
@@ -35,15 +34,15 @@ class InterfaceBuilderTest extends SapphireTest
         $builder->createInterfaces($schema->getModelByClassName(A::class));
         $interface = $schema->getInterface('AInterface');
         $this->assertNotNull($interface);
-        $this->assertFields(['LastEdited', 'Created', 'AField', 'ID'], $interface);
+        $this->assertFields(['LastEdited', 'ClassName', 'Created', 'AField', 'ID'], $interface);
 
         $interface = $schema->getInterface('A1Interface');
         $this->assertNotNull($interface);
-        $this->assertFields(['LastEdited', 'Created', 'AField', 'A1Field', 'ID'], $interface);
+        $this->assertFields(['LastEdited', 'ClassName', 'Created', 'AField', 'A1Field', 'ID'], $interface);
 
         $interface = $schema->getInterface('A1aInterface');
         $this->assertNotNull($interface);
-        $this->assertFields(['LastEdited', 'Created', 'A1Field', 'AField', 'A1aField',  'ID'], $interface);
+        $this->assertFields(['LastEdited', 'ClassName', 'Created', 'A1Field', 'AField', 'A1aField',  'ID'], $interface);
 
         $schema = new TestSchema();
         $schema->applyConfig([
@@ -95,7 +94,6 @@ class InterfaceBuilderTest extends SapphireTest
         $this->assertNotNull($model);
 
         $this->assertInterfaces(['A1Interface', 'AInterface', 'A1aInterface'], $model);
-
     }
 
     public function testBaseInterface()
@@ -180,5 +178,4 @@ class InterfaceBuilderTest extends SapphireTest
         $this->assertEmpty(array_diff($expected, $compare));
         $this->assertEmpty(array_diff($compare, $expected));
     }
-
 }

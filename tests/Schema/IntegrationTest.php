@@ -174,11 +174,6 @@ GRAPHQL;
         $this->assertSchemaNotHasType($schema, 'FakePageVersion');
     }
 
-    public function testInheritance()
-    {
-        $this->markTestSkipped();
-    }
-
     public function testPluginOverride()
     {
         $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
@@ -198,11 +193,15 @@ GRAPHQL;
 query {
   readFakePages {
     nodes {
-        title
+        ... on FakePageInterface {
+            title
+        }
     }
     edges {
         node {
-            title
+            ... on FakePageInterface {
+                title
+            }
         }
     }
   }
@@ -265,7 +264,7 @@ GRAPHQL;
         $query = <<<GRAPHQL
 query {
   readOneDataObjectFake {
-    id
+    myInt
     myField
   }
 }
@@ -278,7 +277,7 @@ GRAPHQL;
             'models' => [
                 DataObjectFake::class => [
                     'fields' => [
-                        'id' => false,
+                        'myInt' => false,
                         'myField' => true,
                     ],
                     'operations' => [
@@ -290,7 +289,7 @@ GRAPHQL;
         $schema = $this->createSchema($factory);
         $result = $this->querySchema($schema, $query);
         $this->assertFailure($result);
-        $this->assertMissingField($result, 'id');
+        $this->assertMissingField($result, 'myInt');
 
         $factory = new TestSchemaBuilder();
         $factory->extraConfig = [
@@ -371,7 +370,9 @@ query {
       firstName
     }
     files {
-      id
+      ... on FileInterface {
+        id
+      }
     }
   }
 }

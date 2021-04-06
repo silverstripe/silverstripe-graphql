@@ -47,7 +47,7 @@ class Inheritance implements PluginInterface, SchemaUpdater
             $class = $modelType->getModel()->getSourceClass();
             if ($inheritance->isBaseModel($class)) {
                 $baseModels[] = $modelType;
-            } else if ($inheritance->isLeafModel($class)) {
+            } elseif ($inheritance->isLeafModel($class)) {
                 $leafModels[] = $modelType;
             }
         }
@@ -66,5 +66,4 @@ class Inheritance implements PluginInterface, SchemaUpdater
         $unions->createUnions();
         $unions->applyUnions();
     }
-
 }

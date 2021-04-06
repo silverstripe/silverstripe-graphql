@@ -134,7 +134,7 @@ class CreateCreator implements OperationCreator, InputTypeProvider
             if (!$fieldObj) {
                 continue;
             }
-            $type = $fieldObj->getType();
+            $type = $fieldObj->getNamedType();
             if ($type && Schema::isInternalType($type)) {
                 $fieldMap[$fieldName] = $type;
             }

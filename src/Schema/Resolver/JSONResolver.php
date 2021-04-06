@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\Resolver;
 
-
 class JSONResolver
 {
     /**
@@ -32,6 +31,4 @@ class JSONResolver
     {
         return $ast->value;
     }
-
-
 }

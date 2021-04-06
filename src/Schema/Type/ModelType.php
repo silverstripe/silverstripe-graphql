@@ -204,7 +204,7 @@ class ModelType extends Type implements ExtraTypeProvider
         }
         $allFields = $this->getModel()->getAllFields();
         foreach ($allFields as $fieldName) {
-            if(!$this->getFieldByName($fieldName)) {
+            if (!$this->getFieldByName($fieldName)) {
                 $this->addField($fieldName, $this->getModel()->getField($fieldName));
             }
         }

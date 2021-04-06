@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema\DataObject;
 
-
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\GraphQL\Schema\DataObject\ModelCreator;
 use SilverStripe\GraphQL\Schema\DataObject\ReadCreator;

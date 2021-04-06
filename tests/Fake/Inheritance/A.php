@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Fake\Inheritance;
 
-
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;

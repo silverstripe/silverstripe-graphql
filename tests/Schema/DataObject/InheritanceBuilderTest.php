@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema\DataObject;
 
-
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceBuilder;
 use SilverStripe\GraphQL\Schema\Type\Type;
@@ -108,7 +107,6 @@ class InheritanceBuilderTest extends SapphireTest
         $this->assertTrue($builder->isBaseModel(A::class));
         $this->assertFalse($builder->isBaseModel(A1::class));
         $this->assertFalse($builder->isBaseModel(Aa::class));
-
     }
 
     public function testLeafModel()
@@ -176,7 +174,6 @@ class InheritanceBuilderTest extends SapphireTest
         $this->assertTrue($builder->isLeafModel(A1a::class));
         $this->assertFalse($builder->isLeafModel(A1::class));
         $this->assertFalse($builder->isLeafModel(A::class));
-
     }
 
     public function testFillAncestry()
@@ -210,7 +207,6 @@ class InheritanceBuilderTest extends SapphireTest
         $a = $schema->getModelByClassName(A::class);
         $this->assertNotNull($a);
         $this->assertFields(['AField', 'id'], $a);
-
     }
 
     public function testFillDescendants()
@@ -318,5 +314,4 @@ class InheritanceBuilderTest extends SapphireTest
         $this->assertEmpty(array_diff($expected, $compare));
         $this->assertEmpty(array_diff($compare, $expected));
     }
-
 }

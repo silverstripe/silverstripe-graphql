@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema\DataObject;
 
-
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\GraphQL\Schema\DataObject\InterfaceBuilder;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
@@ -22,5 +21,4 @@ class FakeInterfaceBuilder extends InterfaceBuilder implements TestOnly
     {
         static::$baseCalled = true;
     }
-
 }

@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema\DataObject;
 
-
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceUnionBuilder;
 use SilverStripe\GraphQL\Schema\Type\ModelInterfaceType;
@@ -49,19 +48,17 @@ class InheritanceUnionBuilderTest extends SapphireTest
 
         $union = $schema->getUnion('A1InheritanceUnion');
         $this->assertNotNull($union);
-        $this->assertTypes(['A', 'A1', 'A1a', 'A1b'], $union);
+        $this->assertTypes(['A1', 'A1a', 'A1b'], $union);
 
         $union = $schema->getUnion('A2InheritanceUnion');
         $this->assertNotNull($union);
-        $this->assertTypes(['A', 'A2', 'A2a'], $union);
+        $this->assertTypes(['A2', 'A2a'], $union);
 
         $union = $schema->getUnion('A1aInheritanceUnion');
-        $this->assertNotNull($union);
-        $this->assertTypes(['A', 'A1', 'A1a'], $union);
+        $this->assertNull($union);
 
         $union = $schema->getUnion('A2aInheritanceUnion');
-        $this->assertNotNull($union);
-        $this->assertTypes(['A', 'A2', 'A2a'], $union);
+        $this->assertNull($union);
 
         $schema = new TestSchema();
         foreach (static::$extra_dataobjects as $class) {
@@ -74,7 +71,8 @@ class InheritanceUnionBuilderTest extends SapphireTest
         $schema->removeModelByClassName(A1::class);
         $schema->createStoreableSchema();
         $builder = new InheritanceUnionBuilder($schema);
-        $builder->createUnions();;
+        $builder->createUnions();
+        ;
         $union = $schema->getUnion('AInheritanceUnion');
         $this->assertNotNull($union);
         $this->assertTypes(['A', 'A2', 'A2a', 'A1a', 'A1b'], $union);
@@ -83,14 +81,11 @@ class InheritanceUnionBuilderTest extends SapphireTest
         $this->assertNull($union);
 
         $union = $schema->getUnion('A1aInheritanceUnion');
-        $this->assertNotNull($union);
-        $this->assertTypes(['A', 'A1a'], $union);
+        $this->assertNull($union);
 
         // Sanity check
         $union = $schema->getUnion('A2aInheritanceUnion');
-        $this->assertNotNull($union);
-        $this->assertTypes(['A', 'A2', 'A2a'], $union);
-
+        $this->assertNull($union);
     }
 
     public function testApplyUnions()
@@ -131,7 +126,6 @@ class InheritanceUnionBuilderTest extends SapphireTest
 
         $interface = $schema->getInterface('AInterface');
         $this->assertEquals('BInheritanceUnion', $interface->getFieldByName('allTheB')->getNamedType());
-
     }
 
     public function testUnionName()
@@ -161,5 +155,4 @@ class InheritanceUnionBuilderTest extends SapphireTest
         $this->assertEmpty(array_diff($expected, $compare));
         $this->assertEmpty(array_diff($compare, $expected));
     }
-
 }

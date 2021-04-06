@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
-
 use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -40,5 +39,4 @@ class AbstractTypeResolver
         }
         return $schemaContext->getTypeNameForClass($class);
     }
-
 }
