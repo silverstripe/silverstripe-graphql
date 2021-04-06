@@ -4,6 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use GraphQL\Type\Definition\ResolveInfo;
+use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
@@ -25,7 +26,7 @@ class Resolver
     public static function resolve($obj, $args = [], $context = [], ?ResolveInfo $info = null)
     {
         $fieldName = $info->fieldName;
-        $context = SchemaContextProvider::get($context);
+        $context = SchemaConfigProvider::get($context);
         $fieldName = $context->mapFieldByClassName(get_class($obj), $fieldName);
         $result = $fieldName ? FieldAccessor::singleton()->accessField($obj, $fieldName[1]) : null;
         if ($result instanceof DBField) {
