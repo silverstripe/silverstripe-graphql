@@ -142,6 +142,13 @@ class ModelType extends Type implements ExtraTypeProvider
                 }
             } else {
                 $fieldObj = ModelField::create($fieldName, $fieldConfig, $this->getModel());
+                Schema::invariant(
+                    $fieldObj->getType(),
+                    'Field %s on type %s could not infer a type. Check to see if the field exists on the model
+                    or provide an explicit type if necessary.',
+                    $fieldObj->getName(),
+                    $this->getName()
+                );
             }
         }
         Schema::invariant(

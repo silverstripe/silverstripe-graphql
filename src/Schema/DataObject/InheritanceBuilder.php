@@ -26,7 +26,7 @@ class InheritanceBuilder
 
     public function __construct(Schema $schema)
     {
-        $this->schema = $schema;
+        $this->setSchema($schema);
     }
 
     /**
@@ -94,6 +94,10 @@ class InheritanceBuilder
      */
     public function isBaseModel(string $class): bool
     {
+        if (!$this->getSchema()->getModelByClassName($class)) {
+            return false;
+        }
+
         $chain = InheritanceChain::create($class);
         if ($chain->getBaseClass() === $class) {
             return true;
@@ -114,6 +118,10 @@ class InheritanceBuilder
      */
     public function isLeafModel(string $class): bool
     {
+        if (!$this->getSchema()->getModelByClassName($class)) {
+            return false;
+        }
+
         $chain = InheritanceChain::create($class);
         foreach ($chain->getDescendantModels() as $class) {
             if ($this->getSchema()->getModelByClassName($class)) {

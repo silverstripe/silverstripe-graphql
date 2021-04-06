@@ -388,7 +388,7 @@ class Field implements
     public function setNamedType(string $name): self
     {
         $currentType = $this->getType();
-        $newType = preg_replace('/[A-Za-z_]+/', $name, $currentType);
+        $newType = preg_replace('/[A-Za-z_0-9]+/', $name, $currentType);
         return $this->setType($newType);
     }
 

@@ -34,7 +34,7 @@ class InheritanceUnionBuilder
      */
     public function __construct(Schema $schema)
     {
-        $this->schema = $schema;
+        $this->setSchema($schema);
     }
 
     /**
@@ -53,9 +53,12 @@ class InheritanceUnionBuilder
             $name = static::unionName($modelType->getName(), $schema->getConfig());
             $union = ModelUnionType::create($modelType, $name);
 
-            $types = array_map(function ($class) use ($schema) {
+            $types = array_filter(array_map(function ($class) use ($schema) {
+                if (!$schema->getModelByClassName($class)) {
+                    return null;
+                }
                 return $schema->getConfig()->getTypeNameForClass($class);
-            }, $chain->getInheritance());
+            }, $chain->getInheritance()));
 
             $types[] = $modelType->getName();
 
@@ -123,7 +126,7 @@ class InheritanceUnionBuilder
     public static function unionName(string $modelName, SchemaConfig $schemaConfig): string
     {
         $callable = $schemaConfig->get(
-            'inheritance.union_formatter',
+            'inheritanceUnionBuilder.name_formatter',
             [static:: class, 'defaultUnionFormatter']
         );
         return $callable($modelName);

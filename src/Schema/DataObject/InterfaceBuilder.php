@@ -24,18 +24,20 @@ class InterfaceBuilder
 {
     use Injectable;
 
+    const BASE_INTERFACE_NAME = 'DataObject';
+
     /**
      * @var Schema
      */
     private $schema;
 
     /**
-     * InterfaceBuilder constructor.
+     * InterfaceBuilderTest constructor.
      * @param Schema $schema
      */
     public function __construct(Schema $schema)
     {
-        $this->schema = $schema;
+        $this->setSchema($schema);
     }
 
     /**
@@ -88,7 +90,7 @@ class InterfaceBuilder
         if (empty($commonFields)) {
             return;
         }
-        $baseInterface = InterfaceType::create('DataObject');
+        $baseInterface = InterfaceType::create(self::BASE_INTERFACE_NAME);
         foreach ($commonFields as $fieldName => $fieldType) {
             $baseInterface->addField(
                 FieldAccessor::singleton()->formatField($fieldName),
@@ -133,7 +135,7 @@ class InterfaceBuilder
     public static function interfaceName(string $modelName, SchemaConfig $schemaConfig): string
     {
         $callable = $schemaConfig->get(
-            'inheritance.interface_formatter',
+            'interfaceBuilder.name_formatter',
             [static:: class, 'defaultInterfaceFormatter']
         );
         return $callable($modelName);
