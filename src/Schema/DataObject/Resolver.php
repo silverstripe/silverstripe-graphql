@@ -26,11 +26,19 @@ class Resolver
      */
     public static function resolve($obj, $args = [], $context = [], ?ResolveInfo $info = null)
     {
-
         $fieldName = $info->fieldName;
         $context = SchemaConfigProvider::get($context);
-        $fieldName = $context->mapFieldByClassName(get_class($obj), $fieldName);
-        $result = $fieldName ? FieldAccessor::singleton()->accessField($obj, $fieldName[1]) : null;
+        $class = get_class($obj);
+        $resolvedField = null;
+        while (!$resolvedField && $class !== DataObject::class) {
+            $resolvedField = $context->mapFieldByClassName($class, $fieldName);
+            $class = get_parent_class($class);
+        }
+
+        if (!$resolvedField) {
+            return null;
+        }
+        $result = FieldAccessor::singleton()->accessField($obj, $resolvedField[1]);
         if ($result instanceof DBField) {
             return $result->getValue();
         }
