@@ -10,6 +10,7 @@ use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\ORM\SS_List;
+
 /**
  * Generic resolver for DataObjects
  */
@@ -25,6 +26,7 @@ class Resolver
      */
     public static function resolve($obj, $args = [], $context = [], ?ResolveInfo $info = null)
     {
+
         $fieldName = $info->fieldName;
         $context = SchemaConfigProvider::get($context);
         $fieldName = $context->mapFieldByClassName(get_class($obj), $fieldName);

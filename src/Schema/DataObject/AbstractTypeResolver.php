@@ -9,6 +9,9 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataObject;
 use Exception;
 
+/**
+ * Used for unions and interfaces to map a class instance to a type
+ */
 class AbstractTypeResolver
 {
     /**
