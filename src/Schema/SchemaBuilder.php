@@ -91,7 +91,7 @@ class SchemaBuilder
         $store->persistSchema($schema->createStoreableSchema());
 
         Dispatcher::singleton()->trigger(
-            'graphqlSchemaBuild.' . $schema->getSchemaKey(),
+            'graphqlSchemaBuild',
             Event::create($schema->getSchemaKey(), [
                 'schema' => $schema
             ])
