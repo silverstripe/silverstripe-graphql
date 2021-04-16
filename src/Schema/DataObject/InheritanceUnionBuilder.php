@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
@@ -89,7 +90,7 @@ class InheritanceUnionBuilder
         }
         foreach ($schema->getModels() as $model) {
             foreach ($model->getFields() as $field) {
-                if ($field instanceof ModelQuery) {
+                if ($field instanceof ModelField && $field->getModelType()) {
                     $queries[] = $field;
                 }
             }
@@ -99,7 +100,7 @@ class InheritanceUnionBuilder
                 continue;
             }
             foreach ($interface->getFields() as $field) {
-                if ($field instanceof ModelQuery) {
+                if ($field instanceof ModelField && $field->getModelType()) {
                     $queries[] = $field;
                 }
             }
