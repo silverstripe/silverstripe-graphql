@@ -4,7 +4,7 @@
     "type": "silverstripe-vendormodule",
     "license": "BSD-3-Clause",
     "require": {
-        "silverstripe/framework": "^4.2",
+        "silverstripe/framework": "^4.8",
         "silverstripe/vendor-plugin": "^1.0",
         "webonyx/graphql-php": "~0.12.6"
     },
