@@ -52,6 +52,12 @@ class Connection implements OperationResolver
     protected $connectedType;
 
     /**
+     * Cache the instance of the connection type to guarantee referential equality for graphql-php
+     * @var ObjectType
+     */
+    protected $connectionTypeInstance;
+
+    /**
      * @var string
      */
     protected $description;
@@ -126,9 +132,16 @@ class Connection implements OperationResolver
      */
     public function getConnectionType($evaluate = true)
     {
-        return ($evaluate && is_callable($this->connectedType))
+        if ($this->connectionTypeInstance) {
+            return $this->connectionTypeInstance;
+        }
+        $instance = ($evaluate && is_callable($this->connectedType))
             ? call_user_func($this->connectedType)
             : $this->connectedType;
+
+        $this->connectionTypeInstance = $instance;
+
+        return $this->connectionTypeInstance;
     }
 
     /**
