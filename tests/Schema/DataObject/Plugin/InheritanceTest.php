@@ -76,7 +76,7 @@ class InheritanceTest extends SapphireTest
                 'class' => FakeInheritanceUnionBuilder::class,
             ],
         ]);
-        Inheritance::updateSchema($schema);
+        Inheritance::updateSchema($schema, []);
 
         $this->assertTrue(FakeInterfaceBuilder::$baseCalled);
         $this->assertTrue(FakeInheritanceUnionBuilder::$createCalled);

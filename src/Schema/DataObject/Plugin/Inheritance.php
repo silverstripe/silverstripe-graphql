@@ -31,17 +31,18 @@ class Inheritance implements PluginInterface, SchemaUpdater
 
     /**
      * @param Schema $schema
+     * @param array $config
      * @throws ReflectionException
      * @throws SchemaBuilderException
      */
-    public static function updateSchema(Schema $schema): void
+    public static function updateSchema(Schema $schema, array $config = []): void
     {
         $baseModels = [];
         $leafModels = [];
 
         $inheritance = InheritanceBuilder::create($schema);
         $interfaces = InterfaceBuilder::create($schema);
-        $unions = InheritanceUnionBuilder::create($schema);
+        $useUnions = $config['useUnionQueries'] ?? false;
 
         foreach ($schema->getModelTypesFromClass(DataObject::class) as $modelType) {
             $class = $modelType->getModel()->getSourceClass();
@@ -63,7 +64,12 @@ class Inheritance implements PluginInterface, SchemaUpdater
 
         $interfaces->applyBaseInterface();
 
-        $unions->createUnions();
-        $unions->applyUnions();
+        if ($useUnions) {
+            InheritanceUnionBuilder::create($schema)
+                ->createUnions()
+                ->applyUnionsToQueries();
+        } else {
+            $interfaces->applyInterfacesToQueries();
+        }
     }
 }

@@ -77,8 +77,9 @@ abstract class AbstractQuerySortPlugin implements SchemaUpdater, ModelQueryPlugi
 
     /**
      * @param Schema $schema
+     * @param array $config
      */
-    public static function updateSchema(Schema $schema): void
+    public static function updateSchema(Schema $schema, array $config = []): void
     {
         $type = Enum::create(
             'SortDirection',

@@ -4,7 +4,11 @@
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryCollector;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\ModelField;
+use SilverStripe\GraphQL\Schema\Field\ModelQuery;
+use SilverStripe\GraphQL\Schema\Interfaces\TypePlugin;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
@@ -44,19 +48,33 @@ class InterfaceBuilder
      * @param ModelInterfaceType[] $interfaceStack
      * @throws ReflectionException
      * @throws SchemaBuilderException
+     * @return $this
      */
-    public function createInterfaces(ModelType $modelType, array $interfaceStack = []): void
+    public function createInterfaces(ModelType $modelType, array $interfaceStack = []): self
     {
         $interface = ModelInterfaceType::create(
             $modelType->getModel(),
             self::interfaceName($modelType->getName(), $this->getSchema()->getConfig())
-        );
-        $interface->setTypeResolver([AbstractTypeResolver::class, 'resolveType']);
+        )
+            ->setTypeResolver([AbstractTypeResolver::class, 'resolveType']);
+
+        // TODO: this makes a really good case for
+        // https://github.com/silverstripe/silverstripe-graphql/issues/364
+        $validPlugins = [];
+        foreach ($modelType->getPlugins() as $name => $config) {
+            $plugin = $modelType->getPluginRegistry()->getPluginByID($name);
+            if ($plugin && $plugin instanceof TypePlugin) {
+                $validPlugins[$name] = $config;
+            }
+        }
+        $interface->setPlugins($validPlugins);
+
 
         // Start by adding all the fields in the model
         foreach ($modelType->getFields() as $fieldObj) {
-            $clone = clone $fieldObj;
-            $interface->addField($fieldObj->getName(), $clone);
+            // Assign by reference, because anything that happens to the field
+            // should be updated in both places to avoid breaking the contract
+            $interface->addField($fieldObj->getName(), $fieldObj);
         }
 
         $this->getSchema()->addInterface($interface);
@@ -78,17 +96,17 @@ class InterfaceBuilder
     }
 
     /**
-     * @return void
+     * @return $this
      * @throws SchemaBuilderException
      */
-    public function applyBaseInterface(): void
+    public function applyBaseInterface(): self
     {
         $commonFields = $this->getSchema()->getConfig()
             ->getModelConfiguration('DataObject')
             ->getBaseFields();
 
         if (empty($commonFields)) {
-            return;
+            return $this;
         }
         $baseInterface = InterfaceType::create(self::BASE_INTERFACE_NAME);
         foreach ($commonFields as $fieldName => $fieldType) {
@@ -105,6 +123,37 @@ class InterfaceBuilder
         foreach ($dataObjects as $modelType) {
             $modelType->addInterface($baseInterface->getName());
         }
+
+        return $this;
+    }
+
+    /**
+     * @throws SchemaBuilderException
+     * @return $this
+     */
+    public function applyInterfacesToQueries(): self
+    {
+        $schema = $this->getSchema();
+        $queryCollector = QueryCollector::create($schema);
+        /* @var ModelQuery $query */
+        foreach ($queryCollector->collectQueries() as $query) {
+            $typeName = $query->getNamedType();
+            $modelType = $this->getSchema()->getModel($typeName);
+            // Type was customised. Ignore.
+            if (!$modelType) {
+                continue;
+            }
+            if (!$modelType->getModel() instanceof DataObjectModel) {
+                continue;
+            }
+
+            $interfaceName = static::interfaceName($modelType->getName(), $schema->getConfig());
+            if ($interface = $schema->getInterface($interfaceName)) {
+                $query->setNamedType($interfaceName);
+            }
+        }
+
+        return $this;
     }
 
     /**

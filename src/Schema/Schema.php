@@ -414,8 +414,9 @@ class Schema implements ConfigurationApplier
         }
 
         /* @var SchemaUpdater $builder */
-        foreach ($schemaUpdates as $class) {
-            $class::updateSchema($this);
+        foreach ($schemaUpdates as $spec) {
+            list ($class, $config) = $spec;
+            $class::updateSchema($this, $config);
         }
     }
 
@@ -439,7 +440,7 @@ class Schema implements ConfigurationApplier
     private function getTypeComponents(): array
     {
         return [
-            'types' => $this->types,
+            'types' => array_merge($this->types, $this->interfaces),
             'models' => $this->models,
             'queries' => $this->queryType->getFields(),
             'mutations' => $this->mutationType->getFields(),
@@ -453,20 +454,21 @@ class Schema implements ConfigurationApplier
     {
         $allTypeFields = [];
         $allModelFields = [];
-        foreach ($this->types as $type) {
+        $types = array_merge($this->types, $this->interfaces);
+        foreach ($types as $type) {
             if ($type->getIsInput()) {
                 continue;
             }
             $pluggedFields = array_filter($type->getFields(), function (Field $field) use ($type) {
                 return !empty($field->getPlugins());
             });
-            $allTypeFields = array_merge($allTypeFields, $pluggedFields);
+            $allTypeFields = array_merge($allTypeFields, array_values($pluggedFields));
         }
         foreach ($this->models as $model) {
-            $pluggedFields = array_filter($model->getFields(), function (ModelField $field) {
+            $pluggedFields = array_filter(array_values($model->getFields()), function (ModelField $field) {
                 return !empty($field->getPlugins());
             });
-            $allModelFields = array_merge($allModelFields, $pluggedFields);
+            $allModelFields = array_merge($allModelFields, array_values($pluggedFields));
         }
 
         return [
@@ -524,9 +526,9 @@ class Schema implements ConfigurationApplier
         $schemaUpdates = [];
         foreach ($components as $component) {
             foreach ($component->loadPlugins() as $data) {
-                list ($plugin) = $data;
+                list ($plugin, $config) = $data;
                 if ($plugin instanceof SchemaUpdater) {
-                    $schemaUpdates[get_class($plugin)] = get_class($plugin);
+                    $schemaUpdates[get_class($plugin)] = [get_class($plugin), $config];
                 }
             }
         }

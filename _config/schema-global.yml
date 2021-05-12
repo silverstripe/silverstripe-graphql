@@ -14,8 +14,6 @@ SilverStripe\GraphQL\Schema\Schema:
         defaultResolver: 'SilverStripe\GraphQL\Schema\Resolver\DefaultResolver::defaultFieldResolver'
         modelCreators:
           - 'SilverStripe\GraphQL\Schema\DataObject\ModelCreator'
-        inheritance:
-          useUnionQueries: true
         modelConfig:
           DataObject:
             type_formatter: 'SilverStripe\Core\ClassInfo::shortName'
@@ -24,7 +22,8 @@ SilverStripe\GraphQL\Schema\Schema:
             base_fields:
               ID: ID
             plugins:
-              inheritance: true
+              inheritance:
+                useUnionQueries: false
               inheritedPlugins:
                 after: '*'
             operations:

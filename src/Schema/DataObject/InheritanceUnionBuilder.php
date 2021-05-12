@@ -4,6 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryCollector;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
@@ -41,8 +42,9 @@ class InheritanceUnionBuilder
      * @return void
      * @throws ReflectionException
      * @throws SchemaBuilderException
+     * @return $this
      */
-    public function createUnions(): void
+    public function createUnions(): self
     {
         $dataObjects = $this->getSchema()->getModelTypesFromClass(DataObject::class);
         $schema = $this->getSchema();
@@ -73,40 +75,22 @@ class InheritanceUnionBuilder
             $union->setTypeResolver([AbstractTypeResolver::class, 'resolveType']);
             $schema->addUnion($union);
         }
+
+        return $this;
     }
 
     /**
      * Changes all queries to use inheritance unions where applicable
      * @throws SchemaBuilderException
+     * @return $this
      */
-    public function applyUnions(): void
+    public function applyUnionsToQueries(): self
     {
         $schema = $this->getSchema();
-        $queries = [];
-        foreach ($schema->getQueryType()->getFields() as $field) {
-            if ($field instanceof ModelQuery) {
-                $queries[] = $field;
-            }
-        }
-        foreach ($schema->getModels() as $model) {
-            foreach ($model->getFields() as $field) {
-                if ($field instanceof ModelField && $field->getModelType()) {
-                    $queries[] = $field;
-                }
-            }
-        }
-        foreach ($schema->getInterfaces() as $interface) {
-            if (!$interface instanceof ModelInterfaceType) {
-                continue;
-            }
-            foreach ($interface->getFields() as $field) {
-                if ($field instanceof ModelField && $field->getModelType()) {
-                    $queries[] = $field;
-                }
-            }
-        }
+        $queryCollector = QueryCollector::create($schema);
+
         /* @var ModelQuery $query */
-        foreach ($queries as $query) {
+        foreach ($queryCollector->collectQueries() as $query) {
             $typeName = $query->getNamedType();
             $modelType = $schema->getModel($typeName);
             // Type was customised. Ignore.
@@ -122,6 +106,8 @@ class InheritanceUnionBuilder
                 $query->setNamedType($unionName);
             }
         }
+
+        return $this;
     }
 
     /**
