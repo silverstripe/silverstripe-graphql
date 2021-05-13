@@ -42,3 +42,10 @@ Only:
 SilverStripe\Admin\LeftAndMain:
   extensions:
     - SilverStripe\GraphQL\Extensions\ClientConfigProvider
+---
+Only:
+  moduleexists: 'silverstripe/testsession'
+---
+SilverStripe\TestSession\TestSessionEnvironment:
+  extensions:
+    - SilverStripe\GraphQL\Extensions\TestSessionEnvironmentExtension
