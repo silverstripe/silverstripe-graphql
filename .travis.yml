@@ -5,8 +5,7 @@ import:
 
 env:
   global:
-    - COMPOSER_ROOT_VERSION="3.x-dev"
-    - REQUIRE_RECIPE="4.x-dev"
+    - REQUIRE_RECIPE="4.8.x-dev"
     - REQUIRE_EXTRA="silverstripe/frameworktest:0.3.0"
     - BEHAT_SUITE="asset-admin --config vendor/silverstripe/asset-admin/behat.yml"
 
