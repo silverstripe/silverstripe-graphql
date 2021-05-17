@@ -8,6 +8,14 @@
         "silverstripe/vendor-plugin": "^1.0",
         "webonyx/graphql-php": "~0.12.6"
     },
+    "conflict": {
+        "silverstripe/versioned-admin": "<1.8",
+        "silverstripe/asset-admin": "<1.8",
+        "silverstripe/admin": "<1.8",
+        "silverstripe/cms": "<1.8",
+        "silverstripe/campaign-admin": "<1.8",
+        "dnadesign/silverstripe-elemental": "<4.6"
+    },
     "require-dev": {
         "sminnee/phpunit": "^5.7",
         "sminnee/phpunit-mock-objects": "^3.4.5",
