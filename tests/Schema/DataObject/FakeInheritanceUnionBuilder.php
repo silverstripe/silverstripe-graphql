@@ -11,13 +11,21 @@ class FakeInheritanceUnionBuilder extends InheritanceUnionBuilder implements Tes
     public static $createCalled = false;
     public static $applyCalled = false;
 
-    public function createUnions(): void
+    public static function reset()
     {
-        static::$createCalled = true;
+        self::$createCalled = false;
+        self::$applyCalled = false;
     }
 
-    public function applyUnions(): void
+    public function createUnions(): self
+    {
+        static::$createCalled = true;
+        return $this;
+    }
+
+    public function applyUnionsToQueries(): self
     {
         static::$applyCalled = true;
+        return $this;
     }
 }

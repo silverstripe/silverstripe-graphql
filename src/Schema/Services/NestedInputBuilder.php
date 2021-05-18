@@ -130,7 +130,7 @@ class NestedInputBuilder
                 continue;
             }
             $namedType = $fieldObj->getNamedType();
-            $nestedType = $this->schema->getTypeOrModel($namedType);
+            $nestedType = $this->schema->getCanonicalType($namedType);
             if ($nestedType) {
                 $seen = $this->schema->getState()->get([
                   static::class,
@@ -209,21 +209,22 @@ class NestedInputBuilder
             }
 
             $fieldType = $fieldObj->getNamedType();
-            $nestedType = $this->schema->getTypeOrModel($fieldType);
+            $nestedType = $this->schema->getCanonicalType($fieldType);
 
             if ($data === self::SELF_REFERENTIAL) {
                 $inputType->addField($fieldName, $inputType->getName());
-            } elseif (!is_array($data)) {
+            } elseif (!is_array($data) && !$nestedType && Schema::isInternalType($fieldType)) {
                 // Regular field, e.g. scalar
-                if (!$nestedType && Schema::isInternalType($fieldType)) {
-                    $inputType->addField(
-                        $fieldName,
-                        $this->getLeafNodeType($fieldType)
-                    );
-                }
+                $inputType->addField(
+                    $fieldName,
+                    $this->getLeafNodeType($fieldType)
+                );
             }
+            // Make sure the input type got at least one field
             if ($inputType->exists()) {
+                // Optimistically add the type to the schema
                 $this->schema->addType($inputType);
+                // If we're in recursion, apply the nested input type to the parent
                 if ($parentType && $parentField) {
                     $parentType->addField($parentField, $inputType->getName());
                 }

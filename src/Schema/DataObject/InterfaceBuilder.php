@@ -53,7 +53,7 @@ class InterfaceBuilder
     public function createInterfaces(ModelType $modelType, array $interfaceStack = []): self
     {
         $interface = ModelInterfaceType::create(
-            $modelType->getModel(),
+            $modelType,
             self::interfaceName($modelType->getName(), $this->getSchema()->getConfig())
         )
             ->setTypeResolver([AbstractTypeResolver::class, 'resolveType']);
@@ -93,6 +93,8 @@ class InterfaceBuilder
                 $this->createInterfaces($childType, $interfaceStack);
             }
         }
+
+        return $this;
     }
 
     /**

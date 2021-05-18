@@ -10,10 +10,7 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
  */
 class ModelUnionType extends UnionType
 {
-    /**
-     * @var ModelType
-     */
-    private $canonicalModel;
+    use CanonicalModelAware;
 
     /**
      * ModelUnionType constructor.
@@ -26,24 +23,5 @@ class ModelUnionType extends UnionType
     {
         $this->setCanonicalModel($canonicalModel);
         parent::__construct($name, $config);
-    }
-
-    /**
-     * @return ModelType
-     */
-    public function getCanonicalModel(): ModelType
-    {
-        return $this->canonicalModel;
-    }
-
-    /**
-     * @param ModelType $modelType
-     * @return $this
-     */
-    public function setCanonicalModel(ModelType  $modelType): self
-    {
-        $this->canonicalModel = $modelType;
-
-        return $this;
     }
 }

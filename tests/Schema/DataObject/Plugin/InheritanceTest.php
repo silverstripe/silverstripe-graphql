@@ -10,6 +10,7 @@ use SilverStripe\GraphQL\Schema\DataObject\InheritanceBuilder;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceUnionBuilder;
 use SilverStripe\GraphQL\Schema\DataObject\InterfaceBuilder;
 use SilverStripe\GraphQL\Schema\DataObject\Plugin\Inheritance;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\Type;
@@ -55,7 +56,13 @@ class InheritanceTest extends SapphireTest
     ];
 
 
-    public function testInheritance()
+    /**
+     * @param false $unions
+     * @throws \ReflectionException
+     * @throws SchemaBuilderException
+     * @dataProvider provideUnionOption
+     */
+    public function testInheritance($unions = false)
     {
         $schema = new TestSchema();
         foreach (static::$extra_dataobjects as $class) {
@@ -64,6 +71,9 @@ class InheritanceTest extends SapphireTest
             });
         }
         $schema->createStoreableSchema();
+
+        FakeInheritanceUnionBuilder::reset();
+        FakeInterfaceBuilder::reset();
 
         Injector::inst()->load([
             InheritanceBuilder::class => [
@@ -76,11 +86,18 @@ class InheritanceTest extends SapphireTest
                 'class' => FakeInheritanceUnionBuilder::class,
             ],
         ]);
-        Inheritance::updateSchema($schema, []);
+        Inheritance::updateSchema($schema, ['useUnionQueries' => $unions]);
 
         $this->assertTrue(FakeInterfaceBuilder::$baseCalled);
-        $this->assertTrue(FakeInheritanceUnionBuilder::$createCalled);
-        $this->assertTrue(FakeInheritanceUnionBuilder::$applyCalled);
+        if ($unions) {
+            $this->assertTrue(FakeInheritanceUnionBuilder::$createCalled);
+            $this->assertTrue(FakeInheritanceUnionBuilder::$applyCalled);
+            $this->assertFalse(FakeInterfaceBuilder::$applyCalled);
+        } else {
+            $this->assertFalse(FakeInheritanceUnionBuilder::$createCalled);
+            $this->assertFalse(FakeInheritanceUnionBuilder::$applyCalled);
+            $this->assertTrue(FakeInterfaceBuilder::$applyCalled);
+        }
 
         $this->assertCalls(
             ['A1a', 'A1b', 'A2a', 'B1a', 'B1b', 'B2', 'C1', 'C2a'],
@@ -108,5 +125,13 @@ class InheritanceTest extends SapphireTest
 
         $this->assertEmpty(array_diff($expected, $compare));
         $this->assertEmpty(array_diff($compare, $expected));
+    }
+
+    public function provideUnionOption()
+    {
+        return [
+            [true],
+            [false],
+        ];
     }
 }

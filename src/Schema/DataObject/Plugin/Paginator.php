@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
 use GraphQL\Type\Definition\ResolveInfo;
+use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\Limitable;
 use SilverStripe\GraphQL\Schema\Plugin\PaginationPlugin;
 use Closure;
@@ -36,13 +37,19 @@ class Paginator extends PaginationPlugin
             if ($list === null) {
                 return null;
             }
+
             if (!$list instanceof Limitable) {
-                return static::createPaginationResult($list, $list, $maxLimit, 0);
+                Schema::invariant(
+                    !isset($list['nodes']),
+                    'List on field %s has already been paginated. Was the plugin executed twice?',
+                    $info->fieldName
+                );
+                return static::createPaginationResult(count($list), $list, $maxLimit, 0);
             }
 
+            $total = $list->count();
             $offset = $args['offset'];
             $limit = $args['limit'];
-            $total = $list->count();
 
             $limit = min($limit, $maxLimit);
 

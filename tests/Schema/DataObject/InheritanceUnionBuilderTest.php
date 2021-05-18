@@ -99,7 +99,7 @@ class InheritanceUnionBuilderTest extends SapphireTest
         }
         $schema->getModelByClassName(A::class)->addField('allTheB', '[B]');
         $a = $schema->getModel('A');
-        $interface = new ModelInterfaceType($a->getModel(), 'AInterface');
+        $interface = new ModelInterfaceType($a, 'AInterface');
         $modelQuery = clone $a->getFieldByName('allTheB');
         $interface->addField('allTheB', $modelQuery);
         $schema->addInterface($interface);
@@ -108,7 +108,7 @@ class InheritanceUnionBuilderTest extends SapphireTest
         $schema->createStoreableSchema();
         $builder = new InheritanceUnionBuilder($schema);
         $builder->createUnions();
-        $builder->applyUnions();
+        $builder->applyUnionsToQueries();
 
         $query = $schema->getQueryType()->getFieldByName('readAs');
         $this->assertNotNull($query);

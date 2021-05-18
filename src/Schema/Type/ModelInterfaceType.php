@@ -12,18 +12,18 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
  */
 class ModelInterfaceType extends InterfaceType
 {
-    use ModelAware;
+    use CanonicalModelAware;
 
     /**
      * ModelInterfaceType constructor.
-     * @param SchemaModelInterface $model
+     * @param SchemaModelInterface $modelType
      * @param string $name
      * @param array|null $config
      * @throws SchemaBuilderException
      */
-    public function __construct(SchemaModelInterface $model, string $name, ?array $config = null)
+    public function __construct(ModelType $modelType, string $name, ?array $config = null)
     {
-        $this->setModel($model);
+        $this->setCanonicalModel($modelType);
         parent::__construct($name, $config);
     }
 }

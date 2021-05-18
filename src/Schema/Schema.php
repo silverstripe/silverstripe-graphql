@@ -454,8 +454,7 @@ class Schema implements ConfigurationApplier
     {
         $allTypeFields = [];
         $allModelFields = [];
-        $types = array_merge($this->types, $this->interfaces);
-        foreach ($types as $type) {
+        foreach ($this->types as $type) {
             if ($type->getIsInput()) {
                 continue;
             }
@@ -721,7 +720,7 @@ class Schema implements ConfigurationApplier
 
         $interface = $this->getInterface($typeName);
         if ($interface instanceof ModelInterfaceType) {
-            return $interface;
+            return $interface->getCanonicalModel();
         }
 
         return null;
