@@ -307,6 +307,15 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
     }
 
     /**
+     * @param string $interfaceName
+     * @return bool
+     */
+    public function implements(string $interfaceName): bool
+    {
+        return in_array($interfaceName, $this->interfaces);
+    }
+
+    /**
      * @return bool
      */
     public function getIsInput(): bool

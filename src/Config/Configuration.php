@@ -53,11 +53,11 @@ class Configuration
 
     /**
      * @param $path
-     * @param $value
+     * @param callable $callback
      * @return $this
      * @throws SchemaBuilderException
      */
-    public function set($path, $value): self
+    private function path($path, $callback): void
     {
         if (is_string($path)) {
             $path = explode('.', $path);
@@ -72,14 +72,44 @@ class Configuration
         foreach ($path as $i => $part) {
             $last = ($i + 1) === sizeof($path);
             if ($last) {
-                $scope[$part] = $value;
-                return $this;
+                $callback($scope, $part);
+                return;
             }
             if (!isset($scope[$part])) {
                 $scope[$part] = [];
             }
             $scope = &$scope[$part];
         }
+    }
+
+    /**
+     * @param $path
+     * @param $value
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function set($path, $value): self
+    {
+        $this->path($path, function (&$scope, $part) use ($value) {
+           $scope[$part] = $value;
+        });
+
+        return $this;
+    }
+
+    /**
+     * @param $path
+     * @param $value
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function unset($path): self
+    {
+        $this->path($path, function (&$scope, $part) {
+            unset($scope[$part]);
+        });
+
+        return $this;
     }
 
     /**

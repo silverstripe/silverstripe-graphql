@@ -950,6 +950,32 @@ class Schema implements ConfigurationApplier
     }
 
     /**
+     * Some types must be eagerly loaded into the schema if they cannot be discovered through introspection.
+     * This may include types that do not appear in any queries.
+     * @param string $name
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function eagerLoad(string $name): self
+    {
+        $this->getConfig()->set("eagerLoadTypes.$name", $name);
+
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function lazyLoad(string $name): self
+    {
+        $this->getConfig()->unset("eagerLoadTypes.$name");
+
+        return $this;
+    }
+
+    /**
      * @param string $class
      * @param array $config
      * @return ModelType|null
@@ -1034,6 +1060,14 @@ class Schema implements ConfigurationApplier
     public function getInterfaces(): array
     {
         return $this->interfaces;
+    }
+
+    public function getImplementorsOf(string $interfaceName): array
+    {
+        $search = array_merge($this->getTypes(), $this->getModels());
+        return array_filter($search, function (Type $type) use ($interfaceName) {
+            return $type->implements($interfaceName);
+        });
     }
 
     /**

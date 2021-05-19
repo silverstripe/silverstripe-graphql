@@ -81,7 +81,6 @@ class InterfaceBuilder
 
         foreach ($interfaceStack as $ancestorInterface) {
             $modelType->addInterface($ancestorInterface->getName());
-            $interface->addInterface($ancestorInterface->getName());
         }
 
         $interfaceStack[] = $interface;
@@ -152,6 +151,9 @@ class InterfaceBuilder
             $interfaceName = static::interfaceName($modelType->getName(), $schema->getConfig());
             if ($interface = $schema->getInterface($interfaceName)) {
                 $query->setNamedType($interfaceName);
+                // Because the canonical type no longer appears in a query, we need to eagerly load
+                // it into the schema so it is discoverable. Helps with intellisense
+                $this->schema->eagerLoad($modelType->getName());
             }
         }
 

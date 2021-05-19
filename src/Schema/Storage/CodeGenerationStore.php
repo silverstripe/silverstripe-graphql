@@ -4,7 +4,7 @@ namespace SilverStripe\GraphQL\Schema\Storage;
 
 use Exception;
 use GraphQL\Type\Schema as GraphQLSchema;
-use GraphQL\Type\SchemaConfig as GraphqLSchemaConfig;
+use GraphQL\Type\SchemaConfig as GraphQLSchemaConfig;
 use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
@@ -290,6 +290,13 @@ class CodeGenerationStore implements SchemaStorageInterface
             $callback = call_user_func([$registryClass, Schema::MUTATION_TYPE]);
             $schemaConfig->setMutation($callback);
         }
+        // Add eager loaded types
+        $typeNames = $this->getConfig()->get('eagerLoadTypes', []);
+        $typeObjs = array_map(function (string $typeName) use ($registryClass) {
+            return call_user_func([$registryClass, $typeName]);
+        }, $typeNames);
+        $schemaConfig->setTypes($typeObjs);
+
         return new GraphQLSchema($schemaConfig);
     }
 
