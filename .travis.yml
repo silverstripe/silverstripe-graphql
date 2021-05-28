@@ -5,8 +5,8 @@ import:
 
 env:
   global:
-    - REQUIRE_RECIPE="4.8.x-dev"
-    - REQUIRE_EXTRA="silverstripe/frameworktest:0.3.0"
+    - REQUIRE_RECIPE="4.x-dev"
+    - REQUIRE_EXTRA="silverstripe/frameworktest:0.4.2"
     - BEHAT_SUITE="asset-admin --config vendor/silverstripe/asset-admin/behat.yml"
 
 before_script:
