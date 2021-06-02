@@ -81,6 +81,11 @@ class CodeGenerationStore implements SchemaStorageInterface
     private $cachedConfig;
 
     /**
+     * @var GraphQLSchema|null
+     */
+    private $graphqlSchema;
+
+    /**
      * @param string $name
      * @param CacheInterface $cache
      */
@@ -267,17 +272,20 @@ class CodeGenerationStore implements SchemaStorageInterface
 
     /**
      * @return GraphQLSchema
+     * @var bool $useCache
      * @throws SchemaNotFoundException
      */
-    public function getSchema(): GraphQLSchema
+    public function getSchema($useCache = true): GraphQLSchema
     {
-        if (!file_exists($this->getSchemaFilename())) {
+        if (!$this->exists()) {
             throw new SchemaNotFoundException(sprintf(
                 'Schema "%s" has not been built',
                 $this->name
             ));
         }
-
+        if ($useCache && $this->graphqlSchema) {
+            return $this->graphqlSchema;
+        }
         require_once($this->getSchemaFilename());
 
         $registryClass = $this->getClassName(self::TYPE_CLASS_NAME);
@@ -297,7 +305,9 @@ class CodeGenerationStore implements SchemaStorageInterface
         }, $typeNames);
         $schemaConfig->setTypes($typeObjs);
 
-        return new GraphQLSchema($schemaConfig);
+        $this->graphqlSchema = new GraphQLSchema($schemaConfig);
+
+        return $this->graphqlSchema;
     }
 
     /**
@@ -329,12 +339,7 @@ class CodeGenerationStore implements SchemaStorageInterface
      */
     public function exists(): bool
     {
-        try {
-            $this->getSchema();
-            return true;
-        } catch (SchemaNotFoundException $e) {
-            return false;
-        }
+        return file_exists($this->getSchemaFilename());
     }
 
     /**
