@@ -299,10 +299,16 @@ class CodeGenerationStore implements SchemaStorageInterface
             $schemaConfig->setMutation($callback);
         }
         // Add eager loaded types
-        $typeNames = $this->getConfig()->get('eagerLoadTypes', []);
+        $typeNames = array_filter(
+            $this->getConfig()->get('eagerLoadTypes', []),
+            function (string $name) use ($registryClass) {
+                return method_exists($registryClass, $name);
+            }
+        );
         $typeObjs = array_map(function (string $typeName) use ($registryClass) {
             return call_user_func([$registryClass, $typeName]);
         }, $typeNames);
+
         $schemaConfig->setTypes($typeObjs);
 
         $this->graphqlSchema = new GraphQLSchema($schemaConfig);
