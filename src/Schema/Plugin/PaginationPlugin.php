@@ -69,10 +69,9 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
 
     /**
      * @param Schema $schema
-     * @param array $config
      * @throws SchemaBuilderException
      */
-    public static function updateSchema(Schema $schema, array $config = []): void
+    public static function updateSchema(Schema $schema): void
     {
         // Create the PageInfo type, which is universal
         $pageinfoType = Type::create('PageInfo')

@@ -86,7 +86,8 @@ class InheritanceTest extends SapphireTest
                 'class' => FakeInheritanceUnionBuilder::class,
             ],
         ]);
-        Inheritance::updateSchema($schema, ['useUnionQueries' => $unions]);
+        $schema->getConfig()->set('useUnionQueries', $unions);
+        Inheritance::updateSchema($schema);
 
         $this->assertTrue(FakeInterfaceBuilder::$baseCalled);
         if ($unions) {

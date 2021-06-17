@@ -46,10 +46,9 @@ abstract class AbstractQueryFilterPlugin implements SchemaUpdater, ModelQueryPlu
     /**
      * Creates all the { eq: String, lte: String }, { eq: Int, lte: Int } etc types for comparisons
      * @param Schema $schema
-     * @param array $config
      * @throws SchemaBuilderException
      */
-    public static function updateSchema(Schema $schema, array $config = []): void
+    public static function updateSchema(Schema $schema): void
     {
         /* @var FieldFilterRegistry $registry */
         $registry = Injector::inst()->get(FilterRegistryInterface::class);

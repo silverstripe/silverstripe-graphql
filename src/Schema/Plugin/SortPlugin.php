@@ -47,11 +47,10 @@ class SortPlugin implements FieldPlugin, SchemaUpdater
 
     /**
      * @param Schema $schema
-     * @param array $config
      */
-    public static function updateSchema(Schema $schema, array $config = []): void
+    public static function updateSchema(Schema $schema): void
     {
-        AbstractQuerySortPlugin::updateSchema($schema, $config);
+        AbstractQuerySortPlugin::updateSchema($schema);
     }
 
     /**

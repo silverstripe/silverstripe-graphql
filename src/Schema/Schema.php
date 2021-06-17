@@ -415,8 +415,8 @@ class Schema implements ConfigurationApplier
 
         /* @var SchemaUpdater $builder */
         foreach ($schemaUpdates as $spec) {
-            list ($class, $config) = $spec;
-            $class::updateSchema($this, $config);
+            list ($class) = $spec;
+            $class::updateSchema($this);
         }
     }
 
