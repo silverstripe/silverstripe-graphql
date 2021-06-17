@@ -50,7 +50,7 @@ class InterfaceBuilder
      * @throws SchemaBuilderException
      * @return $this
      */
-    public function createInterfaces(ModelType $modelType, array $interfaceStack = []): self
+    public function createInterfaces(ModelType $modelType, array $interfaceStack = []): InterfaceBuilder
     {
         $interface = ModelInterfaceType::create(
             $modelType,
@@ -100,7 +100,7 @@ class InterfaceBuilder
      * @return $this
      * @throws SchemaBuilderException
      */
-    public function applyBaseInterface(): self
+    public function applyBaseInterface(): InterfaceBuilder
     {
         $commonFields = $this->getSchema()->getConfig()
             ->getModelConfiguration('DataObject')
@@ -132,7 +132,7 @@ class InterfaceBuilder
      * @throws SchemaBuilderException
      * @return $this
      */
-    public function applyInterfacesToQueries(): self
+    public function applyInterfacesToQueries(): InterfaceBuilder
     {
         $schema = $this->getSchema();
         $queryCollector = QueryCollector::create($schema);

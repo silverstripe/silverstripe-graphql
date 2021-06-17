@@ -44,7 +44,7 @@ class InheritanceUnionBuilder
      * @throws SchemaBuilderException
      * @return $this
      */
-    public function createUnions(): self
+    public function createUnions(): InheritanceUnionBuilder
     {
         $dataObjects = $this->getSchema()->getModelTypesFromClass(DataObject::class);
         $schema = $this->getSchema();
@@ -84,7 +84,7 @@ class InheritanceUnionBuilder
      * @throws SchemaBuilderException
      * @return $this
      */
-    public function applyUnionsToQueries(): self
+    public function applyUnionsToQueries(): InheritanceUnionBuilder
     {
         $schema = $this->getSchema();
         $queryCollector = QueryCollector::create($schema);
