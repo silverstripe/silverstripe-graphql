@@ -91,7 +91,7 @@ class Configuration
     public function set($path, $value): self
     {
         $this->path($path, function (&$scope, $part) use ($value) {
-           $scope[$part] = $value;
+            $scope[$part] = $value;
         });
 
         return $this;
