@@ -51,8 +51,8 @@ class Enum extends Type implements SchemaValidator
         $list = [];
         $values = $this->getValues();
         if (!ArrayLib::is_associative($values)) {
-            $list = array_values($values);
-            $values = array_combine($list, $list);
+            $entries = array_values($values);
+            $values = array_combine($entries, $entries);
         }
         foreach ($values as $key => $val) {
             $value = null;
