@@ -84,6 +84,10 @@ class FieldAccessor
             return $field;
         }
 
+        if ($dataObject->hasField($field)) {
+            return $field;
+        }
+
         return null;
     }
 

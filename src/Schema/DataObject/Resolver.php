@@ -45,4 +45,26 @@ class Resolver
 
         return $result;
     }
+
+    /**
+     * Just the basic ViewableData field accessor bit, without all the property mapping
+     * overhead. Useful for custom dataobject types that circumvent the model layer.
+     *
+     * @param DataObject $obj
+     * @param array $args
+     * @param array $context
+     * @param ResolveInfo|null $info
+     * @return array|bool|int|mixed|DataList|DataObject|DBField|SS_List|string|null
+     */
+    public static function baseResolve($obj, $args = [], $context = [], ?ResolveInfo $info = null)
+    {
+        $fieldName = $info->fieldName;
+        $result = FieldAccessor::singleton()->accessField($obj, $fieldName);
+        if ($result instanceof DBField) {
+            return $result->getValue();
+        }
+
+        return $result;
+    }
+
 }
