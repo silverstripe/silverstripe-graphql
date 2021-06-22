@@ -3,20 +3,23 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
+use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceBuilder;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceUnionBuilder;
 use SilverStripe\GraphQL\Schema\DataObject\InterfaceBuilder;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelTypePlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\PluginInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\DataObject;
 use ReflectionException;
 
 /**
  * Adds inheritance fields to a DataObject type, and exposes its ancestry
  */
-class Inheritance implements PluginInterface, SchemaUpdater
+class Inheritance implements PluginInterface, SchemaUpdater, ModelTypePlugin
 {
 
     const IDENTIFIER = 'inheritance';
@@ -31,44 +34,46 @@ class Inheritance implements PluginInterface, SchemaUpdater
 
     /**
      * @param Schema $schema
-     * @throws ReflectionException
      * @throws SchemaBuilderException
      */
     public static function updateSchema(Schema $schema): void
     {
-        $baseModels = [];
-        $leafModels = [];
+        InterfaceBuilder::create($schema)
+            ->applyBaseInterface();
+    }
+
+    /**
+     * @param ModelType $type
+     * @param Schema $schema
+     * @param array $config
+     * @throws ReflectionException
+     * @throws SchemaBuilderException
+     */
+    public function apply(ModelType $type, Schema $schema, array $config = []): void
+    {
+        if (!$type->getModel() instanceof DataObjectModel) {
+            return;
+        }
 
         $inheritance = InheritanceBuilder::create($schema);
         $interfaces = InterfaceBuilder::create($schema);
         $useUnions = $schema->getConfig()->get('useUnionQueries', false);
 
-        foreach ($schema->getModelTypesFromClass(DataObject::class) as $modelType) {
-            $class = $modelType->getModel()->getSourceClass();
-            if ($inheritance->isBaseModel($class)) {
-                $baseModels[] = $modelType;
-            } elseif ($inheritance->isLeafModel($class)) {
-                $leafModels[] = $modelType;
-            }
+        $class = $type->getModel()->getSourceClass();
+        if ($inheritance->isLeafModel($class)) {
+            $inheritance->fillAncestry($type);
+        } elseif ($inheritance->isBaseModel($class)) {
+            $inheritance->fillDescendants($type);
+            $interfaces->createInterfaces($type);
         }
-
-        foreach ($leafModels as $modelType) {
-            $inheritance->fillAncestry($modelType);
-        }
-
-        foreach ($baseModels as $modelType) {
-            $inheritance->fillDescendants($modelType);
-            $interfaces->createInterfaces($modelType);
-        }
-
-        $interfaces->applyBaseInterface();
 
         if ($useUnions) {
             InheritanceUnionBuilder::create($schema)
-                ->createUnions()
-                ->applyUnionsToQueries();
+                ->createUnions($type)
+                ->applyUnionsToQueries($type);
         } else {
-            $interfaces->applyInterfacesToQueries();
+            $interfaces->applyInterfacesToQueries($type);
         }
+
     }
 }

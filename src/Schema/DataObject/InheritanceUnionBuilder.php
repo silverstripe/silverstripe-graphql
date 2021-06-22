@@ -11,6 +11,7 @@ use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\Type\ModelInterfaceType;
+use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\ModelUnionType;
 use SilverStripe\ORM\DataObject;
 use ReflectionException;
@@ -39,58 +40,54 @@ class InheritanceUnionBuilder
     }
 
     /**
+     * @param ModelType $modelType
      * @return void
      * @throws ReflectionException
      * @throws SchemaBuilderException
      * @return $this
      */
-    public function createUnions(): InheritanceUnionBuilder
+    public function createUnions(ModelType $modelType): InheritanceUnionBuilder
     {
-        $dataObjects = $this->getSchema()->getModelTypesFromClass(DataObject::class);
         $schema = $this->getSchema();
+        $chain = InheritanceChain::create($modelType->getModel()->getSourceClass());
+        if (!$chain->hasDescendants()) {
+            return $this;
+        }
+        $name = static::unionName($modelType->getName(), $schema->getConfig());
+        $union = ModelUnionType::create($modelType, $name);
 
-        /* @var ModelInterfaceType $interface */
-        foreach ($dataObjects as $modelType) {
-            $chain = InheritanceChain::create($modelType->getModel()->getSourceClass());
-            if (!$chain->hasDescendants()) {
-                continue;
+        $types = array_filter(array_map(function ($class) use ($schema) {
+            if (!$schema->getModelByClassName($class)) {
+                return null;
             }
-            $name = static::unionName($modelType->getName(), $schema->getConfig());
-            $union = ModelUnionType::create($modelType, $name);
+            return $schema->getConfig()->getTypeNameForClass($class);
+        }, $chain->getDescendantModels()));
 
-            $types = array_filter(array_map(function ($class) use ($schema) {
-                if (!$schema->getModelByClassName($class)) {
-                    return null;
-                }
-                return $schema->getConfig()->getTypeNameForClass($class);
-            }, $chain->getDescendantModels()));
-
-            if (empty($types)) {
-                continue;
-            }
-
-            $types[] = $modelType->getName();
-
-            $union->setTypes($types);
-            $union->setTypeResolver([AbstractTypeResolver::class, 'resolveType']);
-            $schema->addUnion($union);
+        if (empty($types)) {
+            return $this;
         }
 
+        $types[] = $modelType->getName();
+
+        $union->setTypes($types);
+        $union->setTypeResolver([AbstractTypeResolver::class, 'resolveType']);
+        $schema->addUnion($union);
         return $this;
     }
 
     /**
      * Changes all queries to use inheritance unions where applicable
+     * @param ModelType $modelType
      * @throws SchemaBuilderException
      * @return $this
      */
-    public function applyUnionsToQueries(): InheritanceUnionBuilder
+    public function applyUnionsToQueries(ModelType $modelType): InheritanceUnionBuilder
     {
         $schema = $this->getSchema();
         $queryCollector = QueryCollector::create($schema);
 
         /* @var ModelQuery $query */
-        foreach ($queryCollector->collectQueries() as $query) {
+        foreach ($queryCollector->collectQueriesForType($modelType) as $query) {
             $typeName = $query->getNamedType();
             $modelType = $schema->getModel($typeName);
             // Type was customised. Ignore.

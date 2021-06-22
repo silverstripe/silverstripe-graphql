@@ -5,11 +5,13 @@ namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\ModelInterfaceType;
 use Generator;
+use SilverStripe\GraphQL\Schema\Type\ModelType;
 
 class QueryCollector
 {
@@ -51,6 +53,21 @@ class QueryCollector
                 if ($field instanceof ModelField && $field->getModelType()) {
                     yield $field;
                 }
+            }
+        }
+    }
+
+    /**
+     * @param ModelType $type
+     * @return Generator
+     * @throws SchemaBuilderException
+     */
+    public function collectQueriesForType(ModelType $type): Generator
+    {
+        /* @var Field $query */
+        foreach ($this->collectQueries() as $query) {
+            if ($query->getNamedType() === $type->getName()) {
+                yield $query;
             }
         }
     }

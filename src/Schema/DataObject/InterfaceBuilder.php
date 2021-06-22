@@ -129,15 +129,16 @@ class InterfaceBuilder
     }
 
     /**
+     * @param ModelType $type
      * @throws SchemaBuilderException
      * @return $this
      */
-    public function applyInterfacesToQueries(): InterfaceBuilder
+    public function applyInterfacesToQueries(ModelType $type): InterfaceBuilder
     {
         $schema = $this->getSchema();
         $queryCollector = QueryCollector::create($schema);
         /* @var ModelQuery $query */
-        foreach ($queryCollector->collectQueries() as $query) {
+        foreach ($queryCollector->collectQueriesForType($type) as $query) {
             $typeName = $query->getNamedType();
             $modelType = $this->getSchema()->getModel($typeName);
             // Type was customised. Ignore.

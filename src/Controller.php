@@ -135,7 +135,7 @@ class Controller extends BaseController
             $ctx = $handler->getContext();
             $result = $handler->query($graphqlSchema, $query, $variables);
 
-            // Fire an event
+            // Fire an eventYou
             $eventContext = [
                 'schema' => $graphqlSchema,
                 'schemaKey' => $this->getSchemaKey(),
@@ -144,7 +144,7 @@ class Controller extends BaseController
                 'variables' => $variables,
                 'result' => $result,
             ];
-            $event = QueryHandler::isMutation($query) ? 'onGraphQLMutation' : 'onGraphQLQuery';
+            $event = QueryHandler::isMutation($query) ? 'graphqlMutation' : 'graphqlQuery';
             $operationName = QueryHandler::getOperationName($queryDocument);
             Dispatcher::singleton()->trigger($event, Event::create($operationName, $eventContext));
         } catch (Exception $exception) {
