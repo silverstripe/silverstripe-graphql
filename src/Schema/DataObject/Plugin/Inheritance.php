@@ -74,6 +74,5 @@ class Inheritance implements PluginInterface, SchemaUpdater, ModelTypePlugin
         } else {
             $interfaces->applyInterfacesToQueries($type);
         }
-
     }
 }

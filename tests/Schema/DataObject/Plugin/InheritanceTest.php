@@ -123,7 +123,6 @@ class InheritanceTest extends SapphireTest
                 ['A', 'B', 'C'],
                 FakeInterfaceBuilder::$createCalls
             );
-
         }
 
         $this->assertCalls(
