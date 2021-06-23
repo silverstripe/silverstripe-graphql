@@ -5,27 +5,28 @@ namespace SilverStripe\GraphQL\Tests\Schema\DataObject;
 
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\GraphQL\Schema\DataObject\InheritanceUnionBuilder;
+use SilverStripe\GraphQL\Schema\Type\ModelType;
 
 class FakeInheritanceUnionBuilder extends InheritanceUnionBuilder implements TestOnly
 {
-    public static $createCalled = false;
-    public static $applyCalled = false;
+    public static $createCalls = [];
+    public static $applyCalls = [];
 
     public static function reset()
     {
-        self::$createCalled = false;
-        self::$applyCalled = false;
+        self::$createCalls = [];
+        self::$applyCalls = [];
     }
 
-    public function createUnions(): InheritanceUnionBuilder
+    public function createUnions(ModelType $type): InheritanceUnionBuilder
     {
-        static::$createCalled = true;
+        static::$createCalls[$type->getName()] = true;
         return $this;
     }
 
-    public function applyUnionsToQueries(): InheritanceUnionBuilder
+    public function applyUnionsToQueries(ModelType $type): InheritanceUnionBuilder
     {
-        static::$applyCalled = true;
+        static::$applyCalls[$type->getName()] = true;
         return $this;
     }
 }

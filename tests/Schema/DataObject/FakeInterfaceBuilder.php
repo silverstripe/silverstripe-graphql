@@ -11,13 +11,13 @@ class FakeInterfaceBuilder extends InterfaceBuilder implements TestOnly
 {
     public static $createCalls = [];
     public static $baseCalled = false;
-    public static $applyCalled = false;
+    public static $applyCalls = [];
 
     public static function reset()
     {
         self::$createCalls = [];
         self::$baseCalled = false;
-        self::$applyCalled = false;
+        self::$applyCalls = [];
     }
 
     public function createInterfaces(ModelType $modelType, array $interfaceStack = []): InterfaceBuilder
@@ -32,9 +32,9 @@ class FakeInterfaceBuilder extends InterfaceBuilder implements TestOnly
         return $this;
     }
 
-    public function applyInterfacesToQueries(): InterfaceBuilder
+    public function applyInterfacesToQueries(ModelType $type): InterfaceBuilder
     {
-        self::$applyCalled = true;
+        self::$applyCalls[$type->getName()] = true;
         return $this;
     }
 }

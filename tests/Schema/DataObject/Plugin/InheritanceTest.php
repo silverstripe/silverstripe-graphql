@@ -72,6 +72,11 @@ class InheritanceTest extends SapphireTest
         }
         $schema->createStoreableSchema();
 
+        $allModels = array_map(function ($class) use ($schema) {
+            return $schema->getConfig()->getTypeNameForClass($class);
+        }, static::$extra_dataobjects);
+
+
         FakeInheritanceUnionBuilder::reset();
         FakeInterfaceBuilder::reset();
 
@@ -87,17 +92,38 @@ class InheritanceTest extends SapphireTest
             ],
         ]);
         $schema->getConfig()->set('useUnionQueries', $unions);
-        Inheritance::updateSchema($schema);
 
+        Inheritance::updateSchema($schema);
         $this->assertTrue(FakeInterfaceBuilder::$baseCalled);
+
+        $inheritance = new Inheritance();
+        foreach (static::$extra_dataobjects as $class) {
+            $inheritance->apply($schema->getModelByClassName($class), $schema);
+        }
+
+
         if ($unions) {
-            $this->assertTrue(FakeInheritanceUnionBuilder::$createCalled);
-            $this->assertTrue(FakeInheritanceUnionBuilder::$applyCalled);
-            $this->assertFalse(FakeInterfaceBuilder::$applyCalled);
+            $this->assertCalls(
+                $allModels,
+                FakeInheritanceUnionBuilder::$applyCalls
+            );
+            $this->assertCalls(
+                $allModels,
+                FakeInheritanceUnionBuilder::$createCalls
+            );
+            $this->assertEmpty(FakeInterfaceBuilder::$applyCalls);
         } else {
-            $this->assertFalse(FakeInheritanceUnionBuilder::$createCalled);
-            $this->assertFalse(FakeInheritanceUnionBuilder::$applyCalled);
-            $this->assertTrue(FakeInterfaceBuilder::$applyCalled);
+            $this->assertEmpty(FakeInheritanceUnionBuilder::$createCalls);
+            $this->assertEmpty(FakeInheritanceUnionBuilder::$applyCalls);
+            $this->assertCalls(
+                $allModels,
+                FakeInterfaceBuilder::$applyCalls
+            );
+            $this->assertCalls(
+                ['A', 'B', 'C'],
+                FakeInterfaceBuilder::$createCalls
+            );
+
         }
 
         $this->assertCalls(

@@ -370,9 +370,7 @@ query {
       firstName
     }
     files {
-      ... on FileInterface {
-        id
-      }
+      id
     }
   }
 }

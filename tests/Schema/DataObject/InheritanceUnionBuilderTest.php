@@ -40,7 +40,9 @@ class InheritanceUnionBuilderTest extends SapphireTest
         }
         $schema->createStoreableSchema();
         $builder = new InheritanceUnionBuilder($schema);
-        $builder->createUnions();
+        foreach (static::$extra_dataobjects as $class) {
+            $builder->createUnions($schema->getModelByClassName($class));
+        }
 
         $union = $schema->getUnion('AInheritanceUnion');
         $this->assertNotNull($union);
@@ -71,7 +73,12 @@ class InheritanceUnionBuilderTest extends SapphireTest
         $schema->removeModelByClassName(A1::class);
         $schema->createStoreableSchema();
         $builder = new InheritanceUnionBuilder($schema);
-        $builder->createUnions();
+        foreach (static::$extra_dataobjects as $class) {
+            $type = $schema->getModelByClassName($class);
+            if ($type) {
+                $builder->createUnions($type);
+            }
+        }
         ;
         $union = $schema->getUnion('AInheritanceUnion');
         $this->assertNotNull($union);
@@ -107,8 +114,16 @@ class InheritanceUnionBuilderTest extends SapphireTest
 
         $schema->createStoreableSchema();
         $builder = new InheritanceUnionBuilder($schema);
-        $builder->createUnions();
-        $builder->applyUnionsToQueries();
+
+        foreach (static::$extra_dataobjects as $class) {
+            $type = $schema->getModelByClassName($class);
+            if (!$type) {
+                continue;
+            }
+            $builder->createUnions($type);
+            $builder->applyUnionsToQueries($type);
+        }
+
 
         $query = $schema->getQueryType()->getFieldByName('readAs');
         $this->assertNotNull($query);
