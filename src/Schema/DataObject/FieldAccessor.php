@@ -216,8 +216,9 @@ class FieldAccessor
         $belongsTo = array_keys((array) $config->get('belongs_to', $configFlag));
         $hasMany = array_keys((array) $config->get('has_many', $configFlag));
         $manyMany = array_keys((array) $config->get('many_many', $configFlag));
+        $belongsManyMany = array_keys((array) $config->get('belongs_many_many', $configFlag));
 
-        return array_merge($db, $hasOnes, $belongsTo, $hasMany, $manyMany);
+        return array_merge($db, $hasOnes, $belongsTo, $hasMany, $manyMany, $belongsManyMany);
     }
 
     /**
