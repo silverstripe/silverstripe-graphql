@@ -38,8 +38,8 @@ class QueryCollector
                 yield $field;
             }
         }
-        foreach ($this->schema->getModels() as $model) {
-            foreach ($model->getFields() as $field) {
+        foreach (array_merge($this->schema->getModels(), $this->schema->getTypes()) as $type) {
+            foreach ($type->getFields() as $field) {
                 if ($field instanceof ModelField && $field->getModelType()) {
                     yield $field;
                 }

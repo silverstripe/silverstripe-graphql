@@ -34,6 +34,16 @@ class InheritanceChain
     private $inst;
 
     /**
+     * @var array
+     */
+    private $hiddenAncestors = [];
+
+    /**
+     * @var array
+     */
+    private $hiddenDescendants = [];
+
+    /**
      * InheritanceChain constructor.
      * @param string $dataObjectClass
      * @throws SchemaBuilderException
@@ -62,6 +72,9 @@ class InheritanceChain
             if ($class === $this->dataObjectClass) {
                 continue;
             }
+            if (in_array($class, $this->hiddenAncestors)) {
+                continue;
+            }
             if ($class == DataObject::class) {
                 break;
             }
@@ -80,6 +93,18 @@ class InheritanceChain
     }
 
     /**
+     * Hides ancestors by classname, e.g. SiteTree::class
+     * @param array $ancestors
+     * @return $this
+     */
+    public function hideAncestors(array $ancestors): self
+    {
+        $this->hiddenAncestors = $ancestors;
+
+        return $this;
+    }
+
+    /**
      * @return array
      * @throws ReflectionException
      */
@@ -87,7 +112,9 @@ class InheritanceChain
     {
         $descendants = ClassInfo::subclassesFor($this->dataObjectClass, false);
 
-        return array_values($descendants);
+        return array_filter(array_values($descendants), function ($class) {
+            return !in_array($class, $this->hiddenDescendants);
+        });
     }
 
     /**
@@ -109,6 +136,17 @@ class InheritanceChain
     public function hasDescendants(): bool
     {
         return count($this->getDescendantModels()) > 0;
+    }
+
+    /**
+     * @param array $descendants
+     * @return $this
+     */
+    public function hideDescendants(array $descendants): self
+    {
+        $this->hiddenDescendants = $descendants;
+
+        return $this;
     }
 
     /**

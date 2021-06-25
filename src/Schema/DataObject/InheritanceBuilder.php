@@ -24,9 +24,20 @@ class InheritanceBuilder
      */
     private $schema;
 
-    public function __construct(Schema $schema)
+    /**
+     * @var array
+     */
+    private $hideAncestors = [];
+
+    /**
+     * InheritanceBuilder constructor.
+     * @param Schema $schema
+     * @param array $hideAncestors
+     */
+    public function __construct(Schema $schema, array $hideAncestors = [])
     {
         $this->setSchema($schema);
+        $this->hideAncestors = $hideAncestors;
     }
 
     /**
@@ -35,7 +46,8 @@ class InheritanceBuilder
      */
     public function fillAncestry(ModelType $modelType): void
     {
-        $chain = InheritanceChain::create($modelType->getModel()->getSourceClass());
+        $chain = InheritanceChain::create($modelType->getModel()->getSourceClass())
+            ->hideAncestors($this->hideAncestors);
         $ancestors = $chain->getAncestralModels();
         if (empty($ancestors)) {
             return;
@@ -68,7 +80,9 @@ class InheritanceBuilder
      */
     public function fillDescendants(ModelType $modelType): void
     {
-        $chain = InheritanceChain::create($modelType->getModel()->getSourceClass());
+        $chain = InheritanceChain::create($modelType->getModel()->getSourceClass())
+            ->hideAncestors($this->hideAncestors);
+
         $descendants = $chain->getDirectDescendants();
         if (empty($descendants)) {
             return;
@@ -98,7 +112,9 @@ class InheritanceBuilder
             return false;
         }
 
-        $chain = InheritanceChain::create($class);
+        $chain = InheritanceChain::create($class)
+            ->hideAncestors($this->hideAncestors);
+
         if ($chain->getBaseClass() === $class) {
             return true;
         }
@@ -122,7 +138,9 @@ class InheritanceBuilder
             return false;
         }
 
-        $chain = InheritanceChain::create($class);
+        $chain = InheritanceChain::create($class)
+            ->hideAncestors($this->hideAncestors);
+
         foreach ($chain->getDescendantModels() as $class) {
             if ($this->getSchema()->getModelByClassName($class)) {
                 return false;

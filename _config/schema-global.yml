@@ -24,6 +24,9 @@ SilverStripe\GraphQL\Schema\Schema:
             plugins:
               inheritance:
                 useUnionQueries: false
+                hideAncestors:
+                  - SilverStripe\CMS\Model\SiteTree
+                after: 'versioning'
               inheritedPlugins:
                 after: '*'
             operations:

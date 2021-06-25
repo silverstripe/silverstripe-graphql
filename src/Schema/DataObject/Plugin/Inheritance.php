@@ -55,9 +55,11 @@ class Inheritance implements PluginInterface, SchemaUpdater, ModelTypePlugin
             return;
         }
 
-        $inheritance = InheritanceBuilder::create($schema);
+        $useUnions = $config['useUnionQueries'] ?? false;
+        $hideAncestors = $config['hideAncestors'] ?? [];
+
+        $inheritance = InheritanceBuilder::create($schema, $hideAncestors);
         $interfaces = InterfaceBuilder::create($schema);
-        $useUnions = $schema->getConfig()->get('useUnionQueries', false);
 
         $class = $type->getModel()->getSourceClass();
         if ($inheritance->isLeafModel($class)) {
