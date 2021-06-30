@@ -98,7 +98,10 @@ class InheritanceTest extends SapphireTest
 
         $inheritance = new Inheritance();
         foreach (static::$extra_dataobjects as $class) {
-            $inheritance->apply($schema->getModelByClassName($class), $schema);
+            $inheritance->apply(
+                $schema->getModelByClassName($class),
+                $schema, ['useUnionQueries' => $unions]
+            );
         }
 
 
