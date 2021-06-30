@@ -31,17 +31,22 @@ class QueryCollector
      * @return Generator
      * @throws SchemaBuilderException
      */
-    public function collectQueries(): Generator
+    public function collectQueries(): array
     {
+        $cached = $this->schema->getState()->get([static::class, 'queries']);
+        if ($cached) {
+            return $cached;
+        }
+        $queries = [];
         foreach ($this->schema->getQueryType()->getFields() as $field) {
             if ($field instanceof ModelQuery) {
-                yield $field;
+                $queries[] = $field;
             }
         }
         foreach (array_merge($this->schema->getModels(), $this->schema->getTypes()) as $type) {
             foreach ($type->getFields() as $field) {
                 if ($field instanceof ModelField && $field->getModelType()) {
-                    yield $field;
+                    $queries[] = $field;
                 }
             }
         }
@@ -51,10 +56,13 @@ class QueryCollector
             }
             foreach ($interface->getFields() as $field) {
                 if ($field instanceof ModelField && $field->getModelType()) {
-                    yield $field;
+                    $queries[] = $field;
                 }
             }
         }
+        $this->schema->getState()->set([static::class, 'queries'], $queries);
+
+        return $queries;
     }
 
     /**

@@ -54,7 +54,6 @@ class Inheritance implements PluginInterface, SchemaUpdater, ModelTypePlugin
         if (!$type->getModel() instanceof DataObjectModel) {
             return;
         }
-
         $useUnions = $config['useUnionQueries'] ?? false;
         $hideAncestors = $config['hideAncestors'] ?? [];
 
