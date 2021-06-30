@@ -4,7 +4,7 @@ namespace SilverStripe\GraphQL\Schema\Storage;
 
 use Exception;
 use GraphQL\Type\Schema as GraphQLSchema;
-use GraphQL\Type\SchemaConfig as GraphqLSchemaConfig;
+use GraphQL\Type\SchemaConfig as GraphQLSchemaConfig;
 use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
@@ -79,6 +79,11 @@ class CodeGenerationStore implements SchemaStorageInterface
      * @var SchemaConfig|null
      */
     private $cachedConfig;
+
+    /**
+     * @var GraphQLSchema|null
+     */
+    private $graphqlSchema;
 
     /**
      * @param string $name
@@ -267,17 +272,20 @@ class CodeGenerationStore implements SchemaStorageInterface
 
     /**
      * @return GraphQLSchema
+     * @var bool $useCache
      * @throws SchemaNotFoundException
      */
-    public function getSchema(): GraphQLSchema
+    public function getSchema($useCache = true): GraphQLSchema
     {
-        if (!file_exists($this->getSchemaFilename())) {
+        if (!$this->exists()) {
             throw new SchemaNotFoundException(sprintf(
                 'Schema "%s" has not been built',
                 $this->name
             ));
         }
-
+        if ($useCache && $this->graphqlSchema) {
+            return $this->graphqlSchema;
+        }
         require_once($this->getSchemaFilename());
 
         $registryClass = $this->getClassName(self::TYPE_CLASS_NAME);
@@ -290,7 +298,22 @@ class CodeGenerationStore implements SchemaStorageInterface
             $callback = call_user_func([$registryClass, Schema::MUTATION_TYPE]);
             $schemaConfig->setMutation($callback);
         }
-        return new GraphQLSchema($schemaConfig);
+        // Add eager loaded types
+        $typeNames = array_filter(
+            $this->getConfig()->get('eagerLoadTypes', []),
+            function (string $name) use ($registryClass) {
+                return method_exists($registryClass, $name);
+            }
+        );
+        $typeObjs = array_map(function (string $typeName) use ($registryClass) {
+            return call_user_func([$registryClass, $typeName]);
+        }, $typeNames);
+
+        $schemaConfig->setTypes($typeObjs);
+
+        $this->graphqlSchema = new GraphQLSchema($schemaConfig);
+
+        return $this->graphqlSchema;
     }
 
     /**
@@ -322,12 +345,7 @@ class CodeGenerationStore implements SchemaStorageInterface
      */
     public function exists(): bool
     {
-        try {
-            $this->getSchema();
-            return true;
-        } catch (SchemaNotFoundException $e) {
-            return false;
-        }
+        return file_exists($this->getSchemaFilename());
     }
 
     /**

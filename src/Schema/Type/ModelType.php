@@ -7,6 +7,7 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelAware;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
+use SilverStripe\GraphQL\Schema\Interfaces\BaseFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\InputTypeProvider;
@@ -55,7 +56,6 @@ class ModelType extends Type implements ExtraTypeProvider
     {
         $this->setModel($model);
         $type = $this->getModel()->getTypeName();
-
         Schema::invariant(
             $type,
             'Could not determine type for model %s',
@@ -84,7 +84,7 @@ class ModelType extends Type implements ExtraTypeProvider
         if ($fieldConfig === Schema::ALL) {
             $this->addAllFields();
         } else {
-            $fields = array_merge($this->getBaseFields(), $fieldConfig);
+            $fields = array_merge($this->getInitialFields(), $fieldConfig);
             Schema::assertValidConfig($fields);
 
             foreach ($fields as $fieldName => $data) {
@@ -142,6 +142,13 @@ class ModelType extends Type implements ExtraTypeProvider
                 }
             } else {
                 $fieldObj = ModelField::create($fieldName, $fieldConfig, $this->getModel());
+                Schema::invariant(
+                    $fieldObj->getType(),
+                    'Field %s on type %s could not infer a type. Check to see if the field exists on the model
+                    or provide an explicit type if necessary.',
+                    $fieldObj->getName(),
+                    $this->getName()
+                );
             }
         }
         Schema::invariant(
@@ -191,15 +198,15 @@ class ModelType extends Type implements ExtraTypeProvider
      */
     public function addAllFields(): self
     {
-        /* @var SchemaModelInterface&DefaultFieldsProvider $model */
-        $model = $this->getModel();
-        $defaultFields = $model instanceof DefaultFieldsProvider ? $model->getDefaultFields() : [];
-        foreach ($defaultFields as $fieldName => $fieldType) {
+        $initialFields = $this->getInitialFields();
+        foreach ($initialFields as $fieldName => $fieldType) {
             $this->addField($fieldName, $fieldType);
         }
         $allFields = $this->getModel()->getAllFields();
         foreach ($allFields as $fieldName) {
-            $this->addField($fieldName, $this->getModel()->getField($fieldName));
+            if (!$this->getFieldByName($fieldName)) {
+                $this->addField($fieldName, $this->getModel()->getField($fieldName));
+            }
         }
         return $this;
     }
@@ -422,13 +429,34 @@ class ModelType extends Type implements ExtraTypeProvider
     }
 
     /**
+     * @throws SchemaBuilderException
+     */
+    public function validate(): void
+    {
+        if ($this->getModel() instanceof BaseFieldsProvider) {
+            foreach ($this->getModel()->getBaseFields() as $fieldName => $data) {
+                Schema::invariant(
+                    $this->getFieldByName($fieldName),
+                    'Required base field %s was not on type %s',
+                    $fieldName,
+                    $this->getName()
+                );
+            }
+        }
+        parent::validate();
+    }
+
+    /**
      * @return array
      */
-    private function getBaseFields(): array
+    private function getInitialFields(): array
     {
         $model = $this->getModel();
         /* @var SchemaModelInterface&DefaultFieldsProvider $model */
-        return $model instanceof DefaultFieldsProvider ? $model->getDefaultFields() : [];
+        $default = $model instanceof DefaultFieldsProvider ? $model->getDefaultFields() : [];
+        $base = $model instanceof BaseFieldsProvider ? $model->getBaseFields() : [];
+
+        return array_merge($default, $base);
     }
 
     /**

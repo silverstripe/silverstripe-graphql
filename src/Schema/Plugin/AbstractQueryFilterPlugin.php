@@ -85,11 +85,13 @@ abstract class AbstractQueryFilterPlugin implements SchemaUpdater, ModelQueryPlu
             return;
         }
         $query->addArg($this->getFieldName(), $builder->getRootType()->getName());
+        $canonicalType = $schema->getCanonicalType($query->getNamedType());
+        $rootType = $canonicalType ? $canonicalType->getName() : $query->getNamedType();
         $query->addResolverAfterware(
             $this->getResolver($config),
             [
                 'fieldName' => $this->getFieldName(),
-                'rootType' => $query->getNamedType(),
+                'rootType' => $rootType,
             ]
         );
     }

@@ -91,7 +91,7 @@ class SchemaBuilder
         $store->persistSchema($schema->createStoreableSchema());
 
         Dispatcher::singleton()->trigger(
-            'graphqlSchemaBuild.' . $schema->getSchemaKey(),
+            'graphqlSchemaBuild',
             Event::create($schema->getSchemaKey(), [
                 'schema' => $schema
             ])
@@ -108,6 +108,7 @@ class SchemaBuilder
      * @return GraphQLSchema
      * @throws SchemaBuilderException
      * @throws SchemaNotFoundException
+     * @throws EmptySchemaException
      */
     public function buildByName(string $key, $clear = false): GraphQLSchema
     {
@@ -135,7 +136,6 @@ class SchemaBuilder
     public function boot(string $key): Schema
     {
         $schemaObj = Schema::create($key);
-
         $schemas = $schemaObj->config()->get('schemas') ?: [];
 
         if (!array_key_exists($key, $schemas)) {

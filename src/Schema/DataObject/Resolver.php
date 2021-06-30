@@ -4,13 +4,11 @@
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
 use GraphQL\Type\Definition\ResolveInfo;
-use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
+use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
-use Closure;
 use SilverStripe\ORM\SS_List;
 
 /**
@@ -26,12 +24,21 @@ class Resolver
      * @return array|bool|int|mixed|DataList|DataObject|DBField|SS_List|string|null
      * @throws SchemaBuilderException
      */
-    public static function resolve($obj, array $args = [], array $context = [], ?ResolveInfo $info = null)
+    public static function resolve($obj, $args = [], $context = [], ?ResolveInfo $info = null)
     {
         $fieldName = $info->fieldName;
-        $context = SchemaContextProvider::get($context);
-        $fieldName = $context->mapFieldByClassName(get_class($obj), $fieldName);
-        $result = $fieldName ? FieldAccessor::singleton()->accessField($obj, $fieldName[1]) : null;
+        $context = SchemaConfigProvider::get($context);
+        $class = get_class($obj);
+        $resolvedField = null;
+        while (!$resolvedField && $class !== DataObject::class) {
+            $resolvedField = $context->mapFieldByClassName($class, $fieldName);
+            $class = get_parent_class($class);
+        }
+
+        if (!$resolvedField) {
+            return null;
+        }
+        $result = FieldAccessor::singleton()->accessField($obj, $resolvedField[1]);
         if ($result instanceof DBField) {
             return $result->getValue();
         }
@@ -59,5 +66,4 @@ class Resolver
 
         return $result;
     }
-
 }

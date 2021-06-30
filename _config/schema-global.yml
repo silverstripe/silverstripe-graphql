@@ -4,6 +4,11 @@ Name: 'graphql-schema-global'
 SilverStripe\GraphQL\Schema\Schema:
   schemas:
     '*':
+      scalars:
+        JSONBlob:
+          serialiser: 'SilverStripe\GraphQL\Schema\Resolver\JSONResolver::serialise'
+          valueParser: 'SilverStripe\GraphQL\Schema\Resolver\JSONResolver::parseValue'
+          literalParser: 'SilverStripe\GraphQL\Schema\Resolver\JSONResolver::parseLiteral'
       config:
         resolverStrategy: 'SilverStripe\GraphQL\Schema\Resolver\DefaultResolverStrategy::getResolverMethod'
         defaultResolver: 'SilverStripe\GraphQL\Schema\Resolver\DefaultResolver::defaultFieldResolver'
@@ -14,8 +19,14 @@ SilverStripe\GraphQL\Schema\Schema:
             type_formatter: 'SilverStripe\Core\ClassInfo::shortName'
             type_prefix: ''
             type_mapping: []
+            base_fields:
+              ID: ID
             plugins:
-              inheritance: true
+              inheritance:
+                useUnionQueries: false
+                hideAncestors:
+                  - SilverStripe\CMS\Model\SiteTree
+                after: 'versioning'
               inheritedPlugins:
                 after: '*'
             operations:

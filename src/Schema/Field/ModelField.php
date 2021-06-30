@@ -94,6 +94,10 @@ class ModelField extends Field
      */
     public function getModelType(): ?ModelType
     {
+        $type = $this->getNamedType();
+        if (Schema::isInternalType($type)) {
+            return null;
+        }
         $model = $this->getModel()->getModelTypeForField($this->getName());
         if ($model) {
             $config = [];

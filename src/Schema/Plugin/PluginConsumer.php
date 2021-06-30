@@ -195,7 +195,7 @@ trait PluginConsumer
      * @throws CircularDependencyException
      * @throws ElementNotFoundException
      */
-    protected function getSortedPlugins(): array
+    public function getSortedPlugins(): array
     {
         $dependencies = [];
         $beforeAll = [];

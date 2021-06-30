@@ -8,7 +8,7 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
-use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
+use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\ModelMutation;
@@ -80,12 +80,12 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
             if (!$dataClass) {
                 return null;
             }
-            $schema = SchemaContextProvider::get($context);
+            $schema = SchemaConfigProvider::get($context);
             Schema::invariant(
                 $schema,
                 'Could not access schema in resolver for %s. Did you not add the %s context provider?',
                 __CLASS__,
-                SchemaContextProvider::class
+                SchemaConfigProvider::class
             );
             $fieldName = FieldAccessor::formatField('ID');
             $input = $args['input'];
@@ -143,7 +143,7 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
             if (!$fieldObj) {
                 continue;
             }
-            $type = $fieldObj->getType();
+            $type = $fieldObj->getNamedType();
             // No nested input types... yet
             if ($type && Schema::isInternalType($type)) {
                 $fieldMap[$fieldName] = $type;

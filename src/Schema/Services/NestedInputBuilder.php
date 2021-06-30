@@ -9,7 +9,9 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\InputType;
+use SilverStripe\GraphQL\Schema\Type\ModelInterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
+use SilverStripe\GraphQL\Schema\Type\ModelUnionType;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\ORM\ArrayLib;
@@ -93,7 +95,7 @@ class NestedInputBuilder
     public function populateSchema()
     {
         $typeName = TypeReference::create($this->root->getType())->getNamedType();
-        $type = $this->schema->getTypeOrModel($typeName);
+        $type = $this->schema->getCanonicalType($typeName);
         Schema::invariant(
             $type,
             'Could not find type for query that uses %s. Were plugins applied before the schema was done loading?',
@@ -128,7 +130,7 @@ class NestedInputBuilder
                 continue;
             }
             $namedType = $fieldObj->getNamedType();
-            $nestedType = $this->schema->getTypeOrModel($namedType);
+            $nestedType = $this->schema->getCanonicalType($namedType);
             if ($nestedType) {
                 $seen = $this->schema->getState()->get([
                   static::class,
@@ -207,21 +209,22 @@ class NestedInputBuilder
             }
 
             $fieldType = $fieldObj->getNamedType();
-            $nestedType = $this->schema->getTypeOrModel($fieldType);
+            $nestedType = $this->schema->getCanonicalType($fieldType);
 
             if ($data === self::SELF_REFERENTIAL) {
                 $inputType->addField($fieldName, $inputType->getName());
-            } elseif (!is_array($data)) {
+            } elseif (!is_array($data) && !$nestedType && Schema::isInternalType($fieldType)) {
                 // Regular field, e.g. scalar
-                if (!$nestedType && Schema::isInternalType($fieldType)) {
-                    $inputType->addField(
-                        $fieldName,
-                        $this->getLeafNodeType($fieldType)
-                    );
-                }
+                $inputType->addField(
+                    $fieldName,
+                    $this->getLeafNodeType($fieldType)
+                );
             }
+            // Make sure the input type got at least one field
             if ($inputType->exists()) {
+                // Optimistically add the type to the schema
                 $this->schema->addType($inputType);
+                // If we're in recursion, apply the nested input type to the parent
                 if ($parentType && $parentField) {
                     $parentType->addField($parentField, $inputType->getName());
                 }
@@ -341,6 +344,8 @@ class NestedInputBuilder
 
         return $fieldName;
     }
+
+
 
     /**
      * @param string $key

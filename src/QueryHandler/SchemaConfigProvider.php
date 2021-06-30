@@ -7,7 +7,7 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
 
-class SchemaContextProvider implements ContextProvider
+class SchemaConfigProvider implements ContextProvider
 {
     use Injectable;
 
@@ -19,7 +19,7 @@ class SchemaContextProvider implements ContextProvider
     private $schemaConfig;
 
     /**
-     * SchemaContextProvider constructor.
+     * SchemaConfigProvider constructor.
      * @param SchemaConfig $schemaConfig
      */
     public function __construct(SchemaConfig $schemaConfig)

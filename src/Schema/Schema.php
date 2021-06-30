@@ -24,7 +24,9 @@ use SilverStripe\GraphQL\Schema\Interfaces\TypePlugin;
 use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\InterfaceType;
+use SilverStripe\GraphQL\Schema\Type\ModelInterfaceType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
+use SilverStripe\GraphQL\Schema\Type\ModelUnionType;
 use SilverStripe\GraphQL\Schema\Type\Scalar;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
@@ -412,7 +414,8 @@ class Schema implements ConfigurationApplier
         }
 
         /* @var SchemaUpdater $builder */
-        foreach ($schemaUpdates as $class) {
+        foreach ($schemaUpdates as $spec) {
+            list ($class) = $spec;
             $class::updateSchema($this);
         }
     }
@@ -437,7 +440,7 @@ class Schema implements ConfigurationApplier
     private function getTypeComponents(): array
     {
         return [
-            'types' => $this->types,
+            'types' => array_merge($this->types, $this->interfaces),
             'models' => $this->models,
             'queries' => $this->queryType->getFields(),
             'mutations' => $this->mutationType->getFields(),
@@ -458,13 +461,13 @@ class Schema implements ConfigurationApplier
             $pluggedFields = array_filter($type->getFields(), function (Field $field) use ($type) {
                 return !empty($field->getPlugins());
             });
-            $allTypeFields = array_merge($allTypeFields, $pluggedFields);
+            $allTypeFields = array_merge($allTypeFields, array_values($pluggedFields));
         }
         foreach ($this->models as $model) {
-            $pluggedFields = array_filter($model->getFields(), function (ModelField $field) {
+            $pluggedFields = array_filter(array_values($model->getFields()), function (ModelField $field) {
                 return !empty($field->getPlugins());
             });
-            $allModelFields = array_merge($allModelFields, $pluggedFields);
+            $allModelFields = array_merge($allModelFields, array_values($pluggedFields));
         }
 
         return [
@@ -522,9 +525,9 @@ class Schema implements ConfigurationApplier
         $schemaUpdates = [];
         foreach ($components as $component) {
             foreach ($component->loadPlugins() as $data) {
-                list ($plugin) = $data;
+                list ($plugin, $config) = $data;
                 if ($plugin instanceof SchemaUpdater) {
-                    $schemaUpdates[get_class($plugin)] = get_class($plugin);
+                    $schemaUpdates[get_class($plugin)] = [get_class($plugin), $config];
                 }
             }
         }
@@ -662,6 +665,17 @@ class Schema implements ConfigurationApplier
     }
 
     /**
+     * @param string $type
+     * @return $this
+     */
+    public function removeType(string $type): Schema
+    {
+        unset($this->types[$type]);
+
+        return $this;
+    }
+
+    /**
      * @param string $name
      * @return Type|null
      */
@@ -684,6 +698,45 @@ class Schema implements ConfigurationApplier
         $this->addType(Type::create($name));
 
         return $this->getType($name);
+    }
+
+    /**
+     * Given a type name, try to resolve it to any model-implementing component
+     *
+     * @param string $typeName
+     * @return Type|null
+     */
+    public function getCanonicalType(string $typeName): ?Type
+    {
+        $type = $this->getTypeOrModel($typeName);
+        if ($type) {
+            return $type;
+        }
+
+        $union = $this->getUnion($typeName);
+        if ($union instanceof ModelUnionType) {
+            return $union->getCanonicalModel();
+        }
+
+        $interface = $this->getInterface($typeName);
+        if ($interface instanceof ModelInterfaceType) {
+            return $interface->getCanonicalModel();
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets all the models that were generated from a given ancestor, e.g. DataObject
+     * @param string $class
+     * @return ModelType[]
+     */
+    public function getModelTypesFromClass(string $class): array
+    {
+        return array_filter($this->getModels(), function (ModelType $modelType) use ($class) {
+            $source = $modelType->getModel()->getSourceClass();
+            return $source === $class || is_subclass_of($source, $class);
+        });
     }
 
     /**
@@ -732,6 +785,17 @@ class Schema implements ConfigurationApplier
     }
 
     /**
+     * @param string $name
+     * @return $this
+     */
+    public function removeEnum(string $name): self
+    {
+        unset($this->enums[$name]);
+
+        return $this;
+    }
+
+    /**
      * @return Enum[]
      */
     public function getEnums(): array
@@ -772,6 +836,17 @@ class Schema implements ConfigurationApplier
     public function addScalar(Scalar $scalar): self
     {
         $this->scalars[$scalar->getName()] = $scalar;
+
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return $this
+     */
+    public function removeScalar(string $name): self
+    {
+        unset($this->scalars[$name]);
 
         return $this;
     }
@@ -837,6 +912,30 @@ class Schema implements ConfigurationApplier
 
     /**
      * @param string $class
+     * @return $this
+     */
+    public function removeModelByClassName(string $class): self
+    {
+        if ($model = $this->getModelByClassName($class)) {
+            $this->removeModel($model->getName());
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return $this
+     */
+    public function removeModel(string $name): self
+    {
+        unset($this->models[$name]);
+
+        return $this;
+    }
+
+    /**
+     * @param string $class
      * @return ModelType|null
      */
     public function getModelByClassName(string $class): ?ModelType
@@ -848,6 +947,32 @@ class Schema implements ConfigurationApplier
         }
 
         return null;
+    }
+
+    /**
+     * Some types must be eagerly loaded into the schema if they cannot be discovered through introspection.
+     * This may include types that do not appear in any queries.
+     * @param string $name
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function eagerLoad(string $name): self
+    {
+        $this->getConfig()->set("eagerLoadTypes.$name", $name);
+
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function lazyLoad(string $name): self
+    {
+        $this->getConfig()->unset("eagerLoadTypes.$name");
+
+        return $this;
     }
 
     /**
@@ -911,6 +1036,17 @@ class Schema implements ConfigurationApplier
 
     /**
      * @param string $name
+     * @return $this
+     */
+    public function removeInterface(string $name): self
+    {
+        unset($this->interfaces[$name]);
+
+        return $this;
+    }
+
+    /**
+     * @param string $name
      * @return InterfaceType|null
      */
     public function getInterface(string $name): ?InterfaceType
@@ -926,6 +1062,14 @@ class Schema implements ConfigurationApplier
         return $this->interfaces;
     }
 
+    public function getImplementorsOf(string $interfaceName): array
+    {
+        $search = array_merge($this->getTypes(), $this->getModels());
+        return array_filter($search, function (Type $type) use ($interfaceName) {
+            return $type->implements($interfaceName);
+        });
+    }
+
     /**
      * @param UnionType $union
      * @param callable|null $callback
@@ -939,6 +1083,17 @@ class Schema implements ConfigurationApplier
         if ($callback) {
             $callback($typeObj);
         }
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return $this
+     */
+    public function removeUnion(string $name): self
+    {
+        unset($this->unions[$name]);
+
         return $this;
     }
 

@@ -7,9 +7,12 @@ use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
+use SilverStripe\ORM\ArrayLib;
+use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\Filterable;
 use InvalidArgumentException;
 use SilverStripe\ORM\SS_List;
+use SilverStripe\View\ArrayData;
 
 /**
  * A permission checking plugin for DataLists
@@ -46,15 +49,19 @@ class CanViewPermission extends AbstractCanViewPermission
         }
 
         if (is_array($obj)) {
-            return static::paginatedPermissionCheck($obj, $args, $context, $info);
+            if (isset($obj['nodes'])) {
+                return static::paginatedPermissionCheck($obj, $args, $context, $info);
+            }
+            // This is just arbitrary array data (either a list or a single record).
+            // Either way, we have no way of checking canView() and should assume it's viewable.
+            return $obj;
         }
 
-        if ($obj instanceof Filterable) {
-            return static::listPermissionCheck($obj, $args, $context, $info);
-        }
 
         if (is_object($obj)) {
-            return static::itemPermissionCheck($obj, $args, $context, $info);
+            return $obj instanceof Filterable
+                ? static::listPermissionCheck($obj, $args, $context, $info)
+                : static::itemPermissionCheck($obj, $args, $context, $info);
         }
 
         throw new InvalidArgumentException(sprintf(
@@ -79,21 +86,8 @@ class CanViewPermission extends AbstractCanViewPermission
      */
     public static function paginatedPermissionCheck(array $obj, array $args, array $context, ResolveInfo $info): array
     {
-        if (!isset($obj['nodes'])) {
-            throw new InvalidArgumentException(sprintf(
-                'Permission checker "%s" cannot be applied to field "%s" because it resolves to an array
-                 that does not appear to be a paginated list. Make sure this plugin is listed after the pagination plugin
-                 using the "after: %s" syntax in your config. If you are trying to check permissions on a simple array
-                 of data, you will need to implement a custom permission checker that extends %s',
-                self::IDENTIFIER,
-                $info->fieldName,
-                Paginator::IDENTIFIER,
-                AbstractCanViewPermission::class
-            ));
-        }
-
         $list = $obj['nodes'];
-        $originalCount = $list->count();
+        $originalCount = count($list);
         $filteredList = static::permissionCheck($list, $args, $context, $info);
         $newCount = $filteredList->count();
         if ($originalCount === $newCount) {

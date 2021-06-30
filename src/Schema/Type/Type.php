@@ -222,7 +222,14 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
 
         $this->mergePlugins($type->getPlugins());
 
-        $this->setInterfaces(array_merge($this->interfaces, $type->getInterfaces()));
+        $this->setInterfaces(
+            array_unique(
+                array_merge(
+                    $this->interfaces,
+                    $type->getInterfaces()
+                )
+            )
+        );
 
         return $this;
     }
@@ -297,6 +304,15 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
         }
 
         return $this;
+    }
+
+    /**
+     * @param string $interfaceName
+     * @return bool
+     */
+    public function implements(string $interfaceName): bool
+    {
+        return in_array($interfaceName, $this->interfaces);
     }
 
     /**

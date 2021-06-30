@@ -9,6 +9,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Config\ModelConfiguration;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
+use SilverStripe\GraphQL\Schema\Interfaces\BaseFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
@@ -31,6 +32,7 @@ class DataObjectModel implements
     SchemaModelInterface,
     OperationProvider,
     DefaultFieldsProvider,
+    BaseFieldsProvider,
     ModelBlacklist
 {
     use Injectable;
@@ -141,13 +143,43 @@ class DataObjectModel implements
 
     /**
      * @return array
+     * @throws SchemaBuilderException
      */
     public function getDefaultFields(): array
     {
-        $idField = $this->getFieldAccessor()->formatField('ID');
-        return [
-            $idField => 'ID',
-        ];
+        $fields = $this->getModelConfiguration()->getDefaultFields();
+        $map = [];
+        foreach ($fields as $name => $type) {
+            if ($type === false) {
+                continue;
+            }
+            $formatted = $this->getFieldAccessor()->formatField($name);
+            $map[$formatted] = $type;
+        }
+
+        return $map;
+    }
+
+    /**
+     * @return array
+     * @throws SchemaBuilderException
+     */
+    public function getBaseFields(): array
+    {
+        $fields = $this->getModelConfiguration()->getBaseFields();
+        $map = [];
+        foreach ($fields as $name => $type) {
+            Schema::invariant(
+                $type,
+                'Default field %s cannot be falsy on %s',
+                $name,
+                $this->getSourceClass()
+            );
+            $formatted = $this->getFieldAccessor()->formatField($name);
+            $map[$formatted] = $type;
+        }
+
+        return $map;
     }
 
     /**

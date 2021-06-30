@@ -9,7 +9,7 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
-use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
+use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\Query;
@@ -174,11 +174,6 @@ GRAPHQL;
         $this->assertSchemaNotHasType($schema, 'FakePageVersion');
     }
 
-    public function testInheritance()
-    {
-        $this->markTestSkipped();
-    }
-
     public function testPluginOverride()
     {
         $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
@@ -198,11 +193,15 @@ GRAPHQL;
 query {
   readFakePages {
     nodes {
-        title
+        ... on FakePageInterface {
+            title
+        }
     }
     edges {
         node {
-            title
+            ... on FakePageInterface {
+                title
+            }
         }
     }
   }
@@ -265,7 +264,7 @@ GRAPHQL;
         $query = <<<GRAPHQL
 query {
   readOneDataObjectFake {
-    id
+    myInt
     myField
   }
 }
@@ -278,7 +277,7 @@ GRAPHQL;
             'models' => [
                 DataObjectFake::class => [
                     'fields' => [
-                        'id' => false,
+                        'myInt' => false,
                         'myField' => true,
                     ],
                     'operations' => [
@@ -290,7 +289,7 @@ GRAPHQL;
         $schema = $this->createSchema($factory);
         $result = $this->querySchema($schema, $query);
         $this->assertFailure($result);
-        $this->assertMissingField($result, 'id');
+        $this->assertMissingField($result, 'myInt');
 
         $factory = new TestSchemaBuilder();
         $factory->extraConfig = [
@@ -1021,7 +1020,7 @@ GRAPHQL;
         $graphQLSchena = $builder->fetchSchema($schema);
         $handler = new QueryHandler();
         $schemaContext = $builder->getConfig($schema->getSchemaKey());
-        $handler->addContextProvider(SchemaContextProvider::create($schemaContext));
+        $handler->addContextProvider(SchemaConfigProvider::create($schemaContext));
         try {
             return $handler->query($graphQLSchena, $query, $variables);
         } catch (Exception $e) {

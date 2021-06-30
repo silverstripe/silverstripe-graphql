@@ -65,6 +65,26 @@ class ModelConfiguration extends Configuration
     }
 
     /**
+     * Fields that are added to the model by default. Can be opted out per type
+     * @return array
+     * @throws SchemaBuilderException
+     */
+    public function getDefaultFields(): array
+    {
+        return $this->get('default_fields', []);
+    }
+
+    /**
+     * Fields that will appear on all models. Cannot be opted out on any type.
+     * @return array
+     * @throws SchemaBuilderException
+     */
+    public function getBaseFields(): array
+    {
+        return $this->get('base_fields', []);
+    }
+
+    /**
      * @param string $class
      * @return string
      * @throws SchemaBuilderException

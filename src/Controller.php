@@ -3,6 +3,8 @@
 namespace SilverStripe\GraphQL;
 
 use Exception;
+use GraphQL\Language\Parser;
+use GraphQL\Language\Source;
 use InvalidArgumentException;
 use LogicException;
 use SilverStripe\Control\Controller as BaseController;
@@ -15,13 +17,14 @@ use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
 use SilverStripe\EventDispatcher\Symfony\Event;
 use SilverStripe\GraphQL\Auth\Handler;
 use SilverStripe\GraphQL\PersistedQuery\RequestProcessor;
+use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
+use SilverStripe\GraphQL\QueryHandler\QueryStateProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\QueryHandler\RequestContextProvider;
-use SilverStripe\GraphQL\QueryHandler\SchemaContextProvider;
+use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\QueryHandler\TokenContextProvider;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
-use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
@@ -128,21 +131,22 @@ class Controller extends BaseController
             }
             $handler = $this->getQueryHandler();
             $this->applyContext($handler);
-
+            $queryDocument = Parser::parse(new Source($query));
             $ctx = $handler->getContext();
+            $result = $handler->query($graphqlSchema, $query, $variables);
+
+            // Fire an eventYou
             $eventContext = [
                 'schema' => $graphqlSchema,
+                'schemaKey' => $this->getSchemaKey(),
                 'query' => $query,
                 'context' => $ctx,
                 'variables' => $variables,
+                'result' => $result,
             ];
-
-            Dispatcher::singleton()->trigger('onGraphQLQuery', Event::create($this->getSchemaKey(), $eventContext));
-
-            $result = $handler->query($graphqlSchema, $query, $variables);
-            $eventContext['result'] = $result;
-
-            Dispatcher::singleton()->trigger('onGraphQLResponse', Event::create($this->getSchemaKey(), $eventContext));
+            $event = QueryHandler::isMutation($query) ? 'graphqlMutation' : 'graphqlQuery';
+            $operationName = QueryHandler::getOperationName($queryDocument);
+            Dispatcher::singleton()->trigger($event, Event::create($operationName, $eventContext));
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
 
@@ -305,8 +309,9 @@ class Controller extends BaseController
                 ->addContextProvider(RequestContextProvider::create($request));
         $schemaContext = SchemaBuilder::singleton()->getConfig($this->getSchemaKey());
         if ($schemaContext) {
-            $handler->addContextProvider(SchemaContextProvider::create($schemaContext));
+            $handler->addContextProvider(SchemaConfigProvider::create($schemaContext));
         }
+        $handler->addContextProvider(QueryStateProvider::create());
     }
 
     /**
