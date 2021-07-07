@@ -7,10 +7,12 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Config\ModelConfiguration;
+use SilverStripe\GraphQL\Schema\DataObject\Fields\FieldCreator;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\BaseFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
@@ -115,11 +117,24 @@ class DataObjectModel implements
         }
 
         if ($result instanceof DBField) {
-            $fieldConfig = array_merge([
-                'type' => $result->config()->get('graphql_type'),
-            ], $config);
+            $field = ModelField::create($fieldName, $config, $this);
+            $creator = $this->getFieldCreator($result);
+            $explicitType = $this->getExplicitType($result);
 
-            return ModelField::create($fieldName, $fieldConfig, $this);
+            Schema::invariant(
+                $creator || $explicitType,
+                'DBField %s has no explicit graphql_type or graphql_field_creator class
+                defined in its config',
+                get_class($result)
+            );
+            if ($creator) {
+                $field = $creator->createField($result, $field);
+            }
+            if ($explicitType && !isset($config['type'])) {
+                $field->setType($explicitType);
+            }
+
+            return $field;
         }
 
         $class = $this->getModelClass($result);
@@ -129,7 +144,9 @@ class DataObjectModel implements
             }
             return null;
         }
+
         $type = $this->getModelConfiguration()->getTypeName($class);
+
         if ($this->isList($result)) {
             $queryConfig = array_merge([
                 'type' => sprintf('[%s!]!', $type),
@@ -138,7 +155,28 @@ class DataObjectModel implements
             $query->setDefaultPlugins($this->getModelConfiguration()->getNestedQueryPlugins());
             return $query;
         }
+
         return ModelField::create($fieldName, $type, $this);
+    }
+
+    /**
+     * @param string $fieldName
+     * @return array
+     * @throws SchemaBuilderException
+     */
+    public function getExtraTypesForField(string $fieldName): array
+    {
+        $result = $this->getFieldAccessor()->accessField($this->dataObject, $fieldName);
+        if (!$result) {
+            return [];
+        }
+
+        if ($result instanceof DBField) {
+            $creator = $this->getFieldCreator($result);
+            if ($creator instanceof ExtraTypeProvider) {
+                return $creator->getExtraTypes();
+            }
+        }
     }
 
     /**
@@ -398,5 +436,37 @@ class DataObjectModel implements
     private function isList($result): bool
     {
         return $result instanceof SS_List || $result instanceof UnsavedRelationList;
+    }
+
+    /**
+     * @param DBField $field
+     * @return string|null
+     */
+    private function getExplicitType(DBField $field): ?string
+    {
+        return $field->config()->get('graphql_type');
+    }
+
+    /**
+     * @param DBField $field
+     * @return FieldCreator|null
+     * @throws SchemaBuilderException
+     */
+    private function getFieldCreator(DBField $field): ?FieldCreator
+    {
+        $creatorClass = $field->config()->get('graphql_field_creator');
+        if (!$creatorClass) {
+            return null;
+        }
+        /* @var FieldCreator $creator */
+        $creator = Injector::inst()->get($creatorClass);
+        Schema::invariant(
+            $creator instanceof FieldCreator,
+            'graphql_field_creator on %s must be an implementation of %s',
+            get_class($result),
+            FieldCreator::class
+        );
+
+        return $creator;
     }
 }

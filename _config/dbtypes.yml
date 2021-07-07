@@ -1,9 +1,31 @@
 ---
 Name: graphql-dbtypes
 ---
-# Assign each DBField subclass with an associated internal type
+# Each DB field can have an explicit type assigned, along with field creators
+# that add custom arguments and/or resolvers to that specific DBField type, e.g.
+# limitCharacters: Int
+
 SilverStripe\ORM\FieldType\DBField:
   graphql_type: String
+  graphql_field_creator: null
+
+# These DBFields add custom args and/or resolvers with a FieldCreator implementation
+SilverStripe\ORM\FieldType\DBString:
+  graphql_field_creator: 'SilverStripe\GraphQL\Schema\DataObject\Fields\StringField'
+SilverStripe\ORM\FieldType\DBText:
+  graphql_field_creator: 'SilverStripe\GraphQL\Schema\DataObject\Fields\TextField'
+SilverStripe\ORM\FieldType\DBHTMLText:
+  graphql_field_creator: 'SilverStripe\GraphQL\Schema\DataObject\Fields\HTMLTextField'
+SilverStripe\ORM\FieldType\DBDate:
+  graphql_field_creator: 'SilverStripe\GraphQL\Schema\DataObject\Fields\DateField'
+SilverStripe\ORM\FieldType\DBDateTime:
+  graphql_field_creator: 'SilverStripe\GraphQL\Schema\DataObject\Fields\DateTimeField'
+SilverStripe\ORM\FieldType\DBTime:
+  graphql_field_creator: 'SilverStripe\GraphQL\Schema\DataObject\Fields\TimeField'
+SilverStripe\ORM\FieldType\DBEnum:
+  graphql_field_creator: 'SilverStripe\GraphQL\Schema\DataObject\Fields\EnumField'
+
+# These fields just need to map to a specific graphql type and require no procedural logic
 SilverStripe\ORM\FieldType\DBInt:
   graphql_type: Int
 SilverStripe\ORM\FieldType\DBBoolean:

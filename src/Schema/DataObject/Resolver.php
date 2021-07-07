@@ -6,6 +6,7 @@ namespace SilverStripe\GraphQL\Schema\DataObject;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
@@ -27,23 +28,16 @@ class Resolver
     public static function resolve($obj, $args = [], $context = [], ?ResolveInfo $info = null)
     {
         $fieldName = $info->fieldName;
-        $context = SchemaConfigProvider::get($context);
-        $class = get_class($obj);
-        $resolvedField = null;
-        while (!$resolvedField && $class !== DataObject::class) {
-            $resolvedField = $context->mapFieldByClassName($class, $fieldName);
-            $class = get_parent_class($class);
-        }
-
+        $config = SchemaConfigProvider::get($context);
+        $resolvedField = static::getResolvedField($obj, $fieldName, $config);
         if (!$resolvedField) {
             return null;
         }
-        $result = FieldAccessor::singleton()->accessField($obj, $resolvedField[1]);
-        if ($result instanceof DBField) {
-            return $result->getValue();
+        if ($resolvedField instanceof DBField) {
+            return $resolvedField->getValue();
         }
 
-        return $result;
+        return $resolvedField;
     }
 
     /**
@@ -65,5 +59,28 @@ class Resolver
         }
 
         return $result;
+    }
+
+    /**
+     * @param $obj
+     * @param string $fieldName
+     * @param SchemaConfig $config
+     * @return mixed|null
+     * @throws SchemaBuilderException
+     */
+    public static function getResolvedField($obj, string $fieldName, SchemaConfig $config)
+    {
+        $class = get_class($obj);
+        $resolvedField = null;
+        while (!$resolvedField && $class !== DataObject::class) {
+            $resolvedField = $config->mapFieldByClassName($class, $fieldName);
+            $class = get_parent_class($class);
+        }
+
+        if (!$resolvedField) {
+            return null;
+        }
+
+        return FieldAccessor::singleton()->accessField($obj, $resolvedField[1]);
     }
 }
