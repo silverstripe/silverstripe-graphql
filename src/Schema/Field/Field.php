@@ -277,10 +277,11 @@ class Field implements
 
     /**
      * @param $type
+     * @param bool $required
      * @return Field
      * @throws SchemaBuilderException
      */
-    public function setType($type): self
+    public function setType($type, $required = false): self
     {
         Schema::invariant(
             !is_array($type),
@@ -295,7 +296,7 @@ class Field implements
             EncodedType::class
         );
 
-        $this->type = $type;
+        $this->type = sprintf('%s%s', $type, $required ? '!' : '');
 
         return $this;
     }

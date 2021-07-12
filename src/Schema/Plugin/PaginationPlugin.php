@@ -105,7 +105,7 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
         // Set the new return type
         $plainType = $field->getNamedType();
         $connectionName = ucfirst($connectionName) . 'Connection';
-        $field->setType($connectionName);
+        $field->setType($connectionName, true);
 
         // Create the edge type for this query
         $edgeType = Type::create($connectionName . 'Edge')
@@ -118,8 +118,8 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
 
         // Create the connection type for this query
         $connectionType = Type::create($connectionName)
-            ->addField('edges', "[{$edgeType->getName()}]!")
-            ->addField('nodes', "[$plainType]!")
+            ->addField('edges', "[{$edgeType->getName()}!]!")
+            ->addField('nodes', "[{$plainType}!]!")
             ->addField('pageInfo', 'PageInfo!');
 
         $schema->addType($connectionType);
