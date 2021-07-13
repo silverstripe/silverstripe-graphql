@@ -20,7 +20,7 @@ SilverStripe\GraphQL\Schema\Schema:
             type_prefix: ''
             type_mapping: []
             base_fields:
-              ID: ID
+              ID: ID!
             plugins:
               inheritance:
                 useUnionQueries: false
