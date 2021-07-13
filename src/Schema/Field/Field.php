@@ -171,6 +171,7 @@ class Field implements
             'description',
             'resolver',
             'resolverContext',
+            'resolvedModelClass',
             'plugins',
         ]);
 
