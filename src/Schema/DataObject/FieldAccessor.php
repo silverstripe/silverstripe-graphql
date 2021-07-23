@@ -259,6 +259,9 @@ class FieldAccessor
         $nextField = array_shift($path);
         if ($subject instanceof DataObject) {
             $result = $subject->obj($nextField);
+            if (!is_object($result)) {
+                return $result;
+            }
             if ($result instanceof DBField) {
                 return $result->getValue();
             }
