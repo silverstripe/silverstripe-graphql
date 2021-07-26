@@ -117,46 +117,39 @@ class DataObjectModel implements
         }
 
         if ($result instanceof DBField) {
-            $field = ModelField::create($fieldName, $config, $this);
-            $creator = $this->getFieldCreator($result);
-            $explicitType = $this->getExplicitType($result);
+            $fieldConfig = array_merge([
+                'type' => $result->config()->get('graphql_type'),
+            ], $config);
 
-            Schema::invariant(
-                $creator || $explicitType,
-                'DBField %s has no explicit graphql_type or graphql_field_creator class
-                defined in its config',
+            return $this->applyMetadata(
+                ModelField::create($fieldName, $fieldConfig, $this),
                 get_class($result)
             );
-            if ($creator) {
-                $field = $creator->createField($result, $field);
-            }
-            if ($explicitType && !isset($config['type'])) {
-                $field->setType($explicitType);
-            }
-
-            return $field;
         }
 
         $class = $this->getModelClass($result);
         if (!$class) {
             if ($this->isList($result)) {
-                return ModelField::create($fieldName, $config, $this);
+                return $this->applyMetadata(
+                    ModelField::create($fieldName, $config, $this),
+                    $class
+                );
             }
             return null;
         }
-
         $type = $this->getModelConfiguration()->getTypeName($class);
-
         if ($this->isList($result)) {
             $queryConfig = array_merge([
                 'type' => sprintf('[%s!]!', $type),
             ], $config);
             $query = ModelQuery::create($this, $fieldName, $queryConfig);
             $query->setDefaultPlugins($this->getModelConfiguration()->getNestedQueryPlugins());
-            return $query;
+            return $this->applyMetadata($query, null);
         }
-
-        return ModelField::create($fieldName, $type, $this);
+        return $this->applyMetadata(
+            ModelField::create($fieldName, $type, $this),
+            null
+        );
     }
 
     /**
@@ -439,34 +432,17 @@ class DataObjectModel implements
     }
 
     /**
-     * @param DBField $field
-     * @return string|null
-     */
-    private function getExplicitType(DBField $field): ?string
-    {
-        return $field->config()->get('graphql_type');
-    }
-
-    /**
-     * @param DBField $field
-     * @return FieldCreator|null
+     * @param ModelField $field
+     * @param string | null $class
+     * @return ModelField
      * @throws SchemaBuilderException
      */
-    private function getFieldCreator(DBField $field): ?FieldCreator
+    private function applyMetadata(ModelField $field, ?string $class = null): ModelField
     {
-        $creatorClass = $field->config()->get('graphql_field_creator');
-        if (!$creatorClass) {
-            return null;
-        }
-        /* @var FieldCreator $creator */
-        $creator = Injector::inst()->get($creatorClass);
-        Schema::invariant(
-            $creator instanceof FieldCreator,
-            'graphql_field_creator on %s must be an implementation of %s',
-            get_class($result),
-            FieldCreator::class
-        );
+        $field->getMetadata()
+            ->set('creator', static::class)
+            ->set('dataClass', $class);
 
-        return $creator;
+        return $field;
     }
 }

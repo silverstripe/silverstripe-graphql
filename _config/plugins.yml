@@ -12,4 +12,5 @@ SilverStripe\Core\Injector\Injector:
       - 'SilverStripe\GraphQL\Schema\DataObject\Plugin\CanViewPermission'
       - 'SilverStripe\GraphQL\Schema\DataObject\Plugin\FirstResult'
       - 'SilverStripe\GraphQL\Schema\DataObject\Plugin\InheritedPlugins'
+      - 'SilverStripe\GraphqL\Schema\DataObject\Plugin\DBFieldArgs'
       - 'SilverStripe\GraphQL\Schema\Plugin\SortPlugin'
