@@ -54,6 +54,12 @@ class QueryHandler implements
     private $errorFormatter = [self::class, 'formatError'];
 
     /**
+     * @var callable | null
+     * @config
+     */
+    private $errorHandler = null;
+
+    /**
      * @var QueryMiddleware[]
      */
     private $middlewares = [];
@@ -94,6 +100,9 @@ class QueryHandler implements
      */
     public function queryAndReturnResult(GraphQLSchema $schema, $query, ?array $vars = [])
     {
+        if ($this->errorHandler) {
+            set_error_handler($this->errorHandler);
+        }
         $context = $this->getContext();
         $last = function ($schema, $query, $context, $vars) {
             return GraphQL::executeQuery($schema, $query, null, $context, $vars);
@@ -171,6 +180,16 @@ class QueryHandler implements
     public function setErrorFormatter(callable $errorFormatter): self
     {
         $this->errorFormatter = $errorFormatter;
+        return $this;
+    }
+
+    /**
+     * @param callable $errorHandler
+     * @return QueryHandler
+     */
+    public function setErrorHandler(callable $errorHandler): self
+    {
+        $this->errorHandler = $errorHandler;
         return $this;
     }
 

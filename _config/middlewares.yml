@@ -4,7 +4,6 @@ Name: 'graphql-middlewares'
 SilverStripe\Core\Injector\Injector:
   # default implementation
   SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface:
-    class: SilverStripe\GraphQL\QueryHandler\QueryHandler
     properties:
       Middlewares:
         csrf: '%$SilverStripe\GraphQL\Middleware\CSRFMiddleware'

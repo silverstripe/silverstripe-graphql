@@ -9,7 +9,8 @@ SilverStripe\Core\Injector\Injector:
       schema: default
       # use a custom handler so it's easy to override/add middlewares in the default schema
       handler: '%$SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface.default'
-
+  SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface.default:
+    class: SilverStripe\GraphQL\QueryHandler\QueryHandler
 SilverStripe\GraphQL\Schema\Schema:
   schemas:
     default:
@@ -35,4 +36,13 @@ SilverStripe\GraphQL\Schema\Schema:
                 before: paginateList
               canView:
                 after: paginateList
-
+---
+Name: graphql-default-dev
+Except:
+  environment: live
+---
+# When not in live mode, throw all errors, so the JSON response doesn't get corrupted with notice/warnings
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface.default:
+    properties:
+      errorHandler: [SilverStripe\GraphQL\QueryHandler\DevErrorHandler, handleError]
