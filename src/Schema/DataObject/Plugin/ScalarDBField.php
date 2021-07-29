@@ -3,22 +3,20 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
-use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelTypePlugin;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\FieldType\DBField;
-use SilverStripe\View\ViewableData;
 
 /**
  * Ensures any field that ends up as ViewableData, e.g. DBField,
  * invokes forTemplate() after resolving.
  */
-class ViewableDataField implements ModelTypePlugin
+class ScalarDBField implements ModelTypePlugin
 {
-    const IDENTIFIER = 'viewableDataField';
+    const IDENTIFIER = 'scalarDBField';
 
     public function getIdentifier(): string
     {

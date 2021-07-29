@@ -15,4 +15,4 @@ SilverStripe\Core\Injector\Injector:
       - 'SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBFieldArgsPlugin'
       - 'SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldTypes'
       - 'SilverStripe\GraphQL\Schema\Plugin\SortPlugin'
-      - 'SilverStripe\GraphQL\Schema\DataObject\Plugin\ViewableDataField'
+      - 'SilverStripe\GraphQL\Schema\DataObject\Plugin\ScalarDBField'

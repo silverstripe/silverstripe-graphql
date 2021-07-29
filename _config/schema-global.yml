@@ -24,13 +24,13 @@ SilverStripe\GraphQL\Schema\Schema:
             plugins:
               dbFieldArgs: true
               dbFieldTypes:
-                before: viewableDataField
+                before: scalarDBField
               inheritance:
                 useUnionQueries: false
                 hideAncestors:
                   - SilverStripe\CMS\Model\SiteTree
                 after: 'versioning'
-              viewableDataField:
+              scalarDBField:
                 after: dbFieldArgs
               inheritedPlugins:
                 after: '*'
