@@ -22,11 +22,16 @@ SilverStripe\GraphQL\Schema\Schema:
             base_fields:
               ID: ID!
             plugins:
+              dbFieldArgs: true
+              dbFieldTypes:
+                before: viewableDataField
               inheritance:
                 useUnionQueries: false
                 hideAncestors:
                   - SilverStripe\CMS\Model\SiteTree
                 after: 'versioning'
+              viewableDataField:
+                after: dbFieldArgs
               inheritedPlugins:
                 after: '*'
             operations:

@@ -7,7 +7,6 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Config\ModelConfiguration;
-use SilverStripe\GraphQL\Schema\DataObject\Fields\FieldCreator;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\BaseFieldsProvider;
@@ -147,29 +146,8 @@ class DataObjectModel implements
             return $this->applyMetadata($query, null);
         }
         return $this->applyMetadata(
-            ModelField::create($fieldName, $type, $this),
-            null
+            ModelField::create($fieldName, $type, $this)
         );
-    }
-
-    /**
-     * @param string $fieldName
-     * @return array
-     * @throws SchemaBuilderException
-     */
-    public function getExtraTypesForField(string $fieldName): array
-    {
-        $result = $this->getFieldAccessor()->accessField($this->dataObject, $fieldName);
-        if (!$result) {
-            return [];
-        }
-
-        if ($result instanceof DBField) {
-            $creator = $this->getFieldCreator($result);
-            if ($creator instanceof ExtraTypeProvider) {
-                return $creator->getExtraTypes();
-            }
-        }
     }
 
     /**
@@ -440,7 +418,6 @@ class DataObjectModel implements
     private function applyMetadata(ModelField $field, ?string $class = null): ModelField
     {
         $field->getMetadata()
-            ->set('creator', static::class)
             ->set('dataClass', $class);
 
         return $field;

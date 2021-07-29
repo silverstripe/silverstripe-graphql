@@ -29,15 +29,8 @@ class Resolver
     {
         $fieldName = $info->fieldName;
         $config = SchemaConfigProvider::get($context);
-        $resolvedField = static::getResolvedField($obj, $fieldName, $config);
-        if (!$resolvedField) {
-            return null;
-        }
-        if ($resolvedField instanceof DBField) {
-            return $resolvedField->getValue();
-        }
 
-        return $resolvedField;
+        return static::getResolvedField($obj, $fieldName, $config);
     }
 
     /**

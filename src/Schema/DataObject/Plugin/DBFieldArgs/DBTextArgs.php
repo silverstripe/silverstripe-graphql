@@ -1,0 +1,91 @@
+<?php
+
+
+namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs;
+
+use SilverStripe\GraphQL\Schema\Field\ModelField;
+use SilverStripe\GraphQL\Schema\Type\Enum;
+use SilverStripe\ORM\FieldType\DBString;
+use Exception;
+
+class DBTextArgs extends DBStringArgs
+{
+    public function getEnum(): Enum
+    {
+        return Enum::create(
+            'DBTextFormattingOption',
+            $this->getValues(),
+            'Formatting options for fields that map to DBText data types'
+        );
+    }
+
+    public function getValues(): array
+    {
+        return array_merge(
+            parent::getValues(),
+            [
+                'CONTEXT_SUMMARY' => 'ContextSummary',
+                'FIRST_PARAGRAPH' => 'FirstParagraph',
+                'LIMIT_SENTENCES' => 'LimitSentences',
+                'SUMMARY' => 'Summary',
+            ]
+        );
+    }
+
+    public function applyToField(ModelField $field): void
+    {
+        $field
+            ->addArg('format', [
+                'type' => $this->getEnum()->getName(),
+                'description' => 'Formatting options for this field',
+            ])
+            ->addArg('limit', [
+                'type' => 'Int',
+                'description' => 'An optional limit for the formatting option',
+            ])
+            ->addResolverAfterware(
+                $this->getResolver()
+            );
+    }
+
+    /**
+     * @return callable
+     */
+    protected function getResolver(): callable
+    {
+        return [static::class, 'resolve'];
+    }
+
+    /**
+     * @param DBString $obj
+     * @param array $args
+     */
+    public static function resolve(DBString $obj, array $args)
+    {
+        $result = DBFieldArgs::baseFormatResolver($obj, $args);
+
+        // If no referential equality, the parent did something, so we're done.
+        if ($result !== $obj) {
+            return $result;
+        }
+
+        $format = $args['format'] ?? null;
+        $limit = $args['limit'] ?? null;
+
+        if (!$format) {
+            return $obj;
+        }
+
+        if ($limit && in_array($format, ['FirstParagraph'])) {
+            throw new Exception(sprintf('Arg "limit" is not allowed for format "%s"', $format));
+        }
+        if ($format) {
+            $args = $limit === null ? [] : [$limit];
+            if ($obj->hasMethod($format)) {
+                return $obj->obj($format, $args);
+            }
+        }
+
+        return $obj;
+    }
+}
