@@ -24,6 +24,8 @@ class DataObjectFake extends DataObject implements TestOnly
         'MyDate' => 'Datetime',
         'MyCurrency' => 'Currency',
         'MyText' => 'Text',
+        'MyEnum' => "Enum('ONE, TWO')",
+        'MyMoney' => 'Money',
     ];
 
     private static $has_one = [

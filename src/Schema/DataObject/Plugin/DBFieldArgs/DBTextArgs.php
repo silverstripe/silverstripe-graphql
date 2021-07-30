@@ -8,7 +8,7 @@ use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\ORM\FieldType\DBString;
 use Exception;
 
-class DBTextArgs extends DBStringArgs
+class DBTextArgs extends DBFieldArgs
 {
     public function getEnum(): Enum
     {
@@ -21,15 +21,12 @@ class DBTextArgs extends DBStringArgs
 
     public function getValues(): array
     {
-        return array_merge(
-            parent::getValues(),
-            [
-                'CONTEXT_SUMMARY' => 'ContextSummary',
-                'FIRST_PARAGRAPH' => 'FirstParagraph',
-                'LIMIT_SENTENCES' => 'LimitSentences',
-                'SUMMARY' => 'Summary',
-            ]
-        );
+        return [
+            'CONTEXT_SUMMARY' => 'ContextSummary',
+            'FIRST_PARAGRAPH' => 'FirstParagraph',
+            'LIMIT_SENTENCES' => 'LimitSentences',
+            'SUMMARY' => 'Summary',
+        ];
     }
 
     public function applyToField(ModelField $field): void
@@ -62,13 +59,6 @@ class DBTextArgs extends DBStringArgs
      */
     public static function resolve(DBString $obj, array $args)
     {
-        $result = DBFieldArgs::baseFormatResolver($obj, $args);
-
-        // If no referential equality, the parent did something, so we're done.
-        if ($result !== $obj) {
-            return $result;
-        }
-
         $format = $args['format'] ?? null;
         $limit = $args['limit'] ?? null;
 
@@ -76,9 +66,19 @@ class DBTextArgs extends DBStringArgs
             return $obj;
         }
 
-        if ($limit && in_array($format, ['FirstParagraph'])) {
+        $noArgMethods = ['FirstParagraph'];
+
+        if ($limit && in_array($format, $noArgMethods)) {
             throw new Exception(sprintf('Arg "limit" is not allowed for format "%s"', $format));
         }
+
+        $result = DBFieldArgs::baseFormatResolver($obj, $args);
+
+        // If no referential equality, the parent did something, so we're done.
+        if ($result !== $obj) {
+            return $result;
+        }
+
         if ($format) {
             $args = $limit === null ? [] : [$limit];
             if ($obj->hasMethod($format)) {

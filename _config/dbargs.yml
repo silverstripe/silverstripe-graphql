@@ -2,8 +2,6 @@
 Name: graphql-db-args
 ---
 # For the DBFieldArgsPlugin, assign each DBField type an args factory
-SilverStripe\ORM\FieldType\DBString:
-  graphql_args: SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBStringArgs
 SilverStripe\ORM\FieldType\DBText:
   graphql_args: SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBTextArgs
 SilverStripe\ORM\FieldType\DBHTMLText:
@@ -18,5 +16,3 @@ SilverStripe\ORM\FieldType\DBDecimal:
   graphql_args: SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBDecimalArgs
 SilverStripe\ORM\FieldType\DBFloat:
   graphql_args: SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBFloatArgs
-SilverStripe\ORM\FieldType\DBCurrency:
-  graphql_args: SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBCurrencyArgs

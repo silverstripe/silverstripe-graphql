@@ -8,6 +8,7 @@ use SilverStripe\GraphQL\Schema\Type\Enum;
 use SilverStripe\ORM\FieldType\DBDate;
 use SilverStripe\ORM\FieldType\DBField;
 use Exception;
+use SilverStripe\ORM\FieldType\DBTime;
 
 class DBTimeArgs extends DBFieldArgs
 {
@@ -41,12 +42,12 @@ class DBTimeArgs extends DBFieldArgs
     }
 
     /**
-     * @param DBDate $obj
+     * @param DBTime $obj
      * @param array $args
      * @return DBField | string
      * @throws Exception
      */
-    public static function resolve(DBDate $obj, array $args)
+    public static function resolve(DBTime $obj, array $args)
     {
         $format = $args['format'] ?? null;
         $custom = $args['customFormat'] ?? null;

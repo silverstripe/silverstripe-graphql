@@ -39,7 +39,6 @@ class DBDecimalArgs extends DBFieldArgs
     public function getValues(): array
     {
         return [
-            'NICE' => 'Nice',
             'INT' => 'Int',
         ];
     }

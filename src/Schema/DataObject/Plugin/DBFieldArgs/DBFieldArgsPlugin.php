@@ -31,11 +31,9 @@ class DBFieldArgsPlugin implements SchemaUpdater, ModelTypePlugin
     public static function updateSchema(Schema $schema): void
     {
         $schema
-            ->addEnum(DBStringArgs::create()->getEnum())
             ->addEnum(DBTextArgs::create()->getEnum())
             ->addEnum(DBHTMLTextArgs::create()->getEnum())
             ->addEnum(DBDecimalArgs::create()->getEnum())
-            ->addEnum(DBCurrencyArgs::create()->getEnum())
             ->addEnum(DBFloatArgs::create()->getEnum())
             ->addEnum(DBDateArgs::create()->getEnum())
             ->addEnum(DBDatetimeArgs::create()->getEnum())
