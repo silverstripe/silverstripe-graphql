@@ -992,6 +992,47 @@ GRAPHQL;
         }
     }
 
+
+    public function testDBFieldArgs()
+    {
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
+        $this->assertSchemaHasType($schema, 'DataObjectFake');
+        $obj = DataObjectFake::create([
+            'MyField' => 'This is a varchar field',
+            'MyDate' => '2020-29-02 17:00:00',
+            'MyCurrency' => '204.75',
+            'MyText' => 'This is a really long text field. It has a few sentences. Just filling some space now.',
+        ]);
+        $obj->write();
+
+        $query = <<<GRAPHQL
+query {
+  readOneFakeDataObject {
+    myField
+    date1: myDate(format: DAY_OF_WEEK)
+    date2: myDate(format: SHORT)
+    date3: myDate(format: TIME)
+    date4: myDate(format: CUSTOM, customFormat: "YYYY")
+    myCurrency(format: NICE)
+    myText(format: LIMIT_SENTENCES, limit: 2)
+  }
+}
+GRAPHQL;
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $node = $result['data']['readOneFakeDataObject'] ?? null;
+        $this->assertEquals('This is a varchar field', $node['myField']);
+        $this->assertEquals('Saturday', $node['date1']);
+        $this->assertResult('wtf', 1, $node['date2']);
+        $this->assertResult('17:00:00', 1, $node['date3']);
+        $this->assertResult('2020', 1, $node['date4']);
+        $this->assertResult('$204.75', 1, $node['myCurrency']);
+        $this->assertResult('This is a really long text field. It has a few sentences.', 1, $node['myText
+        ']);
+
+
+    }
+
     /**
      * @param TestSchemaBuilder $factory
      * @return Schema
