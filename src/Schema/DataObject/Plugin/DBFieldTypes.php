@@ -37,14 +37,20 @@ class DBFieldTypes implements ModelTypePlugin
      */
     public function apply(ModelType $type, Schema $schema, array $config = []): void
     {
+        $ignore = $config['ignore'] ?? [];
+        $mapping = $config['enumTypeMapping'] ?? [];
         foreach ($type->getFields() as $field) {
             if ($field instanceof ModelField && $field->getModel() instanceof DataObjectModel) {
+                if (($ignore[$field->getName()] ?? null)) {
+                    continue;
+                }
                 $dataClass = $field->getMetadata()->get('dataClass');
                 if (!$dataClass) {
                     continue;
                 }
                 if ($dataClass === DBEnum::class || is_subclass_of($dataClass, DBEnum::class)) {
-                    $this->applyEnum($type, $field, $schema);
+                    $customName = $mapping[$type->getName()][$field->getName()] ?? null;
+                    $this->applyEnum($type, $field, $schema, $customName);
                 } elseif ($dataClass === DBComposite::class || is_subclass_of($dataClass, DBComposite::class)) {
                     $this->applyComposite($field, $schema);
                 }
@@ -56,10 +62,15 @@ class DBFieldTypes implements ModelTypePlugin
      * @param ModelType $type
      * @param ModelField $field
      * @param Schema $schema
+     * @param string | null $customName
      * @throws SchemaBuilderException
      */
-    private function applyEnum(ModelType $type, ModelField $field, Schema $schema): void
-    {
+    private function applyEnum(
+        ModelType $type,
+        ModelField $field,
+        Schema $schema,
+        ?string $customName = null
+    ): void {
         $sng = Injector::inst()->get($field->getModel()->getSourceClass());
         /* @var DBEnum $enumField */
         $enumField = $sng->dbObject($field->getPropertyName());
@@ -68,11 +79,34 @@ class DBFieldTypes implements ModelTypePlugin
         }
 
         $values = $enumField->enumValues();
-        $enum = Enum::create(
-            sprintf('%s%sEnum', $type->getName(), $field->getName()),
-            $values
-        );
-        $schema->addEnum($enum);
+
+        // If another enum exists with the same values, recycle it.
+        $hash = md5(json_encode($values));
+        $enum = null;
+        foreach ($schema->getEnums() as $candidate) {
+            $candidateHash = md5(json_encode($candidate->getValues()));
+            if ($candidateHash === $hash) {
+                $enum = $candidate;
+                break;
+            }
+        }
+
+        if (!$enum) {
+            $enum = Enum::create(
+                $customName ?: sprintf('%sEnum', $field->getName()),
+                $values
+            );
+
+            // Name collision detection. If already exists, prefix with type.
+            $enums = $schema->getEnums();
+            $existing = $enums[$enum->getName()] ?? null;
+            if ($existing) {
+                $enum->setName($type->getName() . $enum->getName());
+            }
+
+            $schema->addEnum($enum);
+        }
+
         $field->setType($enum->getName());
     }
 

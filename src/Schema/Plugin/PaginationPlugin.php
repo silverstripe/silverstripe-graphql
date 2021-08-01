@@ -13,6 +13,7 @@ use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use Countable;
+use SilverStripe\GraphQL\Schema\Type\TypeReference;
 
 /**
  * Generic pagination functionality for a query that can be customised in subclasses
@@ -104,13 +105,17 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
 
         // Set the new return type
         $plainType = $field->getNamedType();
+        $fullType = $field->getType();
+        $ref = TypeReference::create($fullType);
+
         $connectionName = ucfirst($connectionName) . 'Connection';
-        $field->setType($connectionName, true);
+        $connectionTypeStr = $ref->isRequired() ? $connectionName . '!' : $connectionName;
+        $field->setType($connectionTypeStr);
 
         // Create the edge type for this query
         $edgeType = Type::create($connectionName . 'Edge')
             ->setDescription('The collections edge')
-            ->addField('node', $plainType, function (Field $field) {
+            ->addField('node', "$plainType!", function (Field $field) {
                 $field->setResolver([static::class, 'noop'])
                     ->setDescription('The node at the end of the collections edge');
             });
@@ -118,8 +123,8 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
 
         // Create the connection type for this query
         $connectionType = Type::create($connectionName)
-            ->addField('edges', "[{$edgeType->getName()}!]!")
-            ->addField('nodes', "[{$plainType}!]!")
+            ->addField('edges', "[{$edgeType->getName()}]!")
+            ->addField('nodes', $fullType)
             ->addField('pageInfo', 'PageInfo!');
 
         $schema->addType($connectionType);

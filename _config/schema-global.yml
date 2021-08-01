@@ -24,6 +24,8 @@ SilverStripe\GraphQL\Schema\Schema:
             plugins:
               dbFieldArgs: true
               dbFieldTypes:
+                ignore:
+                  className: true
                 before: scalarDBField
               inheritance:
                 useUnionQueries: false
