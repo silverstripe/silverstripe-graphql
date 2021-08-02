@@ -43,13 +43,16 @@ class DBDateArgs extends DBFieldArgs
     }
 
     /**
-     * @param DBDate $obj
+     * @param mixed $obj
      * @param array $args
      * @return DBField | string
      * @throws Exception
      */
-    public static function resolve(DBDate $obj, array $args)
+    public static function resolve($obj, array $args)
     {
+        if (!$obj instanceof DBDate) {
+            return $obj;
+        }
         $format = $args['format'] ?? null;
         $custom = $args['customFormat'] ?? null;
 

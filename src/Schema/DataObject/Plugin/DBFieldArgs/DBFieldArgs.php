@@ -3,7 +3,6 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs;
 
-use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Type\Enum;
@@ -28,12 +27,15 @@ abstract class DBFieldArgs
     abstract public function applyToField(ModelField $field): void;
 
     /**
-     * @param DBField $obj
+     * @param mixed $obj
      * @param array $args
      * @return mixed
      */
-    public static function baseFormatResolver(DBField $obj, array $args)
+    public static function baseFormatResolver($obj, array $args)
     {
+        if (!$obj instanceof DBField) {
+            return $obj;
+        }
         $format = $args['format'] ?? null;
         if ($format) {
             if ($obj->hasMethod($format)) {

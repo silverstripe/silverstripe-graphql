@@ -92,8 +92,13 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
      */
     public function apply(Field $field, Schema $schema, array $config = []): void
     {
+        // Set the new return type
+        $plainType = $field->getNamedType();
+        $fullType = $field->getType();
+        $ref = TypeReference::create($fullType);
+
         $defaultLimit = $config['defaultLimit'] ?? $this->config()->get('default_limit');
-        $connectionName = $config['connection'] ?? $field->getName();
+        $connectionName = $config['connection'] ?? $plainType;
         $max = $this->config()->get('max_limit');
         $limit = min($defaultLimit, $max);
         $field->addArg('limit', "Int = $limit")
@@ -103,14 +108,26 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
                 ['maxLimit' => $max]
             );
 
-        // Set the new return type
-        $plainType = $field->getNamedType();
-        $fullType = $field->getType();
-        $ref = TypeReference::create($fullType);
+        $existing = $schema->getState()->get(['connections', $fullType]);
+        if ($existing) {
+            $field->setType($existing, $ref->isRequired());
+            return;
+        }
 
         $connectionName = ucfirst($connectionName) . 'Connection';
-        $connectionTypeStr = $ref->isRequired() ? $connectionName . '!' : $connectionName;
-        $field->setType($connectionTypeStr);
+
+        // Dedupe. If the connection exists for the same type
+        // (possibly with different wrapper type, e.g. not required)
+        if ($existing = $schema->getType($connectionName)) {
+            $i = 1;
+            $rootConnectionName = $connectionName;
+            while ($schema->getType($connectionName)) {
+                $connectionName = $rootConnectionName . $i;
+                $i++;
+            }
+        }
+
+        $field->setType($connectionName, $ref->isRequired());
 
         // Create the edge type for this query
         $edgeType = Type::create($connectionName . 'Edge')
@@ -123,11 +140,14 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
 
         // Create the connection type for this query
         $connectionType = Type::create($connectionName)
-            ->addField('edges', "[{$edgeType->getName()}]!")
+            ->addField('edges', "[{$edgeType->getName()}!]!")
             ->addField('nodes', $fullType)
             ->addField('pageInfo', 'PageInfo!');
 
         $schema->addType($connectionType);
+
+        // Cache the connection for this type so it can be reused
+        $schema->getState()->set(['connections', $fullType], $connectionType->getName());
     }
 
     /**

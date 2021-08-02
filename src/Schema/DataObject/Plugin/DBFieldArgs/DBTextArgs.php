@@ -5,8 +5,8 @@ namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs;
 
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Type\Enum;
-use SilverStripe\ORM\FieldType\DBString;
 use Exception;
+use SilverStripe\ORM\FieldType\DBText;
 
 class DBTextArgs extends DBFieldArgs
 {
@@ -54,11 +54,15 @@ class DBTextArgs extends DBFieldArgs
     }
 
     /**
-     * @param DBString $obj
+     * @param mixed $obj
      * @param array $args
+     * @param array $context
      */
-    public static function resolve(DBString $obj, array $args)
+    public static function resolve($obj, array $args, array $context)
     {
+        if (!$obj instanceof DBText) {
+            return $obj;
+        }
         $format = $args['format'] ?? null;
         $limit = $args['limit'] ?? null;
 

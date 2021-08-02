@@ -32,8 +32,7 @@ class ScalarDBField implements ModelTypePlugin
     {
         foreach ($type->getFields() as $field) {
             if ($field instanceof ModelField && $field->getModel() instanceof DataObjectModel) {
-                $dataClass = $field->getMetadata()->get('dataClass');
-                if (is_subclass_of($dataClass, DBField::class)) {
+                if (!$field->isList()) {
                     $field->addResolverAfterware([static::class, 'resolve']);
                 }
             }
@@ -47,7 +46,7 @@ class ScalarDBField implements ModelTypePlugin
     public static function resolve($obj)
     {
         if ($obj instanceof DBField) {
-            return $obj->forTemplate();
+            return $obj->getValue();
         }
 
         return $obj;

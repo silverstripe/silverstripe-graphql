@@ -3,11 +3,12 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs;
 
+use SilverStripe\Control\HTTP;
+use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\ORM\FieldType\DBHTMLText;
 use Exception;
-use SilverStripe\ORM\FieldType\DBString;
 
 class DBHTMLTextArgs extends DBTextArgs
 {
@@ -22,19 +23,29 @@ class DBHTMLTextArgs extends DBTextArgs
     }
 
     /**
-     * @param DBString $obj
+     * @param mixed $obj
      * @param array $args
+     * @param array $context
      * @return DBField
      * @throws Exception
      */
-    public static function resolve(DBString $obj, array $args)
+    public static function resolve($obj, array $args, array $context)
     {
-        /* @var DBHTMLText $obj */
-        $parse = $args['parseShortcodes'] ?? null;
-        if ($parse !== null) {
-            $obj->setProcessShortcodes($parse);
+        $result = parent::resolve($obj, $args, $context);
+        if (!$result instanceof DBHTMLText) {
+            return $result;
         }
 
-        return parent::resolve($obj, $args);
+        /* @var DBHTMLText $obj */
+        $parse = $args['parseShortcodes'] ?? null;
+        if ($parse === null) {
+            $config = SchemaConfigProvider::get($context);
+            if ($config) {
+                $parse = $config->getModelConfiguration('DataObject')->get('parseShortcodes', true);
+            }
+        }
+        $obj->setProcessShortcodes($parse);
+
+        return $obj->RAW();
     }
 }
