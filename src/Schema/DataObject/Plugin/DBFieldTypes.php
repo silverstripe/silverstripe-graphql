@@ -41,7 +41,8 @@ class DBFieldTypes implements ModelTypePlugin
         $mapping = $config['enumTypeMapping'] ?? [];
         foreach ($type->getFields() as $field) {
             if ($field instanceof ModelField && $field->getModel() instanceof DataObjectModel) {
-                if (($ignore[$field->getName()] ?? null)) {
+                $ignored = $ignore[$type->getName()][$field->getName()] ?? null;
+                if (!!$ignored) {
                     continue;
                 }
                 $dataClass = $field->getMetadata()->get('dataClass');

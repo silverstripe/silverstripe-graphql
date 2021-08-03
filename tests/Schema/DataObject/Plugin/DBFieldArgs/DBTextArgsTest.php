@@ -37,11 +37,11 @@ class DBTextArgsTest extends SapphireTest
         $fake->expects($this->once())
             ->method('FirstParagraph');
 
-        DBTextArgs::resolve($fake, ['format' => 'FirstParagraph']);
-        DBTextArgs::resolve($fake, []);
+        DBTextArgs::resolve($fake, ['format' => 'FirstParagraph'], []);
+        DBTextArgs::resolve($fake, [], []);
 
         $this->expectExceptionMessage('Arg "limit" is not allowed for format "FirstParagraph"');
-        DBTextArgs::resolve($fake, ['format' => 'FirstParagraph', 'limit' => 5]);
+        DBTextArgs::resolve($fake, ['format' => 'FirstParagraph', 'limit' => 5], []);
 
         $fake = $this->getMockBuilder(DBText::class)
             ->setMethods(['LimitSentences'])
@@ -50,6 +50,6 @@ class DBTextArgsTest extends SapphireTest
             ->method('LimitSentences')
             ->with([5]);
 
-        DBTextArgs::resolve($fake, ['format' => 'LimitSentences', 'limit' => 5]);
+        DBTextArgs::resolve($fake, ['format' => 'LimitSentences', 'limit' => 5], []);
     }
 }
