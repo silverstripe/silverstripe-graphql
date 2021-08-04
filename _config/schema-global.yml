@@ -29,8 +29,6 @@ SilverStripe\GraphQL\Schema\Schema:
                 before: scalarDBField
               inheritance:
                 useUnionQueries: false
-                hideAncestors:
-                  - SilverStripe\CMS\Model\SiteTree
                 after: 'versioning'
               scalarDBField:
                 after: dbFieldArgs
