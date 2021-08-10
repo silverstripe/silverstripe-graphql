@@ -665,10 +665,13 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
         }
 
         $resolver = function ($obj, $args, $context, $info) {
-            /**
-             * @var DataObject $obj
-             */
-            $field = StaticSchema::inst()->accessField($obj, $info->fieldName);
+            /* @var DataObject $obj */
+            try {
+                $field = StaticSchema::inst()->accessField($obj, $info->fieldName);
+            } catch (InvalidArgumentException $e) {
+                // Gracefully fail when field doesn't exist
+                return null;
+            }
             // return the raw field value, or checks like `is_numeric()` fail
             if ($field instanceof DBField && $field->isInternalGraphQLType()) {
                 return $field->getValue();
