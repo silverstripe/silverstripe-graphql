@@ -109,7 +109,7 @@ class Controller extends BaseController implements Flushable
                 Versioned::set_stage($stage);
             }
         }
-        
+
         // Check for a possible CORS preflight request and handle if necessary
         // Refer issue 66:  https://github.com/silverstripe/silverstripe-graphql/issues/66
         if ($request->httpMethod() === 'OPTIONS') {
@@ -460,6 +460,7 @@ class Controller extends BaseController implements Flushable
             $request = new NullHTTPRequest();
         }
         $manager = $this->getManager($request);
+        $manager->setAllowIntrospection(true);
         try {
             $types = StaticSchema::inst()->introspectTypes($manager);
         } catch (Exception $e) {

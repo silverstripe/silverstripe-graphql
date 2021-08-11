@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Extensions;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Core\Extension;
+use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 
 /**
@@ -22,7 +23,9 @@ class IntrospectionProvider extends Extension
      */
     public function types(HTTPRequest $request)
     {
+        /* @var Manager $manager */
         $manager = $this->owner->getManager();
+        $manager->setAllowIntrospection(true);
         $fragments = StaticSchema::inst()->introspectTypes($manager);
 
         return (new HTTPResponse(json_encode($fragments), 200))

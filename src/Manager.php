@@ -2,11 +2,14 @@
 
 namespace SilverStripe\GraphQL;
 
+use GraphQL\Validator\DocumentValidator;
+use GraphQL\Validator\Rules\DisableIntrospection;
 use InvalidArgumentException;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\Language\SourceLocation;
 use GraphQL\Type\Schema;
 use GraphQL\GraphQL;
+use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injector;
@@ -90,6 +93,11 @@ class Manager implements ConfigurationApplier
     protected $extraContext = [];
 
     /**
+     * @var bool
+     */
+    protected $allowIntrospection = false;
+
+    /**
      * @return QueryMiddleware[]
      */
     public function getMiddlewares()
@@ -157,6 +165,7 @@ class Manager implements ConfigurationApplier
         if ($schemaKey) {
             $this->setSchemaKey($schemaKey);
         }
+        $this->setAllowIntrospection(!Director::isDev());
     }
 
     /**
@@ -333,6 +342,10 @@ class Manager implements ConfigurationApplier
                     }, $this->mutations);
                 },
             ]);
+        }
+
+        if (!$this->getAllowIntrospection()) {
+            DocumentValidator::addRule(new DisableIntrospection());
         }
 
         return new Schema($schema);
@@ -564,6 +577,25 @@ class Manager implements ConfigurationApplier
         $provider = Injector::inst()->get(PersistedQueryMappingProvider::class);
 
         return $provider->getByID($id);
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAllowIntrospection(): bool
+    {
+        return $this->allowIntrospection;
+    }
+
+    /**
+     * @param bool $allowIntrospection
+     * @return $this
+     */
+    public function setAllowIntrospection(bool $allowIntrospection): self
+    {
+        $this->allowIntrospection = $allowIntrospection;
+
+        return $this;
     }
 
     /**
