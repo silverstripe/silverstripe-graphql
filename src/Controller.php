@@ -274,11 +274,11 @@ class Controller extends BaseController
     /**
      * Validate an origin matches a set of allowed origins
      *
-     * @param string $origin Origin string
+     * @param string|null $origin Origin string
      * @param array $allowedOrigins List of allowed origins
      * @return bool
      */
-    protected function validateOrigin(string $origin, array $allowedOrigins)
+    protected function validateOrigin(?string $origin, array $allowedOrigins)
     {
         if (empty($allowedOrigins) || empty($origin)) {
             return false;
