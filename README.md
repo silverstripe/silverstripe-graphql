@@ -2053,7 +2053,7 @@ class AddToCartOperation extends MutationScaffolder
    public function __construct($dataObjectClass)
    {
       parent::__construct($this->createOperationName(), $dataObjectClass);
-      if (!$this->getDataObjectInstance() instanceof ProductInterace) {
+      if (!$this->getDataObjectInstance() instanceof ProductInterface) {
         throw new InvalidArgumentException(
             'addToCart operation is only for implementors of ProductInterface'
         );
