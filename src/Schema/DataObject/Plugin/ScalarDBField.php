@@ -31,10 +31,11 @@ class ScalarDBField implements ModelTypePlugin
     public function apply(ModelType $type, Schema $schema, array $config = []): void
     {
         foreach ($type->getFields() as $field) {
-            if ($field instanceof ModelField && $field->getModel() instanceof DataObjectModel) {
-                if (!$field->isList()) {
-                    $field->addResolverAfterware([static::class, 'resolve']);
-                }
+            if (!$field instanceof ModelField || !$field->getModel() instanceof DataObjectModel) {
+                continue;
+            }
+            if (!$field->isList()) {
+                $field->addResolverAfterware([static::class, 'resolve']);
             }
         }
     }

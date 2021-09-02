@@ -123,18 +123,20 @@ class DataObjectModel implements
             ], $config);
 
             $modelField = ModelField::create($fieldName, $fieldConfig, $this);
-            return $hasExplicitType
-                ? $modelField
-                : $this->applyMetadata($modelField, get_class($result));
+            if (!$hasExplicitType) {
+                $this->applyMetadataClass($modelField, get_class($result));
+            }
+            return $modelField;
         }
 
         $class = $this->getModelClass($result);
         if (!$class) {
             if ($this->isList($result)) {
                 $modelField = ModelField::create($fieldName, $config, $this);
-                return $hasExplicitType
-                    ? $modelField
-                    : $this->applyMetadata($modelField, $class);
+                if (!$hasExplicitType) {
+                    $this->applyMetadataClass($modelField, $class);
+                }
+                return $modelField;
             }
             return null;
         }
@@ -413,14 +415,11 @@ class DataObjectModel implements
     /**
      * @param ModelField $field
      * @param string | null $class
-     * @return ModelField
      * @throws SchemaBuilderException
      */
-    private function applyMetadata(ModelField $field, ?string $class = null): ModelField
+    private function applyMetadataClass(ModelField $field, ?string $class = null): void
     {
         $field->getMetadata()
             ->set('dataClass', $class);
-
-        return $field;
     }
 }
