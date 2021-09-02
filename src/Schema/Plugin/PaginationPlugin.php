@@ -132,7 +132,7 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
         // Create the edge type for this query
         $edgeType = Type::create($connectionName . 'Edge')
             ->setDescription('The collections edge')
-            ->addField('node', "$plainType!", function (Field $field) {
+            ->addField('node', "{$plainType}!", function (Field $field) {
                 $field->setResolver([static::class, 'noop'])
                     ->setDescription('The node at the end of the collections edge');
             });
