@@ -115,24 +115,26 @@ class DataObjectModel implements
             return null;
         }
 
+        $hasExplicitType = isset($config['type']);
+
         if ($result instanceof DBField) {
             $fieldConfig = array_merge([
                 'type' => $result->config()->get('graphql_type'),
             ], $config);
 
-            return $this->applyMetadata(
-                ModelField::create($fieldName, $fieldConfig, $this),
-                get_class($result)
-            );
+            $modelField = ModelField::create($fieldName, $fieldConfig, $this);
+            return $hasExplicitType
+                ? $modelField
+                : $this->applyMetadata($modelField, get_class($result));
         }
 
         $class = $this->getModelClass($result);
         if (!$class) {
             if ($this->isList($result)) {
-                return $this->applyMetadata(
-                    ModelField::create($fieldName, $config, $this),
-                    $class
-                );
+                $modelField = ModelField::create($fieldName, $config, $this);
+                return $hasExplicitType
+                    ? $modelField
+                    : $this->applyMetadata($modelField, $class);
             }
             return null;
         }
@@ -143,11 +145,10 @@ class DataObjectModel implements
             ], $config);
             $query = ModelQuery::create($this, $fieldName, $queryConfig);
             $query->setDefaultPlugins($this->getModelConfiguration()->getNestedQueryPlugins());
-            return $this->applyMetadata($query, null);
+
+            return $query;
         }
-        return $this->applyMetadata(
-            ModelField::create($fieldName, $type, $this)
-        );
+        return ModelField::create($fieldName, $type, $this);
     }
 
     /**
