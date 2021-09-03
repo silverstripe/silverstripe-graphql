@@ -3,6 +3,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema\DataObject\Plugin;
 
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Injector\Factory;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
@@ -33,6 +34,7 @@ use SilverStripe\GraphQL\Tests\Schema\DataObject\FakeInheritanceBuilder;
 use SilverStripe\GraphQL\Tests\Schema\DataObject\FakeInheritanceUnionBuilder;
 use SilverStripe\GraphQL\Tests\Schema\DataObject\FakeInterfaceBuilder;
 use SilverStripe\GraphQL\Tests\Schema\DataObject\TestSchema;
+use SilverStripe\ORM\DataObject;
 
 class InheritanceTest extends SapphireTest
 {
@@ -72,10 +74,19 @@ class InheritanceTest extends SapphireTest
         }
         $schema->createStoreableSchema();
 
-        $allModels = array_map(function ($class) use ($schema) {
+        $baseClasses = array_filter(static::$extra_dataobjects, function ($class) {
+            return DataObject::singleton($class)->baseClass() === $class;
+        });
+        $leafClasses = array_filter(static::$extra_dataobjects, function ($class) {
+            return empty(ClassInfo::subclassesFor($class, false));
+        });
+        $leafModels = array_map(function ($class) use ($schema) {
             return $schema->getConfig()->getTypeNameForClass($class);
-        }, static::$extra_dataobjects);
+        }, $leafClasses);
 
+        $baseModels = array_map(function ($class) use ($schema) {
+            return $schema->getConfig()->getTypeNameForClass($class);
+        }, $baseClasses);
 
         FakeInheritanceUnionBuilder::reset();
         FakeInterfaceBuilder::reset();
@@ -108,11 +119,11 @@ class InheritanceTest extends SapphireTest
 
         if ($unions) {
             $this->assertCalls(
-                $allModels,
+                $baseModels,
                 FakeInheritanceUnionBuilder::$applyCalls
             );
             $this->assertCalls(
-                $allModels,
+                $baseModels,
                 FakeInheritanceUnionBuilder::$createCalls
             );
             $this->assertEmpty(FakeInterfaceBuilder::$applyCalls);
@@ -120,26 +131,26 @@ class InheritanceTest extends SapphireTest
             $this->assertEmpty(FakeInheritanceUnionBuilder::$createCalls);
             $this->assertEmpty(FakeInheritanceUnionBuilder::$applyCalls);
             $this->assertCalls(
-                $allModels,
+                $baseModels,
                 FakeInterfaceBuilder::$applyCalls
             );
             $this->assertCalls(
-                ['A', 'B', 'C'],
+                $baseModels,
                 FakeInterfaceBuilder::$createCalls
             );
         }
 
         $this->assertCalls(
-            ['A1a', 'A1b', 'A2a', 'B1a', 'B1b', 'B2', 'C1', 'C2a'],
+            $leafModels,
             FakeInheritanceBuilder::$ancestryCalls
         );
         $this->assertCalls(
-            ['A', 'B', 'C'],
+            $baseModels,
             FakeInheritanceBuilder::$descendantCalls
         );
 
         $this->assertCalls(
-            ['A', 'B', 'C'],
+            $baseModels,
             FakeInterfaceBuilder::$createCalls
         );
     }
@@ -153,8 +164,8 @@ class InheritanceTest extends SapphireTest
         $expected = array_map('strtolower', $expected);
         $compare = array_map('strtolower', array_keys($actual));
 
-        $this->assertEmpty(array_diff($expected, $compare));
-        $this->assertEmpty(array_diff($compare, $expected));
+        $this->assertEmpty(array_diff($expected, $compare), 'Expected calls exceed the actual calls');
+        $this->assertEmpty(array_diff($compare, $expected), 'Actual calls exceed the expected calls');
     }
 
     public function provideUnionOption()
