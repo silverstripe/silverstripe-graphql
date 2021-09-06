@@ -17,6 +17,7 @@ SilverStripe\GraphQL\Schema\Schema:
       config:
         modelConfig:
           DataObject:
+            parseShortcodes: true
             operations:
               read:
                 plugins:

@@ -11,6 +11,7 @@ use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\BaseFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
+use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
@@ -114,18 +115,28 @@ class DataObjectModel implements
             return null;
         }
 
+        $hasExplicitType = isset($config['type']);
+
         if ($result instanceof DBField) {
             $fieldConfig = array_merge([
                 'type' => $result->config()->get('graphql_type'),
             ], $config);
 
-            return ModelField::create($fieldName, $fieldConfig, $this);
+            $modelField = ModelField::create($fieldName, $fieldConfig, $this);
+            if (!$hasExplicitType) {
+                $this->applyMetadataClass($modelField, get_class($result));
+            }
+            return $modelField;
         }
 
         $class = $this->getModelClass($result);
         if (!$class) {
             if ($this->isList($result)) {
-                return ModelField::create($fieldName, $config, $this);
+                $modelField = ModelField::create($fieldName, $config, $this);
+                if (!$hasExplicitType) {
+                    $this->applyMetadataClass($modelField, $class);
+                }
+                return $modelField;
             }
             return null;
         }
@@ -136,6 +147,7 @@ class DataObjectModel implements
             ], $config);
             $query = ModelQuery::create($this, $fieldName, $queryConfig);
             $query->setDefaultPlugins($this->getModelConfiguration()->getNestedQueryPlugins());
+
             return $query;
         }
         return ModelField::create($fieldName, $type, $this);
@@ -398,5 +410,16 @@ class DataObjectModel implements
     private function isList($result): bool
     {
         return $result instanceof SS_List || $result instanceof UnsavedRelationList;
+    }
+
+    /**
+     * @param ModelField $field
+     * @param string | null $class
+     * @throws SchemaBuilderException
+     */
+    private function applyMetadataClass(ModelField $field, ?string $class = null): void
+    {
+        $field->getMetadata()
+            ->set('dataClass', $class);
     }
 }

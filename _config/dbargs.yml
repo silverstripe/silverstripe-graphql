@@ -1,0 +1,18 @@
+---
+Name: graphql-db-args
+---
+# For the DBFieldArgsPlugin, assign each DBField type an args factory
+SilverStripe\ORM\FieldType\DBText:
+  graphql_args: SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBTextArgs
+SilverStripe\ORM\FieldType\DBHTMLText:
+  graphql_args: SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBHTMLTextArgs
+SilverStripe\ORM\FieldType\DBDate:
+  graphql_args: SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBDateArgs
+SilverStripe\ORM\FieldType\DBDateTime:
+  graphql_args: SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBDatetimeArgs
+SilverStripe\ORM\FieldType\DBTime:
+  graphql_args: SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBTimeArgs
+SilverStripe\ORM\FieldType\DBDecimal:
+  graphql_args: SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBDecimalArgs
+SilverStripe\ORM\FieldType\DBFloat:
+  graphql_args: SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldArgs\DBFloatArgs

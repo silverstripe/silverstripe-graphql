@@ -3,20 +3,6 @@ Name: graphqlassets
 Only:
   moduleexists: 'silverstripe/assets'
 ---
-SilverStripe\GraphQL\Schema\Schema:
-  schemas:
-    '*':
-      types:
-        DBFile:
-          fields:
-            filename: String
-            hash: String
-            variant: String
-            url: String
-
-SilverStripe\Assets\Storage\DBFile:
-  graphql_type: DBFile
-
 SilverStripe\Assets\File:
   allowed_extensions:
     - graphql

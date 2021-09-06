@@ -3,6 +3,7 @@
 
 namespace SilverStripe\GraphQL\Schema\Field;
 
+use SilverStripe\GraphQL\Config\Configuration;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\FieldPlugin;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelFieldPlugin;
@@ -28,6 +29,11 @@ class ModelField extends Field
     private $property;
 
     /**
+     * @var Configuration
+     */
+    private $metadata;
+
+    /**
      * ModelField constructor.
      * @param string $name
      * @param $config
@@ -36,6 +42,7 @@ class ModelField extends Field
      */
     public function __construct(string $name, $config, SchemaModelInterface $model)
     {
+        $this->metadata = new Configuration();
         $this->setModel($model);
         Schema::invariant(
             is_array($config) || is_string($config) || $config === true,
@@ -135,6 +142,14 @@ class ModelField extends Field
     public function getPropertyName(): string
     {
         return $this->getProperty() ?: $this->getModel()->getPropertyForField($this->getName());
+    }
+
+    /**
+     * @return Configuration
+     */
+    public function getMetadata(): Configuration
+    {
+        return $this->metadata;
     }
 
     /**

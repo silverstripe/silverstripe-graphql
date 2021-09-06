@@ -35,12 +35,19 @@ class InterfaceBuilder
     private $schema;
 
     /**
+     * @var array
+     */
+    private $hideAncestors = [];
+
+    /**
      * InterfaceBuilderTest constructor.
      * @param Schema $schema
+     * @param array $hideAncestors
      */
-    public function __construct(Schema $schema)
+    public function __construct(Schema $schema, array $hideAncestors = [])
     {
         $this->setSchema($schema);
+        $this->hideAncestors = $hideAncestors;
     }
 
     /**
@@ -86,7 +93,9 @@ class InterfaceBuilder
         $interfaceStack[] = $interface;
         $modelType->addInterface($interface->getName());
 
-        $chain = InheritanceChain::create($modelType->getModel()->getSourceClass());
+        $chain = InheritanceChain::create($modelType->getModel()->getSourceClass())
+            ->hideAncestors($this->hideAncestors);
+
         foreach ($chain->getDirectDescendants() as $class) {
             if ($childType = $this->getSchema()->getModelByClassName($class)) {
                 $this->createInterfaces($childType, $interfaceStack);
@@ -130,6 +139,7 @@ class InterfaceBuilder
 
     /**
      * @param ModelType $type
+     * @throws ReflectionException
      * @throws SchemaBuilderException
      * @return $this
      */
@@ -155,6 +165,14 @@ class InterfaceBuilder
                 // Because the canonical type no longer appears in a query, we need to eagerly load
                 // it into the schema so it is discoverable. Helps with intellisense
                 $this->schema->eagerLoad($modelType->getName());
+            }
+        }
+        $chain = InheritanceChain::create($type->getModel()->getSourceClass())
+            ->hideAncestors($this->hideAncestors);
+
+        foreach ($chain->getDirectDescendants() as $class) {
+            if ($modelType = $schema->getModelByClassName($class)) {
+                $this->applyInterfacesToQueries($modelType);
             }
         }
 

@@ -44,7 +44,7 @@ class ReadCreator implements OperationCreator
         }
 
         $query = ModelQuery::create($model, $queryName)
-            ->setType("[$typeName]")
+            ->setType("[$typeName!]!")
             ->setPlugins($plugins)
             ->setResolver([static::class, 'resolve'])
             ->setResolverContext([

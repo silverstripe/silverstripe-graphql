@@ -20,7 +20,12 @@ class DataObjectFake extends DataObject implements TestOnly
 
     private static $db = [
         'MyField' => 'Varchar',
-        'MyInt' => 'Int'
+        'MyInt' => 'Int',
+        'MyDate' => 'Datetime',
+        'MyCurrency' => 'Currency',
+        'MyText' => 'Text',
+        'MyEnum' => "Enum('ONE, TWO')",
+        'MyMoney' => 'Money',
     ];
 
     private static $has_one = [
