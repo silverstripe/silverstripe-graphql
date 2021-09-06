@@ -80,8 +80,6 @@ class TypeReference
         if (empty($path)) {
             return false;
         }
-        // Remove the named type
-        array_pop($path);
 
         return in_array($nodeKind, $path);
     }
