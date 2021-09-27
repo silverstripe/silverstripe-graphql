@@ -128,9 +128,7 @@ class DBFieldTypesTest extends SapphireTest
         $schema = new Schema('test');
         $plugin->apply($type, $schema, [
             'ignore' => [
-                'DataObjectFake' => [
-                    'myEnum' => true,
-                ]
+                'myEnum' => true,
             ]
         ]);
 
