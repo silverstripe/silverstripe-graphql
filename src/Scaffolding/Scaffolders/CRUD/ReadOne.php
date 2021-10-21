@@ -3,8 +3,10 @@
 namespace SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD;
 
 use Exception;
+use DomainException;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
+use SilverStripe\Admin\GraphQL\ReadOneLegacyResolver;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\OperationResolver;
@@ -94,6 +96,9 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
      */
     public function resolve($object, array $args, $context, ResolveInfo $info)
     {
+        // Throw exception if the GraphQL query and resolver do not match, see https://github.com/silverstripe/silverstripe-admin/pull/1260
+        $this->checkForQueryFilterCompatibility($args);
+
         $id = StaticSchema::inst()->formatField('ID');
         // get as a list so extensions can influence it pre-query
         $list = DataList::create($this->getDataObjectClass());
@@ -138,5 +143,32 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
                 }
             }
         }
+    }
+
+    /**
+     * Whether or not the query filter is compatible with the current resolver.
+     *
+     * @throw DomainException
+     */
+    protected function checkForQueryFilterCompatibility(array $args): void
+    {
+        // Skip implementation if query filter is compatible
+        if (!array_key_exists('filter', $args)) {
+            return;
+        }
+
+        // Add message to exception if the readone legacy resolver does not exists in admin module
+        $missingResolver = '';
+        if (!class_exists(ReadOneLegacyResolver::class)) {
+            $missingResolver = 'Note: The legacy data object resolver does not exist in the used version of silverstripe/admin.';
+        }
+
+        throw new DomainException(sprintf(
+            'Hey, it looks like you\'ve got graphql 4 style filters and you\'re using the graphql 3 resolver for object (%s). ' .
+            'You can use the legacy data object resolver to fix this issue (%s). %s',
+            $this->getDataObjectClass(),
+            'SilverStripe\\Admin\\GraphQ\\ReadOneLegacyResolver',
+            $missingResolver
+        ));
     }
 }
