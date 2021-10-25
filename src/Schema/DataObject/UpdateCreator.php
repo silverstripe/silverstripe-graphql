@@ -56,6 +56,7 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
     ): ?ModelOperation {
         $plugins = $config['plugins'] ?? [];
         $mutationName = $config['name'] ?? null;
+        $idField = $config['idField'] ?? 'id';
         if (!$mutationName) {
             $mutationName = 'update' . ucfirst($typeName);
         }
@@ -66,6 +67,7 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
             ->setPlugins($plugins)
             ->setResolver([static::class, 'resolve'])
             ->addResolverContext('dataClass', $model->getSourceClass())
+            ->addResolverContext('idField', $idField)
             ->addArg('input', "{$inputTypeName}!");
     }
 
@@ -76,7 +78,8 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
     public static function resolve(array $resolverContext = []): Closure
     {
         $dataClass = $resolverContext['dataClass'] ?? null;
-        return function ($obj, array $args, array $context, ResolveInfo $info) use ($dataClass) {
+        $idField = $resolverContext['identifier'] ?? 'id';
+        return function ($obj, array $args, array $context, ResolveInfo $info) use ($dataClass, $idField) {
             if (!$dataClass) {
                 return null;
             }
@@ -87,10 +90,16 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
                 __CLASS__,
                 SchemaConfigProvider::class
             );
-            $fieldName = FieldAccessor::formatField('ID');
+            $fieldName = FieldAccessor::formatField($idField);
             $input = $args['input'];
-            $obj = DataList::create($dataClass)
-                ->byID($input[$fieldName]);
+            if (strtolower($fieldName) === 'id') {
+                $obj = DataList::create($dataClass)
+                    ->byID($input[$fieldName]);
+            } else {
+                $obj = DataList::create($dataClass)
+                    ->filter($idField, $input[$fieldName])
+                    ->first();
+            }
             if (!$obj) {
                 throw new MutationException(sprintf(
                     '%s with ID %s not found',
