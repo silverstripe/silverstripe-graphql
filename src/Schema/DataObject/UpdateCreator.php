@@ -78,7 +78,7 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
     public static function resolve(array $resolverContext = []): Closure
     {
         $dataClass = $resolverContext['dataClass'] ?? null;
-        $idField = $resolverContext['identifier'] ?? 'id';
+        $idField = $resolverContext['idField'] ?? 'id';
         return function ($obj, array $args, array $context, ResolveInfo $info) use ($dataClass, $idField) {
             if (!$dataClass) {
                 return null;
