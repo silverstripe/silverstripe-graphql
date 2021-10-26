@@ -7,11 +7,11 @@ class JSONResolver
 {
     /**
      * @param $value
-     * @return object
+     * @return array
      */
-    public static function serialise($value): object
+    public static function serialise($value): array
     {
-        return (object) $value;
+        return json_decode($value, true);
     }
 
     /**
