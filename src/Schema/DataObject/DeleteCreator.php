@@ -40,6 +40,7 @@ class DeleteCreator implements OperationCreator
     ): ?ModelOperation {
         $plugins = $config['plugins'] ?? [];
         $mutationName = $config['name'] ?? null;
+        $idField = $config['idField'] ?? 'id';
         if (!$mutationName) {
             $pluraliser = $model->getSchemaConfig()->getPluraliser();
             $suffix = $pluraliser ? $pluraliser($typeName) : $typeName;
@@ -52,6 +53,7 @@ class DeleteCreator implements OperationCreator
             ->setResolver([static::class, 'resolve'])
             ->setResolverContext([
                 'dataClass' => $model->getSourceClass(),
+                'idField' => $idField,
             ])
             ->addArg('ids', '[ID]!');
     }
@@ -63,15 +65,21 @@ class DeleteCreator implements OperationCreator
     public static function resolve(array $resolverContext = []): Closure
     {
         $dataClass = $resolverContext['dataClass'] ?? null;
-        return function ($obj, array $args, array $context, ResolveInfo $info) use ($dataClass) {
+        $idField = $resolverContext['idField'] ?? 'id';
+        return function ($obj, array $args, array $context, ResolveInfo $info) use ($dataClass, $idField) {
             if (!$dataClass) {
                 return null;
             }
             $ids = [];
-            DB::get_conn()->withTransaction(function () use ($args, $context, $info, $dataClass, $ids) {
+            DB::get_conn()->withTransaction(function () use ($args, $context, $info, $dataClass, $ids, $idField) {
                 // Build list to filter
-                $results = DataList::create($dataClass)
-                    ->byIDs($args['ids']);
+                if (strtolower($idField) === 'id') {
+                    $results = DataList::create($dataClass)
+                        ->byIDs($args['ids']);
+                } else {
+                    $results = DataList::create($dataClass)
+                        ->filter($idField, $args['ids']);
+                }
 
                 // Before deleting, check if any items fail canDelete()
                 /** @var DataObject[] $resultsList */

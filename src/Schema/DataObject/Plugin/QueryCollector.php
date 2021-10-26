@@ -7,6 +7,7 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
+use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\ModelInterfaceType;
@@ -43,6 +44,12 @@ class QueryCollector
                 $queries[] = $field;
             }
         }
+        foreach ($this->schema->getMutationType()->getFields() as $field) {
+            if ($field instanceof ModelMutation) {
+                $queries[] = $field;
+            }
+        }
+
         foreach (array_merge($this->schema->getModels(), $this->schema->getTypes()) as $type) {
             foreach ($type->getFields() as $field) {
                 if ($field instanceof ModelField && $field->getModelType()) {
