@@ -56,9 +56,11 @@ class InheritanceBuilder
         $parentModel = $this->getSchema()->findOrMakeModel($parent);
         // Merge descendant fields up into the ancestor
         foreach ($modelType->getFields() as $fieldObj) {
-            // If the field already exists on the ancestor, skip it
-            if ($parentModel->getFieldByName($fieldObj->getName())) {
-                continue;
+            // If the field already exists on the ancestor with the same config, skip it
+            if ($existing = $parentModel->getFieldByName($fieldObj->getName())) {
+                if ($existing->getSignature() === $fieldObj->getSignature()) {
+                    continue;
+                }
             }
             $fieldName = $fieldObj instanceof ModelField
                 ? $fieldObj->getPropertyName()
@@ -91,8 +93,10 @@ class InheritanceBuilder
             $descendantModel = $this->getSchema()->getModelByClassName($descendant);
             if ($descendantModel) {
                 foreach ($modelType->getFields() as $fieldObj) {
-                    if ($descendantModel->getFieldByName($fieldObj->getName())) {
-                        continue;
+                    if ($existing = $descendantModel->getFieldByName($fieldObj->getName())) {
+                        if ($existing->getSignature() === $fieldObj->getSignature()) {
+                            continue;
+                        }
                     }
                     $clone = clone $fieldObj;
                     $descendantModel->addField($fieldObj->getName(), $clone);

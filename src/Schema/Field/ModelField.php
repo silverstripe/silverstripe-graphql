@@ -152,6 +152,27 @@ class ModelField extends Field
         return $this->metadata;
     }
 
+    public function mergeWith(Field $field): Field
+    {
+        if ($field->getProperty()) {
+            $this->setProperty($field->getProperty());
+        }
+        return parent::mergeWith($field);
+    }
+
+    /**
+     * @return string
+     * @throws SchemaBuilderException
+     */
+    public function getSignature(): string
+    {
+        $parentSignature = parent::getSignature();
+        if (!$this->getProperty()) {
+            return $parentSignature;
+        }
+        return md5($parentSignature . $this->getProperty());
+    }
+
     /**
      * @param string $pluginName
      * @param $plugin
