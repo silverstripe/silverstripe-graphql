@@ -56,7 +56,11 @@ abstract class AbstractQueryFilterPlugin implements SchemaUpdater, ModelQueryPlu
         if (empty($filters)) {
             return;
         }
-        foreach (Schema::getInternalTypes() as $typeName) {
+        $scalarTypes = Schema::getInternalTypes();
+        foreach ($schema->getEnums() as $enum) {
+            $scalarTypes[] = $enum->getName();
+        }
+        foreach ($scalarTypes as $typeName) {
             $type = InputType::create(static::getLeafNodeType($typeName));
             foreach ($filters as $id => $filterInstance) {
                 if ($filterInstance instanceof ListFieldFilterInterface) {
