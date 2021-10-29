@@ -42,6 +42,7 @@ class NestedInputBuilderTest extends SapphireTest
             ->addModelbyClassName(FakeProduct::class, function (ModelType $model) {
                 $model->addField('title');
                 $model->addField('reviews');
+                $model->addField('status');
                 $model->addField('relatedProducts');
             })
             ->addModelbyClassName(FakeReview::class, function (ModelType $model) {
@@ -67,6 +68,7 @@ class NestedInputBuilderTest extends SapphireTest
                 'title' => 'String',
                 'reviews' => 'FakeReviewInputType',
                 'relatedProducts' => 'FakeProductInputType',
+                'status' => 'FakeProductStatusEnumInputType',
             ],
             'FakeReviewInputType' => [
                 'id' => 'ID',
@@ -91,6 +93,7 @@ class NestedInputBuilderTest extends SapphireTest
                 $model->addField('title');
                 $model->addField('parent');
                 $model->addField('reviews');
+                $model->addField('status');
                 $model->addField('relatedProducts');
             })
             ->addModelbyClassName(FakeReview::class, function (ModelType $model) {
@@ -123,6 +126,7 @@ class NestedInputBuilderTest extends SapphireTest
             ->addModelbyClassName(FakeProduct::class, function (ModelType $model) {
                 $model->addField('title');
                 $model->addField('parent');
+                $model->addField('status');
                 $model->addField('featuredOn');
             });
         $schema->createStoreableSchema();
@@ -135,7 +139,7 @@ class NestedInputBuilderTest extends SapphireTest
         $this->assertNotNull($featuredFilter, "Field featuredProducts not found on {$filterType->getName()}");
         $this->assertEquals('FakeProductFilterFields', $featuredFilter->getType());
     }
-  
+
     private function assertSchema(array $graph, Schema $schema)
     {
         foreach ($graph as $typeName => $fields) {

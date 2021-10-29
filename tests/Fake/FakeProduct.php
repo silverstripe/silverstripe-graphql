@@ -18,6 +18,7 @@ class FakeProduct extends DataObject implements TestOnly
     private static $db = [
         'Title' => 'Varchar',
         'Price' => 'Int',
+        'Status' => "Enum('AVAILABLE, UNAVAILABLE')",
     ];
 
     private static $has_one = [
