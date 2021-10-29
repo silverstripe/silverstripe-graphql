@@ -4,6 +4,7 @@ namespace SilverStripe\GraphQL\Tests\Schema\Services;
 
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Dev\BuildState;
+use SilverStripe\GraphQL\Schema\DataObject\Plugin\DBFieldTypes;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -39,11 +40,12 @@ class NestedInputBuilderTest extends SapphireTest
                 $model->addField('products');
                 $model->addAllOperations();
             })
-            ->addModelbyClassName(FakeProduct::class, function (ModelType $model) {
+            ->addModelbyClassName(FakeProduct::class, function (ModelType $model) use ($schema) {
                 $model->addField('title');
                 $model->addField('reviews');
                 $model->addField('status');
                 $model->addField('relatedProducts');
+                (new DBFieldTypes())->apply($model, $schema);
             })
             ->addModelbyClassName(FakeReview::class, function (ModelType $model) {
                 $model->addField('content');
@@ -68,7 +70,7 @@ class NestedInputBuilderTest extends SapphireTest
                 'title' => 'String',
                 'reviews' => 'FakeReviewInputType',
                 'relatedProducts' => 'FakeProductInputType',
-                'status' => 'FakeProductStatusEnumInputType',
+                'status' => 'StatusEnum',
             ],
             'FakeReviewInputType' => [
                 'id' => 'ID',
@@ -93,7 +95,6 @@ class NestedInputBuilderTest extends SapphireTest
                 $model->addField('title');
                 $model->addField('parent');
                 $model->addField('reviews');
-                $model->addField('status');
                 $model->addField('relatedProducts');
             })
             ->addModelbyClassName(FakeReview::class, function (ModelType $model) {
@@ -126,7 +127,6 @@ class NestedInputBuilderTest extends SapphireTest
             ->addModelbyClassName(FakeProduct::class, function (ModelType $model) {
                 $model->addField('title');
                 $model->addField('parent');
-                $model->addField('status');
                 $model->addField('featuredOn');
             });
         $schema->createStoreableSchema();
