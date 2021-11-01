@@ -28,8 +28,8 @@ class OperationListTest extends SapphireTest
         $list->removeByName('nothing');
         $this->assertEquals(1, $list->count());
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/only accepts instances of/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/only accepts instances of/');
         $list->push(new OperationList());
     }
 }

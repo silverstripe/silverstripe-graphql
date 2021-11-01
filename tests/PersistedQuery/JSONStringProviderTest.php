@@ -13,7 +13,7 @@ class JSONStringProviderTest extends SapphireTest
     {
         /* @var PersistedQueryMappingProvider $provider */
         $provider = new JSONStringProvider();
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $provider->setSchemaMapping(['default' => 'not a JSON string']);
     }
 

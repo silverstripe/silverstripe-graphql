@@ -22,7 +22,7 @@ class HandlerTest extends SapphireTest
     /**
      * {@inheritDoc}
      */
-    public function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         Handler::config()->remove('authenticators');
@@ -65,12 +65,11 @@ class HandlerTest extends SapphireTest
 
     /**
      * Test that an exception is thrown if an authenticator is configured that doesn't implement the interface
-     *
-     * @expectedException \SilverStripe\ORM\ValidationException
-     * @expectedExceptionMessage stdClass must implement SilverStripe\GraphQL\Auth\AuthenticatorInterface!
      */
     public function testExceptionThrownWhenAuthenticatorDoesNotImplementAuthenticatorInterface()
     {
+        $this->expectException(\SilverStripe\ORM\ValidationException::class);
+        $this->expectExceptionMessage('stdClass must implement SilverStripe\GraphQL\Auth\AuthenticatorInterface!');
         Handler::config()->update('authenticators', [
             ['class' => 'stdClass']
         ]);
@@ -131,12 +130,11 @@ class HandlerTest extends SapphireTest
 
     /**
      * Ensure that an failed authentication attempt throws an exception
-     *
-     * @expectedException \SilverStripe\ORM\ValidationException
-     * @expectedExceptionMessage Never!
      */
     public function testFailedAuthenticationThrowsException()
     {
+        $this->expectException(\SilverStripe\ORM\ValidationException::class);
+        $this->expectExceptionMessage('Never!');
         Handler::config()->update('authenticators', [
             ['class' => BrutalAuthenticatorFake::class]
         ]);
@@ -148,12 +146,11 @@ class HandlerTest extends SapphireTest
      * Ensure that when a falsy value is returned from an authenticator (when it should throw
      * an exception on failure) that a sensible default message is used in a ValidationException
      * instead.
-     *
-     * @expectedException \SilverStripe\ORM\ValidationException
-     * @expectedExceptionMessage Authentication failed.
      */
     public function testFailedAuthenticationWithFalsyReturnValueThrowsDefaultException()
     {
+        $this->expectException(\SilverStripe\ORM\ValidationException::class);
+        $this->expectExceptionMessage('Authentication failed');
         Handler::config()->update('authenticators', [
             ['class' => FalsyAuthenticatorFake::class]
         ]);

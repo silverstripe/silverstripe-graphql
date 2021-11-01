@@ -4,7 +4,8 @@ namespace SilverStripe\GraphQL\Tests;
 
 use Exception;
 use GraphQL\Type\Definition\Type;
-use PHPUnit_Framework_MockObject_MockBuilder;
+use PHPUnit\Framework\Assert;
+use PHPUnit\Framework\MockObject\MockBuilder;
 use SilverStripe\Assets\Dev\TestAssetStore;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
@@ -30,7 +31,7 @@ class ControllerTest extends SapphireTest
 {
     protected $usesDatabase = true;
 
-    public function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -43,7 +44,7 @@ class ControllerTest extends SapphireTest
         TestAssetStore::activate('GraphQLController');
     }
 
-    public function tearDown()
+    protected function tearDown(): void
     {
         TestAssetStore::reset();
         parent::tearDown();
@@ -83,7 +84,7 @@ class ControllerTest extends SapphireTest
         $kernel = Injector::inst()->get(Kernel::class);
         $kernel->setEnvironment(Kernel::LIVE);
 
-        /** @var Manager|PHPUnit_Framework_MockObject_MockBuilder $managerMock */
+        /** @var Manager|MockBuilder $managerMock */
         $managerMock = $this->getMockBuilder(Manager::class)
         ->setMethods(['query'])
         ->getMock();
@@ -103,7 +104,7 @@ class ControllerTest extends SapphireTest
 
     public function testIndexWithExceptionIncludesTraceInDevMode()
     {
-        /** @var Manager|PHPUnit_Framework_MockObject_MockBuilder $managerMock */
+        /** @var Manager|MockBuilder $managerMock */
         $managerMock = $this->getMockBuilder(Manager::class)
         ->setMethods(['query'])
         ->getMock();
@@ -148,9 +149,12 @@ class ControllerTest extends SapphireTest
         $manager->addQuery($this->getQuery($manager), 'myquery');
 
         $response = $controller->index(new HTTPRequest('GET', ''));
-        $assertion = ($shouldFail) ? 'assertContains' : 'assertNotContains';
         // See Fake\BrutalAuthenticatorFake::authenticate for failure message
-        $this->{$assertion}('Never!', $response->getBody());
+        if ($shouldFail) {
+            Assert::assertStringContainsString('Never!', $response->getBody());
+        } else {
+            Assert::assertStringNotContainsString('Never!', $response->getBody());
+        }
     }
 
     /**
@@ -170,11 +174,9 @@ class ControllerTest extends SapphireTest
         ];
     }
 
-    /**
-     * @expectedException \SilverStripe\Control\HTTPResponse_Exception
-     */
     public function testAddCorsHeadersOriginDisallowed()
     {
+        $this->expectException(HTTPResponse_Exception::class);
         Config::modify()->set(Controller::class, 'cors', [
         'Enabled' => true,
         'Allow-Origin' => null,
@@ -394,7 +396,7 @@ class ControllerTest extends SapphireTest
     public function testTypeCaching()
     {
         $expectedSchemaPath = TestAssetStore::base_path() . '/testSchema.types.graphql';
-        $this->assertFileNotExists($expectedSchemaPath, 'Schema is not automatically cached');
+        $this->assertFileDoesNotExist($expectedSchemaPath, 'Schema is not automatically cached');
 
         Config::modify()->set(Controller::class, 'cache_types_in_filesystem', true);
         $controller = Controller::create(new Manager('testSchema'));
@@ -410,7 +412,7 @@ class ControllerTest extends SapphireTest
         Controller::create(new Manager('testSchema'))->processTypeCaching();
 
         // Static cache should be removed when caching is disabled
-        $this->assertFileNotExists($expectedSchemaPath, 'Schema is not cached');
+        $this->assertFileDoesNotExist($expectedSchemaPath, 'Schema is not cached');
     }
 
     public function testIntrospectionProvider()
@@ -562,7 +564,7 @@ class ControllerTest extends SapphireTest
         $data = json_decode($controller->handleRequest($request)->getBody(), true);
         $this->assertArrayHasKey('errors', $data);
         $this->assertCount(1, $data['errors']);
-        $this->assertRegExp($regExp, $data['errors'][0]['message']);
+        $this->assertMatchesRegularExpression($regExp, $data['errors'][0]['message']);
     }
 
     protected function assertQuerySuccess(Controller $controller, HTTPRequest $request, $operation)
@@ -657,7 +659,7 @@ class ControllerTest extends SapphireTest
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject
+     * @return \MockObject
      */
     protected function getStaticSchemaMock()
     {

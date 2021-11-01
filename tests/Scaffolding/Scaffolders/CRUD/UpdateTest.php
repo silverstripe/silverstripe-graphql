@@ -25,7 +25,7 @@ class UpdateTest extends SapphireTest
         RestrictedDataObjectFake::class,
     ];
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         // Make sure we're only testing the native features
@@ -138,7 +138,7 @@ class UpdateTest extends SapphireTest
         $scaffold = $update->scaffold($manager);
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/Cannot edit/');
+        $this->expectExceptionMessageMatches('/Cannot edit/');
 
         $scaffold['resolve'](
             $restrictedDataobject,

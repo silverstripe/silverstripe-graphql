@@ -21,7 +21,7 @@ use SilverStripe\Security\Member;
 class ManagerTest extends SapphireTest
 {
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         /** @var IdentityStore $store */
@@ -135,18 +135,18 @@ class ManagerTest extends SapphireTest
         $manager->setSchemaKey('test');
         $this->assertEquals('test', $manager->getSchemaKey());
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/must be a string/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/must be a string/');
         $manager->setSchemaKey(['test']);
         $this->assertEquals('test', $manager->getSchemaKey());
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/cannnot be empty/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/cannnot be empty/');
         $manager->setSchemaKey('');
         $this->assertEquals('test', $manager->getSchemaKey());
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/alphanumeric/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/alphanumeric/');
         $manager->setSchemaKey('completely % invalid #key');
         $this->assertEquals('test', $manager->getSchemaKey());
     }

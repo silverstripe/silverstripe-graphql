@@ -130,7 +130,7 @@ class OperationScaffolderTest extends SapphireTest
         }
 
         $this->assertInstanceOf(InvalidArgumentException::class, $ex);
-        $this->assertRegExp('/Tried to set description/', $ex->getMessage());
+        $this->assertMatchesRegularExpression('/Tried to set description/', $ex->getMessage());
 
         $ex = null;
         try {
@@ -140,7 +140,7 @@ class OperationScaffolderTest extends SapphireTest
         }
 
         $this->assertInstanceOf(InvalidArgumentException::class, $ex);
-        $this->assertRegExp('/Tried to set default/', $ex->getMessage());
+        $this->assertMatchesRegularExpression('/Tried to set default/', $ex->getMessage());
 
         $ex = null;
         try {
@@ -150,7 +150,7 @@ class OperationScaffolderTest extends SapphireTest
         }
 
         $this->assertInstanceOf(InvalidArgumentException::class, $ex);
-        $this->assertRegExp('/Tried to make arg [A-Za-z0-9]+ required/', $ex->getMessage());
+        $this->assertMatchesRegularExpression('/Tried to make arg [A-Za-z0-9]+ required/', $ex->getMessage());
     }
 
     public function testOperationScaffolderResolver()
@@ -169,8 +169,8 @@ class OperationScaffolderTest extends SapphireTest
 
         $this->assertTrue($success);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/closures, instances of/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/closures, instances of/');
         $scaffolder->setResolver('fail');
     }
 
@@ -213,7 +213,7 @@ class OperationScaffolderTest extends SapphireTest
         }
 
         $this->assertInstanceof(Exception::class, $ex);
-        $this->assertRegExp('/args must be an array/', $ex->getMessage());
+        $this->assertMatchesRegularExpression('/args must be an array/', $ex->getMessage());
 
         $ex = null;
         try {
@@ -230,7 +230,7 @@ class OperationScaffolderTest extends SapphireTest
         }
 
         $this->assertInstanceof(Exception::class, $ex);
-        $this->assertRegExp('/must have a type/', $ex->getMessage());
+        $this->assertMatchesRegularExpression('/must have a type/', $ex->getMessage());
 
         $ex = null;
         try {
@@ -244,6 +244,6 @@ class OperationScaffolderTest extends SapphireTest
         }
 
         $this->assertInstanceof(Exception::class, $ex);
-        $this->assertRegExp('/should be mapped to a string or an array/', $ex->getMessage());
+        $this->assertMatchesRegularExpression('/should be mapped to a string or an array/', $ex->getMessage());
     }
 }

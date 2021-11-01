@@ -14,7 +14,7 @@ class HTTPProviderTest extends SapphireTest
     {
         /* @var HTTPProvider $provider */
         $provider = Injector::inst()->create(HTTPProvider::class);
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $provider->setSchemaMapping(['default' => 'not a url']);
     }
 

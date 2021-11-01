@@ -4,6 +4,7 @@ namespace SilverStripe\GraphQL\Tests\Scaffolding;
 
 use GraphQL\Type\Definition\ObjectType;
 use InvalidArgumentException;
+use PHPUnit\Framework\Error\Notice;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
@@ -18,7 +19,7 @@ use SilverStripe\View\ArrayData;
 
 class StaticSchemaTest extends SapphireTest
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         StaticSchema::reset();
@@ -42,14 +43,14 @@ class StaticSchemaTest extends SapphireTest
 
     public function testEnsureDataObject()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $schema = new StaticSchema();
         $schema->setTypeNames(['fail' => 'fail']);
     }
 
     public function testEnsureUnique()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $typeNames = [
             DataObjectFake::class => 'test1',
             FakePage::class => 'test2',
@@ -61,7 +62,7 @@ class StaticSchemaTest extends SapphireTest
 
     public function testEnsureAssoc()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $typeNames = [
             'test1',
             'test2',
@@ -192,13 +193,13 @@ class StaticSchemaTest extends SapphireTest
             ->fetchFromManager(FakeSiteTree::class, $manager, StaticSchema::PREFER_SINGLE);
         $this->assertSame($result, $singleType);
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/illegal mode/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/illegal mode/');
         StaticSchema::inst()
             ->fetchFromManager(FakeSiteTree::class, $manager, 'fail');
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/could not be resolved/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/could not be resolved/');
         StaticSchema::inst()
             ->fetchFromManager('fail', $manager);
     }
@@ -268,7 +269,11 @@ class StaticSchemaTest extends SapphireTest
         $result = StaticSchema::inst()->extractKeys(['Foo', 'NotExists'], $arr);
         $this->assertEquals(['test1', null], $result);
 
-        $this->expectException(\PHPUnit_Framework_Error::class);
+        if (PHP_VERSION_ID < 80000) {
+            $this->expectNotice('StaticSchema throws notice when extracting on non-existent key on PHP 7');
+        } else {
+            $this->expectWarning('StaticSchema throws warning when extracting on non-existent key on PHP 8');
+        }
         StaticSchema::inst()->extractKeys(['Foo', 'NotExists'], $arr, false);
     }
 

@@ -4,7 +4,7 @@ namespace SilverStripe\GraphQL\Tests;
 
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\Type;
-use PHPUnit_Framework_MockObject_MockObject;
+use PHPUnit\Framework\MockObject\MockObject;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\TypeCreator;
 
@@ -126,7 +126,7 @@ class TypeCreatorTest extends SapphireTest
 
     /**
      * @param array $extraMethods
-     * @return PHPUnit_Framework_MockObject_MockObject|TypeCreator
+     * @return MockObject|TypeCreator
      */
     protected function getTypeCreatorMock($extraMethods = [])
     {
