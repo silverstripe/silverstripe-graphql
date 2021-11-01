@@ -162,8 +162,8 @@ class ListQueryScaffolderTest extends SapphireTest
 
     public function testListQueryScaffolderApplyConfigThrowsOnBadSortableFields()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/sortableFields must be an array/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/sortableFields must be an array/');
         $scaffolder = new ListQueryScaffolder('testQuery', 'testType');
         $scaffolder->applyConfig([
             'sortableFields' => 'fail',

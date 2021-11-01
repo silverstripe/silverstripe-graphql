@@ -24,7 +24,7 @@ class DeleteTest extends SapphireTest
         RestrictedDataObjectFake::class,
     ];
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         // Make sure we're only testing the native features
@@ -124,7 +124,7 @@ class DeleteTest extends SapphireTest
         $scaffold = $delete->scaffold($manager);
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/Cannot delete/');
+        $this->expectExceptionMessageMatches('/Cannot delete/');
 
         $scaffold['resolve'](
             $restrictedDataobject,

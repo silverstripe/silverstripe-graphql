@@ -28,7 +28,7 @@ use SilverStripe\ORM\FieldType\DBInt;
 
 class DataObjectScaffolderTest extends SapphireTest
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         foreach (Read::get_extensions() as $class) {
@@ -42,8 +42,8 @@ class DataObjectScaffolderTest extends SapphireTest
         $this->assertEquals(DataObjectFake::class, $scaffolder->getDataObjectClass());
         $this->assertInstanceOf(DataObjectFake::class, $scaffolder->getDataObjectInstance());
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/Non-existent classname/i');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/Non-existent classname/i');
         new DataObjectScaffolder('fail');
     }
 
@@ -139,8 +139,8 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder->removeOperation(SchemaScaffolder::DELETE);
         $this->assertEquals(1, $scaffolder->getOperations()->count());
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/Invalid operation/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/Invalid operation/');
         $scaffolder = $this->getFakeScaffolder();
         $scaffolder->operation('fail');
     }
@@ -174,8 +174,8 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder->addToManager($managerMock);
 
         // Can't add a nested query for a regular field
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/returns a DataList or ArrayList/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/returns a DataList or ArrayList/');
         $scaffolder = $this->getFakeScaffolder();
         $scaffolder->nestedQuery('MyField');
     }
@@ -272,7 +272,7 @@ class DataObjectScaffolderTest extends SapphireTest
 
         // Must have "fields" defined
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/^No fields or nestedQueries/');
+        $this->expectExceptionMessageMatches('/^No fields or nestedQueries/');
         $scaffolder->applyConfig([
             'operations' => ['create' => true],
         ]);
@@ -284,7 +284,7 @@ class DataObjectScaffolderTest extends SapphireTest
 
         // Invalid fields
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/Fields must be an array/');
+        $this->expectExceptionMessageMatches('/Fields must be an array/');
         $scaffolder->applyConfig([
             'fields' => 'fail',
         ]);
@@ -295,8 +295,8 @@ class DataObjectScaffolderTest extends SapphireTest
         $scaffolder = $this->getFakeScaffolder();
 
         // Invalid fieldsExcept
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/"excludeFields" must be an enumerated list/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/"excludeFields" must be an enumerated list/');
         $scaffolder->applyConfig([
             'fields' => ['MyField'],
             'excludeFields' => 'fail',
@@ -309,7 +309,7 @@ class DataObjectScaffolderTest extends SapphireTest
 
         // Invalid operations
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/Operations field must be a map/');
+        $this->expectExceptionMessageMatches('/Operations field must be a map/');
         $scaffolder->applyConfig([
             'fields' => ['MyField'],
             'operations' => ['create'],
@@ -322,7 +322,7 @@ class DataObjectScaffolderTest extends SapphireTest
 
         // Invalid nested queries
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/"nestedQueries" must be a map of relation name/');
+        $this->expectExceptionMessageMatches('/"nestedQueries" must be a map of relation name/');
         $scaffolder->applyConfig([
             'fields' => ['MyField'],
             'nestedQueries' => ['Files'],
@@ -374,8 +374,8 @@ class DataObjectScaffolderTest extends SapphireTest
 
     public function testDataObjectScaffolderScaffoldFieldException()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/Invalid field/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/Invalid field/');
         $scaffolder = $this->getFakeScaffolder()
             ->addFields(['not a field'])
             ->scaffold(new Manager());
@@ -384,8 +384,8 @@ class DataObjectScaffolderTest extends SapphireTest
 
     public function testDataObjectScaffolderScaffoldNestedQueryException()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessageRegExp('/returns a list/');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/returns a list/');
         $scaffolder = $this->getFakeScaffolder()
             ->addFields(['Files'])
             ->scaffold(new Manager());

@@ -63,7 +63,7 @@ class ArgumentScaffolderTest extends SapphireTest
 
     public function testNonInternalTypeNoManager()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
         $scaffolder = new ArgumentScaffolder('Test', 'MyType');
         $scaffolder->toArray();
     }

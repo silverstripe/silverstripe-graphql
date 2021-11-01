@@ -57,7 +57,7 @@ class UnionScaffolderTest extends SapphireTest
             $ex = $e->getMessage();
         }
 
-        $this->assertRegExp('/not a DataObject/', $ex);
+        $this->assertMatchesRegularExpression('/not a DataObject/', $ex);
 
         $ex = null;
         try {
@@ -66,6 +66,6 @@ class UnionScaffolderTest extends SapphireTest
             $ex = $e->getMessage();
         }
 
-        $this->assertRegExp('/no type defined/', $ex);
+        $this->assertMatchesRegularExpression('/no type defined/', $ex);
     }
 }

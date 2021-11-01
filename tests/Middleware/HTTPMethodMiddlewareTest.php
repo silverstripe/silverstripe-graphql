@@ -24,7 +24,7 @@ class HTTPMethodMiddlewareTest extends MiddlewareProcessTestBase
     public function testItThrowsIfNotPOSTorGET()
     {
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/must be POST or GET/');
+        $this->expectExceptionMessageMatches('/must be POST or GET/');
         $result = $this->simulateMiddlewareProcess(
             new HTTPMethodMiddleware(),
             ' query someQuery { tester }',
@@ -36,7 +36,7 @@ class HTTPMethodMiddlewareTest extends MiddlewareProcessTestBase
     public function testItThrowsIfMutationIsNotPOST()
     {
         $this->expectException(Exception::class);
-        $this->expectExceptionMessageRegExp('/Mutations must use the POST/');
+        $this->expectExceptionMessageMatches('/Mutations must use the POST/');
         $result = $this->simulateMiddlewareProcess(
             new HTTPMethodMiddleware(),
             ' mutation someMutation { tester }',

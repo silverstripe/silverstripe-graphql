@@ -33,7 +33,7 @@ class ConnectionTest extends SapphireTest
      */
     private $manager;
 
-    public function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -158,7 +158,7 @@ class ConnectionTest extends SapphireTest
 
     public function testSortByInvalidColumnThrowsException()
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         $list = DataObjectFake::get();
 
