@@ -44,13 +44,13 @@ class IntegrationTest extends SapphireTest
         Member::class,
     ];
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         TestStoreCreator::$dir = __DIR__;
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         parent::tearDown();
         $this->clean();

@@ -32,7 +32,7 @@ class FieldAccessorTest extends SapphireTest
         Member::class,
     ];
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->obj = new FakeProduct();
