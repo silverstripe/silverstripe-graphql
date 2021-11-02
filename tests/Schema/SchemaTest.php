@@ -23,7 +23,7 @@ use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 
 class SchemaTest extends SapphireTest
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         // Kill the global schema
