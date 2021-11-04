@@ -323,13 +323,18 @@ class DataObjectModel implements
      * get that field.
      *
      * @param string $fieldName
+     * @param string $class Optional class name for model fields which would result in database queries.
+     *                      The database is not always available when the schema is built (e.g. on deployment servers).
      * @return ModelType|null
      * @throws SchemaBuilderException
      */
-    public function getModelTypeForField(string $fieldName): ?ModelType
+    public function getModelTypeForField(string $fieldName, $class = null): ?ModelType
     {
-        $result = $this->getFieldAccessor()->accessField($this->dataObject, $fieldName);
-        $class = $this->getModelClass($result);
+        if (!$class) {
+            $result = $this->getFieldAccessor()->accessField($this->dataObject, $fieldName);
+            $class = $this->getModelClass($result);
+        }
+
         if (!$class) {
             return null;
         }
