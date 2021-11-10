@@ -1159,17 +1159,22 @@ class Schema implements ConfigurationApplier
     {
         static::invariant(
             empty($config) || ArrayLib::is_associative($config),
-            '%s configurations must be key value pairs of names to configurations.
-            Did you include an indexed array in your config?',
-            static::class
+            "%s configurations must be key value pairs of names to configurations.
+            Did you include an indexed array in your config?
+
+            Context: %s",
+            static::class,
+            json_encode($config)
         );
 
         if (!empty($allowedKeys)) {
             $invalidKeys = array_diff(array_keys($config), $allowedKeys);
             static::invariant(
                 empty($invalidKeys),
-                'Config contains invalid keys: %s',
-                implode(',', $invalidKeys)
+                "Config contains invalid keys: %s. Allowed keys are %s.\n\nContext: %s",
+                implode(',', $invalidKeys),
+                implode(',', $allowedKeys),
+                json_encode($config)
             );
         }
 
@@ -1177,8 +1182,9 @@ class Schema implements ConfigurationApplier
             $missingKeys = array_diff($requiredKeys, array_keys($config));
             static::invariant(
                 empty($missingKeys),
-                'Config is missing required keys: %s',
-                implode(',', $missingKeys)
+                "Config is missing required keys: %s.\n\nContext: %s",
+                implode(',', $missingKeys),
+                json_encode($config)
             );
         }
     }

@@ -89,7 +89,8 @@ class ModelType extends Type implements ExtraTypeProvider
             if (isset($fields[Schema::ALL])) {
                 $all = $fields[Schema::ALL];
                 unset($fields[Schema::ALL]);
-                $fields = array_merge([
+                $fields = array_merge(
+                    [
                     Schema::ALL => $all,
                     ],
                     $fields
