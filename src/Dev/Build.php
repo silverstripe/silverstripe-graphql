@@ -86,10 +86,10 @@ class Build extends Controller
                     Your schema configuration requires access to the database. This can happen
                     when you add fields that require type introspection (i.e. custom getters).
                     It is recommended that you specify an explicit type when adding custom getters
-                    to your schema."
-                );
+                    to your schema.");
                 if ($candidate) {
-                    Schema::message(sprintf("
+                    Schema::message(sprintf(
+                        "
                     This most likely happened when you tried to add the field '%s' to '%s'",
                         $candidate['args'][1],
                         get_class($candidate['args'][0])
