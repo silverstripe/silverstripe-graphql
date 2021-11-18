@@ -3,6 +3,8 @@
 
 namespace SilverStripe\GraphQL\Permission;
 
+use SilverStripe\Core\Injector\Injector;
+
 trait PermissionCheckerAware
 {
     /**
@@ -26,6 +28,10 @@ trait PermissionCheckerAware
      */
     public function getPermissionChecker()
     {
-        return $this->permissionChecker;
+        $checker = $this->permissionChecker;
+        if (is_null($checker)) {
+            return Injector::inst()->get(QueryPermissionChecker::class . '.default');
+        }
+        return $checker;
     }
 }
