@@ -6,9 +6,9 @@ namespace SilverStripe\GraphQL\Schema;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Config\Configuration;
 use SilverStripe\GraphQL\Config\ModelConfiguration;
-use SilverStripe\GraphQL\Schema\DataObject\ModelCreator;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Field;
+use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelCreatorInterface;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Schema\Resolver\DefaultResolver;
 use SilverStripe\GraphQL\Schema\Resolver\DefaultResolverStrategy;
@@ -234,19 +234,19 @@ class SchemaConfig extends Configuration
 
     /**
      * @param string $class
-     * @return ModelCreator|null
+     * @return SchemaModelCreatorInterface|null
      * @throws SchemaBuilderException
      */
-    private function getModelCreatorForClass(string $class): ?ModelCreator
+    private function getModelCreatorForClass(string $class): ?SchemaModelCreatorInterface
     {
-        /* @var ModelCreator $creator */
+        /* @var SchemaModelCreatorInterface $creator */
         foreach ($this->get('modelCreators', []) as $creatorClass) {
             $creator = Injector::inst()->create($creatorClass);
             Schema::invariant(
-                $creator instanceof ModelCreator,
+                $creator instanceof SchemaModelCreatorInterface,
                 'Class %s is not an instance of %s',
                 $creatorClass,
-                ModelCreator::class
+                SchemaModelCreatorInterface::class
             );
             if ($creator->appliesTo($class)) {
                 return $creator;
