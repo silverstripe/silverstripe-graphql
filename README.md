@@ -1,4 +1,4 @@
-# SilverStripe GraphQL Server
+# Silverstripe CMS GraphQL Server 
 
 [![Build Status](https://travis-ci.org/silverstripe/silverstripe-graphql.svg?branch=master)](https://travis-ci.org/silverstripe/silverstripe-graphql)
 [![codecov](https://codecov.io/gh/silverstripe/silverstripe-graphql/branch/master/graph/badge.svg)](https://codecov.io/gh/silverstripe/silverstripe-graphql)
@@ -11,13 +11,24 @@ introspection. It layers a pluggable schema registration system on top of the
 [graphql-php](https://github.com/webonyx/graphql-php) library. The APIs are
 very similar.
 
-## Installation
 
-Require the [composer](http://getcomposer.org) package in your `composer.json`
+## This is the 4.x pre-release branch
+
+The stable release of this module is on the default `3` branch, which contains documentation inlined into the README. Documentation for this release is on the [main documentation site](https://doc.silverstripe.org/en/4/developer_guides/graphql/).
+
+
+## Installing on silverstripe/recipe-cms < 4.11
+
+If your project uses silverstripe/recipe-cms, it is still locked to the stable release `silverstripe/graphql:^3`. To use `silverstripe/graphql:^4`, you'll need to "inline" the `silverstripe/recipe-cms` requirements in your root `composer.json` and change `silverstripe/graphql` to `^4`.
+
+You can inline `silverstripe/recipe-cms` by running this command:
 
 ```
-composer require silverstripe/graphql
+composer update-recipe silverstripe/recipe-cms
 ```
+
+Alternatively, you can remove `silverstripe/recipe-cms` from your root `composer.json` and replace it with the the contents of the `composer.json` in `silverstripe/recipe-cms`.
+
 
 ## Documentation
 
