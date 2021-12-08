@@ -11,6 +11,7 @@ use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\HTTPResponse_Exception;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
@@ -26,6 +27,7 @@ use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\QueryHandler\TokenContextProvider;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
+use SilverStripe\ORM\ArrayLib;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
@@ -92,7 +94,8 @@ class Controller extends BaseController
      *
      * @param HTTPRequest $request
      * @return HTTPResponse
-     * @throws InvalidArgumentException
+     * @throws BadMethodCallException
+     * @throws HTTPResponse_Exception
      */
     public function index(HTTPRequest $request): HTTPResponse
     {
@@ -110,12 +113,89 @@ class Controller extends BaseController
             return $this->handleOptions($request);
         }
 
-        // Main query handling
-        try {
-            list($query, $variables) = $this->getRequestQueryVariables($request);
-            if (!$query) {
-                $this->httpError(400, 'This endpoint requires a "query" parameter');
+        // Grab a list of queries from the request
+        $queryList = $this->getQueriesFromRequest($request);
+        if (empty($queryList)) {
+            $this->httpError(400, 'This endpoint requires a "query" parameter');
+        }
+
+        // Process either a single query, or an array (aka batch) of queries
+        if (count($queryList) === 1) {
+            [$query, $variables] = $queryList[0];
+            $result = $this->processQuery($query, $variables);
+        } else {
+            $result = [];
+            foreach ($queryList as $queryData) {
+                [$query, $variables] = $queryData;
+                $result[] = $this->processQuery($query, $variables);
             }
+        }
+
+        $response = $this->addCorsHeaders($request, new HTTPResponse(json_encode($result)));
+        return $response->addHeader('Content-Type', 'application/json');
+    }
+
+    /**
+     * Get a list of queries from the request. JSON requests may contain one or many queries,
+     * non-JSON requests contain a single query
+     *
+     * @param HTTPRequest $request
+     * @return array|array[]
+     */
+    protected function getQueriesFromRequest(HTTPRequest $request): array
+    {
+        $contentType = $request->getHeader('content-type');
+        $isJson = preg_match('#^application/json\b#', $contentType);
+        if (!$isJson) {
+            /** @var RequestProcessor $persistedProcessor  */
+            $persistedProcessor = Injector::inst()->get(RequestProcessor::class);
+            [$query, $variables] = $persistedProcessor->getRequestQueryVariables($request);
+            // No query found, return an empty result
+            if (!$query) {
+                return [];
+            }
+
+            // Return a single query when data is provided in a non-json format
+            return [
+                [$query, (array)$variables]
+            ];
+        }
+
+        $rawBody = $request->getBody();
+        $data = json_decode($rawBody ?: '', true);
+        // No queries found, so return an empty result
+        if (!is_array($data)) {
+            return [];
+        }
+
+        // An associative array is a request containing a single query
+        if (ArrayLib::is_associative($data)) {
+            $query = $data['query'] ?? null;
+            $variables = $data['variables'] ?? [];
+            return [
+                [$query, (array)$variables]
+            ];
+        }
+
+        // An indexed array is a batch of queries, so extract the relevant data from each of them
+        $queries = [];
+        foreach ($data as $queryData) {
+            $query = $queryData['query'] ?? null;
+            $variables = $queryData['variables'] ?? [];
+            $queries[] = [$query, (array)$variables];
+        }
+
+        return $queries;
+    }
+
+    /**
+     * @param string $query
+     * @param array|null $variables
+     * @return array
+     */
+    protected function processQuery(string $query, array $variables = []): array
+    {
+        try {
             $builder = SchemaBuilder::singleton();
             $graphqlSchema = $builder->getSchema($this->getSchemaKey());
             if (!$graphqlSchema && $this->autobuildEnabled()) {
@@ -135,7 +215,7 @@ class Controller extends BaseController
             $ctx = $handler->getContext();
             $result = $handler->query($graphqlSchema, $query, $variables);
 
-            // Fire an eventYou
+            // Fire an event
             $eventContext = [
                 'schema' => $graphqlSchema,
                 'schemaKey' => $this->getSchemaKey(),
@@ -162,8 +242,7 @@ class Controller extends BaseController
             ];
         }
 
-        $response = $this->addCorsHeaders($request, new HTTPResponse(json_encode($result)));
-        return $response->addHeader('Content-Type', 'application/json');
+        return $result;
     }
 
     /**
@@ -367,31 +446,6 @@ class Controller extends BaseController
             $this->httpError(405, "Method Not Allowed");
         }
         return $response;
-    }
-
-    /**
-     * Parse query and variables from the given request
-     *
-     * @param HTTPRequest $request
-     * @return array Array containing query and variables as a pair
-     * @throws LogicException
-     */
-    protected function getRequestQueryVariables(HTTPRequest $request)
-    {
-        $contentType = $request->getHeader('content-type');
-        $isJson = preg_match('#^application/json\b#', $contentType);
-        if ($isJson) {
-            $rawBody = $request->getBody();
-            $data = json_decode($rawBody ?: '', true);
-            $query = isset($data['query']) ? $data['query'] : null;
-            $variables = isset($data['variables']) ? (array)$data['variables'] : null;
-        } else {
-            /** @var RequestProcessor $persistedProcessor  */
-            $persistedProcessor = Injector::inst()->get(RequestProcessor::class);
-            list($query, $variables) = $persistedProcessor->getRequestQueryVariables($request);
-        }
-
-        return [$query, $variables];
     }
 
     /**

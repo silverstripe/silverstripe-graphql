@@ -8,7 +8,8 @@
         "silverstripe/framework": "^4.10",
         "silverstripe/vendor-plugin": "^1.0",
         "webonyx/graphql-php": "^14.0",
-        "silverstripe/event-dispatcher": "^0.1.2"
+        "silverstripe/event-dispatcher": "^0.1.2",
+        "ext-json": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
