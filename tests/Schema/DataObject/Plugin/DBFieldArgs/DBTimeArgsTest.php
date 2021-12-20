@@ -12,7 +12,7 @@ use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\ORM\FieldType\DBTime;
 
-class DBTimeTest extends SapphireTest
+class DBTimeArgsTest extends SapphireTest
 {
     public function testApply()
     {
