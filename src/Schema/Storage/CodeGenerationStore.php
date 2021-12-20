@@ -11,6 +11,7 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
+use SilverStripe\GraphQL\Schema\Logger;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\StorableSchema;
@@ -104,6 +105,7 @@ class CodeGenerationStore implements SchemaStorageInterface
      */
     public function persistSchema(StorableSchema $schema): void
     {
+        $logger = Logger::singleton();
         if (!$schema->exists()) {
             throw new EmptySchemaException(sprintf(
                 'Schema %s is empty',
@@ -117,10 +119,10 @@ class CodeGenerationStore implements SchemaStorageInterface
         $temp = $this->getTempDirectory();
         $dest = $this->getDirectory();
         if ($fs->exists($dest)) {
-            Schema::message('Moving current schema to temp folder');
+            $logger->info('Moving current schema to temp folder');
             $fs->mirror($dest, $temp);
         } else {
-            Schema::message('Creating new schema');
+            $logger->info('Creating new schema');
             try {
                 $fs->mkdir($temp);
                 // Ensure none of these files get loaded into the manifest
@@ -239,34 +241,34 @@ class CodeGenerationStore implements SchemaStorageInterface
 
         // Move the new schema into the proper destination
         if ($fs->exists($dest)) {
-            Schema::message('Deleting current schema');
+            $logger->info('Deleting current schema');
             $fs->remove($dest);
         }
 
-        Schema::message('Migrating new schema');
+        $logger->info('Migrating new schema');
         $fs->mirror($temp, $dest);
-        Schema::message('Deleting temp schema');
+        $logger->info('Deleting temp schema');
         $fs->remove($temp);
 
-        Schema::message("Total types: $total");
-        Schema::message(sprintf('Types built: %s', count($built)));
+        $logger->info("Total types: $total");
+        $logger->info(sprintf('Types built: %s', count($built)));
         $snapshot = array_slice($built, 0, 10);
         foreach ($snapshot as $type) {
-            Schema::message('*' . $type);
+            $logger->output('*' . $type);
         }
         $diff = count($built) - count($snapshot);
         if ($diff > 0) {
-            Schema::message(sprintf('(... and %s more)', $diff));
+            $logger->output(sprintf('(... and %s more)', $diff));
         }
 
-        Schema::message(sprintf('Types deleted: %s', count($deleted)));
+        $logger->info(sprintf('Types deleted: %s', count($deleted)));
         $snapshot = array_slice($deleted, 0, 10);
         foreach ($snapshot as $type) {
-            Schema::message('*' . $type);
+            $logger->output('*' . $type);
         }
         $diff = count($deleted) - count($snapshot);
         if ($diff > 0) {
-            Schema::message(sprintf('(... and %s more)', $diff));
+            $logger->output(sprintf('(... and %s more)', $diff));
         }
     }
 
