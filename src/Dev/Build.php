@@ -64,7 +64,7 @@ class Build extends Controller
      * @throws SchemaNotFoundException
      * @throws SchemaBuilderException
      */
-    public function buildSchema($key = null, $clear = false, int $level = Logger::INFO): void
+    public function buildSchema($key = null, $clear = true, int $level = Logger::INFO): void
     {
         $logger = Logger::singleton();
         $logger->setVerbosity($level);
