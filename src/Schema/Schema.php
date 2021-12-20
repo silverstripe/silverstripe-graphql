@@ -860,6 +860,16 @@ class Schema implements ConfigurationApplier
     public function addModel(ModelType $modelType, ?callable $callback = null): Schema
     {
         $existing = $this->models[$modelType->getName()] ?? null;
+        if ($existing) {
+            Schema::invariant(
+                $existing->getModel()->getSourceClass() === $modelType->getModel()->getSourceClass(),
+                'Name collision for model "%s". It is used for both %s and %s. Use the tyepMapping setting in your schema
+            config to provide a custom name for the model.',
+                $modelType->getName(),
+                $existing->getModel()->getSourceClass(),
+                $modelType->getModel()->getSourceClass()
+            );
+        }
         $typeObj = $existing
             ? $existing->mergeWith($modelType)
             : $modelType;

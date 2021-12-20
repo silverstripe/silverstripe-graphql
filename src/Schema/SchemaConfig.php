@@ -141,6 +141,15 @@ class SchemaConfig extends Configuration
     }
 
     /**
+     * @return array
+     * @throws SchemaBuilderException
+     */
+    public function getTypeMapping(): array
+    {
+        return $this->get('typeMapping', []);
+    }
+
+    /**
      * @param string[] $fields
      * @return $this
      * @throws SchemaBuilderException

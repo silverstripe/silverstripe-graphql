@@ -372,7 +372,13 @@ class DataObjectModel implements
      */
     public function getTypeName(): string
     {
-        return $this->getModelConfiguration()->getTypeName(get_class($this->dataObject));
+        $class = get_class($this->dataObject);
+        $mapping = $this->getSchemaConfig()->getTypeMapping();
+        if (isset($mapping[$class])) {
+            return $mapping[$class];
+        }
+
+        return $this->getModelConfiguration()->getTypeName($class);
     }
 
     /**
