@@ -1226,29 +1226,4 @@ class Schema implements ConfigurationApplier
             throw new SchemaBuilderException($message);
         }
     }
-
-    /**
-     * @param bool $verbose
-     * @return void
-     */
-    public static function setVerbose(bool $verbose): void
-    {
-        self::$verbose = $verbose;
-    }
-
-    /**
-     * Used for logging in tasks
-     * @param string $message
-     */
-    public static function message(string $message): void
-    {
-        if (!self::$verbose) {
-            return;
-        }
-        if (Director::is_cli()) {
-            fwrite(STDOUT, $message . PHP_EOL);
-        } else {
-            echo $message . "<br>";
-        }
-    }
 }

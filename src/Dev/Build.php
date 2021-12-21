@@ -11,6 +11,7 @@ use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
+use SilverStripe\GraphQL\Schema\Logger;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\ORM\Connect\NullDatabaseException;
@@ -28,6 +29,7 @@ class Build extends Controller
     /**
      * @param HTTPRequest $request
      * @throws SchemaBuilderException
+     * @throws SchemaNotFoundException
      */
     public function build(HTTPRequest $request)
     {
@@ -39,7 +41,15 @@ class Build extends Controller
             echo "<div class=\"build\">";
         }
         $clear = (bool) $request->getVar('clear');
-        $this->buildSchema($request->getVar('schema'), $clear);
+        $verbosity = strtoupper($request->getVar('verbosity') ?? 'INFO');
+        $constantRef = sprintf('%s::%s', Logger::class, $verbosity);
+        Schema::invariant(
+            defined($constantRef),
+            'Illegal verbosity: %s',
+            $verbosity
+        );
+        $level = constant($constantRef);
+        $this->buildSchema($request->getVar('schema'), $clear, $level);
 
         if ($isBrowser) {
             echo "</div>";
@@ -50,26 +60,29 @@ class Build extends Controller
     /**
      * @param null $key
      * @param bool $clear
+     * @param int $level
      * @throws SchemaNotFoundException
      * @throws SchemaBuilderException
      */
-    public function buildSchema($key = null, $clear = false): void
+    public function buildSchema($key = null, $clear = false, int $level = Logger::INFO): void
     {
-        Schema::setVerbose(true);
+        $logger = Logger::singleton();
+        $logger->setVerbosity($level);
         $keys = $key ? [$key] : array_keys(Schema::config()->get('schemas'));
         $keys = array_filter($keys, function ($key) {
             return $key !== Schema::ALL;
         });
+
         foreach ($keys as $key) {
             Benchmark::start('build-schema-' . $key);
-            Schema::message(sprintf('--- Building schema "%s" ---', $key));
+            $logger->info(sprintf('--- Building schema "%s" ---', $key));
             $builder = SchemaBuilder::singleton();
             try {
                 $schema = $builder->boot($key);
                 try {
                     $builder->build($schema, $clear);
                 } catch (EmptySchemaException $e) {
-                    Schema::message('Schema ' . $key . ' is empty. Skipping.');
+                    $logger->warning('Schema ' . $key . ' is empty. Skipping.');
                 }
             } catch (NullDatabaseException $e) {
                 $candidate = null;
@@ -82,13 +95,13 @@ class Build extends Controller
                         break;
                     }
                 }
-                Schema::message("
+                $logger->warning("
                     Your schema configuration requires access to the database. This can happen
                     when you add fields that require type introspection (i.e. custom getters).
                     It is recommended that you specify an explicit type when adding custom getters
                     to your schema.");
                 if ($candidate) {
-                    Schema::message(sprintf(
+                    $logger->warning(sprintf(
                         "
                     This most likely happened when you tried to add the field '%s' to '%s'",
                         $candidate['args'][1],
@@ -99,7 +112,7 @@ class Build extends Controller
                 throw $e;
             }
 
-            Schema::message(
+            $logger->info(
                 Benchmark::end('build-schema-' . $key, 'Built schema in %sms.')
             );
         }

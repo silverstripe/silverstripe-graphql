@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Extensions;
 
 use SilverStripe\Core\Extension;
+use SilverStripe\GraphQL\Schema\Logger;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
@@ -19,7 +20,7 @@ class TestSessionEnvironmentExtension extends Extension
      */
     public function onAfterStartTestSession()
     {
-        Schema::setVerbose(true);
+        $logger = Logger::singleton();
         $keys = array_keys(Schema::config()->get('schemas'));
         $keys = array_filter($keys, function ($key) {
             return $key !== Schema::ALL;
@@ -35,9 +36,9 @@ class TestSessionEnvironmentExtension extends Extension
             try {
                 $builder->build($schema);
             } catch (EmptySchemaException $e) {
-                Schema::message('Schema ' . $key . ' is empty. Skipping.');
+                $logger->warning('Schema ' . $key . ' is empty. Skipping.');
             }
-            Schema::message(
+            $logger->info(
                 Benchmark::end('build-schema-' . $key, 'Built schema in %sms.')
             );
         }
