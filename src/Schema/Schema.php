@@ -270,7 +270,7 @@ class Schema implements ConfigurationApplier
                 }
                 $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
                 $safeModelTypeRef = TypeReference::create($safeModelTypeDef);
-                list ($safeNamedClass, $path) = $safeModelTypeRef->getTypeName();
+                [$safeNamedClass, $path] = $safeModelTypeRef->getTypeName();
                 $namedClass = str_replace('__', '\\', $safeNamedClass);
                 $model = $this->getConfig()->createModel($namedClass);
                 Schema::invariant(
