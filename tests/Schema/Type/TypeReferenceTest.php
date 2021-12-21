@@ -70,7 +70,7 @@ class TypeReferenceTest extends SapphireTest
     {
         $typeName = '[MyType!]';
         $ref = TypeReference::create($typeName);
-        list($name, $path) = $ref->getTypeName();
+        [$name, $path] = $ref->getTypeName();
         $this->assertEquals('MyType', $name);
         $this->assertEquals([NodeKind::LIST_TYPE, NodeKind::NON_NULL_TYPE], $path);
     }
