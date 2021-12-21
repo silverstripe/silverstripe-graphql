@@ -14,6 +14,7 @@ use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Logger;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
+use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
 use SilverStripe\ORM\Connect\NullDatabaseException;
 
 class Build extends Controller
@@ -72,6 +73,16 @@ class Build extends Controller
         $keys = array_filter($keys, function ($key) {
             return $key !== Schema::ALL;
         });
+
+        // Check for old code dir
+        if (is_dir(BASE_PATH . '/.graphql')) {
+            $logger->warning(
+                'You have a .graphql/ directory in your project root. This is no longer the default
+                name. The new directory is named ' . CodeGenerationStore::config()->get('dirName') . '. You may
+                want to delete this directory and update your .gitignore file, if you are ignoring the generated
+                GraphQL code.'
+            );
+        }
 
         foreach ($keys as $key) {
             Benchmark::start('build-schema-' . $key);
