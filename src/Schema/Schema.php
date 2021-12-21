@@ -168,7 +168,7 @@ class Schema implements ConfigurationApplier
             self::SCALARS,
             self::SCHEMA_CONFIG,
             'execute',
-            'src',
+            self::SOURCE,
         ];
         static::assertValidConfig($schemaConfig, $validConfigKeys);
 
