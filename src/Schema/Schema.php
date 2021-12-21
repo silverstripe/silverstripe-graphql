@@ -269,7 +269,8 @@ class Schema implements ConfigurationApplier
                     continue;
                 }
                 $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
-                $safeNamedClass = TypeReference::create($safeModelTypeDef)->getNamedType();
+                $safeModelTypeRef = TypeReference::create($safeModelTypeDef);
+                [$safeNamedClass, $path] = $safeModelTypeRef->getTypeName();
                 $namedClass = str_replace('__', '\\', $safeNamedClass);
                 $model = $this->getConfig()->createModel($namedClass);
                 Schema::invariant(
@@ -279,9 +280,8 @@ class Schema implements ConfigurationApplier
                 );
 
                 $typeName = $model->getTypeName();
-                $wrappedTypeName = str_replace($namedClass, $typeName, $modelTypeDef);
-
-                $fieldObj->setType($wrappedTypeName);
+                $newTypeRef = TypeReference::createFromPath($typeName, $path);
+                $fieldObj->setType($newTypeRef->getRawType());
             }
         }
     }

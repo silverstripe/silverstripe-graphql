@@ -125,4 +125,24 @@ class TypeReference
         $type = $this->getNamedType();
         return Schema::isInternalType($type);
     }
+
+    public static function createFromPath(string $name, array $path = []): TypeReference
+    {
+        $str = '';
+        foreach ($path as $item) {
+            if ($item === NodeKind::LIST_TYPE) {
+                $str .= '[';
+            }
+        }
+        $str .= $name;
+        foreach (array_reverse($path) as $item) {
+            if ($item === NodeKind::LIST_TYPE) {
+                $str .= ']';
+            } elseif ($item === NodeKind::NON_NULL_TYPE) {
+                $str .= '!';
+            }
+        }
+
+        return TypeReference::create($str);
+    }
 }
