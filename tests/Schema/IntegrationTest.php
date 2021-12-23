@@ -1105,7 +1105,7 @@ GRAPHQL;
     private function clean()
     {
         $fs = new Filesystem();
-        $fs->remove(__DIR__ . '/.graphql-codegen');
+        $fs->remove(__DIR__ . '/.graphql-generated');
     }
 
     private function assertSuccess(array $result)
