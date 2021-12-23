@@ -8,6 +8,7 @@ use GraphQL\Type\SchemaConfig as GraphQLSchemaConfig;
 use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
@@ -61,6 +62,13 @@ class CodeGenerationStore implements SchemaStorageInterface
     private static $dirName = '.graphql';
 
     /**
+     * @var string[]
+     */
+    private static $dependencies = [
+        'Obfuscator' => '%$' . NameObfuscator::class,
+    ];
+
+    /**
      * @var string
      */
     private $name;
@@ -84,6 +92,11 @@ class CodeGenerationStore implements SchemaStorageInterface
      * @var GraphQLSchema|null
      */
     private $graphqlSchema;
+
+    /**
+     * @var NameObfuscator
+     */
+    private $obfuscator;
 
     /**
      * @param string $name
@@ -140,9 +153,11 @@ class CodeGenerationStore implements SchemaStorageInterface
         }
 
         $templateDir = static::getTemplateDir();
+        $obfuscator = $this->getObfuscator();
         $globals = [
             'typeClassName' => self::TYPE_CLASS_NAME,
             'namespace' => $this->getNamespace(),
+            'obfuscator' => $obfuscator,
         ];
 
         $config = $schema->getConfig()->toArray();
@@ -209,7 +224,8 @@ class CodeGenerationStore implements SchemaStorageInterface
                         continue;
                     }
                 }
-                $file = Path::join($temp, $name . '.php');
+                $obfuscatedName = $obfuscator->obfuscate($name);
+                $file = Path::join($temp, $obfuscatedName . '.php');
                 $encoder = Encoder::create(Path::join($templateDir, $template), $type, $globals);
                 $code = $encoder->encode();
                 $fs->dumpFile($file, $this->toCode($code));
@@ -229,7 +245,14 @@ class CodeGenerationStore implements SchemaStorageInterface
 
         /* @var SplFileInfo $file */
         foreach ($currentFiles as $file) {
-            $type = $file->getBasename('.php');
+            $contents = $file->getContents();
+            preg_match('/\/\/ @type:([A-Za-z0-9+_]+)/', $contents, $matches);
+            Schema::invariant(
+                $matches,
+                'Could not find type name in file %s',
+                $file->getPathname()
+            );
+            $type = $matches[1];
             if (!in_array($type, $touched)) {
                 $fs->remove($file->getPathname());
                 $this->getCache()->delete($type);
@@ -383,6 +406,25 @@ class CodeGenerationStore implements SchemaStorageInterface
         $this->rootDir = $rootDir;
         return $this;
     }
+
+    /**
+     * @return NameObfuscator
+     */
+    public function getObfuscator(): NameObfuscator
+    {
+        return $this->obfuscator;
+    }
+
+    /**
+     * @param NameObfuscator $obfuscator
+     * @return CodeGenerationStore
+     */
+    public function setObfuscator(NameObfuscator $obfuscator): CodeGenerationStore
+    {
+        $this->obfuscator = $obfuscator;
+        return $this;
+    }
+
 
     /**
      * @return string

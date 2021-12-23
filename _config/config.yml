@@ -33,6 +33,9 @@ SilverStripe\Core\Injector\Injector:
     constructor:
       storeCreator: '%$SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator'
 
+  SilverStripe\GraphQL\Schema\Storage\NameObfuscator:
+    class: SilverStripe\GraphQL\Schema\Storage\HybridObfuscator
+
 SilverStripe\GraphQL\Schema\Schema:
   schemas: []
 ---
@@ -49,3 +52,22 @@ Only:
 SilverStripe\TestSession\TestSessionEnvironment:
   extensions:
     - SilverStripe\GraphQL\Extensions\TestSessionEnvironmentExtension
+
+
+---
+Name: graphqlconfig-debug
+Only:
+  envvarset: 'DEBUG_SCHEMA'
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Schema\Storage\NameObfuscator:
+    class: SilverStripe\GraphQL\Schema\Storage\NaiveNameObfuscator
+
+---
+Name: graphqlconfig-live
+Except:
+  environment: dev
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\GraphQL\Schema\Storage\NameObfuscator:
+    class: SilverStripe\GraphQL\Schema\Storage\HashNameObfuscator
