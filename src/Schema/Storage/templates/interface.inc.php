@@ -9,7 +9,9 @@ namespace <?=$globals['namespace'] ?>;
 use GraphQL\Type\Definition\InterfaceType;
 use SilverStripe\GraphQL\Schema\Resolver\ComposedResolver;
 
-class <?=$interface->getName(); ?> extends InterfaceType
+// @type:<?=$interface->getName(); ?>
+
+class <?=$globals['obfuscator']->obfuscate($interface->getName()) ?> extends InterfaceType
 {
     public function __construct()
     {

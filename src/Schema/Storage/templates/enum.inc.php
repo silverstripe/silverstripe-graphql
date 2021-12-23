@@ -8,7 +8,9 @@ namespace <?=$globals['namespace']; ?>;
 
 use GraphQL\Type\Definition\EnumType;
 
-class <?=$enum->getName(); ?> extends EnumType
+// @type:<?=$enum->getName(); ?>
+
+class <?=$globals['obfuscator']->obfuscate($enum->getName()) ?> extends EnumType
 {
     public function __construct()
     {

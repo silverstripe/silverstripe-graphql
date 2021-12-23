@@ -7,6 +7,7 @@ use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\Assets\File;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Path;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
@@ -17,6 +18,8 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStoreCreator;
+use SilverStripe\GraphQL\Schema\Storage\HashNameObfuscator;
+use SilverStripe\GraphQL\Schema\Storage\NameObfuscator;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeProduct;
@@ -767,10 +770,35 @@ GRAPHQL;
         ], $records);
     }
 
-    public function testQueriesAndMutations()
+    /**
+     * @throws SchemaBuilderException
+     * @throws SchemaNotFoundException
+     * @dataProvider provideObfuscationState
+     * @param bool $shouldObfuscateTypes
+     */
+    public function testQueriesAndMutations($shouldObfuscateTypes)
     {
+        FakeProductPage::get()->removeAll();
+        if ($shouldObfuscateTypes) {
+            Injector::inst()->load([
+                NameObfuscator::class => [
+                    'class' => HashNameObfuscator::class,
+                ]
+            ]);
+        }
         $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
 
+        if ($shouldObfuscateTypes) {
+            $obfuscator = new HashNameObfuscator();
+            $obfuscatedName = $obfuscator->obfuscate('FakeProductPage');
+            $path = Path::join(
+                __DIR__,
+                CodeGenerationStore::config()->get('dirName'),
+                $schema->getSchemaKey(),
+                $obfuscatedName . '.php'
+            );
+            $this->assertTrue(file_exists($path));
+        }
         // Create a couple of product pages
         $productPageIDs = [];
         foreach (range(1, 2) as $num) {
@@ -1026,6 +1054,14 @@ GRAPHQL;
         $this->assertEquals('5:00:00 PM', $node['date3']);
         $this->assertEquals('2020', $node['date4']);
         $this->assertEquals('This is a really long text field. It has a few sentences.', $node['myText']);
+    }
+
+    /**
+     * @return array
+     */
+    public function provideObfuscationState(): array
+    {
+        return [ [false], [true] ];
     }
 
     /**

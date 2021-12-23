@@ -21,7 +21,7 @@ class TestStoreCreator implements SchemaStorageCreator
 
     public function createStore(string $name): SchemaStorageInterface
     {
-        $store = new CodeGenerationStore($name, new FilesystemCache());
+        $store = CodeGenerationStore::create($name, new FilesystemCache());
         $store->setRootDir(static::$dir);
 
         return $store;

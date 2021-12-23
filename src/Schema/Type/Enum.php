@@ -84,6 +84,16 @@ class Enum extends Type implements SchemaValidator
             'Enum type %s has no values defined',
             $this->getName()
         );
+        $rx = '/^[_a-zA-Z][_a-zA-Z0-9]*$/';
+        foreach ($this->getValueList() as $item) {
+            Schema::invariant(
+                preg_match($rx, $item['Key']),
+                'Key "%s" for "%s" is not valid. Must match %s',
+                $item['Key'],
+                $this->getName(),
+                $rx
+            );
+        }
     }
 
     /**

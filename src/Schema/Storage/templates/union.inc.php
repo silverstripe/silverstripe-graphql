@@ -9,7 +9,9 @@ namespace <?=$globals['namespace'] ?>;
 use GraphQL\Type\Definition\UnionType;
 use SilverStripe\GraphQL\Schema\Resolver\ComposedResolver;
 
-class <?=$union->getName() ?> extends UnionType
+// @type:<?=$union->getName(); ?>
+
+class <?=$globals['obfuscator']->obfuscate($union->getName()) ?> extends UnionType
 {
     public function __construct()
     {
