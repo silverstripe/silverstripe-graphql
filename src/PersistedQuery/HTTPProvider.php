@@ -108,13 +108,12 @@ class HTTPProvider implements PersistedQueryMappingProvider
      *
      * @param string $queryID
      * @param string $schemaKey
-     * @return string
+     * @return string|null
      */
-    public function getByID($queryID, $schemaKey = 'default')
+    public function getByID($queryID, $schemaKey = 'default'): ?string
     {
         $mapping = $this->getQueryMapping($schemaKey);
-
-        return isset($mapping[$queryID]) ? $mapping[$queryID] : null;
+        return $mapping[$queryID] ?? null;
     }
 
     /**

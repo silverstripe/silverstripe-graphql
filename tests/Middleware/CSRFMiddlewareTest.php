@@ -70,10 +70,14 @@ GRAPHQL;
     {
         $this->expectException(Exception::class);
         $this->expectExceptionMessageMatches('/Invalid CSRF token/');
+
+        $config = $this->createServerConfig();
+        $config->setContext(['token' => 'fail']);
+
         $result = $this->simulateMiddlewareProcess(
             new CSRFMiddleware(),
             ' mutation someMutation { tester }',
-            ['token' => 'fail']
+            $config
         );
         $this->assertNotEquals('resolved', $result);
     }
@@ -81,10 +85,12 @@ GRAPHQL;
     public function testItResolvesIfTokenIsValid()
     {
         $token = SecurityToken::inst()->getValue();
+        $config = $this->createServerConfig();
+        $config->setContext(['token' => $token]);
         $result = $this->simulateMiddlewareProcess(
             new CSRFMiddleware(),
             ' mutation someMutation { tester }',
-            ['token' => $token]
+            $config
         );
         $this->assertEquals('resolved', $result);
     }

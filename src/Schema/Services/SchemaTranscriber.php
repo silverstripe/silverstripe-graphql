@@ -3,12 +3,16 @@
 
 namespace SilverStripe\GraphQL\Schema\Services;
 
+use GraphQL\Executor\ExecutionResult;
+use GraphQL\Server\OperationParams;
 use SilverStripe\Assets\Storage\GeneratedAssetHandler;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use GraphQL\Type\Schema as GraphQLSchema;
 use Exception;
+use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -113,17 +117,14 @@ class SchemaTranscriber
         return $this;
     }
 
-
     /**
-     * @return array
+     * @return ExecutionResult
      * @throws Exception
      */
-    private function introspectTypes(): array
+    private function introspectTypes(): ExecutionResult
     {
-        $handler = QueryHandler::create();
-        $fragments = $handler->query(
-            $this->schema,
-            <<<GRAPHQL
+        $operation = OperationParams::create([
+            'query' => <<<GRAPHQL
 query IntrospectionQuery {
     __schema {
       types {
@@ -136,12 +137,16 @@ query IntrospectionQuery {
     }
 }
 GRAPHQL
-        );
+        ]);
 
-        if (isset($fragments['errors'])) {
+        $handler = QueryHandler::create();
+        /** @var ExecutionResult $executionResult */
+        $executionResult = $handler->executeOperations($operation, $this->schema);
+
+        if (!empty($executionResult->errors)) {
             $messages = array_map(function ($error) {
-                return $error['message'];
-            }, $fragments['errors']);
+                return $error->getMessage();
+            }, $executionResult->errors);
 
             throw new Exception(sprintf(
                 'There were some errors with the introspection query: %s',
@@ -149,7 +154,7 @@ GRAPHQL
             ));
         }
 
-        return $fragments;
+        return $executionResult;
     }
 
     /**

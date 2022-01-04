@@ -3,6 +3,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema;
 
+use GraphQL\Server\OperationParams;
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\Assets\File;
 use SilverStripe\Core\Config\Config;
@@ -839,7 +840,7 @@ GRAPHQL;
         // Create reviews for reach product
         $reviewIDs = [];
         foreach ($productIDs as $sku) {
-            list($productPageID, $productID) = explode('__', $sku);
+            [$productPageID, $productID] = explode('__', $sku);
             foreach (range(1, 5) as $num) {
                 $query = <<<GRAPHQL
 mutation {
@@ -861,7 +862,7 @@ GRAPHQL;
         // Add authors to reviews
         $this->logInWithPermission();
         foreach ($reviewIDs as $sku) {
-            list ($productPageID, $productID, $reviewID) = explode('__', $sku);
+            [$productPageID, $productID, $reviewID] = explode('__', $sku);
             $query = <<<GRAPHQL
 mutation {
   createMember(input: { firstName: "Member $num" }) {
@@ -1089,12 +1090,17 @@ GRAPHQL;
     private function querySchema(Schema $schema, string $query, array $variables = [])
     {
         $builder = new TestSchemaBuilder();
-        $graphQLSchena = $builder->fetchSchema($schema);
+        $graphQLSchema = $builder->fetchSchema($schema);
         $handler = new QueryHandler();
         $schemaContext = $builder->getConfig($schema->getSchemaKey());
         $handler->addContextProvider(SchemaConfigProvider::create($schemaContext));
+
+        $operation = OperationParams::create([
+            'query' => $query,
+            'variables' => $variables
+        ]);
         try {
-            return $handler->query($graphQLSchena, $query, $variables);
+            return $handler->executeOperations($operation, $graphQLSchema)->toArray();
         } catch (Exception $e) {
             return [
                 'error' => $e->getMessage(),

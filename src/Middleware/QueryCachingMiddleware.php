@@ -3,7 +3,10 @@
 
 namespace SilverStripe\GraphQL\Middleware;
 
+use Exception;
 use GraphQL\Executor\ExecutionResult;
+use GraphQL\Server\OperationParams;
+use GraphQL\Server\ServerConfig;
 use Psr\SimpleCache\CacheInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 use SilverStripe\Core\Flushable;
@@ -13,8 +16,6 @@ use SilverStripe\GraphQL\Extensions\QueryRecorderExtension;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBDatetime;
-use Exception;
-use GraphQL\Type\Schema;
 
 /**
  * Enables graphql responses to be cached.
@@ -24,18 +25,24 @@ use GraphQL\Type\Schema;
  *
  * @internal
  */
-class QueryCachingMiddleware implements QueryMiddleware, Flushable
+class QueryCachingMiddleware implements QueryMiddlewareInterface, Flushable
 {
     use Injectable;
+
     /**
      * @var CacheInterface
      */
     protected $cache;
 
     /**
-     * @inheritDoc
+     * @param OperationParams[] $operations
+     * @param ServerConfig $config
+     * @param callable $next
+     * @return ExecutionResult|ExecutionResult[]
+     * @throws Exception
+     * @throws InvalidArgumentException
      */
-    public function process(Schema $schema, $query, $context, $vars, callable $next)
+    public function process($operations, ServerConfig $config, callable $next)
     {
         if (!DataObject::singleton()->hasExtension(QueryRecorderExtension::class)) {
             throw new Exception(sprintf(
@@ -45,8 +52,13 @@ class QueryCachingMiddleware implements QueryMiddleware, Flushable
                 __CLASS__
             ));
         }
-        $vars = $vars['vars'];
-        $key = $this->generateCacheKey($query, $vars);
+
+        if (count($operations) > 1) {
+            throw new Exception('You cannot use batched queries when QueryCachingMiddleware is enabled');
+        }
+
+        $operation = $operations[0];
+        $key = $this->generateCacheKey($operation->query, $operation->variables);
 
         // Get successful cache response
         $response = $this->getCachedResponse($key);
@@ -57,8 +69,8 @@ class QueryCachingMiddleware implements QueryMiddleware, Flushable
         // Closure begins / ends recording of classes queried by DataQuery.
         // ClassSpyExtension is added to DataQuery via yml
         $spy = QueryRecorderExtension::singleton();
-        list($classesUsed, $response) = $spy->recordClasses(function () use ($schema, $query, $context, $vars, $next) {
-            return $next($schema, $query, $context, $vars);
+        [$classesUsed, $response] = $spy->recordClasses(function () use ($operations, $config, $next) {
+            return $next($operations, $config);
         });
 
         // Save freshly generated response
@@ -108,7 +120,7 @@ class QueryCachingMiddleware implements QueryMiddleware, Flushable
      * Note: Cached responses can only be returned in array format, not object format.
      *
      * @param string $key
-     * @return array|null
+     * @return ExecutionResult|ExecutionResult[]
      * @throws InvalidArgumentException
      */
     protected function getCachedResponse($key): ?array
@@ -122,7 +134,7 @@ class QueryCachingMiddleware implements QueryMiddleware, Flushable
 
         // On cache success validate against cached classes
         foreach ($cached['classes'] as $class) {
-            // Note: Could combine these clases into a UNION to cut down on extravagant queries
+            // Note: Could combine these classes into a UNION to cut down on extravagant queries
             // Todo: We can get last-deleted/modified as well for versioned records
             $lastEditedDate = DataObject::get($class)->max('LastEdited');
             if (strtotime($lastEditedDate) > strtotime($cached['date'])) {
@@ -145,7 +157,7 @@ class QueryCachingMiddleware implements QueryMiddleware, Flushable
      */
     protected function storeCache($key, $response, $classesUsed): void
     {
-        // Ensure we store serialisable version of result
+        // Ensure we store serializable version of result
         if ($response instanceof ExecutionResult) {
             $handler = Injector::inst()->get(QueryHandlerInterface::class);
             $response = $handler->serialiseResult($response);

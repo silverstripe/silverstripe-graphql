@@ -3,7 +3,10 @@
 namespace SilverStripe\GraphQL\Middleware;
 
 use Exception;
-use GraphQL\Type\Schema;
+use GraphQL\Error\SyntaxError;
+use GraphQL\Executor\ExecutionResult;
+use GraphQL\Server\OperationParams;
+use GraphQL\Server\ServerConfig;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\TokenContextProvider;
 use SilverStripe\Security\SecurityToken;
@@ -13,24 +16,32 @@ use SilverStripe\Security\SecurityToken;
  * to happen. Protects against CSRF attacks
  *
  */
-class CSRFMiddleware implements QueryMiddleware
+class CSRFMiddleware implements QueryMiddlewareInterface
 {
     /**
-     * @inheritDoc
+     * @param OperationParams[] $operations
+     * @param ServerConfig $config
+     * @param callable $next
+     * @return ExecutionResult|ExecutionResult[]
+     * @throws Exception
+     * @throws SyntaxError
      */
-    public function process(Schema $schema, $query, $context, $vars, callable $next)
+    public function process(array $operations, ServerConfig $config, callable $next)
     {
-        if ($query && QueryHandler::isMutation($query)) {
-            if (empty($context['token'])) {
-                throw new Exception('Mutations must provide a CSRF token in the X-CSRF-TOKEN header');
-            }
-            $token = TokenContextProvider::get($context);
+        $context = $config->getContext();
+        foreach ($operations as $operation) {
+            if ($operation->query && QueryHandler::isMutation($operation->query)) {
+                if (empty($context['token'])) {
+                    throw new Exception('Mutations must provide a CSRF token in the X-CSRF-TOKEN header');
+                }
 
-            if (!SecurityToken::inst()->check($token)) {
-                throw new Exception('Invalid CSRF token');
+                $token = TokenContextProvider::get($context);
+                if (!SecurityToken::inst()->check($token)) {
+                    throw new Exception('Invalid CSRF token');
+                }
             }
         }
 
-        return $next($schema, $query, $context, $vars);
+        return $next($operations, $config);
     }
 }

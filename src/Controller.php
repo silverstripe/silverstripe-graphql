@@ -2,34 +2,35 @@
 
 namespace SilverStripe\GraphQL;
 
+use BadMethodCallException;
 use Exception;
-use GraphQL\Language\Parser;
-use GraphQL\Language\Source;
-use InvalidArgumentException;
-use LogicException;
+use GraphQL\Server\Helper;
+use GraphQL\Server\OperationParams;
+use GraphQL\Server\RequestError;
+use GraphQL\Type\Schema;
+use GraphQL\Utils\Utils;
 use SilverStripe\Control\Controller as BaseController;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\Control\HTTPResponse_Exception;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
-use SilverStripe\EventDispatcher\Symfony\Event;
 use SilverStripe\GraphQL\Auth\Handler;
-use SilverStripe\GraphQL\PersistedQuery\RequestProcessor;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface;
 use SilverStripe\GraphQL\QueryHandler\QueryStateProvider;
-use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\QueryHandler\RequestContextProvider;
 use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\QueryHandler\TokenContextProvider;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
+use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
-use BadMethodCallException;
 
 /**
  * Top level controller for handling graphql requests.
@@ -37,6 +38,14 @@ use BadMethodCallException;
  */
 class Controller extends BaseController
 {
+    private static $url_handlers = [
+        'OPTIONS /' => 'handleOptions'
+    ];
+
+    private static $allowed_actions = [
+        'handleOptions'
+    ];
+
     /**
      * Cors default config
      *
@@ -88,11 +97,8 @@ class Controller extends BaseController
     }
 
     /**
-     * Handles requests to the index action (e.g. /graphql)
-     *
      * @param HTTPRequest $request
      * @return HTTPResponse
-     * @throws InvalidArgumentException
      */
     public function index(HTTPRequest $request): HTTPResponse
     {
@@ -105,48 +111,15 @@ class Controller extends BaseController
             Versioned::set_stage($stage);
         }
 
-        // Check for a possible CORS preflight request and handle if necessary
-        if ($request->httpMethod() === 'OPTIONS') {
-            return $this->handleOptions($request);
-        }
-
-        // Main query handling
         try {
-            list($query, $variables) = $this->getRequestQueryVariables($request);
-            if (!$query) {
-                $this->httpError(400, 'This endpoint requires a "query" parameter');
-            }
-            $builder = SchemaBuilder::singleton();
-            $graphqlSchema = $builder->getSchema($this->getSchemaKey());
-            if (!$graphqlSchema && $this->autobuildEnabled()) {
-                // clear the cache on autobuilds until we trust it more. Maybe
-                // make this configurable.
-                $clear = true;
-                $graphqlSchema = $builder->buildByName($this->getSchemaKey(), $clear);
-            } elseif (!$graphqlSchema) {
-                throw new SchemaBuilderException(sprintf(
-                    'Schema %s has not been built.',
-                    $this->getSchemaKey()
-                ));
-            }
+            $operations = $this->parseRequest($request);
+            $schema = $this->getSchema();
+
+            /** @var QueryHandler $handler */
             $handler = $this->getQueryHandler();
             $this->applyContext($handler);
-            $queryDocument = Parser::parse(new Source($query));
-            $ctx = $handler->getContext();
-            $result = $handler->query($graphqlSchema, $query, $variables);
 
-            // Fire an eventYou
-            $eventContext = [
-                'schema' => $graphqlSchema,
-                'schemaKey' => $this->getSchemaKey(),
-                'query' => $query,
-                'context' => $ctx,
-                'variables' => $variables,
-                'result' => $result,
-            ];
-            $event = QueryHandler::isMutation($query) ? 'graphqlMutation' : 'graphqlQuery';
-            $operationName = QueryHandler::getOperationName($queryDocument);
-            Dispatcher::singleton()->trigger($event, Event::create($operationName, $eventContext));
+            $result = $handler->executeOperations($operations, $schema);
         } catch (Exception $exception) {
             $error = ['message' => $exception->getMessage()];
 
@@ -164,6 +137,125 @@ class Controller extends BaseController
 
         $response = $this->addCorsHeaders($request, new HTTPResponse(json_encode($result)));
         return $response->addHeader('Content-Type', 'application/json');
+    }
+
+    /**
+     * @param HTTPRequest $request
+     * @return OperationParams|OperationParams[]
+     * @throws HTTPResponse_Exception
+     * @throws RequestError
+     */
+    protected function parseRequest(HTTPRequest $request)
+    {
+        $helper = new Helper();
+        $method = $request->httpMethod();
+        $queryParams = $request->getVars();
+
+        if ($method !== 'POST') {
+            return $helper->parseRequestParams($method, [], $queryParams);
+        }
+
+        $body = [];
+        $contentType = $request->getHeader('content-type');
+        if (stripos($contentType, 'application/json') !== false) {
+            $body = json_decode($request->getBody() ?: '', true);
+            if (!is_array($body)) {
+                $this->httpError(400, 'Expected JSON object or array, but got ' . Utils::printSafeJson($body));
+            }
+        } elseif (stripos($contentType, 'application/graphql') !== false) {
+            $body = ['query' => $request->getBody() ?: ''];
+        } elseif (stripos($contentType, 'application/x-www-form-urlencoded') !== false) {
+            $body = $request->postVars();
+        } elseif (stripos($contentType, 'multipart/form-data') !== false) {
+            $body = $this->inlineFiles($request);
+        } else {
+            $this->httpError(400, 'Unexpected content type: ' . Utils::printSafeJson($contentType));
+        }
+
+        return $helper->parseRequestParams($method, $body, $queryParams);
+    }
+
+    /**
+     * @param HTTPRequest $request
+     * @return array
+     * @throws HTTPResponse_Exception
+     */
+    protected function inlineFiles(HTTPRequest $request): array
+    {
+        /** @var string|null $mapParam */
+        $mapParam = $request->postVar('map');
+        if ($mapParam === null) {
+            $this->httpError(400, 'Could not find a valid map, be sure to conform to GraphQL multipart request
+                specification: https://github.com/jaydenseric/graphql-multipart-request-spec');
+        }
+
+        /** @var string|null $operationsParam */
+        $operationsParam = $request->postVar('operations');
+        if ($operationsParam === null) {
+            $this->httpError(400, 'Could not find valid operations, be sure to conform to GraphQL multipart request
+                specification: https://github.com/jaydenseric/graphql-multipart-request-spec');
+        }
+
+        $operations = json_decode($operationsParam, true) ?: [];
+        $map = json_decode($mapParam, true) ?: [];
+
+        foreach ($map as $fileKey => $operationsPaths) {
+            $file = $_FILES[(string)$fileKey] ?? [];
+
+            foreach ($operationsPaths as $operationsPath) {
+                $this->mergeFileIntoOperation($operations, $operationsPath, $file);
+            }
+        }
+
+        return $operations;
+    }
+
+    /**
+     * This method copies $file into $array using dot notation as a path to navigate to nested array keys,
+     * e.g. "1.variables.files.0" is equivalent to $array[1]['variables']['files'][0]
+     *
+     * @param array $array
+     * @param string $key
+     * @param array $file
+     * @return array
+     */
+    protected function mergeFileIntoOperation(array &$array, string $key, array $file): array
+    {
+        $keys = explode('.', $key);
+        while (count($keys) > 1) {
+            $key = array_shift($keys);
+            if (!isset($array[$key]) || !is_array($array[$key])) {
+                $array[$key] = [];
+            }
+            $array = &$array[$key];
+        }
+
+        $array[array_shift($keys)] = $file;
+        return $array;
+    }
+
+    /**
+     * @return Schema
+     * @throws SchemaBuilderException
+     * @throws EmptySchemaException
+     * @throws SchemaNotFoundException
+     */
+    protected function getSchema(): Schema
+    {
+        $builder = SchemaBuilder::singleton();
+        $graphqlSchema = $builder->getSchema($this->getSchemaKey());
+        if (!$graphqlSchema && $this->autobuildEnabled()) {
+            // Clear the cache on auto-builds until we trust it more. Maybe make this configurable.
+            $clear = true;
+            $graphqlSchema = $builder->buildByName($this->getSchemaKey(), $clear);
+        } elseif (!$graphqlSchema) {
+            throw new SchemaBuilderException(sprintf(
+                'Schema %s has not been built.',
+                $this->getSchemaKey()
+            ));
+        }
+
+        return $graphqlSchema;
     }
 
     /**
@@ -352,46 +444,22 @@ class Controller extends BaseController
      *
      * @param HTTPRequest $request
      * @return HTTPResponse
+     * @throws HTTPResponse_Exception
      */
-    protected function handleOptions(HTTPRequest $request)
+    public function handleOptions(HTTPRequest $request): HTTPResponse
     {
         $response = HTTPResponse::create();
         $corsConfig = Config::inst()->get(self::class, 'cors');
-        if ($corsConfig['Enabled']) {
-            // CORS config is enabled and the request is an OPTIONS pre-flight.
-            // Process the CORS config and add appropriate headers.
-            $this->addCorsHeaders($request, $response);
-        } else {
-            // CORS is disabled but we have received an OPTIONS request.  This is not a valid request method in this
-            // situation.  Return a 405 Method Not Allowed response.
+        if (!$corsConfig['Enabled']) {
+            // CORS is disabled, but we have received an OPTIONS request. This is not a valid request method in this
+            // situation. Return a 405 Method Not Allowed response.
             $this->httpError(405, "Method Not Allowed");
         }
+
+        // CORS config is enabled and the request is an OPTIONS pre-flight.
+        // Process the CORS config and add appropriate headers.
+        $this->addCorsHeaders($request, $response);
         return $response;
-    }
-
-    /**
-     * Parse query and variables from the given request
-     *
-     * @param HTTPRequest $request
-     * @return array Array containing query and variables as a pair
-     * @throws LogicException
-     */
-    protected function getRequestQueryVariables(HTTPRequest $request)
-    {
-        $contentType = $request->getHeader('content-type');
-        $isJson = preg_match('#^application/json\b#', $contentType);
-        if ($isJson) {
-            $rawBody = $request->getBody();
-            $data = json_decode($rawBody ?: '', true);
-            $query = isset($data['query']) ? $data['query'] : null;
-            $variables = isset($data['variables']) ? (array)$data['variables'] : null;
-        } else {
-            /** @var RequestProcessor $persistedProcessor  */
-            $persistedProcessor = Injector::inst()->get(RequestProcessor::class);
-            list($query, $variables) = $persistedProcessor->getRequestQueryVariables($request);
-        }
-
-        return [$query, $variables];
     }
 
     /**
@@ -432,7 +500,6 @@ class Controller extends BaseController
     public function setSchemaKey(string $schemaKey): self
     {
         $this->schemaKey = $schemaKey;
-
         return $this;
     }
 

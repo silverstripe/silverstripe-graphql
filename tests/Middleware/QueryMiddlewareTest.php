@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Tests\Middleware;
 
+use GraphQL\Server\OperationParams;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
@@ -38,10 +39,12 @@ class QueryMiddlewareTest extends SapphireTest
 
         $this->assertEquals(
             'It was me, Dio!',
-            $handler->queryAndReturnResult(
-                $fakeSchema,
-                'query { myQuery }',
-                ['name' => 'Dio']
+            $handler->executeOperations(
+                OperationParams::create([
+                    'query' => 'query { myQuery }',
+                    'variables' => ['name' => 'Dio']
+                ]),
+                $fakeSchema
             )
         );
     }

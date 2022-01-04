@@ -6,24 +6,23 @@ namespace SilverStripe\GraphQL\QueryHandler;
 use GraphQL\Error\Error;
 use GraphQL\Error\SyntaxError;
 use GraphQL\Executor\ExecutionResult;
-use GraphQL\GraphQL;
-use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\NodeKind;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Source;
 use GraphQL\Language\SourceLocation;
+use GraphQL\Server\Helper;
+use GraphQL\Server\OperationParams;
+use GraphQL\Server\ServerConfig;
 use GraphQL\Type\Schema as GraphQLSchema;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Middleware\QueryMiddleware;
+use SilverStripe\GraphQL\Middleware\QueryMiddlewareInterface;
 use SilverStripe\GraphQL\Permission\MemberAware;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
-use SilverStripe\GraphQL\PersistedQuery\PersistedQueryProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
-use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\ValidationException;
 
 /**
@@ -31,9 +30,7 @@ use SilverStripe\ORM\ValidationException;
  * processing it through middlewares, extracting the results from the GraphQL schema,
  * and formatting it into a suitable JSON response.
  */
-class QueryHandler implements
-    QueryHandlerInterface,
-    PersistedQueryProvider
+class QueryHandler implements QueryHandlerInterface
 {
     use Extensible;
     use Injectable;
@@ -60,9 +57,15 @@ class QueryHandler implements
     private $errorHandler = null;
 
     /**
-     * @var QueryMiddleware[]
+     * @var QueryMiddlewareInterface[]
      */
     private $middlewares = [];
+
+    /**
+     * @var bool
+     * @config
+     */
+    private static $enable_batched_queries = true;
 
     /**
      * QueryHandler constructor.
@@ -76,53 +79,60 @@ class QueryHandler implements
     }
 
     /**
+     * @param OperationParams[]|OperationParams $operations
      * @param GraphQLSchema $schema
-     * @param string|DocumentNode $query
-     * @param array|null $vars
-     * @return array
+     * @return ExecutionResult[]|ExecutionResult
      */
-    public function query(GraphQLSchema $schema, $query, ?array $vars = []): array
-    {
-        $executionResult = $this->queryAndReturnResult($schema, $query, $vars);
-
-        // Already in array form
-        if (is_array($executionResult)) {
-            return $executionResult;
-        }
-        return $this->serialiseResult($executionResult);
-    }
-
-    /**
-     * @param GraphQLSchema $schema
-     * @param string|DocumentNode $query
-     * @param array|null $vars
-     * @return array|ExecutionResult
-     */
-    public function queryAndReturnResult(GraphQLSchema $schema, $query, ?array $vars = [])
+    public function executeOperations($operations, GraphQLSchema $schema)
     {
         if ($this->errorHandler) {
             set_error_handler($this->errorHandler);
         }
-        $context = $this->getContext();
-        $last = function ($schema, $query, $context, $vars) {
-            return GraphQL::executeQuery($schema, $query, null, $context, $vars);
+        $config = $this->getGraphQLServerConfig($schema);
+
+        $isBatched = is_array($operations);
+        if ($isBatched) {
+            $operationList = $operations;
+        } else {
+            $operationList = [$operations];
+        }
+
+        $last = function ($operations, $config) use ($isBatched) {
+            $helper = new Helper();
+            return $isBatched ?
+                $helper->executeBatch($config, $operations) :
+                $helper->executeOperation($config, $operations[0]);
         };
 
-        return $this->callMiddleware($schema, $query, $context, $vars, $last);
+        return $this->callMiddleware($operationList, $config, $last);
     }
 
+    /**
+     * @param GraphQLSchema $schema
+     * @return ServerConfig
+     */
+    public function getGraphQLServerConfig(GraphQLSchema $schema): ServerConfig
+    {
+        $config = ServerConfig::create([
+            'schema' => $schema,
+            'context' => $this->getContext(),
+            'queryBatching' => $this->config()->get('enable_batched_queries'),
+            'persistentQueryLoader' => [self::class, 'loadPersistentQuery']
+        ]);
+
+        $this->extend('updateGraphQLServerConfig', $config);
+
+        return $config;
+    }
 
     /**
-     * get query from persisted id, return null if not found
-     *
      * @param string $id
-     * @return string|null
+     * @return string
      */
-    public function getQueryFromPersistedID(string $id): ?string
+    public static function loadPersistentQuery(string $id): ?string
     {
         /** @var PersistedQueryMappingProvider $provider */
         $provider = Injector::inst()->get(PersistedQueryMappingProvider::class);
-
         return $provider->getByID($id);
     }
 
@@ -148,29 +158,7 @@ class QueryHandler implements
     public function addContextProvider(ContextProvider $provider): QueryHandlerInterface
     {
         $this->contextProviders[] = $provider;
-
         return $this;
-    }
-
-    /**
-     * Serialise a Graphql result object for output
-     *
-     * @param ExecutionResult $executionResult
-     * @return array
-     */
-    public function serialiseResult(ExecutionResult $executionResult): array
-    {
-        // Format object
-        if (!empty($executionResult->errors)) {
-            return [
-                'data' => $executionResult->data,
-                'errors' => array_map($this->errorFormatter, $executionResult->errors),
-            ];
-        } else {
-            return [
-                'data' => $executionResult->data,
-            ];
-        }
     }
 
     /**
@@ -184,6 +172,14 @@ class QueryHandler implements
     }
 
     /**
+     * @return callable
+     */
+    public function getErrorFormatter(): callable
+    {
+        return $this->errorFormatter;
+    }
+
+    /**
      * @param callable $errorHandler
      * @return QueryHandler
      */
@@ -194,7 +190,7 @@ class QueryHandler implements
     }
 
     /**
-     * @return QueryMiddleware[]
+     * @return QueryMiddlewareInterface[]
      */
     public function getMiddlewares(): array
     {
@@ -202,13 +198,13 @@ class QueryHandler implements
     }
 
     /**
-     * @param QueryMiddleware[] $middlewares
+     * @param QueryMiddlewareInterface[] $middlewares
      * @return $this
      */
     public function setMiddlewares(array $middlewares): self
     {
         foreach ($middlewares as $middleware) {
-            if ($middleware instanceof QueryMiddleware) {
+            if ($middleware instanceof QueryMiddlewareInterface) {
                 $this->addMiddleware($middleware);
             }
         }
@@ -216,10 +212,10 @@ class QueryHandler implements
     }
 
     /**
-     * @param QueryMiddleware $middleware
+     * @param QueryMiddlewareInterface $middleware
      * @return $this
      */
-    public function addMiddleware(QueryMiddleware $middleware): self
+    public function addMiddleware(QueryMiddlewareInterface $middleware): self
     {
         $this->middlewares[] = $middleware;
         return $this;
@@ -228,29 +224,27 @@ class QueryHandler implements
     /**
      * Call middleware to evaluate a graphql query
      *
-     * @param GraphQLSchema $schema
-     * @param string $query Query to invoke
-     * @param array $context
-     * @param array $params Variables passed to this query
+     * @param OperationParams|OperationParams[] $operations
+     * @param ServerConfig $config
      * @param callable $last The callback to call after all middlewares
-     * @return ExecutionResult|array
+     * @return ExecutionResult[]|ExecutionResult
      */
-    protected function callMiddleware(GraphQLSchema $schema, $query, $context, $params, callable $last)
+    protected function callMiddleware($operations, ServerConfig $config, callable $last)
     {
         // Reverse middlewares
         $next = $last;
+
         // Filter out any middlewares that are set to `false`, e.g. via config
         $middlewares = array_reverse(array_filter($this->getMiddlewares()));
-        /** @var QueryMiddleware $middleware */
+
+        /** @var QueryMiddlewareInterface $middleware */
         foreach ($middlewares as $middleware) {
-            $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
-                return $middleware->process($schema, $query, $context, $params, $next);
+            $next = function ($operations, $config) use ($middleware, $next) {
+                return $middleware->process($operations, $config, $next);
             };
         }
 
-        $result = $next($schema, $query, $context, $params);
-
-        return $result;
+        return $next($operations, $config);
     }
 
     /**
@@ -323,42 +317,5 @@ class QueryHandler implements
         }
 
         return false;
-    }
-
-    /**
-     * @param DocumentNode $document
-     * @param bool $preferStatementName If true, use query <MyQueryName(Vars..)>. If false, use the actual field name.
-     * @return string
-     */
-    public static function getOperationName(DocumentNode $document, bool $preferStatementName = true): string
-    {
-        $defs = $document->definitions;
-        foreach ($defs as $statement) {
-            $options = [
-                NodeKind::OPERATION_DEFINITION,
-                NodeKind::OPERATION_TYPE_DEFINITION
-            ];
-            if (!in_array($statement->kind, $options, true)) {
-                continue;
-            }
-            if (in_array($statement->operation, ['query', 'mutation'])) {
-                // If the operation was given a name, use that
-                $name = $statement->name;
-                if ($name && $name->value && $preferStatementName) {
-                    return $name->value;
-                }
-                $selectionSet = $statement->selectionSet;
-                if ($selectionSet) {
-                    $selections = $selectionSet->selections;
-                    if (!empty($selections)) {
-                        $firstField = $selections[0];
-
-                        return $firstField->name->value;
-                    }
-                }
-                return $statement->operation;
-            }
-        }
-        return 'graphql';
     }
 }

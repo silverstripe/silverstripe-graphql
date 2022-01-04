@@ -3,22 +3,31 @@
 namespace SilverStripe\GraphQL\Middleware;
 
 use Exception;
-use GraphQL\Type\Schema;
+use GraphQL\Error\SyntaxError;
+use GraphQL\Executor\ExecutionResult;
+use GraphQL\Server\OperationParams;
+use GraphQL\Server\ServerConfig;
+use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\RequestContextProvider;
 
 /**
  * Ensures mutations use POST requests
  */
-class HTTPMethodMiddleware implements QueryMiddleware
+class HTTPMethodMiddleware implements QueryMiddlewareInterface
 {
     /**
-     * @inheritDoc
+     * @param OperationParams[] $operations
+     * @param ServerConfig $config
+     * @param callable $next
+     * @return ExecutionResult|ExecutionResult[]
+     * @throws Exception
+     * @throws SyntaxError
      */
-    public function process(Schema $schema, $query, $context, $vars, callable $next)
+    public function process($operations, ServerConfig $config, callable $next)
     {
         $isGET = false;
         $isPOST = false;
-        $method = RequestContextProvider::get($context);
+        $method = RequestContextProvider::get($config->getContext());
         if ($method) {
             $isGET = $method === 'GET';
             $isPOST = $method === 'POST';
@@ -28,12 +37,14 @@ class HTTPMethodMiddleware implements QueryMiddleware
             throw new Exception('Request method must be POST or GET');
         }
 
-        if (preg_match('/^\s*mutation/', $query)) {
-            if (!$isPOST) {
-                throw new Exception('Mutations must use the POST request method');
+        if (!$isPOST) {
+            foreach ($operations as $operation) {
+                if ($operation->query && QueryHandler::isMutation($operation->query)) {
+                    throw new Exception('Mutations must use the POST request method');
+                }
             }
         }
 
-        return $next($schema, $query, $context, $vars);
+        return $next($operations, $config);
     }
 }

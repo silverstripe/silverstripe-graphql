@@ -2,13 +2,13 @@
 
 namespace SilverStripe\GraphQL\Tests\Middleware;
 
-use GraphQL\Type\Schema;
-use SilverStripe\GraphQL\Middleware\QueryMiddleware;
+use SilverStripe\GraphQL\Middleware\QueryMiddlewareInterface;
 
-class DummyResponseMiddleware implements QueryMiddleware
+class DummyResponseMiddleware implements QueryMiddlewareInterface
 {
-    public function process(Schema $schema, $query, $context, $vars, callable $next)
+    public function process($operations, $config, callable $next)
     {
+        $vars = $operations[0]->variables;
         return "It was me, {$vars['name']}!";
     }
 }
