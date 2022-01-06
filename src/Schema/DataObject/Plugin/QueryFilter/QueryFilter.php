@@ -3,6 +3,7 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter;
 
+use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Type\Type;
@@ -36,6 +37,7 @@ class QueryFilter extends AbstractQueryFilterPlugin
     }
 
     /**
+     * @param array $config
      * @return array
      */
     protected function getResolver(array $config): array
@@ -71,9 +73,14 @@ class QueryFilter extends AbstractQueryFilterPlugin
             if (!$type instanceof ModelType) {
                 return false;
             }
+
             $dataObject = DataObject::singleton($type->getModel()->getSourceClass());
             $fieldName = $field instanceof ModelField ? $field->getPropertyName() : $field->getName();
-            return FieldAccessor::singleton()->hasNativeField($dataObject, $fieldName);
+            $isNative = FieldAccessor::singleton()->hasNativeField($dataObject, $fieldName);
+
+            // If the field has its own resolver, then we'll allow anything it because the user is
+            // handling all the computation.
+            return $isNative || $field->getResolver();
         });
     }
 
@@ -85,8 +92,9 @@ class QueryFilter extends AbstractQueryFilterPlugin
     {
         $fieldName = $context['fieldName'];
         $rootType = $context['rootType'];
+        $resolvers = $context['resolvers'] ?? [];
 
-        return function (?Filterable $list, array $args, array $context) use ($fieldName, $rootType) {
+        return function (?Filterable $list, array $args, array $context, ResolveInfo $info) use ($fieldName, $rootType, $resolvers) {
             if ($list === null) {
                 return null;
             }
@@ -109,16 +117,29 @@ class QueryFilter extends AbstractQueryFilterPlugin
                 $fieldParts = explode('.', $path);
                 $filterID = array_pop($fieldParts);
                 $fieldPath = implode('.', $fieldParts);
-
+                $filter = $registry->getFilterByIdentifier($filterID);
+                Schema::invariant(
+                    $filter,
+                    'No registered filters match the identifier "%s". Did you register it with %s?',
+                    $filterID,
+                    FilterRegistryInterface::class
+                );
+                if (isset($resolvers[$fieldPath])) {
+                    $newContext = $context;
+                    $newContext['filterComparator'] = $filterID;
+                    $newContext['filterValue'] = $value;
+                    $list = call_user_func_array($resolvers[$fieldPath], [$list, $args, $newContext, $info]);
+                    continue;
+                }
                 $normalised = $schemaContext->mapPath($rootType, $fieldPath);
                 Schema::invariant(
                     $normalised,
-                    'Plugin %s could not map path %s on %s',
+                    'Plugin %s could not map path %s on %s. If this is a custom filter field, make sure you included
+                    a resolver.',
                     static::IDENTIFIER,
                     $fieldPath,
                     $rootType
                 );
-                $filter = $registry->getFilterByIdentifier($filterID);
                 if ($filter) {
                     $list = $filter->apply($list, $normalised, $value);
                 }
