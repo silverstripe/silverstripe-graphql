@@ -1,0 +1,34 @@
+<?php
+
+
+namespace SilverStripe\GraphQL\Schema\BulkLoader;
+
+use Psr\Container\NotFoundExceptionInterface;
+use SilverStripe\Core\ClassInfo;
+use SilverStripe\Core\Injector\Injector;
+
+class Registry
+{
+    /**
+     * @var
+     */
+    private static $inst;
+
+    /**
+     * @return RegistryBackend
+     */
+    public static function inst(): RegistryBackend
+    {
+        if (self::$inst) {
+            return self::$inst;
+        }
+        $subclasses = array_values(ClassInfo::subclassesFor(AbstractBulkLoader::class, false));
+        $bulkLoaders = array_map(function ($className) {
+            return Injector::inst()->get($className);
+        }, $subclasses);
+
+        self::$inst = RegistryBackend::create(...$bulkLoaders);
+
+        return self::$inst;
+    }
+}

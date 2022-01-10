@@ -2,10 +2,13 @@
 
 namespace SilverStripe\GraphQL\Schema;
 
-use SilverStripe\Control\Director;
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Config\Configuration;
+use SilverStripe\GraphQL\Schema\BulkLoader\AbstractBulkLoader;
+use SilverStripe\GraphQL\Schema\BulkLoader\Collection;
+use SilverStripe\GraphQL\Schema\BulkLoader\Registry;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -52,6 +55,7 @@ class Schema implements ConfigurationApplier
     const TYPES = 'types';
     const QUERIES = 'queries';
     const MUTATIONS = 'mutations';
+    const BULK_LOAD = 'bulkLoad';
     const MODELS = 'models';
     const INTERFACES = 'interfaces';
     const UNIONS = 'unions';
@@ -157,12 +161,15 @@ class Schema implements ConfigurationApplier
             return $this;
         }
 
+        $logger = Logger::singleton();
+
         $validConfigKeys = [
             self::TYPES,
             self::QUERIES,
             self::MUTATIONS,
             self::INTERFACES,
             self::UNIONS,
+            self::BULK_LOAD,
             self::MODELS,
             self::ENUMS,
             self::SCALARS,
@@ -177,10 +184,12 @@ class Schema implements ConfigurationApplier
         $mutations = $schemaConfig[self::MUTATIONS] ?? [];
         $interfaces = $schemaConfig[self::INTERFACES] ?? [];
         $unions = $schemaConfig[self::UNIONS] ?? [];
+        $bulkLoad = $schemaConfig[self::BULK_LOAD] ?? [];
         $models = $schemaConfig[self::MODELS] ?? [];
         $enums = $schemaConfig[self::ENUMS] ?? [];
         $scalars = $schemaConfig[self::SCALARS] ?? [];
         $config = $schemaConfig[self::SCHEMA_CONFIG] ?? [];
+
 
         $this->getConfig()->apply($config);
 
@@ -219,6 +228,34 @@ class Schema implements ConfigurationApplier
             $this->addUnion($union);
         }
 
+        if (!empty($bulkLoad)) {
+            static::assertValidConfig($bulkLoad);
+            $registry = Registry::inst();
+            $initialCollection = Collection::create(ClassInfo::allClasses());
+            foreach ($bulkLoad as $loaderData) {
+                if ($loaderData === false) {
+                    continue;
+                }
+                $collection = clone $initialCollection;
+                static::assertValidConfig($loaderData, ['load', 'apply'], ['load', 'apply']);
+                $modelConfig = $loaderData['apply'];
+                foreach ($loaderData['load'] as $loaderID => $loaderConfig) {
+                    /* @var AbstractBulkLoader $loader */
+                    $loader = $registry->getByID($loaderID);
+                    Schema::invariant($loader, 'Loader "%s" does not exist', $loaderID);
+                    $loader->applyConfig($loaderConfig);
+                    $collection = $loader->collect($collection);
+                }
+                foreach ($collection->getClasses() as $includedClass) {
+                    $modelType = $this->createModel($includedClass, $modelConfig);
+                    if (!$modelType) {
+                        continue;
+                    }
+                    $logger->info("Bulk loaded $includedClass");
+                    $this->addModel($modelType);
+                }
+            }
+        }
         static::assertValidConfig($models);
         foreach ($models as $modelName => $modelConfig) {
              $model = $this->createModel($modelName, $modelConfig);

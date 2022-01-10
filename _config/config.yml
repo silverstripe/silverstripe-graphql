@@ -1,7 +1,6 @@
 ---
 Name: graphqlconfig
 ---
-# Define the type parsers
 SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\QueryHandler\QueryHandlerInterface:
     class: SilverStripe\GraphQL\QueryHandler\QueryHandler
@@ -35,6 +34,9 @@ SilverStripe\Core\Injector\Injector:
 
   SilverStripe\GraphQL\Schema\Storage\NameObfuscator:
     class: SilverStripe\GraphQL\Schema\Storage\HybridObfuscator
+
+  SilverStripe\GraphQL\Schema\BulkLoader\Collection:
+    factory: SilverStripe\GraphQL\Schema\BulkLoader\CollectionFactory
 
 SilverStripe\GraphQL\Schema\Schema:
   schemas: []
