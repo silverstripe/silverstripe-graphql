@@ -84,7 +84,10 @@ abstract class AbstractBulkLoader implements Identifiable, ConfigurationApplier
      * @param Collection $collection
      * @return Collection
      */
-    abstract public function collect(Collection $collection): Collection;
+    public function collect(Collection $collection): Collection
+    {
+        return Collection::create($collection->getManifest());
+    }
 
     /**
      * @return string

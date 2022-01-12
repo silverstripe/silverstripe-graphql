@@ -24,21 +24,28 @@ class NamespaceLoader extends AbstractBulkLoader
      */
     public function collect(Collection $collection): Collection
     {
+        $newCollection = parent::collect($collection);
+
         foreach ($collection->getClasses() as $class) {
+            $isIncluded = false;
             foreach ($this->includeList as $pattern) {
-                if (!fnmatch($pattern, $class, FNM_NOESCAPE)) {
-                    $collection->removeClass($class);
+                if (fnmatch($pattern, $class, FNM_NOESCAPE)) {
+                    $isIncluded = true;
                     break;
                 }
             }
             foreach ($this->excludeList as $pattern) {
                 if (fnmatch($pattern, $class, FNM_NOESCAPE)) {
-                    $collection->removeClass($class);
+                    $isIncluded = false;
                     break;
                 }
             }
+
+            if (!$isIncluded) {
+                $newCollection->removeClass($class);
+            }
         }
 
-        return $collection;
+        return $newCollection;
     }
 }

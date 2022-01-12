@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Tests\Schema;
 
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\Assets\File;
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Path;
@@ -27,6 +28,7 @@ use SilverStripe\GraphQL\Tests\Fake\FakeProductPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeReview;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
+use SilverStripe\GraphQL\Tests\Fake\Inheritance\A;
 use SilverStripe\GraphQL\Tests\Fake\IntegrationTestResolver;
 use SilverStripe\Security\Member;
 use Symfony\Component\Filesystem\Filesystem;
@@ -1054,6 +1056,65 @@ GRAPHQL;
         $this->assertEquals('5:00:00 PM', $node['date3']);
         $this->assertEquals('2020', $node['date4']);
         $this->assertEquals('This is a really long text field. It has a few sentences.', $node['myText']);
+    }
+
+    public function testBulkLoadInheritance()
+    {
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
+        $this->assertSchemaHasType($schema, 'A1');
+        $this->assertSchemaHasType($schema, 'A1a');
+        $this->assertSchemaHasType($schema, 'A1b');
+        $this->assertSchemaHasType($schema, 'C');
+        $this->assertSchemaHasType($schema, 'C1');
+        $this->assertSchemaHasType($schema, 'C2');
+        $this->assertSchemaNotHasType($schema, 'C2a');
+        $this->assertSchemaNotHasType($schema, 'B');
+        $this->assertSchemaNotHasType($schema, 'A2');
+
+        $query = $schema->getQueryType();
+        $this->assertNotNull($query->getFieldByName('readA1s'));
+        $this->assertNotNull($query->getFieldByName('readA1as'));
+        $this->assertNotNull($query->getFieldByName('readA1bs'));
+        $this->assertNotNull($query->getFieldByName('readCs'));
+        $this->assertNotNull($query->getFieldByName('readC1s'));
+        $this->assertNotNull($query->getFieldByName('readC2s'));
+        $this->assertNull($query->getFieldByName('readC2as'));
+
+        $a1 = $schema->getType('A1');
+        $this->assertNotNull($a1->getFieldByName('A1Field'));
+        $this->assertNull($a1->getFieldByName('created'));
+
+        $c = $schema->getType('C');
+        $this->assertNotNull($c->getFieldByName('cField'));
+        $this->assertNull($c->getFieldByName('created'));
+    }
+
+    public function testBulkLoadNamespaceAndFilepath()
+    {
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
+        $this->assertSchemaHasType($schema, 'A1');
+        $this->assertSchemaHasType($schema, 'A2');
+        $this->assertSchemaHasType($schema, 'A1a');
+        $this->assertSchemaHasType($schema, 'A1b');
+        $this->assertSchemaHasType($schema, 'A2a');
+
+        $this->assertSchemaHasType($schema, 'B');
+        $this->assertSchemaHasType($schema, 'B1');
+        $this->assertSchemaHasType($schema, 'B2');
+        $this->assertSchemaHasType($schema, 'B1a');
+        $this->assertSchemaHasType($schema, 'B1b');
+
+        $this->assertSchemaHasType($schema, 'C');
+        $this->assertSchemaHasType($schema, 'C1');
+        $this->assertSchemaHasType($schema, 'C2');
+
+        $this->assertSchemaNotHasType($schema, 'C2a');
+
+        $this->assertSchemaHasType($schema, 'SubFakePage');
+        $this->assertSchemaNotHasType($schema, 'FakePage');
+
+        $this->assertSchemaHasType($schema, 'FakeProductPage');
+        $this->assertSchemaHasType($schema, 'FakeRedirectorPage');
     }
 
     /**

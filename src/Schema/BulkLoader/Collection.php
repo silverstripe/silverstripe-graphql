@@ -3,10 +3,10 @@
 
 namespace SilverStripe\GraphQL\Schema\BulkLoader;
 
-use Composer\Autoload\ClassLoader;
 use SilverStripe\Core\Injector\Injectable;
 use Exception;
 use ReflectionClass;
+use ReflectionException;
 
 /**
  * Defines a collection of class names paired with file paths
@@ -22,36 +22,21 @@ class Collection
 
     /**
      * Collection constructor.
-     * @param array $classList
+     * @param array $manifest An array of classname keys to filepath values ['My\Class' => '/path/to/Class.php']
      * @throws Exception
      */
-    public function __construct(array $classList)
+    public function __construct(array $manifest)
     {
-        $this->setClassList($classList);
+        $this->setManifest($manifest);
     }
 
     /**
-     * An expensive operation that rebuilds the index of className -> filePath
-     * @param array $classList
+     * @param array $manifest
      * @return $this
      * @throws Exception
      */
-    public function setClassList(array $classList): self
+    public function setManifest(array $manifest): self
     {
-        $manifest = [];
-        foreach ($classList as $class) {
-            if (!class_exists($class)) {
-                continue;
-            }
-            $reflection = new ReflectionClass($class);
-            $filePath = $reflection->getFileName();
-            if (!$filePath) {
-                continue;
-            }
-
-            $manifest[$class] = $filePath;
-        }
-
         $this->manifest = $manifest;
 
         return $this;
@@ -94,5 +79,38 @@ class Collection
     public function getFiles(): array
     {
         return array_values($this->manifest);
+    }
+
+    /**
+     * @return array
+     */
+    public function getManifest(): array
+    {
+        return $this->manifest;
+    }
+
+    /**
+     * @param array $classList
+     * @return Collection
+     * @throws ReflectionException
+     * @throws Exception
+     */
+    public static function createFromClassList(array $classList): Collection
+    {
+        $manifest = [];
+        foreach ($classList as $class) {
+            if (!class_exists($class)) {
+                continue;
+            }
+            $reflection = new ReflectionClass($class);
+            $filePath = $reflection->getFileName();
+            if (!$filePath) {
+                continue;
+            }
+
+            $manifest[$class] = $filePath;
+        }
+
+        return new static($manifest);
     }
 }

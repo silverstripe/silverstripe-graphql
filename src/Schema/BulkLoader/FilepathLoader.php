@@ -23,8 +23,10 @@ class FilepathLoader extends AbstractBulkLoader
      */
     public function collect(Collection $collection): Collection
     {
+        $newCollection = parent::collect($collection);
         $includedFiles = [];
         $excludedFiles = [];
+
         foreach ($this->includeList as $include) {
             foreach (glob(Path::join(BASE_PATH, $include)) as $path) {
                 $includedFiles[$path] = true;
@@ -34,18 +36,15 @@ class FilepathLoader extends AbstractBulkLoader
             foreach (glob(Path::join(BASE_PATH, $exclude)) as $path) {
                 $excludedFiles[$path] = true;
             }
-
         }
 
         foreach ($collection->getFiles() as $file) {
-            if (!isset($includedFiles[$file])) {
-                $collection->removeFile($file);
-            }
-            if (isset($excludedFiles[$file])) {
-                $collection->removeFile($file);
+            $isIncluded = isset($includedFiles[$file]) && !isset($excludedFiles[$file]);
+            if (!$isIncluded) {
+                $newCollection->removeFile($file);
             }
         }
 
-        return $collection;
+        return $newCollection;
     }
 }

@@ -26,22 +26,29 @@ class InheritanceLoader extends AbstractBulkLoader
      */
     public function collect(Collection $collection): Collection
     {
+        $newCollection = parent::collect($collection);
+
         foreach ($collection->getClasses() as $class) {
+            $isIncluded = false;
             foreach ($this->includeList as $pattern) {
-                if ($class !== $pattern && !is_subclass_of($class, $pattern)) {
-                    $collection->removeClass($class);
+                if ($class === $pattern || is_subclass_of($class, $pattern)) {
+                    $isIncluded = true;
                     break;
                 }
             }
             foreach ($this->excludeList as $pattern) {
                 if ($class === $pattern || is_subclass_of($class, $pattern)) {
-                    $collection->removeClass($class);
+                    $isIncluded = false;
                     break;
                 }
             }
+
+            if (!$isIncluded) {
+                $newCollection->removeClass($class);
+            }
         }
 
-        return $collection;
+        return $newCollection;
     }
 
     /**

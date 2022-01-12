@@ -2,12 +2,12 @@
 
 namespace SilverStripe\GraphQL\Schema;
 
-use SilverStripe\Core\ClassInfo;
+use Psr\Log\LoggerInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Config\Configuration;
 use SilverStripe\GraphQL\Schema\BulkLoader\AbstractBulkLoader;
-use SilverStripe\GraphQL\Schema\BulkLoader\Collection;
+use SilverStripe\GraphQL\Schema\BulkLoader\BulkLoaderSet;
 use SilverStripe\GraphQL\Schema\BulkLoader\Registry;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
@@ -77,6 +77,11 @@ class Schema implements ConfigurationApplier
     private static $verbose = false;
 
     /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
      * @var string
      */
     private $schemaKey;
@@ -143,6 +148,7 @@ class Schema implements ConfigurationApplier
 
         $this->schemaConfig = $schemaConfig ?: SchemaConfig::create();
         $this->state = Configuration::create();
+        $this->logger = Logger::singleton();
     }
 
     /**
@@ -160,8 +166,6 @@ class Schema implements ConfigurationApplier
         if (empty($schemaConfig)) {
             return $this;
         }
-
-        $logger = Logger::singleton();
 
         $validConfigKeys = [
             self::TYPES,
@@ -230,30 +234,14 @@ class Schema implements ConfigurationApplier
 
         if (!empty($bulkLoad)) {
             static::assertValidConfig($bulkLoad);
-            $registry = Registry::inst();
-            $initialCollection = Collection::create(ClassInfo::allClasses());
+
             foreach ($bulkLoad as $loaderData) {
                 if ($loaderData === false) {
                     continue;
                 }
-                $collection = clone $initialCollection;
                 static::assertValidConfig($loaderData, ['load', 'apply'], ['load', 'apply']);
-                $modelConfig = $loaderData['apply'];
-                foreach ($loaderData['load'] as $loaderID => $loaderConfig) {
-                    /* @var AbstractBulkLoader $loader */
-                    $loader = $registry->getByID($loaderID);
-                    Schema::invariant($loader, 'Loader "%s" does not exist', $loaderID);
-                    $loader->applyConfig($loaderConfig);
-                    $collection = $loader->collect($collection);
-                }
-                foreach ($collection->getClasses() as $includedClass) {
-                    $modelType = $this->createModel($includedClass, $modelConfig);
-                    if (!$modelType) {
-                        continue;
-                    }
-                    $logger->info("Bulk loaded $includedClass");
-                    $this->addModel($modelType);
-                }
+                $loaders = BulkLoaderSet::create()->applyConfig($loaderData['load']);
+                $this->applyBulkLoaders($loaders, $loaderData['apply']);
             }
         }
         static::assertValidConfig($models);
@@ -1159,6 +1147,38 @@ class Schema implements ConfigurationApplier
     public function getUnions(): array
     {
         return $this->unions;
+    }
+
+    /**
+     * @param AbstractBulkLoader $loader
+     * @param array $modelConfig
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function applyBulkLoader(AbstractBulkLoader $loader, array $modelConfig): self
+    {
+        return $this->applyBulkLoaders(BulkLoaderSet::create([$loader]), $modelConfig);
+    }
+
+    /**
+     * @param BulkLoaderSet $loaders
+     * @param array $modelConfig
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function applyBulkLoaders(BulkLoaderSet $loaders, array $modelConfig): self
+    {
+        $collection = $loaders->process();
+        foreach ($collection->getClasses() as $includedClass) {
+            $modelType = $this->createModel($includedClass, $modelConfig);
+            if (!$modelType) {
+                continue;
+            }
+            $this->logger->info("Bulk loaded $includedClass");
+            $this->addModel($modelType);
+        }
+
+        return $this;
     }
 
     /**

@@ -28,22 +28,29 @@ class ExtensionLoader extends AbstractBulkLoader
      */
     public function collect(Collection $collection): Collection
     {
+        $newCollection = parent::collect($collection);
+
         foreach ($collection->getClasses() as $class) {
+            $isIncluded = false;
             foreach ($this->includeList as $pattern) {
-                if (!Extensible::has_extension($class, $pattern)) {
-                    $collection->removeClass($class);
+                if (Extensible::has_extension($class, $pattern)) {
+                    $isIncluded = true;
                     break;
                 }
             }
             foreach ($this->excludeList as $pattern) {
                 if (Extensible::has_extension($class, $pattern)) {
-                    $collection->removeClass($class);
+                    $isIncluded = false;
                     break;
                 }
             }
+
+            if (!$isIncluded) {
+                $newCollection->removeClass($class);
+            }
         }
 
-        return $collection;
+        return $newCollection;
     }
 
     /**
