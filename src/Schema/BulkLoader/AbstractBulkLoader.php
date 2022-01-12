@@ -9,6 +9,9 @@ use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Interfaces\Identifiable;
 use SilverStripe\GraphQL\Schema\Schema;
 
+/**
+ * Provides base functionality to all bulk loaders. Must define a collect() method.
+ */
 abstract class AbstractBulkLoader implements Identifiable, ConfigurationApplier
 {
     use Injectable;
@@ -40,7 +43,7 @@ abstract class AbstractBulkLoader implements Identifiable, ConfigurationApplier
      */
     public function include(array $include): self
     {
-        $this->includeList = array_merge($this->includeList, $include);
+        $this->includeList = $include;
 
         return $this;
     }
@@ -51,17 +54,17 @@ abstract class AbstractBulkLoader implements Identifiable, ConfigurationApplier
      */
     public function exclude(array $exclude): self
     {
-        $this->excludeList = array_merge($this->excludeList, $exclude);
+        $this->excludeList = $exclude;
 
         return $this;
     }
 
     /**
      * @param array $config
-     * @return mixed|AbstractBulkLoader
+     * @return AbstractBulkLoader
      * @throws SchemaBuilderException
      */
-    public function applyConfig(array $config)
+    public function applyConfig(array $config): self
     {
         Schema::assertValidConfig($config, ['include', 'exclude'], ['include']);
         $include = $config['include'];

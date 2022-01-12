@@ -7,6 +7,9 @@ use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Injector\Injector;
 
+/**
+ * Frontend for creating a cached registry instance based on all the qualifying subclasses.
+ */
 class Registry
 {
     /**

@@ -7,6 +7,9 @@ use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Interfaces\Identifiable;
 use InvalidArgumentException;
 
+/**
+ * The instance of the registry, as composed by the Registry frontend
+ */
 class RegistryBackend
 {
     use Injectable;

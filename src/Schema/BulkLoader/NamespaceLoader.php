@@ -3,6 +3,9 @@
 
 namespace SilverStripe\GraphQL\Schema\BulkLoader;
 
+/**
+ * Loads classes based on fuzzy match of FQCN, e.g. App\Models\*
+ */
 class NamespaceLoader extends AbstractBulkLoader
 {
     const IDENTIFIER = 'namespaceLoader';

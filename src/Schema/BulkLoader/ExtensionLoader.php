@@ -7,10 +7,16 @@ use SilverStripe\Core\Extensible;
 use InvalidArgumentException;
 use SilverStripe\Core\Extension;
 
+/**
+ * Loads classes that have a given extension assigned to them.
+ */
 class ExtensionLoader extends AbstractBulkLoader
 {
     const IDENTIFIER = 'extensionLoader';
 
+    /**
+     * @return string
+     */
     public static function getIdentifier(): string
     {
         return self::IDENTIFIER;

@@ -35,9 +35,6 @@ SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Schema\Storage\NameObfuscator:
     class: SilverStripe\GraphQL\Schema\Storage\HybridObfuscator
 
-  SilverStripe\GraphQL\Schema\BulkLoader\Collection:
-    factory: SilverStripe\GraphQL\Schema\BulkLoader\CollectionFactory
-
 SilverStripe\GraphQL\Schema\Schema:
   schemas: []
 ---

@@ -6,30 +6,27 @@ namespace SilverStripe\GraphQL\Schema\BulkLoader;
 use Composer\Autoload\ClassLoader;
 use SilverStripe\Core\Injector\Injectable;
 use Exception;
+use ReflectionClass;
 
 /**
- * Defines a collection of class names paired with
+ * Defines a collection of class names paired with file paths
  */
 class Collection
 {
     use Injectable;
 
+    /**
+     * @var array
+     */
     private $manifest;
 
     /**
-     * @var ClassLoader
-     */
-    private $loader;
-
-    /**
      * Collection constructor.
-     * @param ClassLoader $loader
      * @param array $classList
      * @throws Exception
      */
-    public function __construct(ClassLoader $loader, array $classList)
+    public function __construct(array $classList)
     {
-        $this->loader = $loader;
         $this->setClassList($classList);
     }
 
@@ -46,7 +43,8 @@ class Collection
             if (!class_exists($class)) {
                 continue;
             }
-            $filePath = $this->loader->findFile($class);
+            $reflection = new ReflectionClass($class);
+            $filePath = $reflection->getFileName();
             if (!$filePath) {
                 continue;
             }

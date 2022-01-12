@@ -5,6 +5,9 @@ namespace SilverStripe\GraphQL\Schema\BulkLoader;
 
 use InvalidArgumentException;
 
+/**
+ * Loads classes that are in a given inheritance tree, e.g. MyApp\Models\Page
+ */
 class InheritanceLoader extends AbstractBulkLoader
 {
     const IDENTIFIER = 'inheritanceLoader';
