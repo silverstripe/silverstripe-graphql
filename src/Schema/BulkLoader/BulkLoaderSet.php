@@ -107,4 +107,12 @@ class BulkLoaderSet implements ConfigurationApplier
 
         return $this;
     }
+
+    /**
+     * @return AbstractBulkLoader[]
+     */
+    public function getLoaders(): array
+    {
+        return $this->loaders;
+    }
 }

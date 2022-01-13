@@ -12,9 +12,9 @@ class FakeBulkLoader extends AbstractBulkLoader
 
     /**
      * FakeBulkLoader constructor.
-     * @param array $shouldReturn
+     * @param array|null $shouldReturn
      */
-    public function __construct($shouldReturn = [])
+    public function __construct(?array $shouldReturn = null)
     {
         parent::__construct();
         $this->shouldReturn = $shouldReturn;
@@ -32,6 +32,10 @@ class FakeBulkLoader extends AbstractBulkLoader
      */
     public function collect(Collection $collection): Collection
     {
-        return new Collection($this->shouldReturn);
+        if ($this->shouldReturn) {
+            return new Collection($this->shouldReturn);
+        }
+
+        return $collection;
     }
 }

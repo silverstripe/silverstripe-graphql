@@ -25,7 +25,7 @@ class Collection
      * @param array $manifest An array of classname keys to filepath values ['My\Class' => '/path/to/Class.php']
      * @throws Exception
      */
-    public function __construct(array $manifest)
+    public function __construct(array $manifest = [])
     {
         $this->setManifest($manifest);
     }
