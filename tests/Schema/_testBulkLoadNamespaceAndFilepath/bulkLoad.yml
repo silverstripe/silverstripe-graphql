@@ -16,9 +16,9 @@ test2:
   load:
     filepathLoader:
       include:
-        - vendor/silverstripe/graphql/tests/Fake/*Page.php
+        - 'silverstripe/graphql: tests/Fake/*Page.php'
       exclude:
-        - vendor/silverstripe/graphql/tests/Fake/FakePage.php
+        - 'silverstripe/graphql: tests/Fake/FakePage.php'
   apply:
     fields:
       '*': true

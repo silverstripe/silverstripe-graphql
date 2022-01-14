@@ -3,6 +3,8 @@
 
 namespace SilverStripe\GraphQL\Schema\BulkLoader;
 
+use SilverStripe\Control\Director;
+use SilverStripe\Core\Manifest\ModuleResourceLoader;
 use SilverStripe\Core\Path;
 
 /**
@@ -28,7 +30,10 @@ class FilepathLoader extends AbstractBulkLoader
         $excludedFiles = [];
 
         foreach ($this->includeList as $include) {
-            foreach (glob(Path::join(BASE_PATH, $include)) as $path) {
+            $resolvedDir = ModuleResourceLoader::singleton()->resolvePath($include);
+            $absGlob = Director::is_absolute($include) ? $include : Path::join(BASE_PATH, $resolvedDir);
+
+            foreach (glob(Path::join($absGlob)) as $path) {
                 $includedFiles[$path] = true;
             }
         }

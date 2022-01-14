@@ -1199,12 +1199,14 @@ class Schema implements ConfigurationApplier
     private function getDefaultBulkLoaderSet(): BulkLoaderSet
     {
         $loaders = [];
-        $default = $this->getConfig()->get('defaultBulkLoad', []);
-        foreach ($default as $id => $config) {
-            /* @var AbstractBulkLoader $defaultLoader */
-            $defaultLoader = Registry::inst()->getByID($id);
-            static::invariant($defaultLoader, 'Default loader %s not found', $id);
-            $loaders[] = $defaultLoader->applyConfig($config);
+        $default = $this->getConfig()->get('defaultBulkLoad');
+        if ($default && is_array($default)) {
+            foreach ($default as $id => $config) {
+                /* @var AbstractBulkLoader $defaultLoader */
+                $defaultLoader = Registry::inst()->getByID($id);
+                static::invariant($defaultLoader, 'Default loader %s not found', $id);
+                $loaders[] = $defaultLoader->applyConfig($config);
+            }
         }
 
         return BulkLoaderSet::create($loaders);
