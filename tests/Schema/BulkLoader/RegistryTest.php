@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Schema\BulkLoader;
+namespace SilverStripe\GraphQL\Tests\Schema\BulkLoader;
 
 use Fake\FakeBulkLoader;
 use SilverStripe\Dev\SapphireTest;

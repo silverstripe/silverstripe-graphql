@@ -235,13 +235,17 @@ class Schema implements ConfigurationApplier
         if (!empty($bulkLoad)) {
             static::assertValidConfig($bulkLoad);
 
-            foreach ($bulkLoad as $loaderData) {
+            foreach ($bulkLoad as $name => $loaderData) {
                 if ($loaderData === false) {
                     continue;
                 }
                 static::assertValidConfig($loaderData, ['load', 'apply'], ['load', 'apply']);
-                $loaders = BulkLoaderSet::create()->applyConfig($loaderData['load']);
-                $this->applyBulkLoaders($loaders, $loaderData['apply']);
+
+                $this->logger->info(sprintf('Processing bulk load "%s"', $name));
+
+                $set = $this->getDefaultBulkLoaderSet()
+                    ->applyConfig($loaderData['load']);
+                $this->applyBulkLoaders($set, $loaderData['apply']);
             }
         }
         static::assertValidConfig($models);
@@ -1157,7 +1161,10 @@ class Schema implements ConfigurationApplier
      */
     public function applyBulkLoader(AbstractBulkLoader $loader, array $modelConfig): self
     {
-        return $this->applyBulkLoaders(BulkLoaderSet::create([$loader]), $modelConfig);
+        $set = $this->getDefaultBulkLoaderSet();
+        $set->addLoader($loader);
+
+        return $this->applyBulkLoaders($set, $modelConfig);
     }
 
     /**
@@ -1169,16 +1176,38 @@ class Schema implements ConfigurationApplier
     public function applyBulkLoaders(BulkLoaderSet $loaders, array $modelConfig): self
     {
         $collection = $loaders->process();
+        $count = 0;
         foreach ($collection->getClasses() as $includedClass) {
             $modelType = $this->createModel($includedClass, $modelConfig);
             if (!$modelType) {
                 continue;
             }
-            $this->logger->info("Bulk loaded $includedClass");
+            $this->logger->debug("Bulk loaded $includedClass");
+            $count++;
             $this->addModel($modelType);
         }
 
+        $this->logger->info("Bulk loaded $count classes");
+
         return $this;
+    }
+
+    /**
+     * @return BulkLoaderSet
+     * @throws SchemaBuilderException
+     */
+    private function getDefaultBulkLoaderSet(): BulkLoaderSet
+    {
+        $loaders = [];
+        $default = $this->getConfig()->get('defaultBulkLoad', []);
+        foreach ($default as $id => $config) {
+            /* @var AbstractBulkLoader $defaultLoader */
+            $defaultLoader = Registry::inst()->getByID($id);
+            static::invariant($defaultLoader, 'Default loader %s not found', $id);
+            $loaders[] = $defaultLoader->applyConfig($config);
+        }
+
+        return BulkLoaderSet::create($loaders);
     }
 
     /**

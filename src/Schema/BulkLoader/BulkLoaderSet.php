@@ -9,6 +9,7 @@ use ReflectionException;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
+use SilverStripe\GraphQL\Schema\Logger;
 use SilverStripe\GraphQL\Schema\Schema;
 
 /**
@@ -47,7 +48,7 @@ class BulkLoaderSet implements ConfigurationApplier
 
     /**
      * @param array $config
-     * @return mixed|void
+     * @return $this
      * @throws SchemaBuilderException
      */
     public function applyConfig(array $config): self
@@ -80,9 +81,19 @@ class BulkLoaderSet implements ConfigurationApplier
      */
     public function process(): Collection
     {
+        $logger = Logger::singleton();
         $collection = $this->initialCollection;
+        $logger->debug(sprintf(
+            'Bulk loader initial collection size: %s',
+            count($collection->getClasses())
+        ));
         foreach ($this->loaders as $loader) {
             $collection = $loader->collect($collection);
+            $logger->debug(sprintf(
+                'Loader %s reduced bulk load to %s',
+                $loader->getIdentifier(),
+                count($collection->getClasses())
+            ));
         }
 
         return $collection;

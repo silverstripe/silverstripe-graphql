@@ -10,14 +10,6 @@ use SilverStripe\GraphQL\Tests\Fake\Inheritance\A;
 use SilverStripe\GraphQL\Tests\Fake\Inheritance\A1;
 use SilverStripe\GraphQL\Tests\Fake\Inheritance\A1a;
 use SilverStripe\GraphQL\Tests\Fake\Inheritance\A2;
-use SilverStripe\GraphQL\Tests\Fake\Inheritance\B;
-use SilverStripe\GraphQL\Tests\Fake\Inheritance\B1;
-use SilverStripe\GraphQL\Tests\Fake\Inheritance\B1a;
-use SilverStripe\GraphQL\Tests\Fake\Inheritance\B2;
-use SilverStripe\GraphQL\Tests\Fake\Inheritance\C;
-use SilverStripe\GraphQL\Tests\Fake\Inheritance\C1;
-use SilverStripe\GraphQL\Tests\Fake\Inheritance\C2;
-use SilverStripe\GraphQL\Tests\Fake\Inheritance\C2a;
 use SilverStripe\GraphQL\Tests\Fake\SubFake\FakePage;
 
 class NamespaceLoaderTest extends SapphireTest
