@@ -24,10 +24,6 @@ class FilepathLoaderTest extends SapphireTest
 {
     public function testFilepathLoader()
     {
-        $path = ModuleLoader::inst()
-            ->getManifest()
-            ->getModule('silverstripe/graphql')
-            ->getRelativePath();
 
         $collection = Collection::createFromClassList([
             A::class,
@@ -45,8 +41,8 @@ class FilepathLoaderTest extends SapphireTest
         ]);
 
         $loader = new FilepathLoader(
-            [$path . '/tests/Fake/Inheritance/B*.php'],
-            [$path . '/tests/Fake/Inheritance/*a.php']
+            ['silverstripe/graphql: tests/Fake/Inheritance/B*.php'],
+            ['silverstripe/graphql: tests/Fake/Inheritance/*a.php']
         );
 
         $result = $loader->collect($collection)->getClasses();
