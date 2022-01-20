@@ -4,7 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\Interfaces;
 
 /**
- * Used by any class that delcares an identifier
+ * Used by any class that declares an identifier
  */
 interface Identifiable
 {
