@@ -12,7 +12,7 @@ use SilverStripe\Core\Extension;
  */
 class ExtensionLoader extends AbstractBulkLoader
 {
-    const IDENTIFIER = 'extensionLoader';
+    public const IDENTIFIER = 'extensionLoader';
 
     /**
      * @return string
