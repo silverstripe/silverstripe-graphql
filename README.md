@@ -1,12 +1,12 @@
-# SilverStripe GraphQL Server
+# Silverstripe GraphQL Server
 
 [![Build Status](https://api.travis-ci.com/silverstripe/silverstripe-graphql.svg?branch=3)](https://travis-ci.com/silverstripe/silverstripe-graphql)
 [![codecov](https://codecov.io/gh/silverstripe/silverstripe-graphql/branch/master/graph/badge.svg)](https://codecov.io/gh/silverstripe/silverstripe-graphql)
 [![SilverStripe supported module](https://img.shields.io/badge/silverstripe-supported-0071C4.svg)](https://www.silverstripe.org/software/addons/silverstripe-commercially-supported-module-list/)
 
-This modules serves SilverStripe data as
+This modules serves Silverstripe data as
 [GraphQL](http://facebook.github.io/react/blog/2015/05/01/graphql-introduction.html)
-representations, with helpers to generate schemas based on SilverStripe model
+representations, with helpers to generate schemas based on Silverstripe model
 introspection. It layers a pluggable schema registration system on top of the
 [graphql-php](https://github.com/webonyx/graphql-php) library. The APIs are
 very similar.
@@ -119,7 +119,7 @@ registered in a `Manager` instance.
 ### Define types
 
 Types describe your data. While your data could be any arbitrary structure, in
-a SilverStripe project a GraphQL type usually relates to a `DataObject`.
+a Silverstripe project a GraphQL type usually relates to a `DataObject`.
 GraphQL uses this information to validate queries and allow GraphQL clients to
 introspect your API capabilities. The GraphQL type system is hierarchical, so
 the `fields()` definition declares object properties as scalar types within
@@ -173,7 +173,7 @@ SilverStripe\GraphQL\Manager:
 ### Define queries
 
 Types can be exposed via "queries". These queries are in charge of retrieving
-data through the SilverStripe ORM. The response itself is handled by the
+data through the Silverstripe ORM. The response itself is handled by the
 underlying GraphQL PHP library, which loops through the resulting `DataList`
 and accesses fields based on the referred "type" definition.
 
@@ -2149,7 +2149,7 @@ As an alternative, a [desktop version](https://github.com/skevy/graphiql-app) of
 
 ## Authentication
 
-Some SilverStripe resources have permission requirements to perform CRUD operations
+Some Silverstripe resources have permission requirements to perform CRUD operations
 on, for example the `Member` object in the previous examples.
 
 If you are logged into the CMS and performing a request from the same session then
@@ -2173,7 +2173,7 @@ the [CSRF Middleware](#csrf-tokens-required-for-mutations) enabled. (It is by de
 
 Silverstripe has built in support for [HTTP basic authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
 There is a `BasicAuthAuthenticator` which is configured for GraphQL by default, but
-will only activate when required. It is kept separate from the SilverStripe CMS
+will only activate when required. It is kept separate from the Silverstripe CMS
 authenticator because GraphQL needs to use the successfully authenticated member
 for CMS permission filtering, whereas the global `BasicAuth` does not log the
 member in or use it for model security.
@@ -2242,7 +2242,7 @@ is the use of a CSRF token for any requests that destroy or mutate data.
 By default, this module comes with a `CSRFMiddleware` implementation that forces all mutations to check 
 for the presence of a CSRF token in the request. That token must be applied to a header named` X-CSRF-TOKEN`.
 
-In SilverStripe, CSRF tokens are most commonly stored in the session as `SecurityID`, or accessed through
+In Silverstripe, CSRF tokens are most commonly stored in the session as `SecurityID`, or accessed through
 the `SecurityToken` API, using `SecurityToken::inst()->getValue()`.
 
 Queries do not require CSRF tokens.
@@ -2494,7 +2494,7 @@ controller provides a `types` action that will return the type schema (serialise
 ```
 
 As your schema grows, introspecting it dynamically may have a performance hit. Alternatively, 
-if you have the `silverstripe/assets` module installed (as it is in the default SilverStripe installation),
+if you have the `silverstripe/assets` module installed (as it is in the default Silverstripe installation),
 GraphQL can cache your schema as a flat file in the `assets/` directory. To enable this, simply
 set the `cache_types_in_filesystem` setting to `true` on `SilverStripe\GraphQL\Controller`. Once enabled,
 a `types.graphql` file will be written to your `assets/` directory on `flush`.
@@ -2513,7 +2513,7 @@ Controller::remove_extension(IntrospectionProvider::class);
 
 In addition to the default `/graphql` endpoint provided by this module by default,
 along with the `admin/graphql` endpoint provided by the CMS modules (if they're installed),
-you may want to set up another GraphQL server running on the same installation of SilverStripe.
+you may want to set up another GraphQL server running on the same installation of Silverstripe.
 
 First, set up a new `Manager` implementation for your custom server.
 
