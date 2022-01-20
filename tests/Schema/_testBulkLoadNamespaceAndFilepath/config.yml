@@ -1,0 +1,2 @@
+typeMapping:
+  SilverStripe\GraphQL\Tests\Fake\SubFake\FakePage: SubFakePage

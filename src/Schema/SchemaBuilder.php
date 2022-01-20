@@ -241,6 +241,7 @@ class SchemaBuilder
         $config = [
             Schema::SCHEMA_CONFIG => [],
             Schema::TYPES => [],
+            Schema::BULK_LOAD => [],
             Schema::MODELS => [],
             Schema::QUERIES => [],
             Schema::MUTATIONS => [],

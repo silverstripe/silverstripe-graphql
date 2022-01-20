@@ -14,6 +14,10 @@ SilverStripe\GraphQL\Schema\Schema:
         defaultResolver: 'SilverStripe\GraphQL\Schema\Resolver\DefaultResolver::defaultFieldResolver'
         modelCreators:
           - 'SilverStripe\GraphQL\Schema\DataObject\ModelCreator'
+        defaultBulkLoad:
+          inheritanceLoader:
+            include:
+              - SilverStripe\ORM\DataObject
         modelConfig:
           DataObject:
             type_formatter: 'SilverStripe\Core\ClassInfo::shortName'
