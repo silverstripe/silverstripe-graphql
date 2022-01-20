@@ -1,6 +1,5 @@
 <?php
 
-
 namespace SilverStripe\GraphQL\Schema\BulkLoader;
 
 use InvalidArgumentException;
@@ -100,10 +99,10 @@ class BulkLoaderSet implements ConfigurationApplier
     }
 
     /**
-     * @param $loaders
+     * @param array $loaders
      * @return $this
      */
-    public function setLoaders($loaders): self
+    public function setLoaders(array $loaders): self
     {
         foreach ($loaders as $loader) {
             if (!$loader instanceof AbstractBulkLoader) {

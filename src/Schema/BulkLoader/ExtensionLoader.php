@@ -1,6 +1,5 @@
 <?php
 
-
 namespace SilverStripe\GraphQL\Schema\BulkLoader;
 
 use SilverStripe\Core\Extensible;
@@ -72,6 +71,10 @@ class ExtensionLoader extends AbstractBulkLoader
         return parent::include($include);
     }
 
+    /**
+     * @param array $exclude
+     * @return AbstractBulkLoader
+     */
     public function exclude(array $exclude): AbstractBulkLoader
     {
         foreach ($exclude as $class) {

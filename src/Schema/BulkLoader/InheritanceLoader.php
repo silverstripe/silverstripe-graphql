@@ -1,6 +1,5 @@
 <?php
 
-
 namespace SilverStripe\GraphQL\Schema\BulkLoader;
 
 use InvalidArgumentException;

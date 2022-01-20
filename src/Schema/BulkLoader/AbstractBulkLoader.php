@@ -1,6 +1,5 @@
 <?php
 
-
 namespace SilverStripe\GraphQL\Schema\BulkLoader;
 
 use SilverStripe\Core\Injector\Injectable;
@@ -10,7 +9,9 @@ use SilverStripe\GraphQL\Schema\Interfaces\Identifiable;
 use SilverStripe\GraphQL\Schema\Schema;
 
 /**
- * Provides base functionality to all bulk loaders. Must define a collect() method.
+ * Provides base functionality to all bulk loaders. Should override the collect()
+ * method with computations that parse the include/exclude directives and return
+ * a collection of classes.
  */
 abstract class AbstractBulkLoader implements Identifiable, ConfigurationApplier
 {
