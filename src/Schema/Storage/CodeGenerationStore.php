@@ -100,6 +100,11 @@ class CodeGenerationStore implements SchemaStorageInterface
     private $obfuscator;
 
     /**
+     * @var bool
+     */
+    private $verbose = true;
+
+    /**
      * @param string $name
      * @param CacheInterface $cache
      */
@@ -277,21 +282,21 @@ class CodeGenerationStore implements SchemaStorageInterface
         $logger->info(sprintf('Types built: %s', count($built)));
         $snapshot = array_slice($built, 0, 10);
         foreach ($snapshot as $type) {
-            $logger->output('*' . $type);
+            $logger->info('*' . $type);
         }
         $diff = count($built) - count($snapshot);
         if ($diff > 0) {
-            $logger->output(sprintf('(... and %s more)', $diff));
+            $logger->info(sprintf('(... and %s more)', $diff));
         }
 
         $logger->info(sprintf('Types deleted: %s', count($deleted)));
         $snapshot = array_slice($deleted, 0, 10);
         foreach ($snapshot as $type) {
-            $logger->output('*' . $type);
+            $logger->info('*' . $type);
         }
         $diff = count($deleted) - count($snapshot);
         if ($diff > 0) {
-            $logger->output(sprintf('(... and %s more)', $diff));
+            $logger->info(sprintf('(... and %s more)', $diff));
         }
     }
 
@@ -427,6 +432,17 @@ class CodeGenerationStore implements SchemaStorageInterface
         return $this;
     }
 
+    /**
+     * If true, s
+     * @param bool $bool
+     * @return $this
+     */
+    public function setVerbose(bool $bool): self
+    {
+        $this->verbose = $bool;
+
+        return $this;
+    }
 
     /**
      * @return string

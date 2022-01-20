@@ -11,9 +11,11 @@ use SilverStripe\Core\Path;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
+use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\Query;
+use SilverStripe\GraphQL\Schema\Logger;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
@@ -1064,16 +1066,71 @@ GRAPHQL;
         return [ [false], [true] ];
     }
 
+    public function testCustomFilterFields()
+    {
+        $dir = '_' . __FUNCTION__;
+
+        $dataObject1 = DataObjectFake::create(['MyField' => 'Atest1']);
+        $dataObject1->write();
+
+        $dataObject2 = DataObjectFake::create(['MyField' => 'Btest2']);
+        $dataObject2->write();
+
+        $id1 = $dataObject1->ID;
+        $id2 = $dataObject2->ID;
+
+        $schema = $this->createSchema(new TestSchemaBuilder([$dir]));
+
+        $query = <<<GRAPHQL
+query {
+  readOneDataObjectFake(filter: { onlyStartsWithA: { eq: true } }) {
+    id
+  }
+}
+GRAPHQL;
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $this->assertResult('readOneDataObjectFake.id', $id1, $result);
+
+        $query = <<<GRAPHQL
+query {
+  readOneDataObjectFake(filter: { onlyStartsWithA: { eq: false } }) {
+    id
+  }
+}
+GRAPHQL;
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $this->assertResult('readOneDataObjectFake.id', $id2, $result);
+
+        $query = <<<GRAPHQL
+query {
+  readOneDataObjectFake(filter: { id: { eq: $id1 } }) {
+    id
+  }
+}
+GRAPHQL;
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $this->assertResult('readOneDataObjectFake.id', $id1, $result);
+    }
+
     /**
      * @param TestSchemaBuilder $factory
      * @return Schema
      * @throws SchemaBuilderException
      * @throws SchemaNotFoundException
+     * @throws EmptySchemaException
      */
     private function createSchema(TestSchemaBuilder $factory): Schema
     {
         $this->clean();
         $schema = $factory->boot();
+
+        /* @var Logger $logger */
+        $logger = Injector::inst()->get(Logger::class);
+        $logger->setVerbosity(Logger::ERROR);
+
         $factory->build($schema, true);
 
         return $schema;
@@ -1181,5 +1238,22 @@ GRAPHQL;
                 $this->assertEquals($value, $next);
             }
         }
+    }
+
+    public static function resolveCustomFilter($list, $args, $context)
+    {
+        $bool = $context['filterValue'];
+        $comp = $context['filterComparator'];
+        if ($comp === 'ne') {
+            $bool = !$bool;
+        }
+
+        if ($bool) {
+            $list = $list->filter('MyField:StartsWith', 'A');
+        } else {
+            $list = $list->exclude('MyField:StartsWith', 'A');
+        }
+
+        return $list;
     }
 }

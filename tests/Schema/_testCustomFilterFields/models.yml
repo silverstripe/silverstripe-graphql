@@ -1,0 +1,15 @@
+SilverStripe\GraphQL\Tests\Fake\DataObjectFake:
+  operations:
+    readOne:
+      plugins:
+        filter:
+          fields:
+            '*': true
+            onlyStartsWithA: true
+          resolve:
+            onlyStartsWithA:
+              type: Boolean
+              resolver: ['SilverStripe\GraphQL\Tests\Schema\IntegrationTest', 'resolveCustomFilter']
+        sort: true
+  fields:
+    myField: true

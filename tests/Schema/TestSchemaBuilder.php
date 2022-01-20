@@ -10,6 +10,7 @@ use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\Query;
+use SilverStripe\GraphQL\Schema\Logger;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 
@@ -78,6 +79,10 @@ class TestSchemaBuilder extends SchemaBuilder
      */
     private function bootstrapSchema(string $key)
     {
+        /* @var Logger $logger */
+        $logger = Injector::inst()->get(Logger::class);
+        $logger->setVerbosity(Logger::ERROR);
+
         Config::modify()->merge(
             Schema::class,
             'schemas',
