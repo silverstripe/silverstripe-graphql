@@ -1,6 +1,5 @@
 <?php
 
-
 namespace SilverStripe\GraphQL\Dev;
 
 use SilverStripe\Control\Controller;
@@ -8,18 +7,11 @@ use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Manifest\ModuleManifest;
 use SilverStripe\Core\Path;
-use SilverStripe\Dev\DebugView;
-use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
-use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
-use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
-use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\ORM\Connect\NullDatabaseException;
 
 /**
- * Class Initialise
- * @package SilverStripe\GraphQL\Dev
+ * A task that initialises a schema with boilerplate config and files.
  */
 class Initialise extends Controller
 {
@@ -65,7 +57,7 @@ class Initialise extends Controller
     /**
      * @var string
      */
-    private $projectDir = 'app';
+    private $projectDir = '';
 
     /**
      * @var string
@@ -75,7 +67,7 @@ class Initialise extends Controller
     /**
      * @var string
      */
-    private $perms = '0777';
+    private $perms = '';
 
     /**
      * @param HTTPRequest $request
@@ -87,15 +79,22 @@ class Initialise extends Controller
             !$isBrowser,
             'This task can only be run from CLI'
         );
+
+        if ($request->getVar('help')) {
+            $this->showHelp();
+            return;
+        }
+
         $appNamespace = $request->getVar('namespace');
-        Schema::invariant(
-            $appNamespace,
-            'Please provide a base namespace for your app, e.g. "namespace=App" or "namespace=MyVendor\MyProject"'
-        );
+
+        if (!$appNamespace) {
+            echo "Please provide a base namespace for your app, e.g. \"namespace=App\" or \"namespace=MyVendor\MyProject\".\nFor help, run \"dev/graphql/init help=1\"\n";
+            return;
+        }
+
         $this->appNamespace = $appNamespace;
 
         $this->projectDir = ModuleManifest::config()->get('project');
-
 
         $schemaName = $request->getVar('name');
         if ($schemaName) {
@@ -140,13 +139,14 @@ class Initialise extends Controller
             echo "Graphql config directory already exists. Skipping." . PHP_EOL;
             return;
         }
-            echo "Creating graphql config directory: $this->graphqlConfigDir" . PHP_EOL;
-            mkdir($absGraphQLDir, $this->perms);
+
+        echo "Creating graphql config directory: $this->graphqlConfigDir" . PHP_EOL;
+        mkdir($absGraphQLDir, $this->perms);
         foreach (['models', 'config', 'types', 'queries', 'mutations'] as $file) {
             touch(Path::join($absGraphQLDir, "$file.yml"));
         }
-            $configPath = Path::join($absGraphQLDir, 'config.yml');
-            $defaultConfig = <<<YAML
+        $configPath = Path::join($absGraphQLDir, 'config.yml');
+        $defaultConfig = <<<YAML
 resolvers:
   - $this->appNamespace\Resolvers
 YAML;
@@ -172,6 +172,7 @@ SilverStripe\GraphQL\Schema\Schema:
     $this->schemaName:
       src:
         - $this->projectDir/$this->graphqlConfigDir
+
 YAML;
         file_put_contents($absConfigFile, $defaultProjectConfig);
     }
@@ -206,16 +207,44 @@ namespace $graphqlNamespace;
  */
 class Resolvers
 {
-
-    public static function resolveMyQuery(\$obj, array \$args, \$context): array
+    public static function resolveMyQuery(\$obj, array \$args, array \$context): array
     {
        // Return the result of query { myQuery { ... } }
        return [];
     }
-
 }
 
 PHP;
         file_put_contents($resolverFile, $resolverCode);
+    }
+
+    /**
+     * Outputs help text to the console
+     */
+    private function showHelp(): void
+    {
+        echo <<<TXT
+
+****
+This task executes a lot of the boilerplate required to build a new GraphQL schema. It will
+generate a few files in your project directory. Any files that already exist will not be
+overwritten. The task can be run multiple times and is non-destructive.
+****
+
+-- Example:
+
+$ vendor/bin/sake dev/graphql/init namespace="MyAgency\MyApp"
+
+-- Arguments:
+
+[namespace]: The root namespace. Required.
+
+<name>: The name of the schema. Default: "default"
+
+<graphqlConfigDir>: The folder where the flushless graphql config files will go. Default: "_graphql"
+
+<graphqlCodeDir>: The subfolder of src/ where your GraphQL code (the resolver class) will go. Follows PSR-4 based on the namespace argument (default: "GraphQL")
+
+TXT;
     }
 }
