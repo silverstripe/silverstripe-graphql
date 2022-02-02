@@ -1,0 +1,24 @@
+test1:
+  load:
+    namespaceLoader:
+      include:
+        - SilverStripe\GraphQL\Tests\Fake\Inheritance\*
+        - SilverStripe\GraphQL\Tests\Fake\SubFake\*
+      exclude:
+        - SilverStripe\GraphQL\Tests\Fake\Inheritance\C2a
+  apply:
+    fields:
+      '*': true
+      created: false
+    operations:
+      read: true
+test2:
+  load:
+    filepathLoader:
+      include:
+        - 'silverstripe/graphql: tests/Fake/*Page.php'
+      exclude:
+        - 'silverstripe/graphql: tests/Fake/FakePage.php'
+  apply:
+    fields:
+      '*': true

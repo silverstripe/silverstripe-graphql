@@ -9,6 +9,7 @@ use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\EventDispatcher\Dispatch\Dispatcher;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
+use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\Query;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
@@ -78,6 +79,24 @@ class SchemaBuilderTest extends SapphireTest
 
         $type = $schema->getType('MyType');
         $this->assertInstanceOf(Type::class, $type);
+    }
+
+    public function testSrcMustBeArray()
+    {
+        Config::modify()->merge(Schema::class, 'schemas', [
+            'my-schema' => [
+                'src' => 'some/path',
+                'types' => [
+                    'MyType' => [
+                        'fields' => [
+                            'foo' => 'String',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+        $this->expectException(SchemaBuilderException::class);
+        SchemaBuilder::singleton()->boot('my-schema');
     }
 
     public function testBuild()

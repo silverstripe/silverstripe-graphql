@@ -5,18 +5,24 @@ namespace SilverStripe\GraphQL\Tests\Schema;
 
 use GraphQL\Type\Definition\ObjectType;
 use SilverStripe\Assets\File;
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Path;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
+use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Field\Query;
+use SilverStripe\GraphQL\Schema\Logger;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStoreCreator;
+use SilverStripe\GraphQL\Schema\Storage\HashNameObfuscator;
+use SilverStripe\GraphQL\Schema\Storage\NameObfuscator;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeProduct;
@@ -24,6 +30,7 @@ use SilverStripe\GraphQL\Tests\Fake\FakeProductPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
 use SilverStripe\GraphQL\Tests\Fake\FakeReview;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
+use SilverStripe\GraphQL\Tests\Fake\Inheritance\A;
 use SilverStripe\GraphQL\Tests\Fake\IntegrationTestResolver;
 use SilverStripe\Security\Member;
 use Symfony\Component\Filesystem\Filesystem;
@@ -44,13 +51,13 @@ class IntegrationTest extends SapphireTest
         Member::class,
     ];
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         TestStoreCreator::$dir = __DIR__;
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         parent::tearDown();
         $this->clean();
@@ -767,10 +774,35 @@ GRAPHQL;
         ], $records);
     }
 
-    public function testQueriesAndMutations()
+    /**
+     * @throws SchemaBuilderException
+     * @throws SchemaNotFoundException
+     * @dataProvider provideObfuscationState
+     * @param bool $shouldObfuscateTypes
+     */
+    public function testQueriesAndMutations($shouldObfuscateTypes)
     {
+        FakeProductPage::get()->removeAll();
+        if ($shouldObfuscateTypes) {
+            Injector::inst()->load([
+                NameObfuscator::class => [
+                    'class' => HashNameObfuscator::class,
+                ]
+            ]);
+        }
         $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
 
+        if ($shouldObfuscateTypes) {
+            $obfuscator = new HashNameObfuscator();
+            $obfuscatedName = $obfuscator->obfuscate('FakeProductPage');
+            $path = Path::join(
+                __DIR__,
+                CodeGenerationStore::config()->get('dirName'),
+                $schema->getSchemaKey(),
+                $obfuscatedName . '.php'
+            );
+            $this->assertTrue(file_exists($path));
+        }
         // Create a couple of product pages
         $productPageIDs = [];
         foreach (range(1, 2) as $num) {
@@ -1028,16 +1060,138 @@ GRAPHQL;
         $this->assertEquals('This is a really long text field. It has a few sentences.', $node['myText']);
     }
 
+    public function testBulkLoadInheritance()
+    {
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
+        $this->assertSchemaHasType($schema, 'A1');
+        $this->assertSchemaHasType($schema, 'A1a');
+        $this->assertSchemaHasType($schema, 'A1b');
+        $this->assertSchemaHasType($schema, 'C');
+        $this->assertSchemaHasType($schema, 'C1');
+        $this->assertSchemaHasType($schema, 'C2');
+        $this->assertSchemaNotHasType($schema, 'C2a');
+        $this->assertSchemaNotHasType($schema, 'B');
+        $this->assertSchemaNotHasType($schema, 'A2');
+
+        $query = $schema->getQueryType();
+        $this->assertNotNull($query->getFieldByName('readA1s'));
+        $this->assertNotNull($query->getFieldByName('readA1as'));
+        $this->assertNotNull($query->getFieldByName('readA1bs'));
+        $this->assertNotNull($query->getFieldByName('readCs'));
+        $this->assertNotNull($query->getFieldByName('readC1s'));
+        $this->assertNotNull($query->getFieldByName('readC2s'));
+        $this->assertNull($query->getFieldByName('readC2as'));
+
+        $a1 = $schema->getType('A1');
+        $this->assertNotNull($a1->getFieldByName('A1Field'));
+        $this->assertNull($a1->getFieldByName('created'));
+
+        $c = $schema->getType('C');
+        $this->assertNotNull($c->getFieldByName('cField'));
+        $this->assertNull($c->getFieldByName('created'));
+    }
+
+    public function testBulkLoadNamespaceAndFilepath()
+    {
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
+        $this->assertSchemaHasType($schema, 'A1');
+        $this->assertSchemaHasType($schema, 'A2');
+        $this->assertSchemaHasType($schema, 'A1a');
+        $this->assertSchemaHasType($schema, 'A1b');
+        $this->assertSchemaHasType($schema, 'A2a');
+
+        $this->assertSchemaHasType($schema, 'B');
+        $this->assertSchemaHasType($schema, 'B1');
+        $this->assertSchemaHasType($schema, 'B2');
+        $this->assertSchemaHasType($schema, 'B1a');
+        $this->assertSchemaHasType($schema, 'B1b');
+
+        $this->assertSchemaHasType($schema, 'C');
+        $this->assertSchemaHasType($schema, 'C1');
+        $this->assertSchemaHasType($schema, 'C2');
+
+        $this->assertSchemaNotHasType($schema, 'C2a');
+
+        $this->assertSchemaHasType($schema, 'SubFakePage');
+        $this->assertSchemaNotHasType($schema, 'FakePage');
+
+        $this->assertSchemaHasType($schema, 'FakeProductPage');
+        $this->assertSchemaHasType($schema, 'FakeRedirectorPage');
+    }
+
+    /**
+     * @return array
+     */
+    public function provideObfuscationState(): array
+    {
+        return [ [false], [true] ];
+    }
+
+    public function testCustomFilterFields()
+    {
+        $dir = '_' . __FUNCTION__;
+
+        $dataObject1 = DataObjectFake::create(['MyField' => 'Atest1']);
+        $dataObject1->write();
+
+        $dataObject2 = DataObjectFake::create(['MyField' => 'Btest2']);
+        $dataObject2->write();
+
+        $id1 = $dataObject1->ID;
+        $id2 = $dataObject2->ID;
+
+        $schema = $this->createSchema(new TestSchemaBuilder([$dir]));
+
+        $query = <<<GRAPHQL
+query {
+  readOneDataObjectFake(filter: { onlyStartsWithA: { eq: true } }) {
+    id
+  }
+}
+GRAPHQL;
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $this->assertResult('readOneDataObjectFake.id', $id1, $result);
+
+        $query = <<<GRAPHQL
+query {
+  readOneDataObjectFake(filter: { onlyStartsWithA: { eq: false } }) {
+    id
+  }
+}
+GRAPHQL;
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $this->assertResult('readOneDataObjectFake.id', $id2, $result);
+
+        $query = <<<GRAPHQL
+query {
+  readOneDataObjectFake(filter: { id: { eq: $id1 } }) {
+    id
+  }
+}
+GRAPHQL;
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $this->assertResult('readOneDataObjectFake.id', $id1, $result);
+    }
+
     /**
      * @param TestSchemaBuilder $factory
      * @return Schema
      * @throws SchemaBuilderException
      * @throws SchemaNotFoundException
+     * @throws EmptySchemaException
      */
     private function createSchema(TestSchemaBuilder $factory): Schema
     {
         $this->clean();
         $schema = $factory->boot();
+
+        /* @var Logger $logger */
+        $logger = Injector::inst()->get(Logger::class);
+        $logger->setVerbosity(Logger::ERROR);
+
         $factory->build($schema, true);
 
         return $schema;
@@ -1069,7 +1223,7 @@ GRAPHQL;
     private function clean()
     {
         $fs = new Filesystem();
-        $fs->remove(__DIR__ . '/.graphql');
+        $fs->remove(__DIR__ . '/.graphql-generated');
     }
 
     private function assertSuccess(array $result)
@@ -1145,5 +1299,22 @@ GRAPHQL;
                 $this->assertEquals($value, $next);
             }
         }
+    }
+
+    public static function resolveCustomFilter($list, $args, $context)
+    {
+        $bool = $context['filterValue'];
+        $comp = $context['filterComparator'];
+        if ($comp === 'ne') {
+            $bool = !$bool;
+        }
+
+        if ($bool) {
+            $list = $list->filter('MyField:StartsWith', 'A');
+        } else {
+            $list = $list->exclude('MyField:StartsWith', 'A');
+        }
+
+        return $list;
     }
 }

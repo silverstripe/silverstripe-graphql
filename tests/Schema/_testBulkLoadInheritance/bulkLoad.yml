@@ -1,0 +1,14 @@
+test:
+  load:
+    inheritanceLoader:
+      include:
+        - SilverStripe\GraphQL\Tests\Fake\Inheritance\A1
+        - SilverStripe\GraphQL\Tests\Fake\Inheritance\C
+      exclude:
+        - SilverStripe\GraphQL\Tests\Fake\Inheritance\C2a
+  apply:
+    fields:
+      '*': true
+      created: false
+    operations:
+      read: true

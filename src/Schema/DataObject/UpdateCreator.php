@@ -11,6 +11,7 @@ use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -23,6 +24,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\DataList;
 use Closure;
+use SilverStripe\ORM\FieldType\DBEnum;
 
 /**
  * Creates an update operation for a DataObject
@@ -153,8 +155,16 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
                 continue;
             }
             $type = $fieldObj->getNamedType();
+            if (!$type) {
+                continue;
+            }
+            $isScalar = Schema::isInternalType($type);
+            if (!$isScalar && $fieldObj instanceof ModelField) {
+                $dataClass = $fieldObj->getMetadata()->get('dataClass');
+                $isScalar = $dataClass === DBEnum::class || is_subclass_of($dataClass, DBEnum::class);
+            }
             // No nested input types... yet
-            if ($type && Schema::isInternalType($type)) {
+            if ($isScalar) {
                 $fieldMap[$fieldName] = $type;
             }
         }

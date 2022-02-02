@@ -70,12 +70,19 @@ class NestedInputBuilder
     private $rootType;
 
     /**
+     * @var array
+     */
+    private $resolveConfig;
+
+    /**
      * NestedInputBuilder constructor.
      * @param Field $root
+     * @param Schema $schema
      * @param string $fields
+     * @param array $resolveConfig
      * @throws SchemaBuilderException
      */
-    public function __construct(Field $root, Schema $schema, $fields = Schema::ALL)
+    public function __construct(Field $root, Schema $schema, $fields = Schema::ALL, $resolveConfig = [])
     {
         $this->schema = $schema;
         $this->root = $root;
@@ -87,6 +94,7 @@ class NestedInputBuilder
         );
 
         $this->fields = $fields;
+        $this->setResolveConfig($resolveConfig);
     }
 
     /**
@@ -106,6 +114,9 @@ class NestedInputBuilder
 
         if ($this->fields === Schema::ALL) {
             $this->fields = $this->buildAllFieldsConfig($type);
+        } elseif (isset($this->fields[Schema::ALL]) && $this->fields[Schema::ALL]) {
+            unset($this->fields[Schema::ALL]);
+            $this->fields = array_merge($this->fields, $this->buildAllFieldsConfig($type));
         }
         $this->addInputTypesToSchema($type, $this->fields, null, null, $prefix);
         $rootTypeName = $prefix . $this->getTypeName($type);
@@ -181,6 +192,9 @@ class NestedInputBuilder
             $inputType = InputType::create($inputTypeName);
         }
         foreach ($fields as $fieldName => $data) {
+            if ($fieldName === Schema::ALL) {
+                $this->buildAllFieldsConfig($type);
+            }
             if ($data === false) {
                 continue;
             }
@@ -197,12 +211,24 @@ class NestedInputBuilder
             if (!$fieldObj && $type instanceof ModelType) {
                 $fieldObj = $type->getModel()->getField($fieldName);
             }
+
+            $customResolver = $this->getResolver($fieldName);
+            $customType = $this->getResolveType($fieldName);
+
             Schema::invariant(
-                $fieldObj,
-                'Could not find field "%s" on type "%s"',
+                $fieldObj || ($customResolver && $customType),
+                'Could not find field "%s" on type "%s". If it is a custom filter field, you will need to provide a
+                resolver function in the "resolver" config for that field along with an explicit type.',
                 $fieldName,
                 $type->getName()
             );
+
+            if (!$fieldObj) {
+                $fieldObj = Field::create($fieldName, [
+                    'type' => $customType,
+                    'resolver' => $customResolver,
+                ]);
+            }
 
             if (!$this->shouldAddField($type, $fieldObj)) {
                 continue;
@@ -211,9 +237,11 @@ class NestedInputBuilder
             $fieldType = $fieldObj->getNamedType();
             $nestedType = $this->schema->getCanonicalType($fieldType);
 
+            $isScalar = (bool) Schema::isInternalType($fieldType) || $this->schema->getEnum($fieldType);
+
             if ($data === self::SELF_REFERENTIAL) {
                 $inputType->addField($fieldName, $inputType->getName());
-            } elseif (!is_array($data) && !$nestedType && Schema::isInternalType($fieldType)) {
+            } elseif (!is_array($data) && !$nestedType && $isScalar) {
                 // Regular field, e.g. scalar
                 $inputType->addField(
                     $fieldName,
@@ -277,6 +305,65 @@ class NestedInputBuilder
     public function getRootType(): ?InputType
     {
         return $this->rootType;
+    }
+
+    /**
+     * @param array $config
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function setResolveConfig(array $config): self
+    {
+        foreach ($config as $fieldName => $data) {
+            Schema::invariant(
+                is_string($fieldName) && isset($data['resolver']) && isset($data['type']),
+                '"resolve" setting for nested input must be a map of field name keys to an array that contains
+                a "resolver" field and "type" key'
+            );
+        }
+
+        $this->resolveConfig = $config;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getResolveConfig(): array
+    {
+        return $this->resolveConfig;
+    }
+
+    /**
+     * @param string $name
+     * @return string|array|null
+     */
+    public function getResolver(string $name)
+    {
+        return $this->resolveConfig[$name]['resolver'] ?? null;
+    }
+
+    /**
+     * @param string $name
+     * @return string|null
+     */
+    public function getResolveType(string $name): ?string
+    {
+        return $this->resolveConfig[$name]['type'] ?? null;
+    }
+
+    /**
+     * @return array
+     */
+    public function getResolvers(): array
+    {
+        $resolvers = [];
+        foreach ($this->resolveConfig as $fieldName => $config) {
+            $resolvers[$fieldName] = $config['resolver'];
+        }
+
+        return $resolvers;
     }
 
     /**

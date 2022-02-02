@@ -8,7 +8,9 @@ namespace <?=$globals['namespace']; ?>;
 
 use GraphQL\Type\Definition\CustomScalarType;
 
-class <?=$scalar->getName(); ?> extends CustomScalarType
+// @type:<?=$scalar->getName(); ?>
+
+class <?=$globals['obfuscator']->obfuscate($scalar->getName()) ?> extends CustomScalarType
 {
     public function __construct()
     {

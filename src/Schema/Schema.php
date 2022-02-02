@@ -2,10 +2,13 @@
 
 namespace SilverStripe\GraphQL\Schema;
 
-use SilverStripe\Control\Director;
+use Psr\Log\LoggerInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\GraphQL\Config\Configuration;
+use SilverStripe\GraphQL\Schema\BulkLoader\AbstractBulkLoader;
+use SilverStripe\GraphQL\Schema\BulkLoader\BulkLoaderSet;
+use SilverStripe\GraphQL\Schema\BulkLoader\Registry;
 use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -52,6 +55,7 @@ class Schema implements ConfigurationApplier
     const TYPES = 'types';
     const QUERIES = 'queries';
     const MUTATIONS = 'mutations';
+    const BULK_LOAD = 'bulkLoad';
     const MODELS = 'models';
     const INTERFACES = 'interfaces';
     const UNIONS = 'unions';
@@ -71,6 +75,11 @@ class Schema implements ConfigurationApplier
      * @var bool
      */
     private static $verbose = false;
+
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
     /**
      * @var string
@@ -139,6 +148,7 @@ class Schema implements ConfigurationApplier
 
         $this->schemaConfig = $schemaConfig ?: SchemaConfig::create();
         $this->state = Configuration::create();
+        $this->logger = Logger::singleton();
     }
 
     /**
@@ -163,12 +173,13 @@ class Schema implements ConfigurationApplier
             self::MUTATIONS,
             self::INTERFACES,
             self::UNIONS,
+            self::BULK_LOAD,
             self::MODELS,
             self::ENUMS,
             self::SCALARS,
             self::SCHEMA_CONFIG,
             'execute',
-            'src',
+            self::SOURCE,
         ];
         static::assertValidConfig($schemaConfig, $validConfigKeys);
 
@@ -177,10 +188,12 @@ class Schema implements ConfigurationApplier
         $mutations = $schemaConfig[self::MUTATIONS] ?? [];
         $interfaces = $schemaConfig[self::INTERFACES] ?? [];
         $unions = $schemaConfig[self::UNIONS] ?? [];
+        $bulkLoad = $schemaConfig[self::BULK_LOAD] ?? [];
         $models = $schemaConfig[self::MODELS] ?? [];
         $enums = $schemaConfig[self::ENUMS] ?? [];
         $scalars = $schemaConfig[self::SCALARS] ?? [];
         $config = $schemaConfig[self::SCHEMA_CONFIG] ?? [];
+
 
         $this->getConfig()->apply($config);
 
@@ -219,6 +232,22 @@ class Schema implements ConfigurationApplier
             $this->addUnion($union);
         }
 
+        if (!empty($bulkLoad)) {
+            static::assertValidConfig($bulkLoad);
+
+            foreach ($bulkLoad as $name => $loaderData) {
+                if ($loaderData === false) {
+                    continue;
+                }
+                static::assertValidConfig($loaderData, ['load', 'apply'], ['load', 'apply']);
+
+                $this->logger->info(sprintf('Processing bulk load "%s"', $name));
+
+                $set = $this->getDefaultBulkLoaderSet()
+                    ->applyConfig($loaderData['load']);
+                $this->applyBulkLoaders($set, $loaderData['apply']);
+            }
+        }
         static::assertValidConfig($models);
         foreach ($models as $modelName => $modelConfig) {
              $model = $this->createModel($modelName, $modelConfig);
@@ -269,7 +298,8 @@ class Schema implements ConfigurationApplier
                     continue;
                 }
                 $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
-                $safeNamedClass = TypeReference::create($safeModelTypeDef)->getNamedType();
+                $safeModelTypeRef = TypeReference::create($safeModelTypeDef);
+                [$safeNamedClass, $path] = $safeModelTypeRef->getTypeName();
                 $namedClass = str_replace('__', '\\', $safeNamedClass);
                 $model = $this->getConfig()->createModel($namedClass);
                 Schema::invariant(
@@ -279,9 +309,8 @@ class Schema implements ConfigurationApplier
                 );
 
                 $typeName = $model->getTypeName();
-                $wrappedTypeName = str_replace($namedClass, $typeName, $modelTypeDef);
-
-                $fieldObj->setType($wrappedTypeName);
+                $newTypeRef = TypeReference::createFromPath($typeName, $path);
+                $fieldObj->setType($newTypeRef->getRawType());
             }
         }
     }
@@ -860,6 +889,16 @@ class Schema implements ConfigurationApplier
     public function addModel(ModelType $modelType, ?callable $callback = null): Schema
     {
         $existing = $this->models[$modelType->getName()] ?? null;
+        if ($existing) {
+            Schema::invariant(
+                $existing->getModel()->getSourceClass() === $modelType->getModel()->getSourceClass(),
+                'Name collision for model "%s". It is used for both %s and %s. Use the tyepMapping setting in your schema
+            config to provide a custom name for the model.',
+                $modelType->getName(),
+                $existing->getModel()->getSourceClass(),
+                $modelType->getModel()->getSourceClass()
+            );
+        }
         $typeObj = $existing
             ? $existing->mergeWith($modelType)
             : $modelType;
@@ -1115,6 +1154,65 @@ class Schema implements ConfigurationApplier
     }
 
     /**
+     * @param AbstractBulkLoader $loader
+     * @param array $modelConfig
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function applyBulkLoader(AbstractBulkLoader $loader, array $modelConfig): self
+    {
+        $set = $this->getDefaultBulkLoaderSet();
+        $set->addLoader($loader);
+
+        return $this->applyBulkLoaders($set, $modelConfig);
+    }
+
+    /**
+     * @param BulkLoaderSet $loaders
+     * @param array $modelConfig
+     * @return $this
+     * @throws SchemaBuilderException
+     */
+    public function applyBulkLoaders(BulkLoaderSet $loaders, array $modelConfig): self
+    {
+        $collection = $loaders->process();
+        $count = 0;
+        foreach ($collection->getClasses() as $includedClass) {
+            $modelType = $this->createModel($includedClass, $modelConfig);
+            if (!$modelType) {
+                continue;
+            }
+            $this->logger->debug("Bulk loaded $includedClass");
+            $count++;
+            $this->addModel($modelType);
+        }
+
+        $this->logger->info("Bulk loaded $count classes");
+
+        return $this;
+    }
+
+    /**
+     * @return BulkLoaderSet
+     * @throws SchemaBuilderException
+     */
+    private function getDefaultBulkLoaderSet(): BulkLoaderSet
+    {
+        $loaders = [];
+        $default = $this->getConfig()->get('defaultBulkLoad');
+        if ($default && is_array($default)) {
+            foreach ($default as $id => $config) {
+                /* @var AbstractBulkLoader $defaultLoader */
+                $defaultLoader = Registry::inst()->getByID($id);
+                static::invariant($defaultLoader, 'Default loader %s not found', $id);
+                $loaders[] = $defaultLoader->applyConfig($config);
+            }
+        }
+
+        return BulkLoaderSet::create($loaders);
+    }
+
+    /**
      * @return array
      */
     public static function getInternalTypes(): array
@@ -1159,17 +1257,22 @@ class Schema implements ConfigurationApplier
     {
         static::invariant(
             empty($config) || ArrayLib::is_associative($config),
-            '%s configurations must be key value pairs of names to configurations.
-            Did you include an indexed array in your config?',
-            static::class
+            "%s configurations must be key value pairs of names to configurations.
+            Did you include an indexed array in your config?
+
+            Context: %s",
+            static::class,
+            json_encode($config)
         );
 
         if (!empty($allowedKeys)) {
             $invalidKeys = array_diff(array_keys($config), $allowedKeys);
             static::invariant(
                 empty($invalidKeys),
-                'Config contains invalid keys: %s',
-                implode(',', $invalidKeys)
+                "Config contains invalid keys: %s. Allowed keys are %s.\n\nContext: %s",
+                implode(',', $invalidKeys),
+                implode(',', $allowedKeys),
+                json_encode($config)
             );
         }
 
@@ -1177,8 +1280,9 @@ class Schema implements ConfigurationApplier
             $missingKeys = array_diff($requiredKeys, array_keys($config));
             static::invariant(
                 empty($missingKeys),
-                'Config is missing required keys: %s',
-                implode(',', $missingKeys)
+                "Config is missing required keys: %s.\n\nContext: %s",
+                implode(',', $missingKeys),
+                json_encode($config)
             );
         }
     }
@@ -1208,31 +1312,6 @@ class Schema implements ConfigurationApplier
         if (!$test) {
             $message = count($params) > 0 ? sprintf($message, ...$params) : $message;
             throw new SchemaBuilderException($message);
-        }
-    }
-
-    /**
-     * @param bool $verbose
-     * @return void
-     */
-    public static function setVerbose(bool $verbose): void
-    {
-        self::$verbose = $verbose;
-    }
-
-    /**
-     * Used for logging in tasks
-     * @param string $message
-     */
-    public static function message(string $message): void
-    {
-        if (!self::$verbose) {
-            return;
-        }
-        if (Director::is_cli()) {
-            fwrite(STDOUT, $message . PHP_EOL);
-        } else {
-            echo $message . "<br>";
         }
     }
 }

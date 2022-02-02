@@ -153,10 +153,10 @@ class SchemaBuilder
         // Flushless global sources
         $globalSrcs = $mergedSchema[Schema::SOURCE] ?? [];
         unset($mergedSchema[Schema::SOURCE]);
-        if (is_string($globalSrcs)) {
-            $globalSrcs = [Schema::ALL => $globalSrcs];
-        }
-
+        Schema::invariant(
+            is_array($globalSrcs),
+            'The "src" node in the global schema must be an array. Strings are not allowed.'
+        );
         Schema::assertValidConfig($globalSrcs);
         foreach ($globalSrcs as $configSrc => $data) {
             if ($data === false) {
@@ -169,9 +169,11 @@ class SchemaBuilder
         // Schema-specific flushless sources
         $configSrcs = $schema[Schema::SOURCE] ?? [];
         unset($schema[Schema::SOURCE]);
-        if (is_string($configSrcs)) {
-            $configSrcs = [$key => $configSrcs];
-        }
+        Schema::invariant(
+            is_array($configSrcs),
+            'The "src" node must be an array. Strings are not allowed.'
+        );
+
         foreach ($configSrcs as $configSrc => $data) {
             if ($data === false) {
                 continue;
@@ -239,6 +241,7 @@ class SchemaBuilder
         $config = [
             Schema::SCHEMA_CONFIG => [],
             Schema::TYPES => [],
+            Schema::BULK_LOAD => [],
             Schema::MODELS => [],
             Schema::QUERIES => [],
             Schema::MUTATIONS => [],

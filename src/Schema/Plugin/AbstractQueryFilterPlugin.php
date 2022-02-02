@@ -3,6 +3,7 @@
 
 namespace SilverStripe\GraphQL\Schema\Plugin;
 
+use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
@@ -18,7 +19,6 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Services\NestedInputBuilder;
 use SilverStripe\GraphQL\Schema\Type\InputType;
-use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\Type;
 
 /**
@@ -47,6 +47,7 @@ abstract class AbstractQueryFilterPlugin implements SchemaUpdater, ModelQueryPlu
      * Creates all the { eq: String, lte: String }, { eq: Int, lte: Int } etc types for comparisons
      * @param Schema $schema
      * @throws SchemaBuilderException
+     * @throws NotFoundExceptionInterface
      */
     public static function updateSchema(Schema $schema): void
     {
@@ -56,7 +57,11 @@ abstract class AbstractQueryFilterPlugin implements SchemaUpdater, ModelQueryPlu
         if (empty($filters)) {
             return;
         }
-        foreach (Schema::getInternalTypes() as $typeName) {
+        $scalarTypes = Schema::getInternalTypes();
+        foreach ($schema->getEnums() as $enum) {
+            $scalarTypes[] = $enum->getName();
+        }
+        foreach ($scalarTypes as $typeName) {
             $type = InputType::create(static::getLeafNodeType($typeName));
             foreach ($filters as $id => $filterInstance) {
                 if ($filterInstance instanceof ListFieldFilterInterface) {
@@ -78,7 +83,8 @@ abstract class AbstractQueryFilterPlugin implements SchemaUpdater, ModelQueryPlu
     public function apply(ModelQuery $query, Schema $schema, array $config = []): void
     {
         $fields = $config['fields'] ?? Schema::ALL;
-        $builder = NestedInputBuilder::create($query, $schema, $fields);
+        $resolvers = $config['resolve'] ?? [];
+        $builder = NestedInputBuilder::create($query, $schema, $fields, $resolvers);
         $this->updateInputBuilder($builder);
         $builder->populateSchema();
         if (!$builder->getRootType()) {
@@ -87,12 +93,18 @@ abstract class AbstractQueryFilterPlugin implements SchemaUpdater, ModelQueryPlu
         $query->addArg($this->getFieldName(), $builder->getRootType()->getName());
         $canonicalType = $schema->getCanonicalType($query->getNamedType());
         $rootType = $canonicalType ? $canonicalType->getName() : $query->getNamedType();
+        $resolvers = $builder->getResolvers();
+        $context = [
+            'fieldName' => $this->getFieldName(),
+            'rootType' => $rootType,
+        ];
+        if (!empty($resolvers)) {
+            $context['resolvers'] = $resolvers;
+        }
+
         $query->addResolverAfterware(
             $this->getResolver($config),
-            [
-                'fieldName' => $this->getFieldName(),
-                'rootType' => $rootType,
-            ]
+            $context
         );
     }
 

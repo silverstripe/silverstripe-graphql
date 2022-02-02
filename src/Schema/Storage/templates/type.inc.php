@@ -10,8 +10,10 @@ use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\InputObjectType;
 use SilverStripe\GraphQL\Schema\Resolver\ComposedResolver;
 
+// @type:<?=$type->getName(); ?>
 
-class <?=$type->getName() ?> extends <?php if ($type->getIsInput()) :
+
+class <?=$globals['obfuscator']->obfuscate($type->getName()) ?> extends <?php if ($type->getIsInput()) :
     ?>InputObjectType<?php
       else :
             ?>ObjectType<?php

@@ -16,7 +16,7 @@ abstract class MiddlewareProcessTestBase extends SapphireTest
      */
     protected $defaultCallback;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->defaultCallback = function () {

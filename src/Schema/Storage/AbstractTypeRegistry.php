@@ -8,6 +8,7 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ListOfType;
 use Exception;
+use SilverStripe\Core\Injector\Injector;
 
 abstract class AbstractTypeRegistry
 {
@@ -34,12 +35,15 @@ abstract class AbstractTypeRegistry
      */
     protected static function fromCache(string $typename)
     {
+        /* @var NameObfuscator $obfuscator */
+        $obfuscator = Injector::inst()->get(NameObfuscator::class);
         $type = null;
         if (!isset(static::$types[$typename])) {
-            $file = static::getSourceDirectory() . DIRECTORY_SEPARATOR . $typename . '.php';
+            $obfuscatedName = $obfuscator->obfuscate($typename);
+            $file = static::getSourceDirectory() . DIRECTORY_SEPARATOR . $obfuscatedName . '.php';
             if (file_exists($file)) {
                 require_once($file);
-                $cls = static::getSourceNamespace() . '\\' . $typename;
+                $cls = static::getSourceNamespace() . '\\' . $obfuscatedName;
                 if (class_exists($cls)) {
                     $type = new $cls();
                 }

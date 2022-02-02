@@ -86,7 +86,16 @@ class ModelType extends Type implements ExtraTypeProvider
         } else {
             $fields = array_merge($this->getInitialFields(), $fieldConfig);
             Schema::assertValidConfig($fields);
-
+            if (isset($fields[Schema::ALL])) {
+                $all = $fields[Schema::ALL];
+                unset($fields[Schema::ALL]);
+                $fields = array_merge(
+                    [
+                    Schema::ALL => $all,
+                    ],
+                    $fields
+                );
+            }
             foreach ($fields as $fieldName => $data) {
                 if ($data === false) {
                     unset($this->fields[$fieldName]);

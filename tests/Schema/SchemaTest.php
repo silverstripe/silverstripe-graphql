@@ -4,12 +4,11 @@ namespace SilverStripe\GraphQL\Tests\Schema;
 
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
-use SilverStripe\GraphQL\Schema\DataObject\DataObjectModel;
+use SilverStripe\GraphQL\Config\ModelConfiguration;
 use SilverStripe\GraphQL\Schema\DataObject\ModelCreator;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Field\Mutation;
 use SilverStripe\GraphQL\Schema\Field\Query;
-use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\Type\Enum;
@@ -19,11 +18,13 @@ use SilverStripe\GraphQL\Schema\Type\Scalar;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\UnionType;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
+use SilverStripe\GraphQL\Tests\Fake\SubFake\FakePage as SubFakePage;
 
 class SchemaTest extends SapphireTest
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         // Kill the global schema
@@ -257,6 +258,27 @@ class SchemaTest extends SapphireTest
         Schema::assertValidConfig(['foo' => 'bar'], [], ['foo']);
 
         Schema::assertValidConfig([]);
+    }
+
+    public function testDuplicateModelThrows()
+    {
+        $schema = $this->buildSchema();
+        $schema->addModelbyClassName(FakePage::class);
+        $this->expectException(SchemaBuilderException::class);
+        $schema->addModelbyClassName(SubFakePage::class);
+    }
+
+    public function testTypeMapping()
+    {
+        $schema = $this->buildSchema();
+        $schema->getConfig()->setTypeMapping([
+            SubFakePage::class => 'SubFakePage',
+        ]);
+        $schema->addModelbyClassName(FakePage::class);
+        $schema->addModelbyClassName(SubFakePage::class);
+
+        $this->assertInstanceOf(ModelType::class, $schema->getModel('FakePage'));
+        $this->assertInstanceOf(ModelType::class, $schema->getModel('SubFakePage'));
     }
 
     public static function noop()

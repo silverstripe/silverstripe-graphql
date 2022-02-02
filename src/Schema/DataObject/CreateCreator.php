@@ -11,6 +11,7 @@ use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\SchemaConfigProvider;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelMutation;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelOperation;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -22,6 +23,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use Closure;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\FieldType\DBEnum;
 
 /**
  * Creates a "create" mutation for a DataObject
@@ -135,7 +137,16 @@ class CreateCreator implements OperationCreator, InputTypeProvider
                 continue;
             }
             $type = $fieldObj->getNamedType();
-            if ($type && Schema::isInternalType($type)) {
+            if (!$type) {
+                continue;
+            }
+            $isScalar = Schema::isInternalType($type);
+            if (!$isScalar && $fieldObj instanceof ModelField) {
+                $dataClass = $fieldObj->getMetadata()->get('dataClass');
+                $isScalar = $dataClass === DBEnum::class || is_subclass_of($dataClass, DBEnum::class);
+            }
+
+            if ($isScalar) {
                 $fieldMap[$fieldName] = $type;
             }
         }

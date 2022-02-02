@@ -22,7 +22,7 @@ class HandlerTest extends SapphireTest
     /**
      * {@inheritDoc}
      */
-    protected function setUp() : void
+    protected function setUp(): void
     {
         parent::setUp();
         Handler::config()->remove('authenticators');

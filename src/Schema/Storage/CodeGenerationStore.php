@@ -8,9 +8,11 @@ use GraphQL\Type\SchemaConfig as GraphQLSchemaConfig;
 use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
+use SilverStripe\GraphQL\Schema\Logger;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\StorableSchema;
@@ -58,7 +60,14 @@ class CodeGenerationStore implements SchemaStorageInterface
      * @var string
      * @config
      */
-    private static $dirName = '.graphql';
+    private static $dirName = '.graphql-generated';
+
+    /**
+     * @var string[]
+     */
+    private static $dependencies = [
+        'Obfuscator' => '%$' . NameObfuscator::class,
+    ];
 
     /**
      * @var string
@@ -86,6 +95,16 @@ class CodeGenerationStore implements SchemaStorageInterface
     private $graphqlSchema;
 
     /**
+     * @var NameObfuscator
+     */
+    private $obfuscator;
+
+    /**
+     * @var bool
+     */
+    private $verbose = true;
+
+    /**
      * @param string $name
      * @param CacheInterface $cache
      */
@@ -104,6 +123,7 @@ class CodeGenerationStore implements SchemaStorageInterface
      */
     public function persistSchema(StorableSchema $schema): void
     {
+        $logger = Logger::singleton();
         if (!$schema->exists()) {
             throw new EmptySchemaException(sprintf(
                 'Schema %s is empty',
@@ -117,10 +137,10 @@ class CodeGenerationStore implements SchemaStorageInterface
         $temp = $this->getTempDirectory();
         $dest = $this->getDirectory();
         if ($fs->exists($dest)) {
-            Schema::message('Moving current schema to temp folder');
+            $logger->info('Moving current schema to temp folder');
             $fs->mirror($dest, $temp);
         } else {
-            Schema::message('Creating new schema');
+            $logger->info('Creating new schema');
             try {
                 $fs->mkdir($temp);
                 // Ensure none of these files get loaded into the manifest
@@ -140,9 +160,11 @@ class CodeGenerationStore implements SchemaStorageInterface
         }
 
         $templateDir = static::getTemplateDir();
+        $obfuscator = $this->getObfuscator();
         $globals = [
             'typeClassName' => self::TYPE_CLASS_NAME,
             'namespace' => $this->getNamespace(),
+            'obfuscator' => $obfuscator,
         ];
 
         $config = $schema->getConfig()->toArray();
@@ -209,7 +231,8 @@ class CodeGenerationStore implements SchemaStorageInterface
                         continue;
                     }
                 }
-                $file = Path::join($temp, $name . '.php');
+                $obfuscatedName = $obfuscator->obfuscate($name);
+                $file = Path::join($temp, $obfuscatedName . '.php');
                 $encoder = Encoder::create(Path::join($templateDir, $template), $type, $globals);
                 $code = $encoder->encode();
                 $fs->dumpFile($file, $this->toCode($code));
@@ -229,7 +252,14 @@ class CodeGenerationStore implements SchemaStorageInterface
 
         /* @var SplFileInfo $file */
         foreach ($currentFiles as $file) {
-            $type = $file->getBasename('.php');
+            $contents = $file->getContents();
+            preg_match('/\/\/ @type:([A-Za-z0-9+_]+)/', $contents, $matches);
+            Schema::invariant(
+                $matches,
+                'Could not find type name in file %s',
+                $file->getPathname()
+            );
+            $type = $matches[1];
             if (!in_array($type, $touched)) {
                 $fs->remove($file->getPathname());
                 $this->getCache()->delete($type);
@@ -239,34 +269,34 @@ class CodeGenerationStore implements SchemaStorageInterface
 
         // Move the new schema into the proper destination
         if ($fs->exists($dest)) {
-            Schema::message('Deleting current schema');
+            $logger->info('Deleting current schema');
             $fs->remove($dest);
         }
 
-        Schema::message('Migrating new schema');
+        $logger->info('Migrating new schema');
         $fs->mirror($temp, $dest);
-        Schema::message('Deleting temp schema');
+        $logger->info('Deleting temp schema');
         $fs->remove($temp);
 
-        Schema::message("Total types: $total");
-        Schema::message(sprintf('Types built: %s', count($built)));
+        $logger->info("Total types: $total");
+        $logger->info(sprintf('Types built: %s', count($built)));
         $snapshot = array_slice($built, 0, 10);
         foreach ($snapshot as $type) {
-            Schema::message('*' . $type);
+            $logger->info('*' . $type);
         }
         $diff = count($built) - count($snapshot);
         if ($diff > 0) {
-            Schema::message(sprintf('(... and %s more)', $diff));
+            $logger->info(sprintf('(... and %s more)', $diff));
         }
 
-        Schema::message(sprintf('Types deleted: %s', count($deleted)));
+        $logger->info(sprintf('Types deleted: %s', count($deleted)));
         $snapshot = array_slice($deleted, 0, 10);
         foreach ($snapshot as $type) {
-            Schema::message('*' . $type);
+            $logger->info('*' . $type);
         }
         $diff = count($deleted) - count($snapshot);
         if ($diff > 0) {
-            Schema::message(sprintf('(... and %s more)', $diff));
+            $logger->info(sprintf('(... and %s more)', $diff));
         }
     }
 
@@ -381,6 +411,36 @@ class CodeGenerationStore implements SchemaStorageInterface
     public function setRootDir(string $rootDir): CodeGenerationStore
     {
         $this->rootDir = $rootDir;
+        return $this;
+    }
+
+    /**
+     * @return NameObfuscator
+     */
+    public function getObfuscator(): NameObfuscator
+    {
+        return $this->obfuscator;
+    }
+
+    /**
+     * @param NameObfuscator $obfuscator
+     * @return CodeGenerationStore
+     */
+    public function setObfuscator(NameObfuscator $obfuscator): CodeGenerationStore
+    {
+        $this->obfuscator = $obfuscator;
+        return $this;
+    }
+
+    /**
+     * If true, s
+     * @param bool $bool
+     * @return $this
+     */
+    public function setVerbose(bool $bool): self
+    {
+        $this->verbose = $bool;
+
         return $this;
     }
 

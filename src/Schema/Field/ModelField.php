@@ -24,6 +24,11 @@ class ModelField extends Field
     private $modelTypeFields = null;
 
     /**
+     * @var string|null
+     */
+    private $resolvedModelClass = null;
+
+    /**
      * @var string
      */
     private $property;
@@ -37,7 +42,7 @@ class ModelField extends Field
      * ModelField constructor.
      * @param string $name
      * @param $config
-     * @param SchemaModelInterface $model
+     * @param SchemaModelInterface $model The model containing this field (different from the model this field might resolve to)
      * @throws SchemaBuilderException
      */
     public function __construct(string $name, $config, SchemaModelInterface $model)
@@ -78,6 +83,10 @@ class ModelField extends Field
             $this->setResolver($this->getModel()->getDefaultResolver($this->getResolverContext()));
         }
 
+        if (isset($config['resolvedModelClass'])) {
+            $this->resolvedModelClass = $config['resolvedModelClass'];
+        }
+
         $this->modelTypeFields = $config['fields'] ?? null;
 
         unset($config['fields']);
@@ -105,7 +114,8 @@ class ModelField extends Field
         if (Schema::isInternalType($type)) {
             return null;
         }
-        $model = $this->getModel()->getModelTypeForField($this->getName());
+
+        $model = $this->getModel()->getModelTypeForField($this->getName(), $this->resolvedModelClass);
         if ($model) {
             $config = [];
             if ($this->modelTypeFields) {
@@ -150,6 +160,27 @@ class ModelField extends Field
     public function getMetadata(): Configuration
     {
         return $this->metadata;
+    }
+
+    public function mergeWith(Field $field): Field
+    {
+        if ($field->getProperty()) {
+            $this->setProperty($field->getProperty());
+        }
+        return parent::mergeWith($field);
+    }
+
+    /**
+     * @return string
+     * @throws SchemaBuilderException
+     */
+    public function getSignature(): string
+    {
+        $parentSignature = parent::getSignature();
+        if (!$this->getProperty()) {
+            return $parentSignature;
+        }
+        return md5($parentSignature . $this->getProperty());
     }
 
     /**

@@ -3,6 +3,7 @@
 
 namespace SilverStripe\GraphQL\Schema\DataObject;
 
+use Psr\Container\NotFoundExceptionInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
@@ -11,7 +12,6 @@ use SilverStripe\GraphQL\Schema\Field\ModelField;
 use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\BaseFieldsProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\DefaultFieldsProvider;
-use SilverStripe\GraphQL\Schema\Interfaces\ExtraTypeProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelBlacklist;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
@@ -80,6 +80,7 @@ class DataObjectModel implements
      * @param string $class
      * @param SchemaConfig $config
      * @throws SchemaBuilderException
+     * @throws NotFoundExceptionInterface
      */
     public function __construct(string $class, SchemaConfig $config)
     {
@@ -140,7 +141,7 @@ class DataObjectModel implements
             }
             return null;
         }
-        $type = $this->getModelConfiguration()->getTypeName($class);
+        $type = (new static($class, $this->getSchemaConfig()))->getTypeName();
         if ($this->isList($result)) {
             $queryConfig = array_merge([
                 'type' => sprintf('[%s!]!', $type),
@@ -323,13 +324,18 @@ class DataObjectModel implements
      * get that field.
      *
      * @param string $fieldName
+     * @param string $class Optional class name for model fields which would result in database queries.
+     *                      The database is not always available when the schema is built (e.g. on deployment servers).
      * @return ModelType|null
      * @throws SchemaBuilderException
      */
-    public function getModelTypeForField(string $fieldName): ?ModelType
+    public function getModelTypeForField(string $fieldName, $class = null): ?ModelType
     {
-        $result = $this->getFieldAccessor()->accessField($this->dataObject, $fieldName);
-        $class = $this->getModelClass($result);
+        if (!$class) {
+            $result = $this->getFieldAccessor()->accessField($this->dataObject, $fieldName);
+            $class = $this->getModelClass($result);
+        }
+
         if (!$class) {
             return null;
         }
@@ -367,7 +373,13 @@ class DataObjectModel implements
      */
     public function getTypeName(): string
     {
-        return $this->getModelConfiguration()->getTypeName(get_class($this->dataObject));
+        $class = get_class($this->dataObject);
+        $mapping = $this->getSchemaConfig()->getTypeMapping();
+        if (isset($mapping[$class])) {
+            return $mapping[$class];
+        }
+
+        return $this->getModelConfiguration()->getTypeName($class);
     }
 
     /**
