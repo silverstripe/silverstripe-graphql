@@ -41,7 +41,7 @@ class Build extends Controller
             echo $renderer->renderInfo("GraphQL Schema Builder", Director::absoluteBaseURL());
             echo "<div class=\"build\">";
         }
-        $clear = (bool) $request->getVar('clear');
+        $clear = true;
         $verbosity = strtoupper($request->getVar('verbosity') ?? 'INFO');
         $constantRef = sprintf('%s::%s', Logger::class, $verbosity);
         Schema::invariant(
