@@ -26,8 +26,11 @@ class IntrospectionProvider extends Extension
         try {
             $manager = $this->owner->getManager();
         } catch (Exception $ex) {
-            return (new HTTPResponse(json_encode(["error" => "Server error"]), 500))
-                ->addHeader('Content-Type', 'application/json');
+            if ($ex->getMessage() == "Authentication required") {
+                return (new HTTPResponse(json_encode(["error" => "Authentication required"]), 500))
+                    ->addHeader('Content-Type', 'application/json');
+            }
+            throw $ex;
         }
 
         $fragments = StaticSchema::inst()->introspectTypes($manager);
