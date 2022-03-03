@@ -2527,7 +2527,7 @@ property on the `Manager` instance.
 SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Manager.default:
     properties:
-      AllowIntrospection: true
+      allowIntrospection: true
 ```
 
 
