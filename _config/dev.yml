@@ -13,3 +13,7 @@ SilverStripe\GraphQL\Dev\DevelopmentAdmin:
       controller: SilverStripe\GraphQL\Dev\Build
       links:
         build: Build the GraphQL schema
+    clear:
+      controller: SilverStripe\GraphQL\Dev\Clear
+      links:
+        clear: Clear the GraphQL schema
