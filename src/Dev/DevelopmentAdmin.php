@@ -45,6 +45,11 @@ class DevelopmentAdmin extends Controller
             Security::permissionFailure($this);
             return;
         }
+
+        // Define custom logger
+        $logger = Logger::singleton();
+        $logger->setVerbosity(Logger::INFO);
+        Injector::inst()->registerService($logger, LoggerInterface::class . '.graphql-build');
     }
 
     public function index(HTTPRequest $request)

@@ -45,7 +45,7 @@ class Build extends Controller
         }
         $clear = true;
 
-        $this->buildSchema($request->getVar('schema'), $clear, $level);
+        $this->buildSchema($request->getVar('schema'), $clear);
 
         if ($isBrowser) {
             echo "</div>";
