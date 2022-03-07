@@ -3,9 +3,11 @@
 
 namespace SilverStripe\GraphQL\Dev;
 
+use Psr\Log\LoggerInterface;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\DebugView;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
@@ -67,7 +69,7 @@ class Build extends Controller
      */
     public function buildSchema($key = null, $clear = true, int $level = Logger::INFO): void
     {
-        $logger = Logger::singleton();
+        $logger = Injector::inst()->get(LoggerInterface::class . '.graphql-build');
         $logger->setVerbosity($level);
         $keys = $key ? [$key] : array_keys(Schema::config()->get('schemas'));
         $keys = array_filter($keys, function ($key) {

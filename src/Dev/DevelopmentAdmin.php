@@ -11,6 +11,9 @@ use SilverStripe\Dev\DebugView;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\Security;
 use Exception;
+use Psr\Log\LoggerInterface;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\GraphQL\Schema\Logger;
 
 class DevelopmentAdmin extends Controller
 {
@@ -42,6 +45,11 @@ class DevelopmentAdmin extends Controller
             Security::permissionFailure($this);
             return;
         }
+
+        Injector::inst()->registerService(
+            Logger::singleton(),
+            LoggerInterface::class . '.graphql-build',
+        );
     }
 
     public function index(HTTPRequest $request)

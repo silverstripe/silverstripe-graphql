@@ -3,9 +3,11 @@
 namespace SilverStripe\GraphQL\Schema\BulkLoader;
 
 use InvalidArgumentException;
+use Psr\Log\LoggerInterface;
 use SilverStripe\Core\ClassInfo;
 use ReflectionException;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\ConfigurationApplier;
 use SilverStripe\GraphQL\Schema\Logger;
@@ -80,7 +82,7 @@ class BulkLoaderSet implements ConfigurationApplier
      */
     public function process(): Collection
     {
-        $logger = Logger::singleton();
+        $logger = Injector::inst()->get(LoggerInterface::class . '.graphql-build');
         $collection = $this->initialCollection;
         $logger->debug(sprintf(
             'Bulk loader initial collection size: %s',

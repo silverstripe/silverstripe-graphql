@@ -172,7 +172,7 @@ class Logger implements LoggerInterface
         if ($cli) {
             fwrite(STDOUT, $formatted . PHP_EOL);
         } else {
-            // echo $formatted . "<br>";
+            echo $formatted . "<br>";
         }
     }
 }
