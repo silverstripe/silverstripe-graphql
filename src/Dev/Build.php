@@ -44,14 +44,7 @@ class Build extends Controller
             echo "<div class=\"build\">";
         }
         $clear = true;
-        $verbosity = strtoupper($request->getVar('verbosity') ?? 'INFO');
-        $constantRef = sprintf('%s::%s', Logger::class, $verbosity);
-        Schema::invariant(
-            defined($constantRef),
-            'Illegal verbosity: %s',
-            $verbosity
-        );
-        $level = constant($constantRef);
+
         $this->buildSchema($request->getVar('schema'), $clear, $level);
 
         if ($isBrowser) {
@@ -67,10 +60,10 @@ class Build extends Controller
      * @throws SchemaNotFoundException
      * @throws SchemaBuilderException
      */
-    public function buildSchema($key = null, $clear = true, int $level = Logger::INFO): void
+    public function buildSchema($key = null, $clear = true): void
     {
+        /** @var LoggerInterface $logger */
         $logger = Injector::inst()->get(LoggerInterface::class . '.graphql-build');
-        $logger->setVerbosity($level);
         $keys = $key ? [$key] : array_keys(Schema::config()->get('schemas'));
         $keys = array_filter($keys, function ($key) {
             return $key !== Schema::ALL;

@@ -46,10 +46,9 @@ class DevelopmentAdmin extends Controller
             return;
         }
 
-        Injector::inst()->registerService(
-            Logger::singleton(),
-            LoggerInterface::class . '.graphql-build',
-        );
+        $logger = Logger::singleton();
+        $logger->setVerbosity(Logger::INFO);
+        Injector::inst()->registerService($logger, LoggerInterface::class . '.graphql-build');
     }
 
     public function index(HTTPRequest $request)
