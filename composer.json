@@ -6,7 +6,7 @@
     "require": {
         "silverstripe/framework": "^4.10",
         "silverstripe/vendor-plugin": "^1.0",
-        "webonyx/graphql-php": "~0.12.6"
+        "webonyx/graphql-php": "^14"
     },
     "conflict": {
         "silverstripe/versioned-admin": "<1.8",
