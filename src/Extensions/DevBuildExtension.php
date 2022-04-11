@@ -34,13 +34,21 @@ class DevBuildExtension extends DataExtension
             return;
         }
         if (!self::$done) {
-            // Define custom logger
-            $logger = Logger::singleton();
-            $logger->setVerbosity(Logger::INFO);
-            Injector::inst()->registerService($logger, LoggerInterface::class . '.graphql-build');
+            // Get the current graphQL logger
+            $defaultLogger = Injector::inst()->get(LoggerInterface::class . '.graphql-build');
 
-            Build::singleton()->buildSchema();
-            self::$done = true;
+            try {
+                // Define custom logger
+                $logger = Logger::singleton();
+                $logger->setVerbosity(Logger::INFO);
+                Injector::inst()->registerService($logger, LoggerInterface::class . '.graphql-build');
+
+                Build::singleton()->buildSchema();
+                self::$done = true;
+            } finally {
+                // Restore default logger back to its starting state
+                Injector::inst()->registerService($defaultLogger, LoggerInterface::class . '.graphql-build');
+            }
         }
     }
 }
