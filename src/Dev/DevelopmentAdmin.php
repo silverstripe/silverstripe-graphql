@@ -19,6 +19,7 @@ class DevelopmentAdmin extends Controller
     ];
 
     private static $url_handlers = [
+        '' => 'index',
         '$Action' => 'runRegisteredController',
     ];
 

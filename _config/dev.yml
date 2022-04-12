@@ -6,7 +6,7 @@ SilverStripe\Dev\DevelopmentAdmin:
     graphql:
       controller: SilverStripe\GraphQL\Dev\DevelopmentAdmin
       links:
-        build: 'Build/rebuild the GraphQL schema'
+        graphql: 'List GraphQL development tools'
 SilverStripe\GraphQL\Dev\DevelopmentAdmin:
   registered_controllers:
     build:
