@@ -7,7 +7,6 @@ use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\IntType;
 use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\StringType;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
@@ -15,6 +14,7 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Create;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeCRUDExtension;
+use SilverStripe\GraphQL\Tests\Fake\FakeResolveInfo;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 use SilverStripe\Security\Member;
 
@@ -76,7 +76,7 @@ class CreateTest extends SapphireTest
             [
                 'currentUser' => Member::create(),
             ],
-            new ResolveInfo([])
+            new FakeResolveInfo()
         );
 
         if ($shouldExtend) {
@@ -148,7 +148,7 @@ class CreateTest extends SapphireTest
             null,
             [],
             ['currentUser' => Member::create()],
-            new ResolveInfo([])
+            new FakeResolveInfo()
         );
     }
 }

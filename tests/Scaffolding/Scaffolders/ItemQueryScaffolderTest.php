@@ -3,11 +3,11 @@
 namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ItemQueryScaffolder;
 use SilverStripe\GraphQL\Tests\Fake\FakeQueryPermissionChecker;
+use SilverStripe\GraphQL\Tests\Fake\FakeResolveInfo;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
 
@@ -74,7 +74,7 @@ class ItemQueryScaffolderTest extends SapphireTest
         if ($allow === false) {
             $this->expectException('Exception');
         }
-        $result = $arr['resolve'](null, [], ['currentUser' => null], new ResolveInfo([]));
+        $result = $arr['resolve'](null, [], ['currentUser' => null], new FakeResolveInfo());
         if ($allow !== false) {
             $this->assertNotNull($result);
             $this->assertEquals('Bar', $result->Foo);

@@ -7,13 +7,13 @@ use GraphQL\Type\Definition\IDType;
 use GraphQL\Type\Definition\ListOfType;
 use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\StringType;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Delete;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeCRUDExtension;
+use SilverStripe\GraphQL\Tests\Fake\FakeResolveInfo;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 use SilverStripe\Security\Member;
 
@@ -73,7 +73,7 @@ class DeleteTest extends SapphireTest
             [
                 'currentUser' => Member::create(),
             ],
-            new ResolveInfo([])
+            new FakeResolveInfo()
         );
 
         if ($shouldExtend) {
@@ -130,7 +130,7 @@ class DeleteTest extends SapphireTest
             $restrictedDataobject,
             ['IDs' => [$ID]],
             ['currentUser' => Member::create()],
-            new ResolveInfo([])
+            new FakeResolveInfo()
         );
     }
 }

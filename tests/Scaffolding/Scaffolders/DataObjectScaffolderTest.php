@@ -4,7 +4,6 @@ namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
 use Exception;
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\ResolveInfo;
 use InvalidArgumentException;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
@@ -23,8 +22,10 @@ use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
 use SilverStripe\GraphQL\Tests\Fake\FakeFieldAccessor;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
+use SilverStripe\GraphQL\Tests\Fake\FakeResolveInfo;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 use SilverStripe\ORM\FieldType\DBInt;
+use SilverStripe\View\ViewableData;
 
 class DataObjectScaffolderTest extends SapphireTest
 {
@@ -433,7 +434,11 @@ class DataObjectScaffolderTest extends SapphireTest
         $fields = $result->config['fields']();
         $myIntResolver = $fields['MyInt']['resolve'];
         $fake = new DataObjectFake(['MyInt' => 5]);
-        $value = $myIntResolver($fake, [], null, new ResolveInfo(['fieldName' => 'MyInt']));
+
+        $orig = StaticSchema::inst()->getFieldAccessor();
+        StaticSchema::inst()->setFieldAccessor($this->getMyFieldAccessor());
+        $value = $myIntResolver($fake, [], null, new FakeResolveInfo(['name' => 'MyInt', 'type' => 'int']));
+        StaticSchema::inst()->setFieldAccessor($orig);
 
         $this->assertEquals(5, $value);
         Config::modify()->merge(DBInt::class, 'graphql_type', [
@@ -461,9 +466,31 @@ class DataObjectScaffolderTest extends SapphireTest
         $fields = $result->config['fields']();
         $myIntResolver = $fields['MyInt']['resolve'];
 
-        $value = $myIntResolver($fake, [], null, new ResolveInfo(['fieldName' => 'MyInt']));
+        $orig = StaticSchema::inst()->getFieldAccessor();
+        StaticSchema::inst()->setFieldAccessor($this->getMyFieldAccessor());
+        $value = $myIntResolver($fake, [], null, new FakeResolveInfo(['name' => 'MyInt', 'type' => 'int']));
+        StaticSchema::inst()->setFieldAccessor($orig);
 
         $this->assertInstanceOf(DBInt::class, $value);
+    }
+
+    private function getMyFieldAccessor()
+    {
+        // same as FakeFieldAccessor, though without $field = strrev($fieldName)
+        return new class extends FakeFieldAccessor
+        {
+            public function getObjectFieldName(ViewableData $object, $fieldName, $opts = [])
+            {
+                return $object->hasField($fieldName) ? $fieldName : null;
+            }
+            public function getValue(ViewableData $object, $fieldName, $opts = [], $asObject = false)
+            {
+                if ($object->hasField($fieldName)) {
+                    return $object->obj($fieldName);
+                }
+                return $asObject ? $object->obj($fieldName): $object->$fieldName;
+            }
+        };
     }
 
     public function testCloneTo()
