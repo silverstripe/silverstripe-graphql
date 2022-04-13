@@ -3,12 +3,12 @@
 namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\ResolveInfo;
 use InvalidArgumentException;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\ListQueryScaffolder;
 use SilverStripe\GraphQL\Tests\Fake\FakeQueryPermissionChecker;
+use SilverStripe\GraphQL\Tests\Fake\FakeResolveInfo;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
 
@@ -195,7 +195,7 @@ class ListQueryScaffolderTest extends SapphireTest
 
         $scaffolder->addToManager($manager);
         $arr = $scaffolder->scaffold($manager);
-        $result = $arr['resolve'](null, [], ['currentUser' => null], new ResolveInfo([]));
+        $result = $arr['resolve'](null, [], ['currentUser' => null], new FakeResolveInfo());
         $this->assertNotNull($result);
         $expected = $allow === false ? 0 : 1;
         $this->assertCount($expected, $result);

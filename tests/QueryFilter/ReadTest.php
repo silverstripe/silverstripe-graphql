@@ -4,7 +4,6 @@ namespace SilverStripe\GraphQL\Tests\QueryFilter;
 
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\QueryFilter\DataObjectQueryFilter;
@@ -12,6 +11,7 @@ use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\Read;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\CRUD\ReadOne;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\SchemaScaffolder;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FakeResolveInfo;
 use SilverStripe\GraphQL\Tests\Fake\FilterDataList;
 
 class ReadTest extends SapphireTest
@@ -145,7 +145,7 @@ class ReadTest extends SapphireTest
             null,
             [],
             ['currentUser' => null],
-            new ResolveInfo([])
+            new FakeResolveInfo()
         );
 
         /* @var ReadOne|Read $read */
@@ -171,7 +171,7 @@ class ReadTest extends SapphireTest
                 ]
             ],
             ['currentUser' => null],
-            new ResolveInfo([])
+            new FakeResolveInfo()
         );
     }
 

@@ -42,7 +42,7 @@ class StringTypeParser implements TypeParserInterface
      */
     public static function isInternalType($type)
     {
-        $types = array_keys(Type::getInternalTypes());
+        $types = array_keys(Type::getStandardTypes());
 
         return in_array($type, $types);
     }

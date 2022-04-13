@@ -5,7 +5,6 @@ namespace SilverStripe\GraphQL\Tests;
 use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\InputObjectField;
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use InvalidArgumentException;
 use SilverStripe\Dev\SapphireTest;
@@ -13,6 +12,7 @@ use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Pagination\Connection;
 use SilverStripe\GraphQL\Pagination\SortInputTypeCreator;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FakeResolveInfo;
 use SilverStripe\GraphQL\Tests\Fake\PaginatedQueryFake;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\ORM\ArrayList;
@@ -195,7 +195,7 @@ class ConnectionTest extends SapphireTest
 
     public function testCollectionResolves()
     {
-        $resolve = $this->connection->resolve(null, [], [], new ResolveInfo([]));
+        $resolve = $this->connection->resolve(null, [], [], new FakeResolveInfo());
         $item = $resolve['edges']->first()->toMap();
         $this->assertEquals('testMyValidResolverValue', $item['MyValue']);
     }

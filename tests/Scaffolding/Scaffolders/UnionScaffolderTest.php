@@ -3,13 +3,13 @@
 namespace SilverStripe\GraphQL\Tests\Scaffolders\Scaffolding;
 
 use Exception;
-use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Manager;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\DataObjectScaffolder;
 use SilverStripe\GraphQL\Scaffolding\Scaffolders\UnionScaffolder;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeRedirectorPage;
+use SilverStripe\GraphQL\Tests\Fake\FakeResolveInfo;
 use SilverStripe\GraphQL\Tests\Fake\FakeSiteTree;
 use SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake;
 
@@ -38,21 +38,21 @@ class UnionScaffolderTest extends SapphireTest
         $this->assertEquals($scaffolder2->getTypeName(), $types[1]->config['name']);
 
         $fakeRedirector = new FakeRedirectorPage();
-        $result = $unionType->resolveType($fakeRedirector, [], new ResolveInfo([]));
+        $result = $unionType->resolveType($fakeRedirector, [], new FakeResolveInfo());
         //$result = $typeResolver(new FakeRedirectorPage());
 
         $this->assertEquals($scaffolder1->getTypeName(), $result->config['name']);
 
-        $result = $unionType->resolveType(new FakeSiteTree(), [], new ResolveInfo([]));
+        $result = $unionType->resolveType(new FakeSiteTree(), [], new FakeResolveInfo());
         $this->assertEquals($scaffolder2->getTypeName(), $result->config['name']);
 
         // FakePage was never added. Should fall back on the parent type (FakeSiteTree)
-        $result = $unionType->resolveType(new FakePage(), [], new ResolveInfo([]));
+        $result = $unionType->resolveType(new FakePage(), [], new FakeResolveInfo());
         $this->assertEquals($scaffolder2->getTypeName(), $result->config['name']);
 
         $ex = null;
         try {
-            $unionType->resolveType(new Manager(), [], new ResolveInfo([]));
+            $unionType->resolveType(new Manager(), [], new FakeResolveInfo());
         } catch (Exception $e) {
             $ex = $e->getMessage();
         }
@@ -61,7 +61,7 @@ class UnionScaffolderTest extends SapphireTest
 
         $ex = null;
         try {
-            $unionType->resolveType(new RestrictedDataObjectFake(), [], new ResolveInfo([]));
+            $unionType->resolveType(new RestrictedDataObjectFake(), [], new FakeResolveInfo());
         } catch (Exception $e) {
             $ex = $e->getMessage();
         }
