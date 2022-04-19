@@ -5,6 +5,7 @@ namespace SilverStripe\GraphQL\Schema\Storage;
 use Exception;
 use GraphQL\Type\Schema as GraphQLSchema;
 use GraphQL\Type\SchemaConfig as GraphQLSchemaConfig;
+use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
@@ -123,7 +124,7 @@ class CodeGenerationStore implements SchemaStorageInterface
      */
     public function persistSchema(StorableSchema $schema): void
     {
-        $logger = Logger::singleton();
+        $logger = Injector::inst()->get(LoggerInterface::class . '.graphql-build');
         if (!$schema->exists()) {
             throw new EmptySchemaException(sprintf(
                 'Schema %s is empty',

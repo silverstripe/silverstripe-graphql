@@ -1,0 +1,8 @@
+---
+Name: graphql-logging
+after: '#logging'
+---
+
+SilverStripe\Core\Injector\Injector:
+  # This will occasionally be overridden with SilverStripe\GraphQL\Schema\Logger to provide a nicer output on schema build task
+  Psr\Log\LoggerInterface.graphql-build: '%$Psr\Log\LoggerInterface.errorhandler'

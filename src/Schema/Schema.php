@@ -36,6 +36,7 @@ use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\GraphQL\Schema\Type\UnionType;
 use SilverStripe\ORM\ArrayLib;
 use Exception;
+use SilverStripe\Core\Injector\Injector;
 use TypeError;
 
 /**
@@ -148,7 +149,7 @@ class Schema implements ConfigurationApplier
 
         $this->schemaConfig = $schemaConfig ?: SchemaConfig::create();
         $this->state = Configuration::create();
-        $this->logger = Logger::singleton();
+        $this->logger = Injector::inst()->get(LoggerInterface::class . '.graphql-build');
     }
 
     /**

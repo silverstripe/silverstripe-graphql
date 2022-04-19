@@ -3,9 +3,11 @@
 
 namespace SilverStripe\GraphQL\Dev;
 
+use Psr\Log\LoggerInterface;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\DebugView;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
@@ -42,15 +44,8 @@ class Build extends Controller
             echo "<div class=\"build\">";
         }
         $clear = true;
-        $verbosity = strtoupper($request->getVar('verbosity') ?? 'INFO');
-        $constantRef = sprintf('%s::%s', Logger::class, $verbosity);
-        Schema::invariant(
-            defined($constantRef),
-            'Illegal verbosity: %s',
-            $verbosity
-        );
-        $level = constant($constantRef);
-        $this->buildSchema($request->getVar('schema'), $clear, $level);
+
+        $this->buildSchema($request->getVar('schema'), $clear);
 
         if ($isBrowser) {
             echo "</div>";
@@ -65,10 +60,10 @@ class Build extends Controller
      * @throws SchemaNotFoundException
      * @throws SchemaBuilderException
      */
-    public function buildSchema($key = null, $clear = true, int $level = Logger::INFO): void
+    public function buildSchema($key = null, $clear = true): void
     {
-        $logger = Logger::singleton();
-        $logger->setVerbosity($level);
+        /** @var LoggerInterface $logger */
+        $logger = Injector::inst()->get(LoggerInterface::class . '.graphql-build');
         $keys = $key ? [$key] : array_keys(Schema::config()->get('schemas'));
         $keys = array_filter($keys, function ($key) {
             return $key !== Schema::ALL;
