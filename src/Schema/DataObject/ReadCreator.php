@@ -40,7 +40,7 @@ class ReadCreator implements OperationCreator
         if (!$queryName) {
             $pluraliser = $model->getSchemaConfig()->getPluraliser();
             $suffix = $pluraliser ? $pluraliser($typeName) : $typeName;
-            $queryName = 'read' . ucfirst($suffix);
+            $queryName = 'read' . ucfirst($suffix ?? '');
         }
 
         $query = ModelQuery::create($model, $queryName)

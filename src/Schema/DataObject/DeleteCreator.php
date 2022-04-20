@@ -44,7 +44,7 @@ class DeleteCreator implements OperationCreator
         if (!$mutationName) {
             $pluraliser = $model->getSchemaConfig()->getPluraliser();
             $suffix = $pluraliser ? $pluraliser($typeName) : $typeName;
-            $mutationName = 'delete' . ucfirst($suffix);
+            $mutationName = 'delete' . ucfirst($suffix ?? '');
         }
 
         return ModelMutation::create($model, $mutationName)
@@ -73,7 +73,7 @@ class DeleteCreator implements OperationCreator
             $ids = [];
             DB::get_conn()->withTransaction(function () use ($args, $context, $info, $dataClass, $ids, $idField) {
                 // Build list to filter
-                if (strtolower($idField) === 'id') {
+                if (strtolower($idField ?? '') === 'id') {
                     $results = DataList::create($dataClass)
                         ->byIDs($args['ids']);
                 } else {

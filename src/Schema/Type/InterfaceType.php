@@ -129,9 +129,9 @@ class InterfaceType extends Type
             $this->getSortedPlugins(),
             array_map(function (Field $field) {
                 return $field->getSignature();
-            }, $fields),
+            }, $fields ?? []),
         ];
 
-        return md5(json_encode($components));
+        return md5(json_encode($components) ?? '');
     }
 }

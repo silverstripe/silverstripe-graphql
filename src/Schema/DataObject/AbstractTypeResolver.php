@@ -33,7 +33,7 @@ class AbstractTypeResolver
                     get_class($obj)
                 ));
             }
-            $class = get_parent_class($class);
+            $class = get_parent_class($class ?? '');
             Schema::invariant(
                 $class,
                 'Could not resolve type for %s.',

@@ -64,8 +64,8 @@ class Build extends Controller
     {
         /** @var LoggerInterface $logger */
         $logger = Injector::inst()->get(LoggerInterface::class . '.graphql-build');
-        $keys = $key ? [$key] : array_keys(Schema::config()->get('schemas'));
-        $keys = array_filter($keys, function ($key) {
+        $keys = $key ? [$key] : array_keys(Schema::config()->get('schemas') ?? []);
+        $keys = array_filter($keys ?? [], function ($key) {
             return $key !== Schema::ALL;
         });
 

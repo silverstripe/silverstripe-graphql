@@ -30,13 +30,13 @@ class InheritanceLoader extends AbstractBulkLoader
         foreach ($collection->getClasses() as $class) {
             $isIncluded = false;
             foreach ($this->includeList as $pattern) {
-                if ($class === $pattern || is_subclass_of($class, $pattern)) {
+                if ($class === $pattern || is_subclass_of($class, $pattern ?? '')) {
                     $isIncluded = true;
                     break;
                 }
             }
             foreach ($this->excludeList as $pattern) {
-                if ($class === $pattern || is_subclass_of($class, $pattern)) {
+                if ($class === $pattern || is_subclass_of($class, $pattern ?? '')) {
                     $isIncluded = false;
                     break;
                 }
@@ -57,7 +57,7 @@ class InheritanceLoader extends AbstractBulkLoader
     public function include(array $include): AbstractBulkLoader
     {
         foreach ($include as $class) {
-            if (!class_exists($class)) {
+            if (!class_exists($class ?? '')) {
                 throw new InvalidArgumentException(sprintf(
                     'Class %s given to %s does not exist',
                     $class,
@@ -75,7 +75,7 @@ class InheritanceLoader extends AbstractBulkLoader
     public function exclude(array $exclude): AbstractBulkLoader
     {
         foreach ($exclude as $class) {
-            if (!class_exists($class)) {
+            if (!class_exists($class ?? '')) {
                 throw new InvalidArgumentException(sprintf(
                     'Class %s given to %s does not exist',
                     $class,

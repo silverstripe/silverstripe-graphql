@@ -41,10 +41,10 @@ abstract class AbstractTypeRegistry
         if (!isset(static::$types[$typename])) {
             $obfuscatedName = $obfuscator->obfuscate($typename);
             $file = static::getSourceDirectory() . DIRECTORY_SEPARATOR . $obfuscatedName . '.php';
-            if (file_exists($file)) {
+            if (file_exists($file ?? '')) {
                 require_once($file);
                 $cls = static::getSourceNamespace() . '\\' . $obfuscatedName;
-                if (class_exists($cls)) {
+                if (class_exists($cls ?? '')) {
                     $type = new $cls();
                 }
             }

@@ -58,7 +58,7 @@ class Collection
      */
     public function removeFile(string $path): self
     {
-        $class = array_search($path, $this->manifest);
+        $class = array_search($path, $this->manifest ?? []);
         unset($this->manifest[$class]);
 
         return $this;
@@ -69,7 +69,7 @@ class Collection
      */
     public function getClasses(): array
     {
-        return array_keys($this->manifest);
+        return array_keys($this->manifest ?? []);
     }
 
     /**
@@ -77,7 +77,7 @@ class Collection
      */
     public function getFiles(): array
     {
-        return array_values($this->manifest);
+        return array_values($this->manifest ?? []);
     }
 
     /**
@@ -98,7 +98,7 @@ class Collection
     {
         $manifest = [];
         foreach ($classList as $class) {
-            if (!class_exists($class)) {
+            if (!class_exists($class ?? '')) {
                 continue;
             }
             $reflection = new ReflectionClass($class);

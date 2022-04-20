@@ -57,7 +57,7 @@ class EncodedType implements Encoder
             $code .= CodeGenerationStore::TYPE_CLASS_NAME . '::' . $func . '(';
         }
         $code .= CodeGenerationStore::TYPE_CLASS_NAME . '::' . $named . '()';
-        $code .= str_repeat(')', count($path));
+        $code .= str_repeat(')', count($path ?? []));
 
         return $code;
     }

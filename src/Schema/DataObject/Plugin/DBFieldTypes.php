@@ -82,10 +82,10 @@ class DBFieldTypes implements ModelTypePlugin
         $values = $enumField->enumValues();
 
         // If another enum exists with the same values, recycle it.
-        $hash = md5(json_encode($values));
+        $hash = md5(json_encode($values) ?? '');
         $enum = null;
         foreach ($schema->getEnums() as $candidate) {
-            $candidateHash = md5(json_encode($candidate->getValues()));
+            $candidateHash = md5(json_encode($candidate->getValues()) ?? '');
             if ($candidateHash === $hash) {
                 $enum = $candidate;
                 break;

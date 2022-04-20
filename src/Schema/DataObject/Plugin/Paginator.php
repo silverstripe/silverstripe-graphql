@@ -44,7 +44,7 @@ class Paginator extends PaginationPlugin
                     'List on field %s has already been paginated. Was the plugin executed twice?',
                     $info->fieldName
                 );
-                return static::createPaginationResult(count($list), $list, $maxLimit, 0);
+                return static::createPaginationResult(count($list ?? []), $list, $maxLimit, 0);
             }
 
             $total = $list->count();

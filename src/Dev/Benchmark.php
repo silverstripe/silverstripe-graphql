@@ -36,7 +36,7 @@ class Benchmark
             throw new \Exception(sprintf('Benchmark ID %s was never started', $id));
         }
         $diff = microtime(true) - $benchmark;
-        $rounded = round($diff, 3);
+        $rounded = round($diff ?? 0.0, 3);
         $ms = $rounded * 1000;
 
         $result = $message ? sprintf($message, $ms) : sprintf('[%s]: %sms', $id, $ms);

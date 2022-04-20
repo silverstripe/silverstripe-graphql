@@ -164,7 +164,7 @@ class QueryHandler implements
         if (!empty($executionResult->errors)) {
             return [
                 'data' => $executionResult->data,
-                'errors' => array_map($this->errorFormatter, $executionResult->errors),
+                'errors' => array_map($this->errorFormatter, $executionResult->errors ?? []),
             ];
         } else {
             return [
@@ -240,7 +240,7 @@ class QueryHandler implements
         // Reverse middlewares
         $next = $last;
         // Filter out any middlewares that are set to `false`, e.g. via config
-        $middlewares = array_reverse(array_filter($this->getMiddlewares()));
+        $middlewares = array_reverse(array_filter($this->getMiddlewares() ?? []));
         /** @var QueryMiddleware $middleware */
         foreach ($middlewares as $middleware) {
             $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
@@ -279,7 +279,7 @@ class QueryHandler implements
         if (!empty($locations)) {
             $error['locations'] = array_map(function (SourceLocation $loc) {
                 return $loc->toArray();
-            }, $locations);
+            }, $locations ?? []);
         }
 
         if ($relevant instanceof ValidationException) {
@@ -297,12 +297,12 @@ class QueryHandler implements
     public static function isMutation(string $query): bool
     {
         // Simple string matching as a first check to prevent unnecessary static analysis
-        if (stristr($query, 'mutation') === false) {
+        if (stristr($query ?? '', 'mutation') === false) {
             return false;
         }
 
         // If "mutation" is the first expression in the query, then it's a mutation.
-        if (preg_match('/^\s*' . preg_quote('mutation', '/') . '/', $query)) {
+        if (preg_match('/^\s*' . preg_quote('mutation', '/') . '/', $query ?? '')) {
             return true;
         }
 
@@ -314,7 +314,7 @@ class QueryHandler implements
                 NodeKind::OPERATION_DEFINITION,
                 NodeKind::OPERATION_TYPE_DEFINITION
             ];
-            if (!in_array($statement->kind, $options, true)) {
+            if (!in_array($statement->kind, $options ?? [], true)) {
                 continue;
             }
             if ($statement->operation === 'mutation') {
@@ -338,7 +338,7 @@ class QueryHandler implements
                 NodeKind::OPERATION_DEFINITION,
                 NodeKind::OPERATION_TYPE_DEFINITION
             ];
-            if (!in_array($statement->kind, $options, true)) {
+            if (!in_array($statement->kind, $options ?? [], true)) {
                 continue;
             }
             if (in_array($statement->operation, ['query', 'mutation'])) {

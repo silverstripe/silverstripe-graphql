@@ -90,7 +90,7 @@ class TestSchemaBuilder extends SchemaBuilder
                 $key => [
                     'src' => array_map(function ($dir) {
                         return TestStoreCreator::$dir . '/' . $dir;
-                    }, $this->configDirs),
+                    }, $this->configDirs ?? []),
                 ],
             ]
         );

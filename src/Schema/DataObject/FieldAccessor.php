@@ -68,7 +68,7 @@ class FieldAccessor
         }
         $lookup = $this->getCaseInsensitiveMapping($dataObject);
 
-        $normalised = strtolower($field);
+        $normalised = strtolower($field ?? '');
         $property = $lookup[$normalised] ?? null;
         if ($property) {
             return $property;
@@ -98,7 +98,7 @@ class FieldAccessor
      */
     public function hasField(DataObject $dataObject, string $field): bool
     {
-        $path = explode('.', $field);
+        $path = explode('.', $field ?? '');
         $fieldName = array_shift($path);
         return $this->normaliseField($dataObject, $fieldName) !== null;
     }
@@ -154,8 +154,8 @@ class FieldAccessor
      */
     public function accessField(DataObject $dataObject, string $field)
     {
-        if ($path = explode('.', $field)) {
-            if (count($path) === 1) {
+        if ($path = explode('.', $field ?? '')) {
+            if (count($path ?? []) === 1) {
                 $fieldName = $this->normaliseField($dataObject, $path[0]);
                 if (!$fieldName) {
                     return null;
@@ -187,7 +187,7 @@ class FieldAccessor
     {
         return array_map(
             $this->config()->get('field_formatter'),
-            array_values($this->getCaseInsensitiveMapping($dataObject, $includeRelations, $includeInherited))
+            array_values($this->getCaseInsensitiveMapping($dataObject, $includeRelations, $includeInherited) ?? [])
         );
     }
 
@@ -206,7 +206,7 @@ class FieldAccessor
         $schema = $dataObject->getSchema();
         $configFlag = $includeInherited ? 0 : Config::UNINHERITED;
         $schemaFlag = $includeInherited ? 0 : DataObjectSchema::UNINHERITED;
-        $db = array_keys($schema->fieldSpecs(get_class($dataObject), $schemaFlag));
+        $db = array_keys($schema->fieldSpecs(get_class($dataObject), $schemaFlag) ?? []);
         if (!$includeRelations) {
             return $db;
         }
@@ -236,12 +236,12 @@ class FieldAccessor
             get_class($dataObject),
             ($includeRelations ? '_relations' : ''),
             ($includeInherirted ? '_inherited' : '')
-        ]));
+        ]) ?? '');
         $cached = self::$__mappingCache[$cacheKey] ?? null;
         if (!$cached) {
             $normalFields = $this->getAccessibleFields($dataObject, $includeRelations, $includeInherirted);
-            $lowercaseFields = array_map('strtolower', $normalFields);
-            $lookup = array_combine($lowercaseFields, $normalFields);
+            $lowercaseFields = array_map('strtolower', $normalFields ?? []);
+            $lookup = array_combine($lowercaseFields ?? [], $normalFields ?? []);
             self::$__mappingCache[$cacheKey] = $lookup;
         }
         return self::$__mappingCache[$cacheKey];
@@ -274,16 +274,16 @@ class FieldAccessor
             }
 
             // Aggregate field, eg. Comments.Count(), Page.FeaturedProducts.Avg(Price)
-            if (preg_match('/([A-Za-z]+)\(\s*(?:([A-Za-z_*][A-Za-z0-9_]*))?\s*\)$/', $nextField, $matches)) {
-                $aggregateFunction = strtolower($matches[1]);
+            if (preg_match('/([A-Za-z]+)\(\s*(?:([A-Za-z_*][A-Za-z0-9_]*))?\s*\)$/', $nextField ?? '', $matches)) {
+                $aggregateFunction = strtolower($matches[1] ?? '');
                 $aggregateColumn = $matches[2] ?? null;
-                if (!in_array($aggregateFunction, $this->config()->get('allowed_aggregates'))) {
+                if (!in_array($aggregateFunction, $this->config()->get('allowed_aggregates') ?? [])) {
                     throw new LogicException(sprintf(
                         'Cannot call aggregate function %s',
                         $aggregateFunction
                     ));
                 }
-                if (method_exists($subject, $aggregateFunction)) {
+                if (method_exists($subject, $aggregateFunction ?? '')) {
                     return call_user_func_array([$subject, $aggregateFunction], [$aggregateColumn]);
                 }
 

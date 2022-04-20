@@ -141,7 +141,7 @@ GRAPHQL
         if (isset($fragments['errors'])) {
             $messages = array_map(function ($error) {
                 return $error['message'];
-            }, $fragments['errors']);
+            }, $fragments['errors'] ?? []);
 
             throw new Exception(sprintf(
                 'There were some errors with the introspection query: %s',

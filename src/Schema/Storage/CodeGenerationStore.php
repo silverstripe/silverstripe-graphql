@@ -254,14 +254,14 @@ class CodeGenerationStore implements SchemaStorageInterface
         /* @var SplFileInfo $file */
         foreach ($currentFiles as $file) {
             $contents = $file->getContents();
-            preg_match('/\/\/ @type:([A-Za-z0-9+_]+)/', $contents, $matches);
+            preg_match('/\/\/ @type:([A-Za-z0-9+_]+)/', $contents ?? '', $matches);
             Schema::invariant(
                 $matches,
                 'Could not find type name in file %s',
                 $file->getPathname()
             );
             $type = $matches[1];
-            if (!in_array($type, $touched)) {
+            if (!in_array($type, $touched ?? [])) {
                 $fs->remove($file->getPathname());
                 $this->getCache()->delete($type);
                 $deleted[] = $type;
@@ -280,22 +280,22 @@ class CodeGenerationStore implements SchemaStorageInterface
         $fs->remove($temp);
 
         $logger->info("Total types: $total");
-        $logger->info(sprintf('Types built: %s', count($built)));
-        $snapshot = array_slice($built, 0, 10);
+        $logger->info(sprintf('Types built: %s', count($built ?? [])));
+        $snapshot = array_slice($built ?? [], 0, 10);
         foreach ($snapshot as $type) {
             $logger->info('*' . $type);
         }
-        $diff = count($built) - count($snapshot);
+        $diff = count($built ?? []) - count($snapshot ?? []);
         if ($diff > 0) {
             $logger->info(sprintf('(... and %s more)', $diff));
         }
 
-        $logger->info(sprintf('Types deleted: %s', count($deleted)));
-        $snapshot = array_slice($deleted, 0, 10);
+        $logger->info(sprintf('Types deleted: %s', count($deleted ?? [])));
+        $snapshot = array_slice($deleted ?? [], 0, 10);
         foreach ($snapshot as $type) {
             $logger->info('*' . $type);
         }
-        $diff = count($deleted) - count($snapshot);
+        $diff = count($deleted ?? []) - count($snapshot ?? []);
         if ($diff > 0) {
             $logger->info(sprintf('(... and %s more)', $diff));
         }
@@ -320,7 +320,7 @@ class CodeGenerationStore implements SchemaStorageInterface
         require_once($this->getSchemaFilename());
 
         $registryClass = $this->getClassName(self::TYPE_CLASS_NAME);
-        $hasMutations = method_exists($registryClass, Schema::MUTATION_TYPE);
+        $hasMutations = method_exists($registryClass, Schema::MUTATION_TYPE ?? '');
         $schemaConfig = new GraphqLSchemaConfig();
         $callback = call_user_func([$registryClass, Schema::QUERY_TYPE]);
         $schemaConfig->setQuery($callback);
@@ -331,14 +331,14 @@ class CodeGenerationStore implements SchemaStorageInterface
         }
         // Add eager loaded types
         $typeNames = array_filter(
-            $this->getConfig()->get('eagerLoadTypes', []),
+            $this->getConfig()->get('eagerLoadTypes', []) ?? [],
             function (string $name) use ($registryClass) {
-                return method_exists($registryClass, $name);
+                return method_exists($registryClass, $name ?? '');
             }
         );
         $typeObjs = array_map(function (string $typeName) use ($registryClass) {
             return call_user_func([$registryClass, $typeName]);
-        }, $typeNames);
+        }, $typeNames ?? []);
 
         $schemaConfig->setTypes($typeObjs);
 
@@ -356,7 +356,7 @@ class CodeGenerationStore implements SchemaStorageInterface
             return $this->cachedConfig;
         }
         $context = [];
-        if (file_exists($this->getConfigFilename())) {
+        if (file_exists($this->getConfigFilename() ?? '')) {
             $context = require($this->getConfigFilename());
         }
         $this->cachedConfig = new SchemaConfig($context);
@@ -376,7 +376,7 @@ class CodeGenerationStore implements SchemaStorageInterface
      */
     public function exists(): bool
     {
-        return file_exists($this->getSchemaFilename());
+        return file_exists($this->getSchemaFilename() ?? '');
     }
 
     /**
@@ -482,7 +482,7 @@ class CodeGenerationStore implements SchemaStorageInterface
      */
     private function getNamespace(): string
     {
-        return $this->config()->get('namespacePrefix') . md5($this->name);
+        return $this->config()->get('namespacePrefix') . md5($this->name ?? '');
     }
 
     /**
@@ -544,7 +544,7 @@ class CodeGenerationStore implements SchemaStorageInterface
      */
     private function toCode(string $rawCode): string
     {
-        $code = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $rawCode);
+        $code = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $rawCode ?? '');
         return "<?php\n\n /** GENERATED CODE -- DO NOT MODIFY **/\n\n{$code}";
     }
 }

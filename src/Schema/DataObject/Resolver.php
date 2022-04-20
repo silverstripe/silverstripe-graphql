@@ -67,7 +67,7 @@ class Resolver
         $resolvedField = null;
         while (!$resolvedField && $class && $class !== DataObject::class) {
             $resolvedField = $config->mapFieldByClassName($class, $fieldName);
-            $class = get_parent_class($class);
+            $class = get_parent_class($class ?? '');
         }
 
         if (!$resolvedField) {

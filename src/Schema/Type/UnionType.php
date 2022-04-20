@@ -207,7 +207,7 @@ class UnionType implements
         );
 
         Schema::invariant(
-            count($this->types),
+            count($this->types ?? []),
             'Union %s has no types',
             $this->getName()
         );
@@ -227,6 +227,6 @@ class UnionType implements
             $this->getDescription(),
         ];
 
-        return md5(json_encode($components));
+        return md5(json_encode($components) ?? '');
     }
 }

@@ -684,8 +684,8 @@ GRAPHQL;
         $arr = $result['data']['readOneDataObjectFake']['fileTitles'];
         $this->assertNotNull($arr);
         $this->assertCount(2, $arr);
-        $this->assertTrue(in_array('1', $arr));
-        $this->assertTrue(in_array('2', $arr));
+        $this->assertTrue(in_array('1', $arr ?? []));
+        $this->assertTrue(in_array('2', $arr ?? []));
 
         $query = <<<GRAPHQL
 query {
@@ -801,7 +801,7 @@ GRAPHQL;
                 $schema->getSchemaKey(),
                 $obfuscatedName . '.php'
             );
-            $this->assertTrue(file_exists($path));
+            $this->assertTrue(file_exists($path ?? ''));
         }
         // Create a couple of product pages
         $productPageIDs = [];
@@ -843,7 +843,7 @@ GRAPHQL;
         // Create reviews for reach product
         $reviewIDs = [];
         foreach ($productIDs as $sku) {
-            list($productPageID, $productID) = explode('__', $sku);
+            list($productPageID, $productID) = explode('__', $sku ?? '');
             foreach (range(1, 5) as $num) {
                 $query = <<<GRAPHQL
 mutation {
@@ -865,7 +865,7 @@ GRAPHQL;
         // Add authors to reviews
         $this->logInWithPermission();
         foreach ($reviewIDs as $sku) {
-            list ($productPageID, $productID, $reviewID) = explode('__', $sku);
+            list ($productPageID, $productID, $reviewID) = explode('__', $sku ?? '');
             $query = <<<GRAPHQL
 mutation {
   createMember(input: { firstName: "Member $num" }) {
@@ -1250,7 +1250,7 @@ GRAPHQL;
     {
         $errors = $result['errors'] ?? [];
         foreach ($errors as $error) {
-            if (preg_match('/^Cannot query field "' . $fieldName . '"/', $error['message'])) {
+            if (preg_match('/^Cannot query field "' . $fieldName . '"/', $error['message'] ?? '')) {
                 return;
             }
         }
@@ -1286,7 +1286,7 @@ GRAPHQL;
     private function assertResult(string $path, $value, array $result)
     {
         $data = $result['data'];
-        $parts = explode('.', $path);
+        $parts = explode('.', $path ?? '');
         $curr = $data;
         foreach ($parts as $part) {
             $next = $curr[$part] ?? null;

@@ -53,7 +53,7 @@ class JSONStringProvider implements PersistedQueryMappingProvider
         }
 
         $mapping = $mappingWithKey[$schemaKey];
-        $result = json_decode($mapping, true);
+        $result = json_decode($mapping ?? '', true);
         if (!is_array($result)) {
             return [];
         }
@@ -87,7 +87,7 @@ class JSONStringProvider implements PersistedQueryMappingProvider
                     'setSchemaMapping accepts an array of schema keys to JSON strings'
                 );
             }
-            if (json_decode($queryMap) === null) {
+            if (json_decode($queryMap ?? '') === null) {
                 throw new InvalidArgumentException(
                     'setSchemaMapping passed an invalid string of JSON. Got error: ' . json_last_error()
                 );

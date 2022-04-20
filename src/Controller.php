@@ -287,7 +287,7 @@ class Controller extends BaseController
             if ($allowedOrigin === '*') {
                 return true;
             }
-            if (strcasecmp($allowedOrigin, $origin) === 0) {
+            if (strcasecmp($allowedOrigin ?? '', $origin ?? '') === 0) {
                 return true;
             }
         }
@@ -332,7 +332,7 @@ class Controller extends BaseController
         $referer = $request->getHeader('Referer');
         if ($referer) {
             // Extract protocol, hostname, and port
-            $refererParts = parse_url($referer);
+            $refererParts = parse_url($referer ?? '');
             if (!$refererParts) {
                 return null;
             }
@@ -379,7 +379,7 @@ class Controller extends BaseController
     protected function getRequestQueryVariables(HTTPRequest $request)
     {
         $contentType = $request->getHeader('content-type');
-        $isJson = preg_match('#^application/json\b#', $contentType);
+        $isJson = preg_match('#^application/json\b#', $contentType ?? '');
         if ($isJson) {
             $rawBody = $request->getBody();
             $data = json_decode($rawBody ?: '', true);

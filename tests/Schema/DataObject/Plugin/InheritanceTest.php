@@ -82,11 +82,11 @@ class InheritanceTest extends SapphireTest
         });
         $leafModels = array_map(function ($class) use ($schema) {
             return $schema->getConfig()->getTypeNameForClass($class);
-        }, $leafClasses);
+        }, $leafClasses ?? []);
 
         $baseModels = array_map(function ($class) use ($schema) {
             return $schema->getConfig()->getTypeNameForClass($class);
-        }, $baseClasses);
+        }, $baseClasses ?? []);
 
         FakeInheritanceUnionBuilder::reset();
         FakeInterfaceBuilder::reset();
@@ -161,11 +161,11 @@ class InheritanceTest extends SapphireTest
      */
     private function assertCalls(array $expected, array $actual)
     {
-        $expected = array_map('strtolower', $expected);
-        $compare = array_map('strtolower', array_keys($actual));
+        $expected = array_map('strtolower', $expected ?? []);
+        $compare = array_map('strtolower', array_keys($actual ?? []));
 
-        $this->assertEmpty(array_diff($expected, $compare), 'Expected calls exceed the actual calls');
-        $this->assertEmpty(array_diff($compare, $expected), 'Actual calls exceed the expected calls');
+        $this->assertEmpty(array_diff($expected ?? [], $compare), 'Expected calls exceed the actual calls');
+        $this->assertEmpty(array_diff($compare ?? [], $expected), 'Actual calls exceed the expected calls');
     }
 
     public function provideUnionOption()

@@ -114,7 +114,7 @@ class QueryFilter extends AbstractQueryFilterPlugin
             $registry = Injector::inst()->get(FilterRegistryInterface::class);
             $paths = NestedInputBuilder::buildPathsFromArgs($filterArgs);
             foreach ($paths as $path => $value) {
-                $fieldParts = explode('.', $path);
+                $fieldParts = explode('.', $path ?? '');
                 $filterID = array_pop($fieldParts);
                 $fieldPath = implode('.', $fieldParts);
                 $filter = $registry->getFilterByIdentifier($filterID);

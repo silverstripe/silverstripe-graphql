@@ -44,6 +44,6 @@ class BasicAuthAuthenticator implements AuthenticatorInterface
      */
     protected function hasAuthHandler($servervar)
     {
-        return isset($_SERVER[$servervar]) && preg_match('/Basic\s+(.*)$/i', $_SERVER[$servervar]);
+        return isset($_SERVER[$servervar]) && preg_match('/Basic\s+(.*)$/i', $_SERVER[$servervar] ?? '');
     }
 }

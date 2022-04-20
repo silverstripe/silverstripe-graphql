@@ -34,7 +34,7 @@ class Encoder implements EncoderInterface
      */
     public function __construct(string $includeFile, $scope, $globals = [])
     {
-        if (!file_exists($includeFile)) {
+        if (!file_exists($includeFile ?? '')) {
             throw new InvalidArgumentException(sprintf(
                 'File "%s" does not exist',
                 $includeFile

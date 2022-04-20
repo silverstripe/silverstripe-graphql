@@ -31,7 +31,7 @@ class FieldFilterRegistry implements FilterRegistryInterface
     public function addFilter(FieldFilterInterface $filter, ?string $identifier = null): self
     {
         $id = $identifier ?: $filter->getIdentifier();
-        if (!preg_match('/^[A-Za-z0-9_]+$/', $id)) {
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $id ?? '')) {
             throw new InvalidArgumentException(sprintf(
                 'Filter %s has an invalid identifier. Only alphanumeric characters and underscores allowed.',
                 get_class($filter)

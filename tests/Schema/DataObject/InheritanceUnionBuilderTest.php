@@ -164,10 +164,10 @@ class InheritanceUnionBuilderTest extends SapphireTest
      */
     private function assertTypes(array $types, UnionType $union)
     {
-        $expected = array_map('strtolower', $types);
-        $compare = array_map('strtolower', $union->getTypes());
+        $expected = array_map('strtolower', $types ?? []);
+        $compare = array_map('strtolower', $union->getTypes() ?? []);
 
-        $this->assertEmpty(array_diff($expected, $compare));
-        $this->assertEmpty(array_diff($compare, $expected));
+        $this->assertEmpty(array_diff($expected ?? [], $compare));
+        $this->assertEmpty(array_diff($compare ?? [], $expected));
     }
 }

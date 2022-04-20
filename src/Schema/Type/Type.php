@@ -117,7 +117,7 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
      */
     public function setName(string $name): self
     {
-        $this->name = ucfirst($name);
+        $this->name = ucfirst($name ?? '');
         return $this;
     }
 
@@ -299,7 +299,7 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
      */
     public function addInterface(string $name): self
     {
-        if (!in_array($name, $this->interfaces)) {
+        if (!in_array($name, $this->interfaces ?? [])) {
             $this->interfaces[] = $name;
         }
 
@@ -312,7 +312,7 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
      */
     public function implements(string $interfaceName): bool
     {
-        return in_array($interfaceName, $this->interfaces);
+        return in_array($interfaceName, $this->interfaces ?? []);
     }
 
     /**
@@ -382,9 +382,9 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
                 // The field resolver can change depending on what type it's on, so
                 // we need to augment the Field signature here to be type specific.
                 return $field->getSignature() . $field->getEncodedResolver($this->getName())->getExpression();
-            }, $fields),
+            }, $fields ?? []),
         ];
 
-        return md5(json_encode($components));
+        return md5(json_encode($components) ?? '');
     }
 }

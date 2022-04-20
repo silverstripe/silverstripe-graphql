@@ -49,7 +49,7 @@ class FakeProduct extends DataObject implements TestOnly
      */
     public function getReverseTitle()
     {
-        return strrev($this->Title);
+        return strrev($this->Title ?? '');
     }
 
     public function Link()

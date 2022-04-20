@@ -60,7 +60,7 @@ class Configuration
     private function path($path, $callback): void
     {
         if (is_string($path)) {
-            $path = explode('.', $path);
+            $path = explode('.', $path ?? '');
         }
         Schema::invariant(
             is_array($path),
@@ -70,7 +70,7 @@ class Configuration
         );
         $scope = &$this->settings;
         foreach ($path as $i => $part) {
-            $last = ($i + 1) === sizeof($path);
+            $last = ($i + 1) === sizeof($path ?? []);
             if ($last) {
                 $callback($scope, $part);
                 return;

@@ -45,8 +45,8 @@ class IntegrationTestResolver
             $limit = min(($args['limit'] ?? 10), $maxLimit);
             $offset = $args['offset'] ?? 0;
             return PaginationPlugin::createPaginationResult(
-                count($list),
-                array_slice($list, $offset, $limit),
+                count($list ?? []),
+                array_slice($list ?? [], $offset ?? 0, $limit),
                 $limit,
                 $offset
             );

@@ -9,6 +9,6 @@ class FakeFunctions
 {
     public static function fakeFormatter(string $className)
     {
-        return strrev(ClassInfo::shortName($className));
+        return strrev(ClassInfo::shortName($className) ?? '');
     }
 }

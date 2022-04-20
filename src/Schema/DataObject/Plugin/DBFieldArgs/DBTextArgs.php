@@ -72,7 +72,7 @@ class DBTextArgs extends DBFieldArgs
 
         $noArgMethods = ['FirstParagraph'];
 
-        if ($limit && in_array($format, $noArgMethods)) {
+        if ($limit && in_array($format, $noArgMethods ?? [])) {
             throw new Exception(sprintf('Arg "limit" is not allowed for format "%s"', $format));
         }
 
