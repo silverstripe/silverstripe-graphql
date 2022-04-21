@@ -33,7 +33,7 @@ class Logger implements LoggerInterface
     /**
      * @var int
      */
-    private $level = self::DEBUG;
+    private $level = self::INFO;
 
     /**
      * @param int $level
