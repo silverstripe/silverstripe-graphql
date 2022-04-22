@@ -83,7 +83,7 @@ class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
             'types' => function () use ($manager, $types) {
                 return array_map(function ($item) use ($manager) {
                     return $manager->getType($item);
-                }, $types);
+                }, $types ?? []);
             },
             'resolveType' => function ($obj) use ($manager) {
                 if (!$obj instanceof DataObject) {
@@ -98,7 +98,7 @@ class UnionScaffolder implements ScaffolderInterface, ManagerMutatorInterface
                     if ($manager->hasType($typeName)) {
                         return $manager->getType($typeName);
                     }
-                    $class = get_parent_class($class);
+                    $class = get_parent_class($class ?? '');
                 }
                 throw new Exception(sprintf(
                     'There is no type defined for %s, and none of its ancestors are defined.',

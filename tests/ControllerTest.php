@@ -95,7 +95,7 @@ class ControllerTest extends SapphireTest
         $controller = new Controller($managerMock);
         $response = $controller->index(new HTTPRequest('GET', ''));
         $this->assertFalse($response->isError());
-        $responseObj = json_decode($response->getBody(), true);
+        $responseObj = json_decode($response->getBody() ?? '', true);
         $this->assertNotNull($responseObj);
         $this->assertArrayHasKey('errors', $responseObj);
         $this->assertEquals('Failed', $responseObj['errors'][0]['message']);
@@ -115,7 +115,7 @@ class ControllerTest extends SapphireTest
         $controller = new Controller($managerMock);
         $response = $controller->index(new HTTPRequest('GET', ''));
         $this->assertFalse($response->isError());
-        $responseObj = json_decode($response->getBody(), true);
+        $responseObj = json_decode($response->getBody() ?? '', true);
         $this->assertNotNull($responseObj);
         $this->assertArrayHasKey('errors', $responseObj);
         $this->assertEquals('Failed', $responseObj['errors'][0]['message']);
@@ -406,7 +406,7 @@ class ControllerTest extends SapphireTest
 
         // Static cache should now exist
         $this->assertFileExists($expectedSchemaPath, 'Schema is cached');
-        $this->assertEquals('{"uncle":"cheese"}', file_get_contents($expectedSchemaPath));
+        $this->assertEquals('{"uncle":"cheese"}', file_get_contents($expectedSchemaPath ?? ''));
 
         Config::modify()->set(Controller::class, 'cache_types_in_filesystem', false);
         Controller::create(new Manager('testSchema'))->processTypeCaching();
@@ -561,7 +561,7 @@ class ControllerTest extends SapphireTest
 
     protected function assertQueryError(Controller $controller, HTTPRequest $request, $regExp)
     {
-        $data = json_decode($controller->handleRequest($request)->getBody(), true);
+        $data = json_decode($controller->handleRequest($request)->getBody() ?? '', true);
         $this->assertArrayHasKey('errors', $data);
         $this->assertCount(1, $data['errors']);
         $this->assertMatchesRegularExpression($regExp, $data['errors'][0]['message']);
@@ -570,7 +570,7 @@ class ControllerTest extends SapphireTest
     protected function assertQuerySuccess(Controller $controller, HTTPRequest $request, $operation)
     {
         $controller->setRequest($request);
-        $data = json_decode($controller->handleRequest($request)->getBody(), true);
+        $data = json_decode($controller->handleRequest($request)->getBody() ?? '', true);
         $this->assertArrayNotHasKey('errors', $data);
         $this->assertArrayHasKey('data', $data);
         $this->assertArrayHasKey($operation, $data['data']);
@@ -645,7 +645,7 @@ class ControllerTest extends SapphireTest
             'variables' => json_encode($expectedVariables)
         ]);
         $result = $controller->index($request)->getBody();
-        $this->assertArrayHasKey('errors', json_decode($result, true));
+        $this->assertArrayHasKey('errors', json_decode($result ?? '', true));
     }
 
     protected function getType(Manager $manager)

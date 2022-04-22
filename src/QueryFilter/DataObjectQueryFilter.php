@@ -180,7 +180,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
      */
     public function addAllFilters()
     {
-        $fields = array_keys($this->getDataObjectInstance()->searchableFields());
+        $fields = array_keys($this->getDataObjectInstance()->searchableFields() ?? []);
         foreach ($fields as $fieldName) {
             $this->addDefaultFilters($fieldName);
         }
@@ -289,7 +289,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
      */
     public function getFilterIdentifiersForField($fieldName)
     {
-        return array_keys($this->getFiltersForField($fieldName));
+        return array_keys($this->getFiltersForField($fieldName) ?? []);
     }
 
 
@@ -316,7 +316,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
     public function fieldHasFilter($fieldName, $id)
     {
         if ($this->isFieldFiltered($fieldName)) {
-            return in_array($id, $this->getFilterIdentifiersForField($fieldName));
+            return in_array($id, $this->getFilterIdentifiersForField($fieldName) ?? []);
         }
 
         return false;
@@ -379,7 +379,7 @@ class DataObjectQueryFilter implements ConfigurationApplier
     protected function getFieldFilters(array $filters)
     {
         foreach ($filters as $key => $val) {
-            $pos = strrpos($key, self::SEPARATOR);
+            $pos = strrpos($key ?? '', self::SEPARATOR ?? '');
             // falsy is okay here because a leading __ is invalid.
             if (!$pos) {
                 throw new InvalidArgumentException(sprintf(
@@ -388,12 +388,12 @@ class DataObjectQueryFilter implements ConfigurationApplier
                     self::SEPARATOR
                 ));
             }
-            $parts = explode(self::SEPARATOR, $key);
+            $parts = explode(self::SEPARATOR ?? '', $key ?? '');
             $filterIdentifier = array_pop($parts);
             // If the field segment contained __, that implies relationship (dot notation)
             $field = implode('.', $parts);
             // The Field key is written with self::SEPARATOR
-            $fieldName = implode(self::SEPARATOR, $parts);
+            $fieldName = implode(self::SEPARATOR ?? '', $parts);
             $filter = $this->getFieldFilterByIdentifier($fieldName, $filterIdentifier);
             if (!$filter instanceof FieldFilterInterface) {
                 $filter = $this->getFilterRegistry()->getFilterByIdentifier($filterIdentifier);
@@ -417,11 +417,11 @@ class DataObjectQueryFilter implements ConfigurationApplier
     protected function getDBField($field)
     {
         $dbField = null;
-        if (stristr($field, self::SEPARATOR) !== false) {
-            $relationNames = explode(self::SEPARATOR, $field);
+        if (stristr($field ?? '', self::SEPARATOR ?? '') !== false) {
+            $relationNames = explode(self::SEPARATOR ?? '', $field ?? '');
             $relationField = array_pop($relationNames);
             // reverse array so we can use the faster array_pop
-            $relationNames = array_reverse($relationNames);
+            $relationNames = array_reverse($relationNames ?? []);
             // initialize current class
             $class = get_class($this->getDataObjectInstance());
             do {

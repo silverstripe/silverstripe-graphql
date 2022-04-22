@@ -458,7 +458,7 @@ class Connection implements OperationResolver
         foreach ($sortBy as $sortInput) {
             if (isset($sortInput['field'])) {
                 $direction = isset($sortInput['direction']) ? $sortInput['direction'] : 'ASC';
-                if (!array_key_exists($sortInput['field'], $sortableFields)) {
+                if (!array_key_exists($sortInput['field'], $sortableFields ?? [])) {
                     throw new InvalidArgumentException(sprintf(
                         '"%s" is not a valid sort column',
                         $sortInput['field']

@@ -298,7 +298,7 @@ class Controller extends BaseController implements Flushable
             if ($allowedOrigin === '*') {
                 return true;
             }
-            if (strcasecmp($allowedOrigin, $origin) === 0) {
+            if (strcasecmp($allowedOrigin ?? '', $origin ?? '') === 0) {
                 return true;
             }
         }
@@ -347,7 +347,7 @@ class Controller extends BaseController implements Flushable
         $referer = $request->getHeader('Referer');
         if ($referer) {
             // Extract protocol, hostname, and port
-            $refererParts = parse_url($referer);
+            $refererParts = parse_url($referer ?? '');
             if (!$refererParts) {
                 return null;
             }
@@ -394,7 +394,7 @@ class Controller extends BaseController implements Flushable
     protected function getRequestQueryVariables(HTTPRequest $request)
     {
         $contentType = $request->getHeader('content-type');
-        $isJson = preg_match('#^application/json\b#', $contentType);
+        $isJson = preg_match('#^application/json\b#', $contentType ?? '');
         if ($isJson) {
             $rawBody = $request->getBody();
             $data = json_decode($rawBody ?: '', true);
@@ -404,7 +404,7 @@ class Controller extends BaseController implements Flushable
         } else {
             $query = $request->requestVar('query');
             $id = $request->requestVar('id');
-            $variables = json_decode($request->requestVar('variables'), true);
+            $variables = json_decode($request->requestVar('variables') ?? '', true);
         }
 
         if ($id) {
@@ -515,7 +515,7 @@ class Controller extends BaseController implements Flushable
         $routes = Director::config()->get('rules');
         foreach ($routes as $pattern => $controllerInfo) {
             $routeClass = (is_string($controllerInfo)) ? $controllerInfo : $controllerInfo['Controller'];
-            if (stristr($routeClass, Controller::class) !== false) {
+            if (stristr($routeClass ?? '', Controller::class) !== false) {
                 try {
                     $inst = Injector::inst()->convertServiceProperty($routeClass);
                     if ($inst instanceof Controller) {

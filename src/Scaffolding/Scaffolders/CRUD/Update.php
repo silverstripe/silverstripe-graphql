@@ -43,7 +43,7 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
             return $name;
         }
 
-        return 'update' . ucfirst($this->getTypeName());
+        return 'update' . ucfirst($this->getTypeName() ?? '');
     }
 
     /**
@@ -150,7 +150,7 @@ class Update extends MutationScaffolder implements OperationResolver, CRUDInterf
 
         // Extension points that return false should kill the write operation
         $results = $this->extend('augmentMutation', $obj, $args, $context, $info);
-        if (in_array(false, $results, true)) {
+        if (in_array(false, $results ?? [], true)) {
             return $obj;
         }
 

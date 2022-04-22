@@ -48,9 +48,9 @@ class FileProvider implements PersistedQueryMappingProvider
             return [];
         }
 
-        $path = trim($pathWithKey[$schemaKey]);
-        $contents = trim(file_get_contents($path));
-        $result = json_decode($contents, true);
+        $path = trim($pathWithKey[$schemaKey] ?? '');
+        $contents = trim(file_get_contents($path ?? '') ?? '');
+        $result = json_decode($contents ?? '', true);
         if (!is_array($result)) {
             return [];
         }

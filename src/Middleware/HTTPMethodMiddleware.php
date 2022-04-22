@@ -21,7 +21,7 @@ class HTTPMethodMiddleware implements QueryMiddleware
             throw new Exception('Request method must be POST or GET');
         }
 
-        if (preg_match('/^\s*mutation/', $query)) {
+        if (preg_match('/^\s*mutation/', $query ?? '')) {
             if (!$isPOST) {
                 throw new Exception('Mutations must use the POST request method');
             }

@@ -91,7 +91,7 @@ abstract class OperationScaffolder implements ConfigurationApplier
     {
         $class = ($instOrClass instanceof OperationScaffolder) ? get_class($instOrClass) : $instOrClass;
         $operations = static::getOperations();
-        $operations = array_flip($operations);
+        $operations = array_flip($operations ?? []);
 
         return isset($operations[$class]) ? $operations[$class] : null;
     }
@@ -449,10 +449,10 @@ abstract class OperationScaffolder implements ConfigurationApplier
         return function () use ($resolver) {
             $args = func_get_args();
             if (is_callable($resolver)) {
-                return call_user_func_array($resolver, $args);
+                return call_user_func_array($resolver, $args ?? []);
             } else {
                 if ($resolver instanceof OperationResolver) {
-                    return call_user_func_array([$resolver, 'resolve'], $args);
+                    return call_user_func_array([$resolver, 'resolve'], $args ?? []);
                 } else {
                     throw new \Exception(sprintf(
                         '%s resolver must be a closure or implement %s',

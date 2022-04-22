@@ -59,7 +59,7 @@ class SchemaScaffolderTest extends SapphireTest
         $mutation->Test = true;
         $mutation2 = $scaffolder->mutation('testMutation', DataObjectFake::class);
 
-        $this->assertEquals(1, count($scaffolder->getTypes()));
+        $this->assertEquals(1, count($scaffolder->getTypes() ?? []));
         $this->assertTrue($type2->Test);
 
         $this->assertEquals(1, $scaffolder->getQueries()->count());
@@ -107,7 +107,7 @@ class SchemaScaffolderTest extends SapphireTest
 
         $classNames = array_map(function (DataObjectScaffolder $scaffold) {
             return $scaffold->getDataObjectClass();
-        }, $types);
+        }, $types ?? []);
 
         $expectedTypes = [];
         $explicitTypes = [
@@ -318,7 +318,7 @@ class SchemaScaffolderTest extends SapphireTest
             $this->assertTrue($manager->hasType($inheritanceTypeName));
             /* @var UnionType $type */
             $type = $manager->getType($inheritanceTypeName);
-            $numDescendants = count(StaticSchema::inst()->getDescendants($ancestor));
+            $numDescendants = count(StaticSchema::inst()->getDescendants($ancestor) ?? []);
             $this->assertCount($numDescendants + 1, $type->getTypes());
             $this->assertTrue($manager->hasType($normalTypeName));
             /* @var ObjectType $type */
@@ -353,7 +353,7 @@ class SchemaScaffolderTest extends SapphireTest
         /* @var UnionType $union */
         $union = $manager->getType($inheritanceTypeName);
         $descendants = StaticSchema::inst()->getDescendants(Member::class);
-        $this->assertCount(count($descendants) + 1, $union->getTypes());
+        $this->assertCount(count($descendants ?? []) + 1, $union->getTypes());
         $inheritanceTypeName = StaticSchema::inst()
             ->inheritanceTypeNameForDataObject(File::class);
         $normalTypeName = StaticSchema::inst()
@@ -364,6 +364,6 @@ class SchemaScaffolderTest extends SapphireTest
 
         $union = $manager->getType($inheritanceTypeName);
         $descendants = StaticSchema::inst()->getDescendants(File::class);
-        $this->assertCount(count($descendants) + 1, $union->getTypes());
+        $this->assertCount(count($descendants ?? []) + 1, $union->getTypes());
     }
 }

@@ -97,7 +97,7 @@ class UpdateTest extends SapphireTest
 
         // Test args
         $args = $scaffold['args'];
-        $this->assertEquals(['Input', 'MyField'], array_keys($args));
+        $this->assertEquals(['Input', 'MyField'], array_keys($args ?? []));
 
         /** @var NonNull $inputType */
         $inputType = $args['Input']['type'];

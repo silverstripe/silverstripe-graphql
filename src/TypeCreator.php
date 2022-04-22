@@ -173,11 +173,11 @@ class TypeCreator
             return $field['resolve'];
         }
         $candidateMethods = [
-            'resolve'.ucfirst($name).'Field',
+            'resolve'.ucfirst($name ?? '').'Field',
             'resolveField',
         ];
         foreach ($candidateMethods as $resolveMethod) {
-            if (!method_exists($this, $resolveMethod)) {
+            if (!method_exists($this, $resolveMethod ?? '')) {
                 continue;
             }
 
@@ -186,7 +186,7 @@ class TypeCreator
             return function () use ($resolver) {
                 $args = func_get_args();
                 // See 'resolveType' on https://github.com/webonyx/graphql-php
-                return call_user_func_array($resolver, $args);
+                return call_user_func_array($resolver, $args ?? []);
             };
         }
 

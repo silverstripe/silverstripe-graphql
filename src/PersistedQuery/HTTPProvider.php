@@ -85,11 +85,11 @@ class HTTPProvider implements PersistedQueryMappingProvider
             return [];
         }
 
-        $url = trim($urlWithKey[$schemaKey]);
+        $url = trim($urlWithKey[$schemaKey] ?? '');
         $map = null;
         try {
             $contents = $this->getClient()->getURL($url, $this->config()->get('timeout'));
-            $map = json_decode($contents, true);
+            $map = json_decode($contents ?? '', true);
         } catch (Exception $e) {
             user_error($e->getMessage(), E_USER_WARNING);
             $map = [];

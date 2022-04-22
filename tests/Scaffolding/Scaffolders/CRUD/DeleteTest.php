@@ -98,7 +98,7 @@ class DeleteTest extends SapphireTest
 
         // Test args
         $args = $scaffold['args'];
-        $this->assertEquals(['IDs', 'MyField'], array_keys($args));
+        $this->assertEquals(['IDs', 'MyField'], array_keys($args ?? []));
 
         /** @var NonNull $idType */
         $idType = $args['IDs']['type'];

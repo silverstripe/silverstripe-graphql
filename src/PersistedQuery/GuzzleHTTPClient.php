@@ -21,7 +21,7 @@ class GuzzleHTTPClient implements HTTPClient
 
         try {
             $response = $client->send($request, ['timeout' => $timeout]);
-            $contents = trim($response->getBody()->getContents());
+            $contents = trim($response->getBody()->getContents() ?? '');
         } catch (RuntimeException $e) {
             user_error($e->getMessage(), E_USER_WARNING);
             return null;

@@ -101,7 +101,7 @@ class CreateTest extends SapphireTest
 
         // Test args
         $args = $scaffold['args'];
-        $this->assertEquals(['Input', 'MyField'], array_keys($args));
+        $this->assertEquals(['Input', 'MyField'], array_keys($args ?? []));
 
         // Custom field
         $this->assertArrayHasKey('MyField', $args);

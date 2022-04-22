@@ -62,7 +62,7 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
      */
     public function setRootClass($rootClass)
     {
-        if (!class_exists($rootClass)) {
+        if (!class_exists($rootClass ?? '')) {
             throw new InvalidArgumentException(sprintf(
                 'Class %s does not exist.',
                 $rootClass
@@ -115,7 +115,7 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
 
         return array_map(function ($class) use ($tree, $schema) {
             return $schema->typeNameForDataObject($class);
-        }, $tree);
+        }, $tree ?? []);
     }
 
     /**
@@ -124,7 +124,7 @@ class InheritanceScaffolder extends UnionScaffolder implements ManagerMutatorInt
     public function addToManager(Manager $manager)
     {
         $types = $this->getTypes();
-        if (sizeof($types) === 1) {
+        if (sizeof($types ?? []) === 1) {
             return;
         }
 

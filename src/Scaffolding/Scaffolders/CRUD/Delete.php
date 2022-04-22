@@ -40,7 +40,7 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
             return $name;
         }
 
-        return 'delete' . ucfirst($this->getTypeName());
+        return 'delete' . ucfirst($this->getTypeName() ?? '');
     }
 
     /**
@@ -75,7 +75,7 @@ class Delete extends MutationScaffolder implements OperationResolver, CRUDInterf
             $extensionResults = $this->extend('augmentMutation', $results, $args, $context, $info);
 
             // Extension points that return false should kill the deletion
-            if (in_array(false, $extensionResults, true)) {
+            if (in_array(false, $extensionResults ?? [], true)) {
                 return;
             }
 

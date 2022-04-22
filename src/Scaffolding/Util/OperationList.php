@@ -107,7 +107,7 @@ class OperationList extends ArrayList
         }
 
         if ($renumberKeys) {
-            $this->items = array_values($this->items);
+            $this->items = array_values($this->items ?? []);
         }
     }
 

@@ -63,7 +63,7 @@ class InheritanceScaffolderTest extends SapphireTest
 
         $nestedTypes = array_map(function ($type) {
             return $type->config['name'];
-        }, $scaffold->getTypes());
+        }, $scaffold->getTypes() ?? []);
 
         $this->assertContains(
             StaticSchema::inst()->typeNameForDataObject(FakeSiteTree::class),

@@ -35,12 +35,12 @@ class CSRFMiddleware implements QueryMiddleware
     protected function isMutation($query)
     {
         // Simple string matching as a first check to prevent unnecessary static analysis
-        if (stristr($query, Manager::MUTATION_ROOT) === false) {
+        if (stristr($query ?? '', Manager::MUTATION_ROOT ?? '') === false) {
             return false;
         }
 
         // If "mutation" is the first expression in the query, then it's a mutation.
-        if (preg_match('/^\s*'.preg_quote(Manager::MUTATION_ROOT, '/').'/', $query)) {
+        if (preg_match('/^\s*'.preg_quote(Manager::MUTATION_ROOT ?? '', '/').'/', $query ?? '')) {
             return true;
         }
 
@@ -52,7 +52,7 @@ class CSRFMiddleware implements QueryMiddleware
                 NodeKind::OPERATION_DEFINITION,
                 NodeKind::OPERATION_TYPE_DEFINITION
             ];
-            if (!in_array($statement->kind, $options, true)) {
+            if (!in_array($statement->kind, $options ?? [], true)) {
                 continue;
             }
             if ($statement->operation === Manager::MUTATION_ROOT) {

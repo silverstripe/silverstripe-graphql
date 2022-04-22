@@ -370,7 +370,7 @@ class DataObjectScaffolderTest extends SapphireTest
         $config = $objectType->config;
 
         $this->assertEquals($scaffolder->getTypeName(), $config['name']);
-        $this->assertEquals(['MyField', 'Author', 'Files'], array_keys($config['fields']()));
+        $this->assertEquals(['MyField', 'Author', 'Files'], array_keys($config['fields']() ?? []));
     }
 
     public function testDataObjectScaffolderScaffoldFieldException()

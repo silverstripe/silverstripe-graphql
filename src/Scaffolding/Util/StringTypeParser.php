@@ -42,9 +42,9 @@ class StringTypeParser implements TypeParserInterface
      */
     public static function isInternalType($type)
     {
-        $types = array_keys(Type::getStandardTypes());
+        $types = array_keys(Type::getStandardTypes() ?? []);
 
-        return in_array($type, $types);
+        return in_array($type, $types ?? []);
     }
 
     /**
@@ -63,7 +63,7 @@ class StringTypeParser implements TypeParserInterface
             );
         }
 
-        if (!preg_match('/^([A-Za-z]+)(!?)(?:\s*\(\s*(.*)\))?/', $rawArg, $matches)) {
+        if (!preg_match('/^([A-Za-z]+)(!?)(?:\s*\(\s*(.*)\))?/', $rawArg ?? '', $matches)) {
             throw new InvalidArgumentException(
                 "Invalid argument: $rawArg"
             );
