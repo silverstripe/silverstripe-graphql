@@ -147,7 +147,7 @@ class FieldCreator
 
         return function () use ($resolver) {
             $args = func_get_args();
-            $result = call_user_func_array($resolver, $args);
+            $result = call_user_func_array($resolver, $args ?? []);
 
             return $result;
         };

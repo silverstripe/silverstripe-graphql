@@ -42,7 +42,7 @@ class Create extends MutationScaffolder implements OperationResolver, CRUDInterf
             return $name;
         }
 
-        return 'create' . ucfirst($this->getTypeName());
+        return 'create' . ucfirst($this->getTypeName() ?? '');
     }
 
     /**
@@ -126,7 +126,7 @@ class Create extends MutationScaffolder implements OperationResolver, CRUDInterf
 
         // Extension points that return false should kill the create
         $results = $this->extend('augmentMutation', $newObject, $args, $context, $info);
-        if (in_array(false, $results, true)) {
+        if (in_array(false, $results ?? [], true)) {
             return null;
         }
 

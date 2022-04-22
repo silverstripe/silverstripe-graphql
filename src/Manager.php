@@ -134,7 +134,7 @@ class Manager implements ConfigurationApplier
         // Reverse middlewares
         $next = $last;
         // Filter out any middlewares that are set to `false`, e.g. via config
-        $middlewares = array_reverse(array_filter($this->getMiddlewares()));
+        $middlewares = array_reverse(array_filter($this->getMiddlewares() ?? []));
         /** @var QueryMiddleware $middleware */
         foreach ($middlewares as $middleware) {
             $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
@@ -205,20 +205,20 @@ class Manager implements ConfigurationApplier
         $this->extend('updateConfig', $config);
 
         // Bootstrap schema class mapping from config
-        if (array_key_exists('typeNames', $config)) {
+        if (array_key_exists('typeNames', $config ?? [])) {
             StaticSchema::inst()->setTypeNames($config['typeNames']);
         }
-        if (array_key_exists('fieldFormatter', $config)) {
+        if (array_key_exists('fieldFormatter', $config ?? [])) {
             StaticSchema::inst()->setFieldFormatter($config['fieldFormatter']);
         }
-        if (array_key_exists('fieldAccessor', $config)) {
+        if (array_key_exists('fieldAccessor', $config ?? [])) {
             StaticSchema::inst()->setFieldAccessor(Injector::inst()->get($config['fieldAccessor']));
         } else {
             StaticSchema::inst()->setFieldAccessor(Injector::inst()->get(NaiveFieldAccessor::class));
         }
 
         // Types (incl. Interfaces and InputTypes)
-        if (array_key_exists('types', $config)) {
+        if (array_key_exists('types', $config ?? [])) {
             foreach ($config['types'] as $name => $typeCreatorClass) {
                 $typeCreator = Injector::inst()->create($typeCreatorClass, $this);
                 if (!($typeCreator instanceof TypeCreator)) {
@@ -234,7 +234,7 @@ class Manager implements ConfigurationApplier
         }
 
         // Queries
-        if ($config && array_key_exists('queries', $config)) {
+        if ($config && array_key_exists('queries', $config ?? [])) {
             foreach ($config['queries'] as $name => $queryCreatorClass) {
                 $queryCreator = Injector::inst()->create($queryCreatorClass, $this);
                 if (!($queryCreator instanceof QueryCreator)) {
@@ -251,7 +251,7 @@ class Manager implements ConfigurationApplier
         }
 
         // Mutations
-        if ($config && array_key_exists('mutations', $config)) {
+        if ($config && array_key_exists('mutations', $config ?? [])) {
             foreach ($config['mutations'] as $name => $mutationCreatorClass) {
                 $mutationCreator = Injector::inst()->create($mutationCreatorClass, $this);
                 if (!($mutationCreator instanceof MutationCreator)) {
@@ -274,7 +274,7 @@ class Manager implements ConfigurationApplier
         }
         if (isset($config['scaffolding_providers'])) {
             foreach ($config['scaffolding_providers'] as $provider) {
-                if (!class_exists($provider)) {
+                if (!class_exists($provider ?? '')) {
                     throw new InvalidArgumentException(sprintf(
                         'Scaffolding provider %s does not exist.',
                         $provider
@@ -315,7 +315,7 @@ class Manager implements ConfigurationApplier
                 'fields' => function () {
                     return array_map(function ($query) {
                         return is_callable($query) ? $query() : $query;
-                    }, $this->queries);
+                    }, $this->queries ?? []);
                 },
             ]);
         } else {
@@ -330,7 +330,7 @@ class Manager implements ConfigurationApplier
                 'fields' => function () {
                     return array_map(function ($mutation) {
                         return is_callable($mutation) ? $mutation() : $mutation;
-                    }, $this->mutations);
+                    }, $this->mutations ?? []);
                 },
             ]);
         }
@@ -491,7 +491,7 @@ class Manager implements ConfigurationApplier
                 __CLASS__
             ));
         }
-        if (preg_match('/[^A-Za-z0-9_-]/', $schemaKey)) {
+        if (preg_match('/[^A-Za-z0-9_-]/', $schemaKey ?? '')) {
             throw new InvalidArgumentException(sprintf(
                 '%s schemaKey may only contain alphanumeric characters, dashes, and underscores',
                 __CLASS__
@@ -519,7 +519,7 @@ class Manager implements ConfigurationApplier
         if (!empty($locations)) {
             $error['locations'] = array_map(function (SourceLocation $loc) {
                 return $loc->toArray();
-            }, $locations);
+            }, $locations ?? []);
         }
 
         $previous = $exception->getPrevious();
@@ -619,7 +619,7 @@ class Manager implements ConfigurationApplier
         if (!empty($executionResult->errors)) {
             return [
                 'data' => $executionResult->data,
-                'errors' => array_map($this->errorFormatter, $executionResult->errors),
+                'errors' => array_map($this->errorFormatter, $executionResult->errors ?? []),
             ];
         } else {
             return [

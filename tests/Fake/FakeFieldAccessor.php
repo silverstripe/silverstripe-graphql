@@ -10,7 +10,7 @@ class FakeFieldAccessor implements FieldAccessorInterface
 {
     public function getObjectFieldName(ViewableData $object, $fieldName, $opts = [])
     {
-        $field = strrev($fieldName);
+        $field = strrev($fieldName ?? '');
 
         return $object->hasField($field) ? $field : null;
     }
@@ -20,7 +20,7 @@ class FakeFieldAccessor implements FieldAccessorInterface
         if ($object->hasField($fieldName)) {
             return $object->obj($fieldName);
         }
-        $field = strrev($fieldName);
+        $field = strrev($fieldName ?? '');
         return $asObject ? $object->obj($field): $object->$field;
     }
 

@@ -48,7 +48,7 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
             return $name;
         }
 
-        return 'readOne' . ucfirst($this->getTypeName());
+        return 'readOne' . ucfirst($this->getTypeName() ?? '');
     }
 
     /**
@@ -153,7 +153,7 @@ class ReadOne extends ItemQueryScaffolder implements OperationResolver, CRUDInte
     protected function checkForQueryFilterCompatibility(array $args): void
     {
         // Skip implementation if query filter is compatible
-        if (!array_key_exists('filter', $args)) {
+        if (!array_key_exists('filter', $args ?? [])) {
             return;
         }
 

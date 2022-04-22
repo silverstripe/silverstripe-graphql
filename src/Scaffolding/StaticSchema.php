@@ -111,8 +111,8 @@ class StaticSchema
             return $customTypeName;
         }
 
-        $parts = explode('\\', $class);
-        $typeName = sizeof($parts) > 1 ? $parts[0] . end($parts) : $parts[0];
+        $parts = explode('\\', $class ?? '');
+        $typeName = sizeof($parts ?? []) > 1 ? $parts[0] . end($parts) : $parts[0];
 
         return $this->typeName($typeName);
     }
@@ -144,7 +144,7 @@ class StaticSchema
      */
     public function typeName($str)
     {
-        return preg_replace('/[^A-Za-z0-9_]/', '_', str_replace(' ', '', $str));
+        return preg_replace('/[^A-Za-z0-9_]/', '_', str_replace(' ', '', $str ?? '') ?? '');
     }
 
     /**
@@ -178,11 +178,11 @@ class StaticSchema
                 static::class
             ));
         }
-        $allTypes = array_values($typesMap);
+        $allTypes = array_values($typesMap ?? []);
         $diff = array_unique(
             array_diff_assoc(
-                $allTypes,
-                array_unique($allTypes)
+                $allTypes ?? [],
+                array_unique($allTypes ?? [])
             )
         );
 
@@ -211,7 +211,7 @@ class StaticSchema
     public function getAncestry($dataObjectClass)
     {
         $classes = [];
-        $ancestry = array_reverse(ClassInfo::ancestry($dataObjectClass));
+        $ancestry = array_reverse(ClassInfo::ancestry($dataObjectClass) ?? []);
 
         foreach ($ancestry as $class) {
             if ($class === $dataObjectClass) {
@@ -244,7 +244,7 @@ class StaticSchema
         $descendants = ClassInfo::subclassesFor($dataObjectClass);
         array_shift($descendants);
 
-        return array_values($descendants);
+        return array_values($descendants ?? []);
     }
 
     /**
@@ -309,7 +309,7 @@ GRAPHQL
         if (isset($fragments['errors'])) {
             $messages = array_map(function ($error) {
                 return $error['message'];
-            }, $fragments['errors']);
+            }, $fragments['errors'] ?? []);
 
             throw new Exception(sprintf(
                 'There were some errors with the introspection query: %s',
@@ -346,7 +346,7 @@ GRAPHQL
 
         return array_map(function ($field) {
             return $this->formatField($field);
-        }, $fields);
+        }, $fields ?? []);
     }
 
     /**
@@ -383,7 +383,7 @@ GRAPHQL
         return array_map(function ($key) use ($graceful, $arr) {
             $formatted = $this->formatField($key);
             return $graceful ? ($arr[$formatted] ?? null) : $arr[$formatted];
-        }, $keys);
+        }, $keys ?? []);
     }
 
     /**

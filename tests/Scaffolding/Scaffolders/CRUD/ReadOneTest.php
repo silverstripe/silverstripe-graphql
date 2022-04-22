@@ -69,7 +69,7 @@ class ReadOneTest extends SapphireTest
 
         // Check all args
         $args = $scaffold['args'];
-        $this->assertEquals(['ID', 'MyField'], array_keys($args));
+        $this->assertEquals(['ID', 'MyField'], array_keys($args ?? []));
 
         /** @var NonNull $idType */
         $idType = $args['ID']['type'];

@@ -87,7 +87,7 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
         }
 
         $typePlural = $this->pluralise($this->getTypeName());
-        return 'read' . ucfirst($typePlural);
+        return 'read' . ucfirst($typePlural ?? '');
     }
 
     /**
@@ -114,8 +114,8 @@ class Read extends ListQueryScaffolder implements OperationResolver, CRUDInterfa
     protected function pluralise($typeName)
     {
         // Ported from DataObject::plural_name()
-        if (preg_match('/[^aeiou]y$/i', $typeName)) {
-            $typeName = substr($typeName, 0, -1) . 'ie';
+        if (preg_match('/[^aeiou]y$/i', $typeName ?? '')) {
+            $typeName = substr($typeName ?? '', 0, -1) . 'ie';
         }
         $typeName .= 's';
         return $typeName;

@@ -71,7 +71,7 @@ class OperationScaffolderTest extends SapphireTest
         );
 
         $this->assertEquals([], array_diff(
-            $scaffolder->getArgs()->column('argName'),
+            $scaffolder->getArgs()->column('argName') ?? [],
             ['One', 'Two']
         ));
 
@@ -192,7 +192,7 @@ class OperationScaffolderTest extends SapphireTest
         ]);
 
         $this->assertEquals([], array_diff(
-            $scaffolder->getArgs()->column('argName'),
+            $scaffolder->getArgs()->column('argName') ?? [],
             ['One', 'Two']
         ));
 

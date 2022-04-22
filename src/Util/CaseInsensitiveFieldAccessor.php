@@ -131,7 +131,7 @@ class CaseInsensitiveFieldAccessor implements FieldAccessorInterface
         ], $opts);
 
         $optFn = function ($type) use (&$opts) {
-            return (in_array($type, $opts) && $opts[$type] === true);
+            return (in_array($type, $opts ?? []) && $opts[$type] === true);
         };
 
         // Correct case (and getters)
@@ -145,7 +145,7 @@ class CaseInsensitiveFieldAccessor implements FieldAccessorInterface
             foreach ($parents as $parent) {
                 $fields = DataObject::getSchema()->databaseFields($parent);
                 foreach ($fields as $objectFieldName => $fieldClass) {
-                    if (strcasecmp($objectFieldName, $fieldName) === 0) {
+                    if (strcasecmp($objectFieldName ?? '', $fieldName ?? '') === 0) {
                         return $objectFieldName;
                     }
                 }
@@ -154,7 +154,7 @@ class CaseInsensitiveFieldAccessor implements FieldAccessorInterface
 
         // Setters
         // TODO Support for Object::$extra_methods (case sensitive array key check)
-        $setterName = "set" . ucfirst($fieldName);
+        $setterName = "set" . ucfirst($fieldName ?? '');
         if ($optFn(self::HAS_SETTER) && $object->hasMethod($setterName)) {
             return $setterName;
         }

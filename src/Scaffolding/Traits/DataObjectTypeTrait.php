@@ -68,7 +68,7 @@ trait DataObjectTypeTrait
             throw new InvalidArgumentException("Missing class provided");
         }
 
-        if (!class_exists($class)) {
+        if (!class_exists($class ?? '')) {
             throw new InvalidArgumentException("Non-existent classname \"{$class}\"");
         }
 

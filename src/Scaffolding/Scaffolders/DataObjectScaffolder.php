@@ -153,7 +153,7 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
             $exclusions = [$exclusions];
         }
         $fields = $this->allFieldsFromDataObject($includeHasOne);
-        $filteredFields = array_diff($fields, $exclusions);
+        $filteredFields = array_diff($fields ?? [], $exclusions);
 
         return $this->addFields($filteredFields);
     }
@@ -379,8 +379,8 @@ class DataObjectScaffolder implements ManagerMutatorInterface, ScaffolderInterfa
     public function getDependentClasses()
     {
         return array_merge(
-            array_values($this->nestedDataObjectClasses()),
-            array_values($this->nestedConnections())
+            array_values($this->nestedDataObjectClasses() ?? []),
+            array_values($this->nestedConnections() ?? [])
         );
     }
 

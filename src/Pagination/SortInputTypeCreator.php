@@ -80,7 +80,7 @@ class SortInputTypeCreator extends TypeCreator
     public function attributes()
     {
         return [
-            'name' => ucfirst($this->inputName) .'SortInputType',
+            'name' => ucfirst($this->inputName ?? '') .'SortInputType',
             'description' => 'Define the sorting',
         ];
     }
@@ -95,7 +95,7 @@ class SortInputTypeCreator extends TypeCreator
         }
 
         $sortableField = new EnumType([
-            'name' => ucfirst($this->inputName) . 'SortFieldType',
+            'name' => ucfirst($this->inputName ?? '') . 'SortFieldType',
             'description' => 'Field name to sort by.',
             'values' => $values,
         ]);
