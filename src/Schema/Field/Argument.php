@@ -196,6 +196,6 @@ class Argument implements ConfigurationApplier, SignatureProvider
             $this->getDefaultValue(),
         ];
 
-        return md5(json_encode($components));
+        return md5(json_encode($components) ?? '');
     }
 }

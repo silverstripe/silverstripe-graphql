@@ -66,13 +66,13 @@ class InheritanceChain
     public function getAncestralModels(): array
     {
         $classes = [];
-        $ancestry = array_reverse(ClassInfo::ancestry($this->dataObjectClass));
+        $ancestry = array_reverse(ClassInfo::ancestry($this->dataObjectClass) ?? []);
 
         foreach ($ancestry as $class) {
             if ($class === $this->dataObjectClass) {
                 continue;
             }
-            if (in_array($class, $this->hiddenAncestors)) {
+            if (in_array($class, $this->hiddenAncestors ?? [])) {
                 continue;
             }
             if ($class == DataObject::class) {
@@ -89,7 +89,7 @@ class InheritanceChain
      */
     public function hasAncestors(): bool
     {
-        return count($this->getAncestralModels()) > 0;
+        return count($this->getAncestralModels() ?? []) > 0;
     }
 
     /**
@@ -112,8 +112,8 @@ class InheritanceChain
     {
         $descendants = ClassInfo::subclassesFor($this->dataObjectClass, false);
 
-        return array_filter(array_values($descendants), function ($class) {
-            return !in_array($class, $this->hiddenDescendants);
+        return array_filter(array_values($descendants ?? []), function ($class) {
+            return !in_array($class, $this->hiddenDescendants ?? []);
         });
     }
 
@@ -124,8 +124,8 @@ class InheritanceChain
     public function getDirectDescendants(): array
     {
         $parentClass = $this->dataObjectClass;
-        return array_filter($this->getDescendantModels(), function ($class) use ($parentClass) {
-            return get_parent_class($class) === $parentClass;
+        return array_filter($this->getDescendantModels() ?? [], function ($class) use ($parentClass) {
+            return get_parent_class($class ?? '') === $parentClass;
         });
     }
 
@@ -135,7 +135,7 @@ class InheritanceChain
      */
     public function hasDescendants(): bool
     {
-        return count($this->getDescendantModels()) > 0;
+        return count($this->getDescendantModels() ?? []) > 0;
     }
 
     /**

@@ -168,7 +168,7 @@ class ModelType extends Type implements ExtraTypeProvider
         );
 
         Schema::invariant(
-            !in_array(strtolower($fieldObj->getName()), $this->blacklistedFields),
+            !in_array(strtolower($fieldObj->getName() ?? ''), $this->blacklistedFields ?? []),
             'Field %s is not allowed on %s',
             $fieldObj->getName(),
             $this->getModel()->getSourceClass()

@@ -28,10 +28,10 @@ class TypeReference
     {
         // The Type = 'default value' syntax isn't parsed by the graphql-php library, so
         // we just handle this internally.
-        if (stristr($typeStr, '=') !== false) {
-            list ($type, $defaultValue) = explode('=', $typeStr);
-            $this->defaultValue = trim($defaultValue);
-            $this->typeStr = trim($type);
+        if (stristr($typeStr ?? '', '=') !== false) {
+            list ($type, $defaultValue) = explode('=', $typeStr ?? '');
+            $this->defaultValue = trim($defaultValue ?? '');
+            $this->typeStr = trim($type ?? '');
         } else {
             $this->typeStr = $typeStr;
         }
@@ -81,7 +81,7 @@ class TypeReference
             return false;
         }
 
-        return in_array($nodeKind, $path);
+        return in_array($nodeKind, $path ?? []);
     }
 
     /**
@@ -135,7 +135,7 @@ class TypeReference
             }
         }
         $str .= $name;
-        foreach (array_reverse($path) as $item) {
+        foreach (array_reverse($path ?? []) as $item) {
             if ($item === NodeKind::LIST_TYPE) {
                 $str .= ']';
             } elseif ($item === NodeKind::NON_NULL_TYPE) {

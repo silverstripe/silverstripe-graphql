@@ -38,7 +38,7 @@ class QueryRecorderExtension extends DataExtension
 
         // Add class to all nested levels
         $class = $query->dataClass();
-        for ($i = 0; $i < count($this->levels); $i++) {
+        for ($i = 0; $i < count($this->levels ?? []); $i++) {
             $this->levels[$i][strtolower($class)] = $class;
         }
     }

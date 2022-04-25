@@ -298,10 +298,10 @@ class Schema implements ConfigurationApplier
                 if (!$modelTypeDef || $fieldObj->getType()) {
                     continue;
                 }
-                $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef);
+                $safeModelTypeDef = str_replace('\\', '__', $modelTypeDef ?? '');
                 $safeModelTypeRef = TypeReference::create($safeModelTypeDef);
                 [$safeNamedClass, $path] = $safeModelTypeRef->getTypeName();
-                $namedClass = str_replace('__', '\\', $safeNamedClass);
+                $namedClass = str_replace('__', '\\', $safeNamedClass ?? '');
                 $model = $this->getConfig()->createModel($namedClass);
                 Schema::invariant(
                     $model,
@@ -488,16 +488,16 @@ class Schema implements ConfigurationApplier
             if ($type->getIsInput()) {
                 continue;
             }
-            $pluggedFields = array_filter($type->getFields(), function (Field $field) use ($type) {
+            $pluggedFields = array_filter($type->getFields() ?? [], function (Field $field) use ($type) {
                 return !empty($field->getPlugins());
             });
-            $allTypeFields = array_merge($allTypeFields, array_values($pluggedFields));
+            $allTypeFields = array_merge($allTypeFields, array_values($pluggedFields ?? []));
         }
         foreach ($this->models as $model) {
-            $pluggedFields = array_filter(array_values($model->getFields()), function (ModelField $field) {
+            $pluggedFields = array_filter(array_values($model->getFields() ?? []), function (ModelField $field) {
                 return !empty($field->getPlugins());
             });
-            $allModelFields = array_merge($allModelFields, array_values($pluggedFields));
+            $allModelFields = array_merge($allModelFields, array_values($pluggedFields ?? []));
         }
 
         return [
@@ -763,9 +763,9 @@ class Schema implements ConfigurationApplier
      */
     public function getModelTypesFromClass(string $class): array
     {
-        return array_filter($this->getModels(), function (ModelType $modelType) use ($class) {
+        return array_filter($this->getModels() ?? [], function (ModelType $modelType) use ($class) {
             $source = $modelType->getModel()->getSourceClass();
-            return $source === $class || is_subclass_of($source, $class);
+            return $source === $class || is_subclass_of($source, $class ?? '');
         });
     }
 
@@ -1105,7 +1105,7 @@ class Schema implements ConfigurationApplier
     public function getImplementorsOf(string $interfaceName): array
     {
         $search = array_merge($this->getTypes(), $this->getModels());
-        return array_filter($search, function (Type $type) use ($interfaceName) {
+        return array_filter($search ?? [], function (Type $type) use ($interfaceName) {
             return $type->implements($interfaceName);
         });
     }
@@ -1227,7 +1227,7 @@ class Schema implements ConfigurationApplier
      */
     public static function isInternalType(string $type): bool
     {
-        return in_array($type, static::getInternalTypes());
+        return in_array($type, static::getInternalTypes() ?? []);
     }
 
     /**
@@ -1267,7 +1267,7 @@ class Schema implements ConfigurationApplier
         );
 
         if (!empty($allowedKeys)) {
-            $invalidKeys = array_diff(array_keys($config), $allowedKeys);
+            $invalidKeys = array_diff(array_keys($config ?? []), $allowedKeys);
             static::invariant(
                 empty($invalidKeys),
                 "Config contains invalid keys: %s. Allowed keys are %s.\n\nContext: %s",
@@ -1278,7 +1278,7 @@ class Schema implements ConfigurationApplier
         }
 
         if (!empty($requiredKeys)) {
-            $missingKeys = array_diff($requiredKeys, array_keys($config));
+            $missingKeys = array_diff($requiredKeys ?? [], array_keys($config ?? []));
             static::invariant(
                 empty($missingKeys),
                 "Config is missing required keys: %s.\n\nContext: %s",
@@ -1295,7 +1295,7 @@ class Schema implements ConfigurationApplier
     public static function assertValidName($name): void
     {
         static::invariant(
-            preg_match(' /[_A-Za-z][_0-9A-Za-z]*/', $name),
+            preg_match(' /[_A-Za-z][_0-9A-Za-z]*/', $name ?? ''),
             'Invalid name: %s. Names must only use underscores and alphanumeric characters, and cannot
           begin with a number.',
             $name
@@ -1311,7 +1311,7 @@ class Schema implements ConfigurationApplier
     public static function invariant($test, $message = '', ...$params): void
     {
         if (!$test) {
-            $message = count($params) > 0 ? sprintf($message, ...$params) : $message;
+            $message = count($params ?? []) > 0 ? sprintf($message, ...$params) : $message;
             throw new SchemaBuilderException($message);
         }
     }

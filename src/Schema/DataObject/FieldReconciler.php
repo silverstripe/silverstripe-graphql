@@ -25,17 +25,17 @@ trait FieldReconciler
             Schema::assertValidConfig($configFields);
             foreach ($configFields as $fieldName => $bool) {
                 if ($bool === false) {
-                    $fields = array_filter($fields, function ($field) use ($fieldName) {
+                    $fields = array_filter($fields ?? [], function ($field) use ($fieldName) {
                         return $field !== $fieldName;
                     });
                 } elseif ($fieldName === Schema::ALL) {
-                    $fields = array_merge($fields, array_keys($modelType->getFields()));
+                    $fields = array_merge($fields, array_keys($modelType->getFields() ?? []));
                 } else {
                     $fields[] = $fieldName;
                 }
             }
         } else {
-            $fields = array_keys($modelType->getFields());
+            $fields = array_keys($modelType->getFields() ?? []);
         }
 
         return $fields;

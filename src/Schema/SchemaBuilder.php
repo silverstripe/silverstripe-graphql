@@ -138,7 +138,7 @@ class SchemaBuilder
         $schemaObj = Schema::create($key);
         $schemas = $schemaObj->config()->get('schemas') ?: [];
 
-        if (!array_key_exists($key, $schemas)) {
+        if (!array_key_exists($key, $schemas ?? [])) {
             throw new SchemaBuilderException(sprintf(
                 'Schema "%s" has not been defined',
                 $key
@@ -223,7 +223,7 @@ class SchemaBuilder
         $absConfigSrc = Director::is_absolute($dir) ? $dir : Path::join(BASE_PATH, $resolvedDir);
 
         Schema::invariant(
-            !is_file($absConfigSrc),
+            !is_file($absConfigSrc ?? ''),
             'Provided source config file "%s" rather than directory on schema %s. ' .
             'See https://docs.silverstripe.org/en/4/developer_guides/graphql/getting_started/configuring_your_schema/',
             $absConfigSrc,
@@ -231,7 +231,7 @@ class SchemaBuilder
         );
 
         Schema::invariant(
-            is_dir($absConfigSrc),
+            is_dir($absConfigSrc ?? ''),
             'Source config directory %s does not exist on schema %s. ' .
             'See https://docs.silverstripe.org/en/4/developer_guides/graphql/getting_started/configuring_your_schema/',
             $absConfigSrc,
@@ -284,7 +284,7 @@ class SchemaBuilder
                 $namespace = $yamlFile->getBasename('.yml');
             } else {
                 // Otherwise, the directory name is the namespace, e.g _graphql/models/myfile.yml
-                $namespace = basename($yamlFile->getPath());
+                $namespace = basename($yamlFile->getPath() ?? '');
             }
 
             // if the yaml file was in a namespace directory, e.g. "models/" or "types/", the key is implied.

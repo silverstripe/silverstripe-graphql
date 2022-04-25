@@ -196,6 +196,6 @@ class Scalar implements ConfigurationApplier, SchemaValidator, SignatureProvider
             $this->getSerialiser()->toArray(),
             $this->getLiteralParser()->toArray(),
             $this->getValueParser()->toArray(),
-        ]));
+        ]) ?? '');
     }
 }

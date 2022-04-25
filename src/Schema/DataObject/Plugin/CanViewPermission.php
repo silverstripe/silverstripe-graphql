@@ -87,7 +87,7 @@ class CanViewPermission extends AbstractCanViewPermission
     public static function paginatedPermissionCheck(array $obj, array $args, array $context, ResolveInfo $info): array
     {
         $list = $obj['nodes'];
-        $originalCount = count($list);
+        $originalCount = count($list ?? []);
         $filteredList = static::permissionCheck($list, $args, $context, $info);
         $newCount = $filteredList->count();
         if ($originalCount === $newCount) {

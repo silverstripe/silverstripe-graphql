@@ -14,6 +14,6 @@ class HybridObfuscator implements NameObfuscator
      */
     public function obfuscate(string $name): string
     {
-        return sprintf('%s_%s', $name, md5($name));
+        return sprintf('%s_%s', $name, md5($name ?? ''));
     }
 }

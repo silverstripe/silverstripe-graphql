@@ -59,7 +59,7 @@ class ExtensionLoader extends AbstractBulkLoader
     public function include(array $include): AbstractBulkLoader
     {
         foreach ($include as $class) {
-            if (!class_exists($class) || !is_subclass_of($class, Extension::class)) {
+            if (!class_exists($class ?? '') || !is_subclass_of($class, Extension::class)) {
                 throw new InvalidArgumentException(sprintf(
                     'Class %s given to %s is not a valid extension',
                     $class,
@@ -78,7 +78,7 @@ class ExtensionLoader extends AbstractBulkLoader
     public function exclude(array $exclude): AbstractBulkLoader
     {
         foreach ($exclude as $class) {
-            if (!class_exists($class) || !is_subclass_of($class, Extension::class)) {
+            if (!class_exists($class ?? '') || !is_subclass_of($class, Extension::class)) {
                 throw new InvalidArgumentException(sprintf(
                     'Class %s given to %s is not a valid extension',
                     $class,

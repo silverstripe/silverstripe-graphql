@@ -24,10 +24,10 @@ class Registry
         if (self::$inst) {
             return self::$inst;
         }
-        $subclasses = array_values(ClassInfo::subclassesFor(AbstractBulkLoader::class, false));
+        $subclasses = array_values(ClassInfo::subclassesFor(AbstractBulkLoader::class, false) ?? []);
         $bulkLoaders = array_map(function ($className) {
             return Injector::inst()->get($className);
-        }, $subclasses);
+        }, $subclasses ?? []);
 
         self::$inst = RegistryBackend::create(...$bulkLoaders);
 

@@ -308,10 +308,10 @@ class InheritanceBuilderTest extends SapphireTest
      */
     private function assertFields(array $fields, Type $type)
     {
-        $expected = array_map('strtolower', $fields);
-        $compare = array_map('strtolower', array_keys($type->getFields()));
+        $expected = array_map('strtolower', $fields ?? []);
+        $compare = array_map('strtolower', array_keys($type->getFields() ?? []));
 
-        $this->assertEmpty(array_diff($expected, $compare));
-        $this->assertEmpty(array_diff($compare, $expected));
+        $this->assertEmpty(array_diff($expected ?? [], $compare));
+        $this->assertEmpty(array_diff($compare ?? [], $expected));
     }
 }

@@ -20,7 +20,7 @@ class RequestIDProcessor implements RequestProcessor
     {
         $query = $request->requestVar('query');
         $id = $request->requestVar('id');
-        $variables = json_decode($request->requestVar('variables'), true);
+        $variables = json_decode($request->requestVar('variables') ?? '', true);
 
         if ($id) {
             if ($query) {

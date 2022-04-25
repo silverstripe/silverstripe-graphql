@@ -81,7 +81,7 @@ class ResolverFailure extends Exception
         $allCallables = $info->fieldDefinition->config['resolverComposition'] ?? [];
         $callables = array_map(function ($callable) {
             return var_export($callable, true);
-        }, $allCallables);
+        }, $allCallables ?? []);
         return implode("\n", $callables);
     }
 

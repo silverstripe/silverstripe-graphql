@@ -86,14 +86,14 @@ class BulkLoaderSet implements ConfigurationApplier
         $collection = $this->initialCollection;
         $logger->debug(sprintf(
             'Bulk loader initial collection size: %s',
-            count($collection->getClasses())
+            count($collection->getClasses() ?? [])
         ));
         foreach ($this->loaders as $loader) {
             $collection = $loader->collect($collection);
             $logger->debug(sprintf(
                 'Loader %s reduced bulk load to %s',
                 $loader->getIdentifier(),
-                count($collection->getClasses())
+                count($collection->getClasses() ?? [])
             ));
         }
 

@@ -93,7 +93,7 @@ class DevelopmentAdmin extends Controller
             $controllerClass = $reg[$baseUrlPart]['controller'];
         }
 
-        if ($controllerClass && class_exists($controllerClass)) {
+        if ($controllerClass && class_exists($controllerClass ?? '')) {
             return $controllerClass::create();
         }
 

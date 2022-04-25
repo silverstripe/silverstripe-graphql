@@ -36,7 +36,7 @@ class ReadOneCreator implements OperationCreator
         $plugins = $config['plugins'] ?? [];
         $queryName = $config['name'] ?? null;
         if (!$queryName) {
-            $queryName = 'readOne' . ucfirst($typeName);
+            $queryName = 'readOne' . ucfirst($typeName ?? '');
         }
         return ModelQuery::create($model, $queryName)
             ->setType($typeName)

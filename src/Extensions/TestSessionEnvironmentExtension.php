@@ -21,8 +21,8 @@ class TestSessionEnvironmentExtension extends Extension
     public function onAfterStartTestSession()
     {
         $logger = Logger::singleton();
-        $keys = array_keys(Schema::config()->get('schemas'));
-        $keys = array_filter($keys, function ($key) {
+        $keys = array_keys(Schema::config()->get('schemas') ?? []);
+        $keys = array_filter($keys ?? [], function ($key) {
             return $key !== Schema::ALL;
         });
         $builder = SchemaBuilder::singleton();

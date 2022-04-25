@@ -114,7 +114,7 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
             return;
         }
 
-        $connectionName = ucfirst($connectionName) . 'Connection';
+        $connectionName = ucfirst($connectionName ?? '') . 'Connection';
 
         // Dedupe. If the connection exists for the same type
         // (possibly with different wrapper type, e.g. not required)

@@ -126,8 +126,8 @@ class Field implements
     {
         $name = null;
         $args = null;
-        if (stristr($def, Token::PAREN_L) !== false) {
-            list ($name, $args) = explode(Token::PAREN_L, $def);
+        if (stristr($def ?? '', Token::PAREN_L ?? '') !== false) {
+            list ($name, $args) = explode(Token::PAREN_L ?? '', $def ?? '');
         } else {
             $name = $def;
         }
@@ -137,7 +137,7 @@ class Field implements
             return [$name, []];
         }
 
-        preg_match('/^(.*?)\)$/', $args, $matches);
+        preg_match('/^(.*?)\)$/', $args ?? '', $matches);
 
         Schema::invariant(
             $matches,
@@ -145,15 +145,15 @@ class Field implements
             $def
         );
         $argList = [];
-        $argDefs = explode(',', $matches[1]);
+        $argDefs = explode(',', $matches[1] ?? '');
         foreach ($argDefs as $argDef) {
             Schema::invariant(
-                stristr($argDef, Token::COLON) !== false,
+                stristr($argDef ?? '', Token::COLON ?? '') !== false,
                 'Invalid arg: %s',
                 $argDef
             );
-            list ($argName, $argType) = explode(':', $argDef);
-            $argList[trim($argName)] = trim($argType);
+            list ($argName, $argType) = explode(':', $argDef ?? '');
+            $argList[trim($argName)] = trim($argType ?? '');
         }
         return [$name, $argList];
     }
@@ -390,7 +390,7 @@ class Field implements
     public function setNamedType(string $name): self
     {
         $currentType = $this->getType();
-        $newType = preg_replace('/[A-Za-z_0-9]+/', $name, $currentType);
+        $newType = preg_replace('/[A-Za-z_0-9]+/', $name ?? '', $currentType ?? '');
         return $this->setType($newType);
     }
 
@@ -548,10 +548,10 @@ class Field implements
             $this->getSortedPlugins(),
             array_map(function (Argument $arg) {
                 return $arg->getSignature();
-            }, $args),
+            }, $args ?? []),
         ];
 
-        return md5(json_encode($components));
+        return md5(json_encode($components) ?? '');
     }
 
     /**

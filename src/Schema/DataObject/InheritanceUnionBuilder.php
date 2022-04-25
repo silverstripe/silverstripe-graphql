@@ -61,7 +61,7 @@ class InheritanceUnionBuilder
                 return null;
             }
             return $schema->getConfig()->getTypeNameForClass($class);
-        }, $chain->getDescendantModels()));
+        }, $chain->getDescendantModels() ?? []));
 
         if (empty($types)) {
             return $this;

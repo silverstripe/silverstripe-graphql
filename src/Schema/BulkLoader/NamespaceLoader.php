@@ -28,13 +28,13 @@ class NamespaceLoader extends AbstractBulkLoader
         foreach ($collection->getClasses() as $class) {
             $isIncluded = false;
             foreach ($this->includeList as $pattern) {
-                if (fnmatch($pattern, $class, FNM_NOESCAPE)) {
+                if (fnmatch($pattern ?? '', $class ?? '', FNM_NOESCAPE)) {
                     $isIncluded = true;
                     break;
                 }
             }
             foreach ($this->excludeList as $pattern) {
-                if (fnmatch($pattern, $class, FNM_NOESCAPE)) {
+                if (fnmatch($pattern ?? '', $class ?? '', FNM_NOESCAPE)) {
                     $isIncluded = false;
                     break;
                 }

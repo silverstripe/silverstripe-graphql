@@ -53,7 +53,7 @@ trait MiddlewareConsumer
         // Reverse middlewares
         $next = $last;
         // Filter out any middlewares that are set to `false`, e.g. via config
-        $middlewares = array_reverse(array_filter($this->getMiddlewares()));
+        $middlewares = array_reverse(array_filter($this->getMiddlewares() ?? []));
         /** @var Middleware $middleware */
         foreach ($middlewares as $middleware) {
             $next = function ($params) use ($middleware, $next) {

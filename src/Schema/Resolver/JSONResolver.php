@@ -11,7 +11,7 @@ class JSONResolver
      */
     public static function serialise($value): array
     {
-        return json_decode($value, true);
+        return json_decode($value ?? '', true);
     }
 
     /**

@@ -212,7 +212,7 @@ class DataObjectModel implements
         }
         return array_map(function (string $field) {
             return $this->getFieldAccessor()->formatField($field);
-        }, $blackList);
+        }, $blackList ?? []);
     }
 
     /**
@@ -224,7 +224,7 @@ class DataObjectModel implements
         $blackList = $this->getBlacklistedFields();
         $allFields = $this->getFieldAccessor()->getAllFields($this->dataObject);
 
-        return array_diff($allFields, $blackList);
+        return array_diff($allFields ?? [], $blackList);
     }
 
     /**
@@ -236,7 +236,7 @@ class DataObjectModel implements
         $blackList = $this->getBlacklistedFields();
         $allFields = $this->getFieldAccessor()->getAllFields($this->dataObject, true, false);
 
-        return array_diff($allFields, $blackList);
+        return array_diff($allFields ?? [], $blackList);
     }
 
     /**
@@ -291,7 +291,7 @@ class DataObjectModel implements
             return null;
         }
         Schema::invariant(
-            class_exists($creator),
+            class_exists($creator ?? ''),
             'Operation creator %s does not exist',
             $creator
         );
@@ -315,7 +315,7 @@ class DataObjectModel implements
     {
         $registeredOperations = $this->getModelConfiguration()->get('operations', []);
 
-        return array_keys($registeredOperations);
+        return array_keys($registeredOperations ?? []);
     }
 
     /**

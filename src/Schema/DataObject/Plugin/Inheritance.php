@@ -57,7 +57,7 @@ class Inheritance implements PluginInterface, SchemaUpdater, ModelTypePlugin
         $useUnions = $config['useUnionQueries'] ?? false;
         $hideAncestors = $config['hideAncestors'] ?? [];
 
-        if (in_array($type->getModel()->getSourceClass(), $hideAncestors)) {
+        if (in_array($type->getModel()->getSourceClass(), $hideAncestors ?? [])) {
             return;
         }
 

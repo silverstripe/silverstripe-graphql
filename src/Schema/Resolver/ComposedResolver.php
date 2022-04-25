@@ -49,7 +49,7 @@ class ComposedResolver
                 }
                 $args = array_merge([$result], $params);
                 try {
-                    $result = call_user_func_array($callable, $args);
+                    $result = call_user_func_array($callable, $args ?? []);
                 } catch (Exception $e) {
                     throw new ResolverFailure(
                         $callable,

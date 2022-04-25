@@ -25,7 +25,7 @@ class ResolverReference
     public function __construct($callable)
     {
         Schema::invariant(
-            is_array($callable) || (is_string($callable) && stristr($callable, '::') !== false),
+            is_array($callable) || (is_string($callable) && stristr($callable ?? '', '::') !== false),
             '%s accepts a valid callable in array or string form',
             __CLASS__
         );

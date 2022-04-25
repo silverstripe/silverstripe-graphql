@@ -32,7 +32,7 @@ class FilepathLoader extends AbstractBulkLoader
             $resolvedDir = ModuleResourceLoader::singleton()->resolvePath($include);
             $absGlob = Director::is_absolute($include) ? $include : Path::join(BASE_PATH, $resolvedDir);
 
-            foreach (glob(Path::join($absGlob)) as $path) {
+            foreach (glob(Path::join($absGlob) ?? '') as $path) {
                 $includedFiles[$path] = true;
             }
         }
@@ -40,7 +40,7 @@ class FilepathLoader extends AbstractBulkLoader
             $resolvedDir = ModuleResourceLoader::singleton()->resolvePath($exclude);
             $absGlob = Director::is_absolute($exclude) ? $exclude : Path::join(BASE_PATH, $resolvedDir);
 
-            foreach (glob(Path::join($absGlob)) as $path) {
+            foreach (glob(Path::join($absGlob) ?? '') as $path) {
                 $excludedFiles[$path] = true;
             }
         }

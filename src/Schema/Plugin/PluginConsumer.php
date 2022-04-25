@@ -126,7 +126,7 @@ trait PluginConsumer
         $plugins = $inheritDefaults
             ? Priority::mergeArray($this->plugins, $this->defaultPlugins)
             : $this->plugins;
-        $excluded = array_keys($this->excludedPlugins);
+        $excluded = array_keys($this->excludedPlugins ?? []);
         foreach ($excluded as $pluginName) {
             unset($plugins[$pluginName]);
         }
@@ -148,9 +148,9 @@ trait PluginConsumer
      */
     public function hasPlugin(string $identifier): bool
     {
-        $ids = array_keys($this->getPlugins());
+        $ids = array_keys($this->getPlugins() ?? []);
 
-        return in_array($identifier, $ids);
+        return in_array($identifier, $ids ?? []);
     }
 
     /**
@@ -201,29 +201,29 @@ trait PluginConsumer
         $beforeAll = [];
         $afterAll = [];
         $allPlugins = $this->getPlugins();
-        $allPluginNames = array_keys($allPlugins);
+        $allPluginNames = array_keys($allPlugins ?? []);
         foreach ($allPlugins as $pluginName => $pluginConfig) {
             $before = $pluginConfig['before'] ?? [];
             if ($before === Schema::ALL) {
                 $beforeAll[] = $pluginName;
-                $allPluginNames = array_filter($allPluginNames, function ($name) use ($pluginName) {
+                $allPluginNames = array_filter($allPluginNames ?? [], function ($name) use ($pluginName) {
                     return $name !== $pluginName;
                 });
                 continue;
             }
             $before = !is_array($before) ? [$before] : $before;
-            $before = array_intersect($before, $allPluginNames);
+            $before = array_intersect($before ?? [], $allPluginNames);
 
             $after = $pluginConfig['after'] ?? [];
             if ($after === Schema::ALL) {
                 $afterAll[] = $pluginName;
-                $allPluginNames = array_filter($allPluginNames, function ($name) use ($pluginName) {
+                $allPluginNames = array_filter($allPluginNames ?? [], function ($name) use ($pluginName) {
                     return $name !== $pluginName;
                 });
                 continue;
             }
             $after = !is_array($after) ? [$after] : $after;
-            $after = array_intersect($after, $allPluginNames);
+            $after = array_intersect($after ?? [], $allPluginNames);
 
             if (!isset($dependencies[$pluginName])) {
                 $dependencies[$pluginName] = [];

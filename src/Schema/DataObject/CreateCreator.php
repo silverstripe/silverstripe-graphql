@@ -58,7 +58,7 @@ class CreateCreator implements OperationCreator, InputTypeProvider
         $plugins = $config['plugins'] ?? [];
         $mutationName = $config['name'] ?? null;
         if (!$mutationName) {
-            $mutationName = 'create' . ucfirst($typeName);
+            $mutationName = 'create' . ucfirst($typeName ?? '');
         }
         $inputTypeName = self::inputTypeName($typeName);
 
@@ -185,6 +185,6 @@ class CreateCreator implements OperationCreator, InputTypeProvider
      */
     private static function inputTypeName(string $typeName): string
     {
-        return 'Create' . ucfirst($typeName) . 'Input';
+        return 'Create' . ucfirst($typeName ?? '') . 'Input';
     }
 }

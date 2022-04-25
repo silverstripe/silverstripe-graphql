@@ -99,7 +99,7 @@ class QueryCachingMiddleware implements QueryMiddleware, Flushable
                 'params' => $vars
             ],
             true
-        ));
+        ) ?? '');
     }
 
     /**
@@ -125,7 +125,7 @@ class QueryCachingMiddleware implements QueryMiddleware, Flushable
             // Note: Could combine these clases into a UNION to cut down on extravagant queries
             // Todo: We can get last-deleted/modified as well for versioned records
             $lastEditedDate = DataObject::get($class)->max('LastEdited');
-            if (strtotime($lastEditedDate) > strtotime($cached['date'])) {
+            if (strtotime($lastEditedDate ?? '') > strtotime($cached['date'] ?? '')) {
                 // class modified, fail validation of cache
                 return null;
             }

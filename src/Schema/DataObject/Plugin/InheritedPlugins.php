@@ -49,7 +49,7 @@ class InheritedPlugins implements ModelTypePlugin
         if (!$chain->hasAncestors()) {
             return;
         }
-        $ancestors = array_reverse($chain->getAncestralModels());
+        $ancestors = array_reverse($chain->getAncestralModels() ?? []);
         /* @var ModelType[] $ancestorModels */
         $ancestorModels = [];
         foreach ($ancestors as $ancestor) {

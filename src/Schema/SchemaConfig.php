@@ -123,8 +123,8 @@ class SchemaConfig extends Configuration
     public static function pluralise(string $typeName): string
     {
         // Ported from DataObject::plural_name()
-        if (preg_match('/[^aeiou]y$/i', $typeName)) {
-            $typeName = substr($typeName, 0, -1) . 'ie';
+        if (preg_match('/[^aeiou]y$/i', $typeName ?? '')) {
+            $typeName = substr($typeName ?? '', 0, -1) . 'ie';
         }
         $typeName .= 's';
         return $typeName;
@@ -229,7 +229,7 @@ class SchemaConfig extends Configuration
     {
         $map = [];
         $currentType = $rootType;
-        foreach (explode('.', $path) as $fieldName) {
+        foreach (explode('.', $path ?? '') as $fieldName) {
             $info = $this->mapField($currentType, $fieldName);
             if (!$info) {
                 return null;

@@ -51,8 +51,8 @@ class Enum extends Type implements SchemaValidator
         $list = [];
         $values = $this->getValues();
         if (!ArrayLib::is_associative($values)) {
-            $entries = array_values($values);
-            $values = array_combine($entries, $entries);
+            $entries = array_values($values ?? []);
+            $values = array_combine($entries ?? [], $entries ?? []);
         }
         foreach ($values as $key => $val) {
             $value = null;
@@ -87,7 +87,7 @@ class Enum extends Type implements SchemaValidator
         $rx = '/^[_a-zA-Z][_a-zA-Z0-9]*$/';
         foreach ($this->getValueList() as $item) {
             Schema::invariant(
-                preg_match($rx, $item['Key']),
+                preg_match($rx ?? '', $item['Key'] ?? ''),
                 'Key "%s" for "%s" is not valid. Must match %s',
                 $item['Key'],
                 $this->getName(),
@@ -152,13 +152,13 @@ class Enum extends Type implements SchemaValidator
             $this->getDescription(),
         ];
 
-        return md5(json_encode($components));
+        return md5(json_encode($components) ?? '');
     }
 
     public static function sanitise(string $str): string
     {
-        $str = preg_replace('/\s+/', '_', $str);
-        $str = preg_replace('/[^A-Za-z0-9_]/', '', $str);
+        $str = preg_replace('/\s+/', '_', $str ?? '');
+        $str = preg_replace('/[^A-Za-z0-9_]/', '', $str ?? '');
 
         return $str;
     }

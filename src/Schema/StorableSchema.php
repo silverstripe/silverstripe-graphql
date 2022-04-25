@@ -131,7 +131,7 @@ class StorableSchema implements SchemaValidator
         if (empty($fields)) {
             return false;
         }
-        $otherTypes = array_filter(array_keys($this->types), function ($key) {
+        $otherTypes = array_filter(array_keys($this->types ?? []), function ($key) {
             return $key !== Schema::QUERY_TYPE;
         });
         if (empty($otherTypes)) {
@@ -146,14 +146,14 @@ class StorableSchema implements SchemaValidator
     public function validate(): void
     {
         $allNames = array_merge(
-            array_keys($this->types),
-            array_keys($this->enums),
-            array_keys($this->interfaces),
-            array_keys($this->unions),
-            array_keys($this->scalars)
+            array_keys($this->types ?? []),
+            array_keys($this->enums ?? []),
+            array_keys($this->interfaces ?? []),
+            array_keys($this->unions ?? []),
+            array_keys($this->scalars ?? [])
         );
         $dupes = [];
-        foreach (array_count_values($allNames) as $val => $count) {
+        foreach (array_count_values($allNames ?? []) as $val => $count) {
             if ($count > 1) {
                 $dupes[] = $val;
             }

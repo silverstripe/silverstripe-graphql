@@ -60,7 +60,7 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
         $mutationName = $config['name'] ?? null;
         $idField = $config['idField'] ?? 'id';
         if (!$mutationName) {
-            $mutationName = 'update' . ucfirst($typeName);
+            $mutationName = 'update' . ucfirst($typeName ?? '');
         }
         $inputTypeName = self::inputTypeName($typeName);
 
@@ -94,7 +94,7 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
             );
             $fieldName = FieldAccessor::formatField($idField);
             $input = $args['input'];
-            if (strtolower($fieldName) === 'id') {
+            if (strtolower($fieldName ?? '') === 'id') {
                 $obj = DataList::create($dataClass)
                     ->byID($input[$fieldName]);
             } else {
@@ -203,6 +203,6 @@ class UpdateCreator implements OperationCreator, InputTypeProvider
      */
     private static function inputTypeName(string $typeName): string
     {
-        return 'Update' . ucfirst($typeName) . 'Input';
+        return 'Update' . ucfirst($typeName ?? '') . 'Input';
     }
 }
