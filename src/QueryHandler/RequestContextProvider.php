@@ -13,10 +13,7 @@ class RequestContextProvider implements ContextProvider
 
     const HTTP_METHOD = 'httpMethod';
 
-    /**
-     * @var HTTPRequest
-     */
-    private $request;
+    private HTTPRequest $request;
 
     /**
      * HTTPMethodProvider constructor.

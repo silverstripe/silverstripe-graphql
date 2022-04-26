@@ -18,10 +18,7 @@ class QueryStateProvider implements ContextProvider
 
     const KEY = 'queryState';
 
-    /**
-     * @var Configuration
-     */
-    private $queryState;
+    private Configuration $queryState;
 
     /**
      * QueryStateProvider constructor.
@@ -31,18 +28,11 @@ class QueryStateProvider implements ContextProvider
         $this->queryState = new Configuration();
     }
 
-    /**
-     * @param array $context
-     * @return mixed|null
-     */
     public static function get(array $context): Configuration
     {
         return $context[self::KEY] ?? new Configuration();
     }
 
-    /**
-     * @return array[]
-     */
     public function provideContext(): array
     {
         return [

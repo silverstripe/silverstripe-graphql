@@ -8,10 +8,6 @@ namespace SilverStripe\GraphQL\Schema\Storage;
  */
 class NaiveNameObfuscator implements NameObfuscator
 {
-    /**
-     * @param string $name
-     * @return string
-     */
     public function obfuscate(string $name): string
     {
         return $name;

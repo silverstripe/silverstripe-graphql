@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Middleware;
 
 use Exception;
+use GraphQL\Executor\ExecutionResult;
 use GraphQL\Type\Schema;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\TokenContextProvider;
@@ -18,7 +19,7 @@ class CSRFMiddleware implements QueryMiddleware
     /**
      * @inheritDoc
      */
-    public function process(Schema $schema, $query, $context, $vars, callable $next)
+    public function process(Schema $schema, string $query, array $context, array $vars, callable $next)
     {
         if ($query && QueryHandler::isMutation($query)) {
             if (empty($context['token'])) {

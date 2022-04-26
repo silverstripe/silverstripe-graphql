@@ -18,10 +18,6 @@ class FilepathLoader extends AbstractBulkLoader
         return self::IDENTIFIER;
     }
 
-    /**
-     * @param Collection $collection
-     * @return Collection
-     */
     public function collect(Collection $collection): Collection
     {
         $newCollection = parent::collect($collection);

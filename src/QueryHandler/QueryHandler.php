@@ -40,29 +40,23 @@ class QueryHandler implements
     use Configurable;
     use MemberAware;
 
-    // Deprecated. Remove once all dependencies use UserContextProvider::get($context);
-    const CURRENT_USER = 'currentUser';
-
     /**
      * @var ContextProvider[]
      */
-    private $contextProviders = [];
+    private array $contextProviders = [];
+
+    private array $errorFormatter = [self::class, 'formatError'];
 
     /**
-     * @var callable
-     */
-    private $errorFormatter = [self::class, 'formatError'];
-
-    /**
-     * @var callable | null
      * @config
+     * @var callable|null
      */
     private $errorHandler = null;
 
     /**
      * @var QueryMiddleware[]
      */
-    private $middlewares = [];
+    private array $middlewares = [];
 
     /**
      * QueryHandler constructor.
@@ -235,7 +229,7 @@ class QueryHandler implements
      * @param callable $last The callback to call after all middlewares
      * @return ExecutionResult|array
      */
-    protected function callMiddleware(GraphQLSchema $schema, $query, $context, $params, callable $last)
+    protected function callMiddleware(GraphQLSchema $schema, string $query, array $context, array $params, callable $last)
     {
         // Reverse middlewares
         $next = $last;

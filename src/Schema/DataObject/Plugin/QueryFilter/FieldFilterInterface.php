@@ -11,13 +11,7 @@ use SilverStripe\ORM\Filterable;
  */
 interface FieldFilterInterface
 {
-    /**
-     * @param Filterable $list
-     * @param string $fieldName
-     * @param string $value
-     * @return iterable
-     */
-    public function apply(Filterable $list, string $fieldName, $value): iterable;
+    public function apply(Filterable $list, string $fieldName, string $value): iterable;
 
     /**
      * @return string

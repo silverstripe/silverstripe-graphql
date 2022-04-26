@@ -15,10 +15,6 @@ class ModelInterfaceType extends InterfaceType
     use CanonicalModelAware;
 
     /**
-     * ModelInterfaceType constructor.
-     * @param SchemaModelInterface $modelType
-     * @param string $name
-     * @param array|null $config
      * @throws SchemaBuilderException
      */
     public function __construct(ModelType $modelType, string $name, ?array $config = null)

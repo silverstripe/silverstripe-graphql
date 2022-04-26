@@ -55,8 +55,7 @@ class DBTextArgs extends DBFieldArgs
 
     /**
      * @param mixed $obj
-     * @param array $args
-     * @param array $context
+     * @return mixed
      */
     public static function resolve($obj, array $args, array $context)
     {

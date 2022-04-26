@@ -22,9 +22,6 @@ class FirstResult implements ModelQueryPlugin
     }
 
     /**
-     * @param ModelQuery $query
-     * @param Schema $schema
-     * @param array $config
      * @throws SchemaBuilderException
      */
     public function apply(ModelQuery $query, Schema $schema, array $config = []): void
@@ -41,10 +38,6 @@ class FirstResult implements ModelQueryPlugin
         $query->addResolverAfterware([static::class, 'firstResult']);
     }
 
-    /**
-     * @param SS_List $obj
-     * @return ViewableData|null
-     */
     public static function firstResult(SS_List $obj): ?ViewableData
     {
         return $obj->first();

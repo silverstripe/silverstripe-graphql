@@ -14,7 +14,7 @@ class InFilter implements ListFieldFilterInterface
     /**
      * @inheritDoc
      */
-    public function apply(Filterable $list, string $fieldName, $value): iterable
+    public function apply(Filterable $list, string $fieldName, string $value): iterable
     {
         return $list->filter($fieldName, (array) $value);
     }

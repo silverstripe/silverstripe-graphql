@@ -11,7 +11,6 @@ use Exception;
 class SchemaTranscribeHandler implements EventHandlerInterface
 {
     /**
-     * @param EventContextInterface $context
      * @throws Exception
      */
     public function fire(EventContextInterface $context): void

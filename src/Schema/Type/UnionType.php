@@ -27,30 +27,15 @@ class UnionType implements
     use Injectable;
     use Configurable;
 
-    /**
-     * @var string
-     */
-    private $name;
+    private string $name;
+
+    private array $types = [];
+
+    private ResolverReference $typeResolver;
+
+    private ?string $description = null;
 
     /**
-     * @var array
-     */
-    private $types = [];
-
-    /**
-     * @var ResolverReference
-     */
-    private $typeResolver;
-
-    /**
-     * @var string|null
-     */
-    private $description;
-
-    /**
-     * Union constructor.
-     * @param string $name
-     * @param array|null $config
      * @throws SchemaBuilderException
      */
     public function __construct(string $name, ?array $config = null)
@@ -62,7 +47,6 @@ class UnionType implements
     }
 
     /**
-     * @param array $config
      * @throws SchemaBuilderException
      */
     public function applyConfig(array $config)
@@ -79,46 +63,32 @@ class UnionType implements
         }
     }
 
-    /**
-     * @return mixed|null
-     */
     public function getName(): ?string
     {
         return $this->name;
     }
 
     /**
-     * @return UnionType
      * @throws SchemaBuilderException
      */
-    public function setName(string $name)
+    public function setName(string $name): self
     {
         Schema::assertValidName($name);
         $this->name = $name;
         return $this;
     }
 
-    /**
-     * @return array
-     */
     public function getTypes(): array
     {
         return $this->types;
     }
 
-    /**
-     * @param array $types
-     * @return UnionType
-     */
-    public function setTypes(array $types): UnionType
+    public function setTypes(array $types): self
     {
         $this->types = $types;
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getEncodedTypes(): string
     {
         return var_export($this->types, true);
@@ -149,34 +119,23 @@ class UnionType implements
         return $this;
     }
 
-    /**
-     * @return EncodedResolver
-     */
     public function getEncodedTypeResolver(): EncodedResolver
     {
         return EncodedResolver::create($this->typeResolver);
     }
 
-    /**
-     * @return string|null
-     */
     public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    /**
-     * @param string|null $description
-     * @return UnionType
-     */
-    public function setDescription(?string $description): UnionType
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
         return $this;
     }
 
     /**
-     * @param UnionType $existing
      * @throws SchemaBuilderException
      */
     public function mergeWith(UnionType $existing)
@@ -213,9 +172,6 @@ class UnionType implements
         );
     }
 
-    /**
-     * @return string
-     */
     public function getSignature(): string
     {
         $types = $this->getTypes();

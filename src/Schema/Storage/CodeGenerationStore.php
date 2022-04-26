@@ -29,9 +29,6 @@ use Symfony\Component\Finder\SplFileInfo;
 use Psr\SimpleCache\InvalidArgumentException;
 use RuntimeException;
 
-/**
- * Class CodeGenerationStore
- */
 class CodeGenerationStore implements SchemaStorageInterface
 {
     use Injectable;
@@ -40,75 +37,46 @@ class CodeGenerationStore implements SchemaStorageInterface
     const TYPE_CLASS_NAME = 'Types';
 
     /**
-     * @var string
      * @config
      */
-    private static $schemaFilename = '__graphql-schema.php';
+    private static string $schemaFilename = '__graphql-schema.php';
 
     /**
-     * @var string
      * @config
      */
-    private static $configFilename = '__schema-config.php';
+    private static string $configFilename = '__schema-config.php';
 
     /**
-     * @var string
      * @config
      */
-    private static $namespacePrefix = 'SSGraphQLSchema_';
+    private static string $namespacePrefix = 'SSGraphQLSchema_';
 
     /**
-     * @var string
      * @config
      */
-    private static $dirName = '.graphql-generated';
+    private static string $dirName = '.graphql-generated';
 
     /**
      * @var string[]
      */
-    private static $dependencies = [
+    private static array $dependencies = [
         'Obfuscator' => '%$' . NameObfuscator::class,
     ];
 
-    /**
-     * @var string
-     */
-    private $name;
+    private string $name;
 
-    /**
-     * @var CacheInterface
-     */
-    private $cache;
+    private CacheInterface $cache;
 
-    /**
-     * @var string
-     */
-    private $rootDir = BASE_PATH;
+    private string $rootDir = BASE_PATH;
 
-    /**
-     * @var SchemaConfig|null
-     */
-    private $cachedConfig;
+    private ?SchemaConfig $cachedConfig = null;
 
-    /**
-     * @var GraphQLSchema|null
-     */
-    private $graphqlSchema;
+    private ?GraphQLSchema $graphqlSchema = null;
 
-    /**
-     * @var NameObfuscator
-     */
-    private $obfuscator;
+    private NameObfuscator $obfuscator;
 
-    /**
-     * @var bool
-     */
-    private $verbose = true;
+    private bool $verbose = true;
 
-    /**
-     * @param string $name
-     * @param CacheInterface $cache
-     */
     public function __construct(string $name, CacheInterface $cache)
     {
         $this->name = $name;
@@ -116,7 +84,6 @@ class CodeGenerationStore implements SchemaStorageInterface
     }
 
     /**
-     * @param StorableSchema $schema
      * @throws Exception
      * @throws InvalidArgumentException
      * @throws RuntimeException
@@ -302,11 +269,9 @@ class CodeGenerationStore implements SchemaStorageInterface
     }
 
     /**
-     * @return GraphQLSchema
-     * @var bool $useCache
      * @throws SchemaNotFoundException
      */
-    public function getSchema($useCache = true): GraphQLSchema
+    public function getSchema(bool $useCache = true): GraphQLSchema
     {
         if (!$this->exists()) {
             throw new SchemaNotFoundException(sprintf(
@@ -347,9 +312,6 @@ class CodeGenerationStore implements SchemaStorageInterface
         return $this->graphqlSchema;
     }
 
-    /**
-     * @return SchemaConfig
-     */
     public function getConfig(): SchemaConfig
     {
         if ($this->cachedConfig) {
@@ -371,73 +333,44 @@ class CodeGenerationStore implements SchemaStorageInterface
         $this->getCache()->clear();
     }
 
-    /**
-     * @return bool
-     */
     public function exists(): bool
     {
         return file_exists($this->getSchemaFilename() ?? '');
     }
 
-    /**
-     * @return CacheInterface
-     */
     public function getCache(): CacheInterface
     {
         return $this->cache;
     }
 
-    /**
-     * @param CacheInterface $cache
-     * @return CodeGenerationStore
-     */
     public function setCache(CacheInterface $cache): CodeGenerationStore
     {
         $this->cache = $cache;
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getRootDir(): string
     {
         return $this->rootDir;
     }
 
-    /**
-     * @param string $rootDir
-     * @return CodeGenerationStore
-     */
     public function setRootDir(string $rootDir): CodeGenerationStore
     {
         $this->rootDir = $rootDir;
         return $this;
     }
 
-    /**
-     * @return NameObfuscator
-     */
     public function getObfuscator(): NameObfuscator
     {
         return $this->obfuscator;
     }
 
-    /**
-     * @param NameObfuscator $obfuscator
-     * @return CodeGenerationStore
-     */
     public function setObfuscator(NameObfuscator $obfuscator): CodeGenerationStore
     {
         $this->obfuscator = $obfuscator;
         return $this;
     }
 
-    /**
-     * If true, s
-     * @param bool $bool
-     * @return $this
-     */
     public function setVerbose(bool $bool): self
     {
         $this->verbose = $bool;
@@ -445,17 +378,11 @@ class CodeGenerationStore implements SchemaStorageInterface
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public static function getTemplateDir(): string
     {
         return Path::join(__DIR__, 'templates');
     }
 
-    /**
-     * @return string
-     */
     private function getDirectory(): string
     {
         return Path::join(
@@ -465,9 +392,6 @@ class CodeGenerationStore implements SchemaStorageInterface
         );
     }
 
-    /**
-     * @return string
-     */
     private function getTempDirectory(): string
     {
         return Path::join(
@@ -477,26 +401,16 @@ class CodeGenerationStore implements SchemaStorageInterface
         );
     }
 
-    /**
-     * @return string
-     */
     private function getNamespace(): string
     {
         return $this->config()->get('namespacePrefix') . md5($this->name ?? '');
     }
 
-    /**
-     * @param string $className
-     * @return string
-     */
     private function getClassName(string $className): string
     {
         return $this->getNamespace() . '\\' . $className;
     }
 
-    /**
-     * @return string
-     */
     private function getSchemaFilename(): string
     {
         return Path::join(
@@ -505,9 +419,6 @@ class CodeGenerationStore implements SchemaStorageInterface
         );
     }
 
-    /**
-     * @return string
-     */
     private function getConfigFilename(): string
     {
         return Path::join(
@@ -516,9 +427,6 @@ class CodeGenerationStore implements SchemaStorageInterface
         );
     }
 
-    /**
-     * @return string
-     */
     private function getTempSchemaFilename(): string
     {
         return Path::join(
@@ -527,9 +435,6 @@ class CodeGenerationStore implements SchemaStorageInterface
         );
     }
 
-    /**
-     * @return string
-     */
     private function getTempConfigFilename(): string
     {
         return Path::join(
@@ -538,10 +443,6 @@ class CodeGenerationStore implements SchemaStorageInterface
         );
     }
 
-    /**
-     * @param string $rawCode
-     * @return string
-     */
     private function toCode(string $rawCode): string
     {
         $code = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $rawCode ?? '');

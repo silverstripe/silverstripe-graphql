@@ -28,38 +28,30 @@ class StorableSchema implements SchemaValidator
     /**
      * @var Type[]
      */
-    private $types;
+    private array $types;
 
     /**
      * @var Enum[]
      */
-    private $enums;
+    private array $enums;
 
     /**
      * @var InterfaceType[]
      */
-    private $interfaces;
+    private array $interfaces;
 
     /**
      * @var UnionType[]
      */
-    private $unions;
+    private array $unions;
 
     /**
      * @var Scalar[]
      */
-    private $scalars;
+    private array $scalars;
 
-    /**
-     * @var SchemaConfig
-     */
-    private $config;
+    private SchemaConfig $config;
 
-    /**
-     * StorableSchema constructor.
-     * @param array $config
-     * @param SchemaConfig|null $context
-     */
     public function __construct(array $config = [], ?SchemaConfig $context = null)
     {
         $this->types = $config[Schema::TYPES] ?? [];
@@ -71,7 +63,7 @@ class StorableSchema implements SchemaValidator
     }
 
     /**
-     * @return array|mixed
+     * @return Types[]
      */
     public function getTypes(): array
     {
@@ -79,7 +71,7 @@ class StorableSchema implements SchemaValidator
     }
 
     /**
-     * @return array
+     * @return Enum[]
      */
     public function getEnums(): array
     {
@@ -87,7 +79,7 @@ class StorableSchema implements SchemaValidator
     }
 
     /**
-     * @return array
+     * @return InterfaceType[]
      */
     public function getInterfaces(): array
     {
@@ -95,7 +87,7 @@ class StorableSchema implements SchemaValidator
     }
 
     /**
-     * @return array
+     * @return UnionType[]
      */
     public function getUnions(): array
     {
@@ -103,24 +95,18 @@ class StorableSchema implements SchemaValidator
     }
 
     /**
-     * @return array
+     * @return Scalar[]
      */
     public function getScalars(): array
     {
         return $this->scalars;
     }
 
-    /**
-     * @return SchemaConfig
-     */
     public function getConfig(): SchemaConfig
     {
         return $this->config;
     }
 
-    /**
-     * @return bool
-     */
     public function exists(): bool
     {
         $queryType = $this->types[Schema::QUERY_TYPE] ?? null;
@@ -140,6 +126,7 @@ class StorableSchema implements SchemaValidator
 
         return true;
     }
+
     /**
      * @throws SchemaBuilderException
      */

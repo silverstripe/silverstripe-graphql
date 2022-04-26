@@ -42,33 +42,21 @@ class ResolverReference
         $this->method = $method;
     }
 
-    /**
-     * @return array
-     */
     public function toArray(): array
     {
         return [$this->class, $this->method];
     }
 
-    /**
-     * @return string
-     */
     public function toString(): string
     {
         return sprintf('%s::%s', $this->class, $this->method);
     }
 
-    /**
-     * @return string
-     */
     public function getClass(): string
     {
         return $this->class;
     }
 
-    /**
-     * @return string
-     */
     public function getMethod(): string
     {
         return $this->method;

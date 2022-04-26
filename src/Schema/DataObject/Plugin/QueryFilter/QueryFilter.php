@@ -36,19 +36,12 @@ class QueryFilter extends AbstractQueryFilterPlugin
         return self::IDENTIFIER;
     }
 
-    /**
-     * @param array $config
-     * @return array
-     */
-    protected function getResolver(array $config): array
+    protected function getResolver(array $config): callable
     {
         return [static::class, 'filter'];
     }
 
     /**
-     * @param ModelQuery $query
-     * @param Schema $schema
-     * @param array $config
      * @throws SchemaBuilderException
      */
     public function apply(ModelQuery $query, Schema $schema, array $config = []): void
@@ -63,9 +56,6 @@ class QueryFilter extends AbstractQueryFilterPlugin
         parent::apply($query, $schema, $config);
     }
 
-    /**
-     * @param NestedInputBuilder $builder
-     */
     protected function updateInputBuilder(NestedInputBuilder $builder): void
     {
         parent::updateInputBuilder($builder);
@@ -84,11 +74,7 @@ class QueryFilter extends AbstractQueryFilterPlugin
         });
     }
 
-    /**
-     * @param array $context
-     * @return Closure
-     */
-    public static function filter(array $context)
+    public static function filter(array $context): Closure
     {
         $fieldName = $context['fieldName'];
         $rootType = $context['rootType'];

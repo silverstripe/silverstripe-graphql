@@ -13,10 +13,7 @@ class SchemaConfigProvider implements ContextProvider
 
     const KEY = 'schemaConfig';
 
-    /**
-     * @var SchemaConfig
-     */
-    private $schemaConfig;
+    private SchemaConfig $schemaConfig;
 
     /**
      * SchemaConfigProvider constructor.

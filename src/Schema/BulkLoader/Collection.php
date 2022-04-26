@@ -14,10 +14,7 @@ class Collection
 {
     use Injectable;
 
-    /**
-     * @var array
-     */
-    private $manifest;
+    private array $manifest;
 
     /**
      * Collection constructor.

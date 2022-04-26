@@ -11,10 +11,7 @@ use SilverStripe\Core\Injector\Injector;
  */
 class Registry
 {
-    /**
-     * @var
-     */
-    private static $inst;
+    private static ?RegistryBackend $inst = null;
 
     /**
      * @return RegistryBackend

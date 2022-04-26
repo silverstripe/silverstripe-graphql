@@ -6,15 +6,16 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\GraphQL\Auth\AuthenticatorInterface;
 use SilverStripe\ORM\ValidationException;
+use SilverStripe\Security\Member;
 
 class BrutalAuthenticatorFake implements AuthenticatorInterface, TestOnly
 {
-    public function authenticate(HTTPRequest $request)
+    public function authenticate(HTTPRequest $request): ?Member
     {
         throw new ValidationException('Never!');
     }
 
-    public function isApplicable(HTTPRequest $request)
+    public function isApplicable(HTTPRequest $request): bool
     {
         return true;
     }

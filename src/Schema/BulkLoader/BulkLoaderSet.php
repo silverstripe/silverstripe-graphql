@@ -24,12 +24,9 @@ class BulkLoaderSet implements ConfigurationApplier
     /**
      * @var AbstractBulkLoader[]
      */
-    private $loaders;
+    private array $loaders;
 
-    /**
-     * @var Collection
-     */
-    private $initialCollection;
+    private Collection $initialCollection;
 
     /**
      * BulkLoaderSet constructor.

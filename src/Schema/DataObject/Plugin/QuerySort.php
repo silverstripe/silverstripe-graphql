@@ -26,18 +26,12 @@ class QuerySort extends AbstractQuerySortPlugin
 {
     const IDENTIFIER = 'sort';
 
-    /**
-     * @return string
-     */
     public function getIdentifier(): string
     {
         return self::IDENTIFIER;
     }
 
-    /**
-     * @return array
-     */
-    protected function getResolver(array $config): array
+    protected function getResolver(array $config): callable
     {
         return [static::class, 'sort'];
     }

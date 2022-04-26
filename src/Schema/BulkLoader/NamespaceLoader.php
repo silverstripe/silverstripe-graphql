@@ -9,18 +9,11 @@ class NamespaceLoader extends AbstractBulkLoader
 {
     const IDENTIFIER = 'namespaceLoader';
 
-    /**
-     * @return string
-     */
     public static function getIdentifier(): string
     {
         return self::IDENTIFIER;
     }
 
-    /**
-     * @param Collection $collection
-     * @return Collection
-     */
     public function collect(Collection $collection): Collection
     {
         $newCollection = parent::collect($collection);

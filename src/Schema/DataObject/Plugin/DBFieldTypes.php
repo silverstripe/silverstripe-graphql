@@ -60,10 +60,6 @@ class DBFieldTypes implements ModelTypePlugin
     }
 
     /**
-     * @param ModelType $type
-     * @param ModelField $field
-     * @param Schema $schema
-     * @param string | null $customName
      * @throws SchemaBuilderException
      */
     private function applyEnum(
@@ -112,8 +108,6 @@ class DBFieldTypes implements ModelTypePlugin
     }
 
     /**
-     * @param ModelField $field
-     * @param Schema $schema
      * @throws SchemaBuilderException
      */
     private function applyComposite(ModelField $field, Schema $schema): void
@@ -139,6 +133,11 @@ class DBFieldTypes implements ModelTypePlugin
         }
     }
 
+    /**
+     * @param mixed @obj
+     * @param array $args
+     * @return mixed
+     */
     public static function resolveComposite($obj, array $args)
     {
         if ($obj instanceof DBComposite) {

@@ -14,24 +14,13 @@ class UserContextProvider implements ContextProvider
 
     const KEY = 'currentUser';
 
-    /**
-     * @var Member|null
-     */
-    private $member;
+    private ?Member $member;
 
-    /**
-     * UserContextProvider constructor.
-     * @param Member|null $member
-     */
-    public function __construct(Member $member = null)
+    public function __construct(?Member $member = null)
     {
         $this->member = $member;
     }
 
-    /**
-     * @param array $context
-     * @return Member|null
-     */
     public static function get(array $context): ?Member
     {
         return $context[self::KEY] ?? null;

@@ -27,9 +27,6 @@ class DBDecimalArgs extends DBFieldArgs
         );
     }
 
-    /**
-     * @return callable
-     */
     protected function getResolver(): callable
     {
         return [DBFieldArgs::class, 'baseFormatResolver'];

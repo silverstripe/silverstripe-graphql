@@ -136,9 +136,5 @@ abstract class AbstractQueryFilterPlugin implements SchemaUpdater, ModelQueryPlu
             ->setTypeNameHandler([static::class, 'getTypeName']);
     }
 
-    /**
-     * @param array $config
-     * @return array
-     */
-    abstract protected function getResolver(array $config): array;
+    abstract protected function getResolver(array $config): callable;
 }

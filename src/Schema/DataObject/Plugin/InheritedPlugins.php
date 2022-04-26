@@ -20,74 +20,16 @@ class InheritedPlugins implements ModelTypePlugin
 {
     const IDENTIFIER = 'inheritedPlugins';
 
-    /**
-     * @return string
-     */
     public function getIdentifier(): string
     {
         return self::IDENTIFIER;
     }
 
     /**
-     * @param ModelType $type
-     * @param Schema $schema
-     * @param array $config
      * @throws SchemaBuilderException
      */
     public function apply(ModelType $type, Schema $schema, array $config = []): void
     {
         return;
-        $sourceClass = $type->getModel()->getSourceClass();
-        Schema::invariant(
-            is_subclass_of($sourceClass, DataObject::class),
-            '%s only applies to %s subclasses',
-            static::class,
-            DataObject::class
-        );
-
-        $chain = InheritanceChain::create($sourceClass);
-        if (!$chain->hasAncestors()) {
-            return;
-        }
-        $ancestors = array_reverse($chain->getAncestralModels() ?? []);
-        /* @var ModelType[] $ancestorModels */
-        $ancestorModels = [];
-        foreach ($ancestors as $ancestor) {
-            $modelType = $schema->getModelByClassName($ancestor);
-            if (!$modelType) {
-                continue;
-            }
-            $ancestorModels[] = $modelType;
-        }
-
-        $pluginArgs = [];
-        foreach ($ancestorModels as $model) {
-            $pluginArgs[] = $model->getPlugins(false);
-        }
-        $pluginArgs[] = $type->getPlugins(false);
-        $plugins = [];
-        foreach ($pluginArgs as $pluginData) {
-            $plugins = Priority::mergeArray($pluginData, $plugins);
-        }
-        $type->setPlugins($plugins);
-
-        $operations = $type->getOperations();
-
-        /* @var ModelField $operation */
-        foreach ($operations as $name => $operation) {
-            $pluginArgs = [];
-            foreach ($ancestorModels as $model) {
-                $ancestorOperation = $model->getOperations()[$name] ?? null;
-                if ($ancestorOperation) {
-                    $pluginArgs[] = $ancestorOperation->getPlugins(false);
-                }
-            }
-            $pluginArgs[] = $operation->getPlugins(false);
-            $plugins = [];
-            foreach ($pluginArgs as $pluginData) {
-                $plugins = Priority::mergeArray($pluginData, $plugins);
-            }
-            $operation->setPlugins($plugins);
-        }
     }
 }

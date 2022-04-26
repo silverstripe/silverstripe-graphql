@@ -12,10 +12,7 @@ class TokenContextProvider implements ContextProvider
 
     const KEY = 'token';
 
-    /**
-     * @var string
-     */
-    private $token;
+    private string $token;
 
     /**
      * TokenContextProvider constructor.

@@ -13,18 +13,11 @@ class ExtensionLoader extends AbstractBulkLoader
 {
     public const IDENTIFIER = 'extensionLoader';
 
-    /**
-     * @return string
-     */
     public static function getIdentifier(): string
     {
         return self::IDENTIFIER;
     }
 
-    /**
-     * @param Collection $collection
-     * @return Collection
-     */
     public function collect(Collection $collection): Collection
     {
         $newCollection = parent::collect($collection);
@@ -52,10 +45,6 @@ class ExtensionLoader extends AbstractBulkLoader
         return $newCollection;
     }
 
-    /**
-     * @param array $include
-     * @return AbstractBulkLoader
-     */
     public function include(array $include): AbstractBulkLoader
     {
         foreach ($include as $class) {
@@ -71,10 +60,6 @@ class ExtensionLoader extends AbstractBulkLoader
         return parent::include($include);
     }
 
-    /**
-     * @param array $exclude
-     * @return AbstractBulkLoader
-     */
     public function exclude(array $exclude): AbstractBulkLoader
     {
         foreach ($exclude as $class) {

@@ -15,20 +15,13 @@ class DevBuildExtension extends DataExtension
     use Configurable;
 
     /**
-     * @var bool
      * @config
      */
-    private static $enabled = true;
+    private static bool $enabled = true;
 
-    /**
-     * @var bool
-     */
-    private static $done = false;
+    private static bool $done = false;
 
-    /**
-     * @return void
-     */
-    public function onAfterBuild()
+    public function onAfterBuild(): void
     {
         if (!static::config()->get('enabled')) {
             return;

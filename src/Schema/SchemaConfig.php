@@ -23,25 +23,18 @@ use SilverStripe\GraphQL\Schema\Type\Type;
  */
 class SchemaConfig extends Configuration
 {
-    /**
-     * @var array
-     */
-    private $__modelCache = [];
+    private array $__modelCache = [];
 
     /**
-     * @param string $modelName
-     * @return ModelConfiguration
      * @throws SchemaBuilderException
      */
     public function getModelConfiguration(string $modelName): ModelConfiguration
     {
         $config = $this->get(['modelConfig', $modelName], []);
-
         return new ModelConfiguration($config);
     }
 
     /**
-     * @return array
      * @throws SchemaBuilderException
      */
     public function getResolvers(): array
@@ -51,8 +44,6 @@ class SchemaConfig extends Configuration
 
 
     /**
-     * @param string $class
-     * @return SchemaModelInterface|null
      * @throws SchemaBuilderException
      */
     public function createModel(string $class): ?SchemaModelInterface
@@ -73,9 +64,6 @@ class SchemaConfig extends Configuration
     }
 
     /**
-     * @param Type|null $type
-     * @param Field|null $field
-     * @return ResolverReference
      * @throws SchemaBuilderException
      */
     public function discoverResolver(?Type $type = null, ?Field $field = null): ResolverReference
@@ -94,12 +82,10 @@ class SchemaConfig extends Configuration
             return $type->getFieldResolver();
         }
 
-
         return ResolverReference::create($this->getDefaultResolver());
     }
 
     /**
-     * @return callable
      * @throws SchemaBuilderException
      */
     public function getDefaultResolver(): callable
@@ -108,7 +94,6 @@ class SchemaConfig extends Configuration
     }
 
     /**
-     * @return callable
      * @throws SchemaBuilderException
      */
     public function getPluraliser(): callable
@@ -116,10 +101,6 @@ class SchemaConfig extends Configuration
         return $this->get('pluraliser', [static::class, 'pluralise']);
     }
 
-    /**
-     * @param string $typeName
-     * @return string
-     */
     public static function pluralise(string $typeName): string
     {
         // Ported from DataObject::plural_name()
@@ -141,7 +122,6 @@ class SchemaConfig extends Configuration
     }
 
     /**
-     * @return array
      * @throws SchemaBuilderException
      */
     public function getTypeMapping(): array
@@ -160,8 +140,6 @@ class SchemaConfig extends Configuration
     }
 
     /**
-     * @param string $class
-     * @return bool
      * @throws SchemaBuilderException
      */
     public function hasModel(string $class): bool
@@ -171,8 +149,6 @@ class SchemaConfig extends Configuration
 
 
     /**
-     * @param string $class
-     * @return string|null
      * @throws SchemaBuilderException
      */
     public function getTypeNameForClass(string $class): ?string
@@ -194,9 +170,6 @@ class SchemaConfig extends Configuration
     }
 
     /**
-     * @param string $typeName
-     * @param string $fieldName
-     * @return array|null
      * @throws SchemaBuilderException
      */
     public function mapField(string $typeName, string $fieldName): ?array
@@ -205,9 +178,6 @@ class SchemaConfig extends Configuration
     }
 
     /**
-     * @param string $className
-     * @param string $fieldName
-     * @return array|null
      * @throws SchemaBuilderException
      */
     public function mapFieldByClassName(string $className, string $fieldName): ?array
@@ -220,9 +190,6 @@ class SchemaConfig extends Configuration
         return $this->mapField($typeName, $fieldName);
     }
     /**
-     * @param string $rootType
-     * @param string $path
-     * @return string|null
      * @throws SchemaBuilderException
      */
     public function mapPath(string $rootType, string $path): ?string
@@ -243,8 +210,6 @@ class SchemaConfig extends Configuration
     }
 
     /**
-     * @param string $class
-     * @return ModelCreator|null
      * @throws SchemaBuilderException
      */
     private function getModelCreatorForClass(string $class): ?ModelCreator

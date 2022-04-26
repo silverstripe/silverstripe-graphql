@@ -21,49 +21,32 @@ class EncodedResolver implements EncoderInterface
     use Injectable;
     use Configurable;
 
-    /**
-     * @var ResolverReference
-     */
-    private $resolverRef;
+    private ResolverReference $resolverRef;
 
-    /**
-     * @var array
-     */
-    private $context = [];
+    private ?array $context = [];
 
     /**
      * @var EncodedResolver[]
      */
-    private $middleware = [];
+    private array $middleware = [];
 
     /**
      * @var EncodedResolver[]
      */
-    private $afterware = [];
+    private array $afterware = [];
 
-    /**
-     * EncodedResolver constructor.
-     * @param ResolverReference $resolver
-     * @param array|null $context
-     */
     public function __construct(ResolverReference $resolver, ?array $context = [])
     {
         $this->resolverRef = $resolver;
         $this->context = $context;
     }
 
-    /**
-     * @return string
-     */
     public function encode(): string
     {
         return Encoder::create(__DIR__ . '/templates/resolver.inc.php', $this)
             ->encode();
     }
 
-    /**
-     * @return array
-     */
     public function getStack(): array
     {
         return array_merge(
@@ -73,9 +56,6 @@ class EncodedResolver implements EncoderInterface
         );
     }
 
-    /**
-     * @return string
-     */
     public function getExpression(): string
     {
         $callable = $this->getInnerExpression();
@@ -90,9 +70,6 @@ class EncodedResolver implements EncoderInterface
         );
     }
 
-    /**
-     * @return string
-     */
     public function getInnerExpression(): string
     {
         return sprintf(
@@ -102,35 +79,22 @@ class EncodedResolver implements EncoderInterface
         );
     }
 
-    /**
-     * @return string|null
-     */
     public function getContextArgs(): ?string
     {
         return !empty($this->getContext()) ? var_export($this->getContext(), true) : null;
     }
 
-    /**
-     * @return array|null
-     */
     public function getContext(): ?array
     {
         return $this->context;
     }
 
-    /**
-     * @param array $context
-     * @return EncodedResolver
-     */
-    public function setContext(array $context): self
+    public function setContext(?array $context): self
     {
         $this->context = $context;
         return $this;
     }
 
-    /**
-     * @return ResolverReference
-     */
     public function getRef(): ResolverReference
     {
         return $this->resolverRef;
@@ -138,7 +102,7 @@ class EncodedResolver implements EncoderInterface
 
     /**
      * @param string $key
-     * @param $val
+     * @param mixed $val
      * @return EncodedResolver
      * @throws SchemaBuilderException
      */
@@ -155,10 +119,6 @@ class EncodedResolver implements EncoderInterface
         return $this;
     }
 
-    /**
-     * @param EncodedResolver $ref
-     * @return EncodedResolver
-     */
     public function addMiddleware(EncodedResolver $ref): self
     {
         $this->middleware[] = $ref;
@@ -166,18 +126,11 @@ class EncodedResolver implements EncoderInterface
         return $this;
     }
 
-    /**
-     * @return array
-     */
     public function getResolverMiddlewares(): array
     {
         return $this->middleware;
     }
 
-    /**
-     * @param EncodedResolver $ref
-     * @return EncodedResolver
-     */
     public function addAfterware(EncodedResolver $ref): self
     {
         $this->afterware[] = $ref;
@@ -185,9 +138,6 @@ class EncodedResolver implements EncoderInterface
         return $this;
     }
 
-    /**
-     * @return array
-     */
     public function getResolverAfterwares(): array
     {
         return $this->afterware;

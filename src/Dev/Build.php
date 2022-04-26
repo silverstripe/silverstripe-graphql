@@ -30,11 +30,10 @@ class Build extends Controller
     ];
 
     /**
-     * @param HTTPRequest $request
      * @throws SchemaBuilderException
      * @throws SchemaNotFoundException
      */
-    public function build(HTTPRequest $request)
+    public function build(HTTPRequest $request): void
     {
         $isBrowser = !Director::is_cli();
         if ($isBrowser) {
@@ -54,13 +53,10 @@ class Build extends Controller
     }
 
     /**
-     * @param null $key
-     * @param bool $clear
-     * @param int $level
      * @throws SchemaNotFoundException
      * @throws SchemaBuilderException
      */
-    public function buildSchema($key = null, $clear = true): void
+    public function buildSchema(string $key = null, bool $clear = true): void
     {
         /** @var LoggerInterface $logger */
         $logger = Injector::inst()->get(LoggerInterface::class . '.graphql-build');

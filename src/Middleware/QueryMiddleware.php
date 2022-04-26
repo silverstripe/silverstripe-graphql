@@ -11,12 +11,7 @@ use GraphQL\Type\Schema;
 interface QueryMiddleware
 {
     /**
-     * @param Schema $schema
-     * @param string $query
-     * @param array $context
-     * @param array $vars
-     * @param callable $next
      * @return ExecutionResult|array Result either as an ExecutionResult object or raw array
      */
-    public function process(Schema $schema, $query, $context, $vars, callable $next);
+    public function process(Schema $schema, string $query, array $context, array $vars, callable $next);
 }

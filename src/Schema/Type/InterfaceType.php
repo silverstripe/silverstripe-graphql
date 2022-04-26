@@ -19,13 +19,9 @@ use Exception;
  */
 class InterfaceType extends Type
 {
-    /**
-     * @var ResolverReference
-     */
-    private $typeResolver;
+    private ResolverReference $typeResolver;
 
     /**
-     * @param array $config
      * @throws SchemaBuilderException
      */
     public function applyConfig(array $config)
@@ -45,9 +41,6 @@ class InterfaceType extends Type
         $this->setFields($fields);
     }
 
-    /**
-     * @return EncodedResolver
-     */
     public function getEncodedTypeResolver(): EncodedResolver
     {
         return EncodedResolver::create($this->typeResolver);
@@ -71,8 +64,6 @@ class InterfaceType extends Type
     }
 
     /**
-     * @param Type $type
-     * @return InterfaceType
      * @throws SchemaBuilderException
      */
     public function mergeWith(Type $type): Type
@@ -112,7 +103,6 @@ class InterfaceType extends Type
     }
 
     /**
-     * @return string
      * @throws Exception
      */
     public function getSignature(): string

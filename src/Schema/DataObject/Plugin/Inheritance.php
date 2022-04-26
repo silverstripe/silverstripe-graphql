@@ -24,16 +24,12 @@ class Inheritance implements PluginInterface, SchemaUpdater, ModelTypePlugin
 
     const IDENTIFIER = 'inheritance';
 
-    /**
-     * @return string
-     */
     public function getIdentifier(): string
     {
         return self::IDENTIFIER;
     }
 
     /**
-     * @param Schema $schema
      * @throws SchemaBuilderException
      */
     public static function updateSchema(Schema $schema): void
@@ -43,9 +39,6 @@ class Inheritance implements PluginInterface, SchemaUpdater, ModelTypePlugin
     }
 
     /**
-     * @param ModelType $type
-     * @param Schema $schema
-     * @param array $config
      * @throws ReflectionException
      * @throws SchemaBuilderException
      */

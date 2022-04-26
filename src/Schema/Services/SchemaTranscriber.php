@@ -20,30 +20,15 @@ class SchemaTranscriber
 
     const CACHE_FILENAME = 'types.graphql';
 
-    /**
-     * @var GraphQLSchema
-     */
-    private $schema;
+    private GraphQLSchema $schema;
 
-    /**
-     * @var string
-     */
-    private $name;
+    private string $name;
 
-    /**
-     * @var GeneratedAssetHandler
-     */
-    protected $assetHandler;
+    protected GeneratedAssetHandler $assetHandler;
 
-    /**
-     * @var Filesystem
-     */
-    private $fs;
+    private Filesystem $fs;
 
-    /**
-     * @var string
-     */
-    private $rootDir;
+    private string $rootDir;
 
     /**
      * SchemaTranscriber constructor.
@@ -79,43 +64,28 @@ class SchemaTranscriber
         $this->writeTypes(json_encode($types));
     }
 
-    /**
-     * @return void
-     */
     public function removeSchemaFromFilesystem(): void
     {
         $this->fs->remove($this->generateCacheFilename());
     }
 
-    /**
-     * @param string $content
-     */
     public function writeTypes(string $content)
     {
         $this->fs->dumpFile($this->generateCacheFilename(), $content);
     }
 
-    /**
-     * @return string
-     */
     public function getRootDir(): string
     {
         return $this->rootDir;
     }
 
-    /**
-     * @param string
-     * @return SchemaTranscriber
-     */
     public function setRootDir(string $rootDir): self
     {
         $this->rootDir = $rootDir;
         return $this;
     }
 
-
     /**
-     * @return array
      * @throws Exception
      */
     private function introspectTypes(): array
@@ -152,9 +122,6 @@ GRAPHQL
         return $fragments;
     }
 
-    /**
-     * @return string
-     */
     private function generateCacheFilename(): string
     {
         return Path::join(

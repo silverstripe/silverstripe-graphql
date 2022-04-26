@@ -29,20 +29,13 @@ class NestedInputBuilder
     const SELF_REFERENTIAL = '--self--';
 
     /**
-     * @var string
      * @config
      */
-    private static $prefix = '';
+    private static string $prefix = '';
 
-    /**
-     * @var Schema
-     */
-    private $schema;
+    private Schema $schema;
 
-    /**
-     * @var Field
-     */
-    private $root;
+    private Field $root;
 
     /**
      * @var string|array
@@ -50,39 +43,29 @@ class NestedInputBuilder
     private $fields;
 
     /**
-     * @var callable
+     * @var callable|null
      */
     private $fieldFilter;
 
     /**
-     * @var callable
+     * @var callable|null
      */
     private $typeNameHandler;
 
     /**
-     * @var callable
+     * @var callable|null
      */
     private $leafNodeHandler;
 
-    /**
-     * @var InputType
-     */
-    private $rootType;
+    private InputType $rootType;
+
+    private array $resolveConfig;
 
     /**
-     * @var array
-     */
-    private $resolveConfig;
-
-    /**
-     * NestedInputBuilder constructor.
-     * @param Field $root
-     * @param Schema $schema
-     * @param string $fields
-     * @param array $resolveConfig
+     * @param string|array $fields
      * @throws SchemaBuilderException
      */
-    public function __construct(Field $root, Schema $schema, $fields = Schema::ALL, $resolveConfig = [])
+    public function __construct(Field $root, Schema $schema, $fields = Schema::ALL, array $resolveConfig = [])
     {
         $this->schema = $schema;
         $this->root = $root;
@@ -100,7 +83,7 @@ class NestedInputBuilder
     /**
      * @throws SchemaBuilderException
      */
-    public function populateSchema()
+    public function populateSchema(): void
     {
         $typeName = TypeReference::create($this->root->getType())->getNamedType();
         $type = $this->schema->getCanonicalType($typeName);
@@ -125,8 +108,6 @@ class NestedInputBuilder
     }
 
     /**
-     * @param Type $type
-     * @return array
      * @throws SchemaBuilderException
      */
     protected function buildAllFieldsConfig(Type $type): array
@@ -172,11 +153,6 @@ class NestedInputBuilder
     }
 
     /**
-     * @param Type $type
-     * @param array $fields
-     * @param InputType|null $parentType
-     * @param string|null $parentField
-     * @param string $prefix
      * @throws SchemaBuilderException
      */
     protected function addInputTypesToSchema(
@@ -269,47 +245,30 @@ class NestedInputBuilder
         }
     }
 
-    /**
-     * @param callable $fieldFilter
-     * @return NestedInputBuilder
-     */
     public function setFieldFilter(callable $fieldFilter): NestedInputBuilder
     {
         $this->fieldFilter = $fieldFilter;
         return $this;
     }
 
-    /**
-     * @param callable $typeNameHandler
-     * @return NestedInputBuilder
-     */
     public function setTypeNameHandler(callable $typeNameHandler): NestedInputBuilder
     {
         $this->typeNameHandler = $typeNameHandler;
         return $this;
     }
 
-    /**
-     * @param callable $leafNodeHandler
-     * @return NestedInputBuilder
-     */
     public function setLeafNodeHandler(callable $leafNodeHandler): NestedInputBuilder
     {
         $this->leafNodeHandler = $leafNodeHandler;
         return $this;
     }
 
-    /**
-     * @return InputType|null
-     */
     public function getRootType(): ?InputType
     {
         return $this->rootType;
     }
 
     /**
-     * @param array $config
-     * @return $this
      * @throws SchemaBuilderException
      */
     public function setResolveConfig(array $config): self
@@ -327,16 +286,12 @@ class NestedInputBuilder
         return $this;
     }
 
-    /**
-     * @return array
-     */
     public function getResolveConfig(): array
     {
         return $this->resolveConfig;
     }
 
     /**
-     * @param string $name
      * @return string|array|null
      */
     public function getResolver(string $name)
@@ -344,18 +299,11 @@ class NestedInputBuilder
         return $this->resolveConfig[$name]['resolver'] ?? null;
     }
 
-    /**
-     * @param string $name
-     * @return string|null
-     */
     public function getResolveType(string $name): ?string
     {
         return $this->resolveConfig[$name]['type'] ?? null;
     }
 
-    /**
-     * @return array
-     */
     public function getResolvers(): array
     {
         $resolvers = [];
@@ -370,9 +318,6 @@ class NestedInputBuilder
      * Public API that can be used by a resolver to flatten the input argument into
      * dot.separated.paths that can be normalised
      *
-     * @param array $argFilters
-     * @param array $origin
-     * @return array
      */
     public static function buildPathsFromArgs(array $argFilters, array $origin = []): array
     {
@@ -392,10 +337,6 @@ class NestedInputBuilder
 
     /**
      * Allows certain fields to be excluded
-     *
-     * @param Type $type
-     * @param Field $field
-     * @return bool
      */
     private function shouldAddField(Type $type, Field $field): bool
     {
@@ -406,10 +347,6 @@ class NestedInputBuilder
         return true;
     }
 
-    /**
-     * @param Type $type
-     * @return string
-     */
     private function getTypeName(Type $type): string
     {
         if ($this->typeNameHandler) {
@@ -419,10 +356,6 @@ class NestedInputBuilder
         return $type->getName() . 'InputType';
     }
 
-    /**
-     * @param string $fieldName
-     * @return string
-     */
     private function getLeafNodeType(string $fieldName): string
     {
         if ($this->leafNodeHandler) {
@@ -431,8 +364,6 @@ class NestedInputBuilder
 
         return $fieldName;
     }
-
-
 
     /**
      * @param string $key

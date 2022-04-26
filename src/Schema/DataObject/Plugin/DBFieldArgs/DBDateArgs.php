@@ -34,9 +34,6 @@ class DBDateArgs extends DBFieldArgs
             ->addResolverAfterware($this->getResolver());
     }
 
-    /**
-     * @return callable
-     */
     protected function getResolver(): callable
     {
         return [static::class, 'resolve'];

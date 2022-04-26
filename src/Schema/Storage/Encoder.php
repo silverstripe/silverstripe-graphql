@@ -12,27 +12,19 @@ class Encoder implements EncoderInterface
 {
     use Injectable;
 
-    /**
-     * @var string
-     */
-    private $includeFile;
+    private string $includeFile;
 
     /**
-     * @var object
+     * @var object|array
      */
     private $scope;
 
-    /**
-     * @var array
-     */
-    private $globals = [];
+    private array $globals = [];
 
     /**
-     * Encoder constructor.
-     * @param string $includeFile
-     * @param $scope
+     * @param object|array $scope
      */
-    public function __construct(string $includeFile, $scope, $globals = [])
+    public function __construct(string $includeFile, $scope, array $globals = [])
     {
         if (!file_exists($includeFile ?? '')) {
             throw new InvalidArgumentException(sprintf(

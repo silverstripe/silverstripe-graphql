@@ -8,10 +8,6 @@ namespace SilverStripe\GraphQL\Schema\Storage;
  */
 class HybridObfuscator implements NameObfuscator
 {
-    /**
-     * @param string $name
-     * @return string
-     */
     public function obfuscate(string $name): string
     {
         return sprintf('%s_%s', $name, md5($name ?? ''));
