@@ -9,12 +9,12 @@ use SilverStripe\Security\Member;
 
 class PushoverAuthenticatorFake implements AuthenticatorInterface, TestOnly
 {
-    public function authenticate(HTTPRequest $request)
+    public function authenticate(HTTPRequest $request): ?Member
     {
         return Member::create(['Email' => 'john@example.com']);
     }
 
-    public function isApplicable(HTTPRequest $request)
+    public function isApplicable(HTTPRequest $request): bool
     {
         return true;
     }

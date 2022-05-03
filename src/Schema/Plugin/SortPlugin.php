@@ -26,37 +26,27 @@ class SortPlugin implements FieldPlugin, SchemaUpdater
     const IDENTIFIER = 'sorter';
 
     /**
-     * @var string
      * @config
      */
-    private static $field_name = 'sort';
+    private static string $field_name = 'sort';
 
     /**
-     * @var array
      * @config
+     * @var callable
      */
     private static $resolver = [__CLASS__, 'sort'];
 
-    /**
-     * @return string
-     */
     public function getIdentifier(): string
     {
         return self::IDENTIFIER;
     }
 
-    /**
-     * @param Schema $schema
-     */
     public static function updateSchema(Schema $schema): void
     {
         AbstractQuerySortPlugin::updateSchema($schema);
     }
 
     /**
-     * @param Field $field
-     * @param Schema $schema
-     * @param array $config
      * @throws SchemaBuilderException
      */
     public function apply(Field $field, Schema $schema, array $config = []): void
@@ -93,10 +83,6 @@ class SortPlugin implements FieldPlugin, SchemaUpdater
         $field->addArg($sortFieldName, $input->getName());
     }
 
-    /**
-     * @param array $context
-     * @return Closure
-     */
     public static function sort(array $context): Closure
     {
         $fieldName = $context['fieldName'];
@@ -114,8 +100,6 @@ class SortPlugin implements FieldPlugin, SchemaUpdater
     }
 
     /**
-     * @return array
-     * @param array $config
      * @throws SchemaBuilderException
      */
     protected function getResolver(array $config): array

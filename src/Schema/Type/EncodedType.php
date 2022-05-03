@@ -22,27 +22,19 @@ class EncodedType implements Encoder
     use Injectable;
     use Configurable;
 
-    /**
-     * @var TypeReference
-     */
-    private $ref;
+    private TypeReference $ref;
 
-    private static $typeMap = [
+    private static array $typeMap = [
         NodeKind::LIST_TYPE => 'listOf',
         NodeKind::NON_NULL_TYPE => 'nonNull',
     ];
 
-    /**
-     * EncodedType constructor.
-     * @param TypeReference $ref
-     */
     public function __construct(TypeReference $ref)
     {
         $this->ref = $ref;
     }
 
     /**
-     * @return string
      * @throws SchemaBuilderException
      */
     public function encode(): string

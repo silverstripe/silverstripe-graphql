@@ -14,12 +14,6 @@ use SilverStripe\GraphQL\Schema\Interfaces\ResolverProvider;
  */
 class DefaultResolverStrategy
 {
-    /**
-     * @param array $resolverClasses
-     * @param string|null $typeName
-     * @param Field|null $field
-     * @return callable|null
-     */
     public static function getResolverMethod(array $resolverClasses, ?string $typeName = null, ?Field $field = null): ?callable
     {
         $fieldName = $field->getName();

@@ -52,12 +52,9 @@ class Configuration
     }
 
     /**
-     * @param $path
-     * @param callable $callback
-     * @return $this
      * @throws SchemaBuilderException
      */
-    private function path($path, $callback): void
+    private function path($path, callable $callback): void
     {
         if (is_string($path)) {
             $path = explode('.', $path ?? '');

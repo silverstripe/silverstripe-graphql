@@ -14,9 +14,9 @@ class RegistryBackend
     use Injectable;
 
     /**
-     * @var array Identifiable
+     * @var Identifiable[]
      */
-    private $instances = [];
+    private array $instances = [];
 
     /**
      * RegistryBackend constructor.

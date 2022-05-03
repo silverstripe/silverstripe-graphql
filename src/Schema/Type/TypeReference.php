@@ -17,10 +17,10 @@ class TypeReference
 {
     use Injectable;
 
-    private $typeStr;
+    private string $typeStr;
 
     /**
-     * @var
+     * @var mixed
      */
     private $defaultValue;
 
@@ -37,9 +37,6 @@ class TypeReference
         }
     }
 
-    /**
-     * @return Node
-     */
     public function toAST(): Node
     {
         return Parser::parseType($this->typeStr, ['noLocation' => true]);
@@ -53,26 +50,16 @@ class TypeReference
         return $this->defaultValue;
     }
 
-    /**
-     * @return bool
-     */
     public function isList(): bool
     {
         return $this->hasWrapper(NodeKind::LIST_TYPE);
     }
 
-    /**
-     * @return bool
-     */
     public function isRequired(): bool
     {
         return $this->hasWrapper(NodeKind::NON_NULL_TYPE);
     }
 
-    /**
-     * @param string $nodeKind
-     * @return bool
-     */
     private function hasWrapper(string $nodeKind): bool
     {
         list ($named, $path) = $this->getTypeName();
@@ -84,9 +71,6 @@ class TypeReference
         return in_array($nodeKind, $path ?? []);
     }
 
-    /**
-     * @return array
-     */
     public function getTypeName(): array
     {
         $node = $this->toAST();
@@ -101,25 +85,16 @@ class TypeReference
         return [$named, $path];
     }
 
-    /**
-     * @return string
-     */
     public function getNamedType(): string
     {
         return $this->getTypeName()[0];
     }
 
-    /**
-     * @return string
-     */
     public function getRawType(): string
     {
         return $this->typeStr;
     }
 
-    /**
-     * @return bool
-     */
     public function isInternal(): bool
     {
         $type = $this->getNamedType();

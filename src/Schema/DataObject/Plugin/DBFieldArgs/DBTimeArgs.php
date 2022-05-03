@@ -43,7 +43,7 @@ class DBTimeArgs extends DBFieldArgs
     /**
      * @param mixed $obj
      * @param array $args
-     * @return DBField | string
+     * @return DBField|string
      * @throws Exception
      */
     public static function resolve($obj, array $args)

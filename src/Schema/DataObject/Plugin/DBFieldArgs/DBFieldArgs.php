@@ -16,14 +16,8 @@ abstract class DBFieldArgs
 {
     use Injectable;
 
-    /**
-     * @return Enum
-     */
     abstract public function getEnum(): Enum;
 
-    /**
-     * @param ModelField $field
-     */
     abstract public function applyToField(ModelField $field): void;
 
     /**

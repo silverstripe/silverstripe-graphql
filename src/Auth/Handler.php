@@ -65,7 +65,7 @@ class Handler
      * @param HTTPRequest $request
      * @return null|AuthenticatorInterface
      */
-    public function getAuthenticator(HTTPRequest $request)
+    public function getAuthenticator(HTTPRequest $request): ?AuthenticatorInterface
     {
         // Get list of default authenticators
         $authenticators = $this->config()->get('authenticators');
@@ -89,7 +89,7 @@ class Handler
      * @return AuthenticatorInterface
      * @throws ValidationException
      */
-    protected function buildAuthenticator($authenticator)
+    protected function buildAuthenticator(string $authenticator): AuthenticatorInterface
     {
         if (!ClassInfo::classImplements($authenticator, AuthenticatorInterface::class)) {
             throw new ValidationException(
@@ -106,7 +106,7 @@ class Handler
      *
      * @param array $authenticators
      */
-    public function prioritiseAuthenticators(&$authenticators)
+    public function prioritiseAuthenticators(array &$authenticators): void
     {
         usort($authenticators, function ($a, $b) {
             // Set some default values

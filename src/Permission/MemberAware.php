@@ -12,14 +12,14 @@ use SilverStripe\Security\Security;
 trait MemberAware
 {
 
-    private $member;
+    private ?Member $member = null;
 
     /**
      * Set the Member for the current context
      *
      * @param  Member $member
      */
-    public function setMemberContext(Member $member): void
+    public function setMemberContext(?Member $member): void
     {
         $this->member = $member;
     }

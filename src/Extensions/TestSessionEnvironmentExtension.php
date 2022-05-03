@@ -18,7 +18,7 @@ class TestSessionEnvironmentExtension extends Extension
      * it also checks for the existance of persisted schemas first do that the schema is not rebuilt
      * after each behat scenario
      */
-    public function onAfterStartTestSession()
+    public function onAfterStartTestSession(): void
     {
         $logger = Logger::singleton();
         $keys = array_keys(Schema::config()->get('schemas') ?? []);

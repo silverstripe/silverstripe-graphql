@@ -14,7 +14,7 @@ class NotEqualFilter implements FieldFilterInterface
     /**
      * @inheritDoc
      */
-    public function apply(Filterable $list, string $fieldName, $value): iterable
+    public function apply(Filterable $list, string $fieldName, string $value): iterable
     {
         return $list->exclude($fieldName, $value);
     }

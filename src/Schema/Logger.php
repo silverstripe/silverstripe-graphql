@@ -30,15 +30,8 @@ class Logger implements LoggerInterface
     const ALERT = 550;
     const EMERGENCY = 600;
 
-    /**
-     * @var int
-     */
-    private $level = self::INFO;
+    private int $level = self::INFO;
 
-    /**
-     * @param int $level
-     * @return $this
-     */
     public function setVerbosity(int $level): self
     {
         $this->level = $level;
@@ -46,11 +39,7 @@ class Logger implements LoggerInterface
         return $this;
     }
 
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function alert($message, array $context = array())
+    public function alert($message, array $context = [])
     {
         if ($this->level > self::ALERT) {
             return;
@@ -58,11 +47,7 @@ class Logger implements LoggerInterface
         $this->output($message, strtoupper(__FUNCTION__), self::RED);
     }
 
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function critical($message, array $context = array())
+    public function critical($message, array $context = [])
     {
         if ($this->level > self::CRITICAL) {
             return;
@@ -71,11 +56,7 @@ class Logger implements LoggerInterface
         $this->output($message, strtoupper(__FUNCTION__), self::RED);
     }
 
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function debug($message, array $context = array())
+    public function debug($message, array $context = [])
     {
         if ($this->level > self::DEBUG) {
             return;
@@ -84,11 +65,7 @@ class Logger implements LoggerInterface
         $this->output($message, strtoupper(__FUNCTION__));
     }
 
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function emergency($message, array $context = array())
+    public function emergency($message, array $context = [])
     {
         if ($this->level > self::EMERGENCY) {
             return;
@@ -97,11 +74,7 @@ class Logger implements LoggerInterface
         $this->output($message, strtoupper(__FUNCTION__), self::RED);
     }
 
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function error($message, array $context = array())
+    public function error($message, array $context = [])
     {
         if ($this->level > self::ERROR) {
             return;
@@ -110,11 +83,7 @@ class Logger implements LoggerInterface
         $this->output($message, strtoupper(__FUNCTION__), self::RED);
     }
 
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function info($message, array $context = array())
+    public function info($message, array $context = [])
     {
         if ($this->level > self::INFO) {
             return;
@@ -123,21 +92,12 @@ class Logger implements LoggerInterface
         $this->output($message, strtoupper(__FUNCTION__), self::CYAN);
     }
 
-    /**
-     * @param mixed $level
-     * @param string $message
-     * @param array $context
-     */
-    public function log($level, $message, array $context = array())
+    public function log($level, $message, array $context = [])
     {
         $this->output($message, strtoupper(__FUNCTION__));
     }
 
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function notice($message, array $context = array())
+    public function notice($message, array $context = [])
     {
         if ($this->level > self::NOTICE) {
             return;
@@ -146,11 +106,7 @@ class Logger implements LoggerInterface
         $this->output($message, strtoupper(__FUNCTION__), self::YELLOW);
     }
 
-    /**
-     * @param string $message
-     * @param array $context
-     */
-    public function warning($message, array $context = array())
+    public function warning($message, array $context = [])
     {
         if ($this->level > self::WARNING) {
             return;
@@ -159,7 +115,7 @@ class Logger implements LoggerInterface
         $this->output($message, strtoupper(__FUNCTION__), self::YELLOW);
     }
 
-    public function output(string $msg, ?string $prefix = null, ?string $colour = null)
+    public function output(string $msg, ?string $prefix = null, ?string $colour = null): void
     {
         $cli = Director::is_cli();
         $formatted = sprintf(

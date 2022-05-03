@@ -13,10 +13,6 @@ class ModelUnionType extends UnionType
     use CanonicalModelAware;
 
     /**
-     * ModelUnionType constructor.
-     * @param ModelType $canonicalModel
-     * @param string $name
-     * @param array|null $config
      * @throws SchemaBuilderException
      */
     public function __construct(ModelType $canonicalModel, string $name, ?array $config = null)

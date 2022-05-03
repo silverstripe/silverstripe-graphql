@@ -9,7 +9,7 @@ class FieldFilterRegistry implements FilterRegistryInterface
     /**
      * @var array FieldFilterInterface[]
      */
-    protected $filters = [];
+    protected array $filters = [];
 
     /**
      * FilterRegistry constructor.
@@ -59,7 +59,7 @@ class FieldFilterRegistry implements FilterRegistryInterface
     /**
      * @return FieldFilterInterface[]
      */
-    public function getAll()
+    public function getAll(): array
     {
         return $this->filters;
     }

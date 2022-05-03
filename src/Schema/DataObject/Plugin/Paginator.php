@@ -15,20 +15,17 @@ class Paginator extends PaginationPlugin
 {
     const IDENTIFIER = 'paginateList';
 
+    /**
+     * @var callable
+     * @config
+     */
     private static $resolver = [__CLASS__, 'paginate'];
 
-    /**
-     * @return string
-     */
     public function getIdentifier(): string
     {
         return self::IDENTIFIER;
     }
 
-    /**
-     * @param array $context
-     * @return Closure
-     */
     public static function paginate(array $context): Closure
     {
         $maxLimit = $context['maxLimit'];

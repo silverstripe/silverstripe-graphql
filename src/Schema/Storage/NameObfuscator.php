@@ -8,9 +8,5 @@ namespace SilverStripe\GraphQL\Schema\Storage;
  */
 interface NameObfuscator
 {
-    /**
-     * @param string $name
-     * @return string
-     */
     public function obfuscate(string $name): string;
 }

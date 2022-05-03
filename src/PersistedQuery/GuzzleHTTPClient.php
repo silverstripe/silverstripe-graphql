@@ -14,7 +14,7 @@ class GuzzleHTTPClient implements HTTPClient
      * @param int $timeout
      * @return null|string
      */
-    public function getURL($url, $timeout = 5)
+    public function getURL(string $url, int $timeout = 5): ?string
     {
         $request = new Request('GET', $url);
         $client = new Client();

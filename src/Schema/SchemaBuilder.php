@@ -24,15 +24,8 @@ class SchemaBuilder
 {
     use Injectable;
 
-    /**
-     * @var SchemaStorageCreator
-     */
-    private $storeCreator;
+    private SchemaStorageCreator $storeCreator;
 
-    /**
-     * SchemaBuilder constructor.
-     * @param SchemaStorageCreator $storeCreator
-     */
     public function __construct(SchemaStorageCreator $storeCreator)
     {
         $this->setStoreCreator($storeCreator);
@@ -43,9 +36,6 @@ class SchemaBuilder
      * which does not require booting. Useful for getting data from
      * a saved schema at request time.
      * Returns null when no stored schema can be found.
-     *
-     * @param string $key
-     * @return SchemaConfig|null
      */
     public function getConfig(string $key): ?SchemaConfig
     {
@@ -59,8 +49,6 @@ class SchemaBuilder
     /**
      * Gets a graphql-php Schema instance that can be queried
      *
-     * @param string $key
-     * @return GraphQLSchema|null
      * @throws SchemaNotFoundException
      */
     public function getSchema(string $key): ?GraphQLSchema
@@ -76,13 +64,10 @@ class SchemaBuilder
     /**
      * Stores a schema and fetches the graphql-php instance
      *
-     * @param Schema $schema
-     * @param bool $clear If true, clear the cache
-     * @return GraphQLSchema
      * @throws SchemaNotFoundException
      * @throws EmptySchemaException
      */
-    public function build(Schema $schema, $clear = false): GraphQLSchema
+    public function build(Schema $schema, bool $clear = false): GraphQLSchema
     {
         $store = $this->getStoreCreator()->createStore($schema->getSchemaKey());
         if ($clear) {
@@ -103,14 +88,11 @@ class SchemaBuilder
     /**
      * Boots a schema, persists it, and fetches it
      *
-     * @param string $key
-     * @param false $clear
-     * @return GraphQLSchema
      * @throws SchemaBuilderException
      * @throws SchemaNotFoundException
      * @throws EmptySchemaException
      */
-    public function buildByName(string $key, $clear = false): GraphQLSchema
+    public function buildByName(string $key, bool $clear = false): GraphQLSchema
     {
         $schema = $this->boot($key);
 
@@ -129,9 +111,7 @@ class SchemaBuilder
      * and is usually only needed for the process of storing them
      * (through {@link SchemaBuilder->build()}).
      *
-     * @param string $key
      * @throws SchemaBuilderException
-     * @return Schema
      */
     public function boot(string $key): Schema
     {
@@ -189,18 +169,11 @@ class SchemaBuilder
         return $schemaObj;
     }
 
-    /**
-     * @return SchemaStorageCreator
-     */
     public function getStoreCreator(): SchemaStorageCreator
     {
         return $this->storeCreator;
     }
 
-    /**
-     * @param SchemaStorageCreator $storeCreator
-     * @return SchemaBuilder
-     */
     public function setStoreCreator(SchemaStorageCreator $storeCreator): SchemaBuilder
     {
         $this->storeCreator = $storeCreator;
@@ -212,9 +185,6 @@ class SchemaBuilder
      * Retrieves config from filesystem path.
      * Use {@link applyConfig()} to use the resulting config array on the schema instance.
      *
-     * @param string $schemaKey
-     * @param string $dir
-     * @return array
      * @throws SchemaBuilderException
      */
     private static function getSchemaConfigFromSource(string $schemaKey, string $dir): array

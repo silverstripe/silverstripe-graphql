@@ -18,10 +18,7 @@ class QueryCollector
 {
     use Injectable;
 
-    /**
-     * @var Schema
-     */
-    private $schema;
+    private Schema $schema;
 
     public function __construct(Schema $schema)
     {
@@ -29,7 +26,6 @@ class QueryCollector
     }
 
     /**
-     * @return Generator
      * @throws SchemaBuilderException
      */
     public function collectQueries(): array
@@ -73,8 +69,6 @@ class QueryCollector
     }
 
     /**
-     * @param ModelType $type
-     * @return Generator
      * @throws SchemaBuilderException
      */
     public function collectQueriesForType(ModelType $type): Generator

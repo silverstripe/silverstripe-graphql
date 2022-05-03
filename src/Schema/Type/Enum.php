@@ -13,28 +13,12 @@ use SilverStripe\ORM\ArrayLib;
  */
 class Enum extends Type implements SchemaValidator
 {
-    /**
-     * @var string
-     */
-    private $name;
+    private string $name;
 
-    /**
-     * @var array
-     */
-    private $values;
+    private array $values;
 
-    /**
-     * @var string|null
-     */
-    private $description;
+    private ?string $description;
 
-    /**
-     * Enum constructor.
-     * @param string $name
-     * @param array $values
-     * @param string|null $description
-     * @throws SchemaBuilderException
-     */
     public function __construct(string $name, array $values, ?string $description = null)
     {
         parent::__construct($name);
@@ -43,7 +27,6 @@ class Enum extends Type implements SchemaValidator
     }
 
     /**
-     * @return array
      * @throws SchemaBuilderException
      */
     public function getValueList(): array
@@ -96,18 +79,11 @@ class Enum extends Type implements SchemaValidator
         }
     }
 
-    /**
-     * @return array
-     */
     public function getValues(): array
     {
         return $this->values;
     }
 
-    /**
-     * @param array $values
-     * @return Enum
-     */
     public function setValues(array $values): self
     {
         $this->values = $values;
@@ -115,11 +91,9 @@ class Enum extends Type implements SchemaValidator
     }
 
     /**
-     * @param $key
-     * @param null $val
-     * @return Enum
+     * @param mixed $val
      */
-    public function addValue($key, $val = null): self
+    public function addValue(string $key, $val = null): self
     {
         if ($val === null) {
             $this->values[$key] = $key;
@@ -130,10 +104,6 @@ class Enum extends Type implements SchemaValidator
         return $this;
     }
 
-    /**
-     * @param string $key
-     * @return Enum
-     */
     public function removeValue(string $key): self
     {
         unset($this->values[$key]);
@@ -141,9 +111,6 @@ class Enum extends Type implements SchemaValidator
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function getSignature(): string
     {
         $components = [

@@ -37,7 +37,7 @@ interface AuthenticatorInterface
      * @return Member               If authentication is successful
      * @throws ValidationException  If authentication fails
      */
-    public function authenticate(HTTPRequest $request);
+    public function authenticate(HTTPRequest $request): ?Member;
 
     /**
      * Determine if this authenticator is applicable to the current request
@@ -45,5 +45,5 @@ interface AuthenticatorInterface
      * @param HTTPRequest $request
      * @return bool
      */
-    public function isApplicable(HTTPRequest $request);
+    public function isApplicable(HTTPRequest $request): bool;
 }

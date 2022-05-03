@@ -19,30 +19,15 @@ class Scalar implements ConfigurationApplier, SchemaValidator, SignatureProvider
     use Injectable;
     use Configurable;
 
-    /**
-     * @var string
-     */
-    private $name;
+    private string $name;
+
+    private ResolverReference $serialiser;
+
+    private ResolverReference $valueParser;
+
+    private ResolverReference $literalParser;
 
     /**
-     * @var ResolverReference
-     */
-    private $serialiser;
-
-    /**
-     * @var ResolverReference
-     */
-    private $valueParser;
-
-    /**
-     * @var ResolverReference
-     */
-    private $literalParser;
-
-    /**
-     * Scalar constructor.
-     * @param string $fieldName
-     * @param array $config
      * @throws SchemaBuilderException
      */
     public function __construct(string $fieldName, array $config = [])
@@ -51,7 +36,7 @@ class Scalar implements ConfigurationApplier, SchemaValidator, SignatureProvider
         $this->applyConfig($config);
     }
 
-    public function applyConfig(array $config)
+    public function applyConfig(array $config): void
     {
         Schema::assertValidConfig($config, [
             'name',
@@ -77,17 +62,12 @@ class Scalar implements ConfigurationApplier, SchemaValidator, SignatureProvider
         }
     }
 
-    /**
-     * @return string|null
-     */
     public function getName(): ?string
     {
         return $this->name;
     }
 
     /**
-     * @param string $name
-     * @return Scalar
      * @throws SchemaBuilderException
      */
     public function setName(string $name): self
@@ -97,79 +77,49 @@ class Scalar implements ConfigurationApplier, SchemaValidator, SignatureProvider
         return $this;
     }
 
-    /**
-     * @return ResolverReference
-     */
     public function getSerialiser(): ResolverReference
     {
         return $this->serialiser;
     }
 
-    /**
-     * @return EncodedResolver
-     */
     public function getEncodedSerialiser(): EncodedResolver
     {
         return EncodedResolver::create($this->getSerialiser());
     }
 
-    /**
-     * @param ResolverReference $serialiser
-     * @return Scalar
-     */
-    public function setSerialiser(ResolverReference $serialiser): Scalar
+    public function setSerialiser(ResolverReference $serialiser): self
     {
         $this->serialiser = $serialiser;
         return $this;
     }
 
-    /**
-     * @return ResolverReference
-     */
     public function getValueParser(): ResolverReference
     {
         return $this->valueParser;
     }
 
-    /**
-     * @return EncodedResolver
-     */
     public function getEncodedValueParser(): EncodedResolver
     {
         return EncodedResolver::create($this->getValueParser());
     }
 
-    /**
-     * @param ResolverReference $valueParser
-     * @return Scalar
-     */
-    public function setValueParser(ResolverReference $valueParser): Scalar
+    public function setValueParser(ResolverReference $valueParser): self
     {
         $this->valueParser = $valueParser;
         return $this;
     }
 
-    /**
-     * @return ResolverReference
-     */
     public function getLiteralParser(): ResolverReference
     {
         return $this->literalParser;
     }
 
-    /**
-     * @return EncodedResolver
-     */
     public function getEncodedLiteralParser(): EncodedResolver
     {
         return EncodedResolver::create($this->getLiteralParser());
     }
 
-    /**
-     * @param ResolverReference $literalParser
-     * @return Scalar
-     */
-    public function setLiteralParser(ResolverReference $literalParser): Scalar
+    public function setLiteralParser(ResolverReference $literalParser): self
     {
         $this->literalParser = $literalParser;
         return $this;
@@ -186,9 +136,6 @@ class Scalar implements ConfigurationApplier, SchemaValidator, SignatureProvider
         );
     }
 
-    /**
-     * @return string
-     */
     public function getSignature(): string
     {
         return md5(json_encode([

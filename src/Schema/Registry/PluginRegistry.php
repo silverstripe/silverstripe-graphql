@@ -16,10 +16,7 @@ class PluginRegistry
 {
     use Injectable;
 
-    /**
-     * @var array
-     */
-    private $plugins = [];
+    private array $plugins = [];
 
     /**
      * @param array ...$plugins
@@ -45,10 +42,6 @@ class PluginRegistry
         }
     }
 
-    /**
-     * @param string $id
-     * @return PluginInterface|null
-     */
     public function getPluginByID(string $id): ?PluginInterface
     {
         $class = $this->plugins[$id] ?? null;

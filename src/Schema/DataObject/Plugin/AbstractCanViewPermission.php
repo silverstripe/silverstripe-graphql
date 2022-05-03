@@ -31,5 +31,5 @@ abstract class AbstractCanViewPermission implements FieldPlugin
         );
     }
 
-    abstract protected function getPermissionResolver(): array;
+    abstract protected function getPermissionResolver(): callable;
 }

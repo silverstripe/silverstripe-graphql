@@ -26,34 +26,27 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
     const IDENTIFIER = 'paginate';
 
     /**
-     * @var int
      * @config
      */
-    private static $default_limit = 100;
+    private static int $default_limit = 100;
 
     /**
-     * @var int
      * @config
      */
-    private static $max_limit = 100;
+    private static int $max_limit = 100;
 
     /**
-     * @var array|null
      * @config
+     * @var ?callable
      */
-    private static $resolver;
+    private static $resolver = null;
 
-    /**
-     * @return string
-     */
     public function getIdentifier(): string
     {
         return self::IDENTIFIER;
     }
 
     /**
-     * @return array
-     * @param array $config
      * @throws SchemaBuilderException
      */
     protected function getPaginationResolver(array $config): array
@@ -69,7 +62,6 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
     }
 
     /**
-     * @param Schema $schema
      * @throws SchemaBuilderException
      */
     public static function updateSchema(Schema $schema): void
@@ -85,9 +77,6 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
     }
 
     /**
-     * @param Field $field
-     * @param Schema $schema
-     * @param array|null $config
      * @throws SchemaBuilderException
      */
     public function apply(Field $field, Schema $schema, array $config = []): void
@@ -150,13 +139,6 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
         $schema->getState()->set(['connections', $fullType], $connectionType->getName());
     }
 
-    /**
-     * @param int $total
-     * @param iterable $limitedResults
-     * @param int $limit
-     * @param int $offset
-     * @return array
-     */
     public static function createPaginationResult(
         int $total,
         iterable $limitedResults,

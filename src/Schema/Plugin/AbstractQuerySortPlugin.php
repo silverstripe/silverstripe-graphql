@@ -32,9 +32,6 @@ abstract class AbstractQuerySortPlugin implements SchemaUpdater, ModelQueryPlugi
     private static $field_name = 'sort';
 
     /**
-     * @param ModelQuery $query
-     * @param Schema $schema
-     * @param array $config
      * @throws SchemaBuilderException
      */
     public function apply(ModelQuery $query, Schema $schema, array $config = []): void
@@ -58,26 +55,17 @@ abstract class AbstractQuerySortPlugin implements SchemaUpdater, ModelQueryPlugi
         );
     }
 
-    /**
-     * @param NestedInputBuilder $builder
-     */
     protected function updateInputBuilder(NestedInputBuilder $builder): void
     {
         $builder->setLeafNodeHandler([static::class, 'getLeafNodeType'])
             ->setTypeNameHandler([static::class, 'getTypeName']);
     }
 
-    /**
-     * @return string
-     */
     protected function getFieldName(): string
     {
         return $this->config()->get('field_name');
     }
 
-    /**
-     * @param Schema $schema
-     */
     public static function updateSchema(Schema $schema): void
     {
         $type = Enum::create(
@@ -90,28 +78,15 @@ abstract class AbstractQuerySortPlugin implements SchemaUpdater, ModelQueryPlugi
         $schema->addEnum($type);
     }
 
-    /**
-     * @param Type $type
-     * @return string
-     */
     public static function getTypeName(Type $type): string
     {
         return $type->getName() . 'SortFields';
     }
 
-
-    /**
-     * @param string $internalType
-     * @return string
-     */
     public static function getLeafNodeType(string $internalType): string
     {
         return 'SortDirection';
     }
 
-    /**
-     * @param array $config
-     * @return array
-     */
-    abstract protected function getResolver(array $config): array;
+    abstract protected function getResolver(array $config): callable;
 }

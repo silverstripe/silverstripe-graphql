@@ -19,27 +19,12 @@ use Generator;
  */
 trait PluginConsumer
 {
-    /**
-     * @var array
-     */
-    private $plugins = [];
+    private array $plugins = [];
 
-    /**
-     * @var array
-     */
-    private $defaultPlugins = [];
+    private array $defaultPlugins = [];
 
-    /**
-     * @var array
-     */
-    private $excludedPlugins = [];
+    private array $excludedPlugins = [];
 
-
-    /**
-     * @param string $pluginName
-     * @param $config
-     * @return $this
-     */
     public function addPlugin(string $pluginName, array $config = []): self
     {
         $this->plugins[$pluginName] = $config;
@@ -47,21 +32,12 @@ trait PluginConsumer
         return $this;
     }
 
-    /**
-     * @param string $pluginName
-     * @return $this
-     */
     public function removePlugin(string $pluginName): self
     {
         unset($this->plugins[$pluginName]);
-
         return $this;
     }
 
-    /**
-     * @param array $plugins
-     * @return $this
-     */
     public function mergePlugins(array $plugins): self
     {
         foreach ($plugins as $identifier => $config) {
@@ -79,8 +55,6 @@ trait PluginConsumer
     }
 
     /**
-     * @param array $plugins
-     * @return $this
      * @throws SchemaBuilderException
      */
     public function setPlugins(array $plugins): self
@@ -99,8 +73,6 @@ trait PluginConsumer
     }
 
     /**
-     * @param array $plugins
-     * @return $this
      * @throws SchemaBuilderException
      */
     public function setDefaultPlugins(array $plugins): self
@@ -117,10 +89,6 @@ trait PluginConsumer
         return $this;
     }
 
-    /**
-     * @param bool $inheritDefaults
-     * @return array
-     */
     public function getPlugins(bool $inheritDefaults = true): array
     {
         $plugins = $inheritDefaults
@@ -134,18 +102,11 @@ trait PluginConsumer
         return $plugins;
     }
 
-    /**
-     * @return array
-     */
     public function getDefaultPlugins(): array
     {
         return $this->defaultPlugins;
     }
 
-    /**
-     * @param string $identifier
-     * @return bool
-     */
     public function hasPlugin(string $identifier): bool
     {
         $ids = array_keys($this->getPlugins() ?? []);
@@ -153,9 +114,6 @@ trait PluginConsumer
         return in_array($identifier, $ids ?? []);
     }
 
-    /**
-     * @return PluginRegistry
-     */
     public function getPluginRegistry(): PluginRegistry
     {
         return Injector::inst()->get(PluginRegistry::class);
@@ -164,7 +122,6 @@ trait PluginConsumer
     /**
      * Translates all the ID and config settings to first class instances
      *
-     * @return Generator
      * @throws SchemaBuilderException
      * @throws CircularDependencyException
      * @throws ElementNotFoundException
@@ -191,7 +148,6 @@ trait PluginConsumer
     /**
      * Sorts the before/after of plugins using topological sort
      *
-     * @return array
      * @throws CircularDependencyException
      * @throws ElementNotFoundException
      */

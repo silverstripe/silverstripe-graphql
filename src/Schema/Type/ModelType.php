@@ -25,31 +25,18 @@ class ModelType extends Type implements ExtraTypeProvider
 {
     use ModelAware;
 
-    /**
-     * @var array
-     */
-    private $operationCreators = [];
+    private array $operationCreators = [];
 
     /**
      * @var Type[]
      */
-    private $extraTypes = [];
+    private array $extraTypes = [];
+
+    private array $blacklistedFields = [];
+
+    private array $operations = [];
 
     /**
-     * @var array
-     */
-    private $blacklistedFields = [];
-
-    /**
-     * @var array
-     */
-    private $operations = [];
-
-
-    /**
-     * ModelType constructor.
-     * @param array $config
-     * @param SchemaModelInterface|null $model
      * @throws SchemaBuilderException
      */
     public function __construct(SchemaModelInterface $model, array $config = [])
@@ -73,7 +60,6 @@ class ModelType extends Type implements ExtraTypeProvider
     }
 
     /**
-     * @param array $config
      * @throws SchemaBuilderException
      */
     public function applyConfig(array $config)
@@ -126,7 +112,7 @@ class ModelType extends Type implements ExtraTypeProvider
 
     /**
      * @param string $fieldName
-     * @param array|string|Field|boolean $fieldConfig
+     * @param array|string|Field|bool $fieldConfig
      * @param callable|null $callback
      * @return Type
      * @throws SchemaBuilderException
@@ -202,7 +188,6 @@ class ModelType extends Type implements ExtraTypeProvider
     }
 
     /**
-     * @return ModelType
      * @throws SchemaBuilderException
      */
     public function addAllFields(): self
@@ -221,7 +206,6 @@ class ModelType extends Type implements ExtraTypeProvider
     }
 
     /**
-     * @return ModelType
      * @throws SchemaBuilderException
      */
     public function addAllOperations(): self
@@ -246,11 +230,9 @@ class ModelType extends Type implements ExtraTypeProvider
 
 
     /**
-     * @param array $operations
-     * @return ModelType
      * @throws SchemaBuilderException
      */
-    public function applyOperationsConfig(array $operations): ModelType
+    public function applyOperationsConfig(array $operations): self
     {
         Schema::assertValidConfig($operations);
         foreach ($operations as $operationName => $data) {
@@ -276,10 +258,6 @@ class ModelType extends Type implements ExtraTypeProvider
         return $this;
     }
 
-    /**
-     * @param string $fieldName
-     * @return Field|null
-     */
     public function getFieldByName(string $fieldName): ?Field
     {
         /* @var ModelField $fieldObj */
@@ -292,8 +270,6 @@ class ModelType extends Type implements ExtraTypeProvider
     }
 
     /**
-     * @param Type $type
-     * @return Type
      * @throws SchemaBuilderException
      */
     public function mergeWith(Type $type): Type
@@ -307,11 +283,6 @@ class ModelType extends Type implements ExtraTypeProvider
         return parent::mergeWith($type);
     }
 
-    /**
-     * @param string $operationName
-     * @param array $config
-     * @return ModelType
-     */
     public function addOperation(string $operationName, array $config = []): self
     {
         $this->operationCreators[$operationName] = $config;
@@ -319,22 +290,14 @@ class ModelType extends Type implements ExtraTypeProvider
         return $this;
     }
 
-    /**
-     * @param string $operationName
-     * @return ModelType
-     */
     public function removeOperation(string $operationName): self
     {
         unset($this->operationCreators[$operationName]);
-
         return $this;
     }
 
 
     /**
-     * @param string $operationName
-     * @param array $config
-     * @return ModelType
      * @throws SchemaBuilderException
      */
     public function updateOperation(string $operationName, array $config = []): self
@@ -382,17 +345,11 @@ class ModelType extends Type implements ExtraTypeProvider
         $this->operations = $operations;
     }
 
-    /**
-     * @return array
-     */
     public function getOperations(): array
     {
         return $this->operations;
     }
 
-    /**
-     * @return array
-     */
     public function getOperationCreators(): array
     {
         return $this->operationCreators;
@@ -455,9 +412,6 @@ class ModelType extends Type implements ExtraTypeProvider
         parent::validate();
     }
 
-    /**
-     * @return array
-     */
     private function getInitialFields(): array
     {
         $model = $this->getModel();
@@ -469,8 +423,6 @@ class ModelType extends Type implements ExtraTypeProvider
     }
 
     /**
-     * @param string $operationName
-     * @return OperationCreator
      * @throws SchemaBuilderException
      */
     private function getOperationCreator(string $operationName): OperationCreator

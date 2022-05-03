@@ -67,81 +67,56 @@ class Schema implements ConfigurationApplier
     const ALL = '*';
 
     /**
-     * @var callable
      * @config
+     * @var callable
      */
     private static $pluraliser = [self::class, 'pluraliser'];
 
-    /**
-     * @var bool
-     */
-    private static $verbose = false;
+    private static bool $verbose = false;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
-    /**
-     * @var string
-     */
-    private $schemaKey;
+    private string $schemaKey;
 
     /**
      * @var Type[]
      */
-    private $types = [];
+    private array $types = [];
 
     /**
      * @var ModelType[]
      */
-    private $models = [];
+    private array $models = [];
 
     /**
      * @var InterfaceType[]
      */
-    private $interfaces = [];
+    private array $interfaces = [];
 
     /**
      * @var UnionType[]
      */
-    private $unions = [];
+    private array $unions = [];
 
     /**
      * @var Enum[]
      */
-    private $enums = [];
+    private array $enums = [];
 
     /**
      * @var Scalar[]
      */
-    private $scalars = [];
+    private array $scalars = [];
 
-    /**
-     * @var Type
-     */
-    private $queryType;
+    private Type $queryType;
 
-    /**
-     * @var Type
-     */
-    private $mutationType;
+    private Type $mutationType;
 
-    /**
-     * @var SchemaConfig
-     */
-    private $schemaConfig;
+    private SchemaConfig $schemaConfig;
 
-    /**
-     * @var Configuration
-     */
-    private $state;
+    private Configuration $state;
 
-    /**
-     * @param string $schemaKey
-     * @param SchemaConfig|null $schemaConfig
-     */
-    public function __construct(string $schemaKey, SchemaConfig $schemaConfig = null)
+    public function __construct(string $schemaKey, ?SchemaConfig $schemaConfig = null)
     {
         $this->schemaKey = $schemaKey;
         $this->queryType = Type::create(self::QUERY_TYPE);
@@ -158,8 +133,6 @@ class Schema implements ConfigurationApplier
      * since the configuration is auto-discovered and applied
      * through the {@link SchemaBuilder::boot()} step.
      *
-     * @param array $schemaConfig
-     * @return Schema
      * @throws SchemaBuilderException
      */
     public function applyConfig(array $schemaConfig): Schema
@@ -374,7 +347,6 @@ class Schema implements ConfigurationApplier
     }
 
     /**
-     * @param array $builders
      * @throws SchemaBuilderException
      */
     private function applyProceduralUpdates(array $builders): void
@@ -432,9 +404,6 @@ class Schema implements ConfigurationApplier
         $this->applyComponentUpdatesFromSet($this->getFieldComponents());
     }
 
-    /**
-     * @param array $componentSet
-     */
     private function applySchemaUpdatesFromSet(array $componentSet): void
     {
         $schemaUpdates = [];
@@ -451,10 +420,9 @@ class Schema implements ConfigurationApplier
     }
 
     /**
-     * @param array $componentSet
      * @throws SchemaBuilderException
      */
-    private function applyComponentUpdatesFromSet(array $componentSet)
+    private function applyComponentUpdatesFromSet(array $componentSet): void
     {
         foreach ($componentSet as $name => $components) {
             /* @var SchemaComponent $component */
@@ -464,9 +432,6 @@ class Schema implements ConfigurationApplier
         }
     }
 
-    /**
-     * @return array
-     */
     private function getTypeComponents(): array
     {
         return [
@@ -477,9 +442,6 @@ class Schema implements ConfigurationApplier
         ];
     }
 
-    /**
-     * @return array
-     */
     private function getFieldComponents(): array
     {
         $allTypeFields = [];
@@ -507,8 +469,6 @@ class Schema implements ConfigurationApplier
     }
 
     /**
-     * @param SchemaComponent $component
-     * @param string $name
      * @throws SchemaBuilderException
      */
     private function applyComponentPlugins(SchemaComponent $component, string $name): void
@@ -546,10 +506,6 @@ class Schema implements ConfigurationApplier
         }
     }
 
-    /**
-     * @param array $components
-     * @return array
-     */
     private function collectSchemaUpdaters(array $components): array
     {
         $schemaUpdates = [];
@@ -603,8 +559,6 @@ class Schema implements ConfigurationApplier
      * Creates a readonly object that can be used by a storage service.
      * Processes all of the types, fields, models, etc to end up with a coherent,
      * schema that can be validated and stored.
-     *
-     * @return StorableSchema
      */
     public function createStoreableSchema(): StorableSchema
     {
@@ -623,42 +577,26 @@ class Schema implements ConfigurationApplier
         return $schema;
     }
 
-    /**
-     * @return bool
-     */
     public function exists(): bool
     {
         return !empty($this->types) && $this->queryType->exists();
     }
 
-    /**
-     * @return string
-     */
     public function getSchemaKey(): string
     {
         return $this->schemaKey;
     }
 
-    /**
-     * @return SchemaConfig
-     */
     public function getConfig(): SchemaConfig
     {
         return $this->schemaConfig;
     }
 
-    /**
-     * @return Configuration
-     */
     public function getState(): Configuration
     {
         return $this->state;
     }
 
-    /**
-     * @param Field $query
-     * @return $this
-     */
     public function addQuery(Field $query): self
     {
         $this->queryType->addField($query->getName(), $query);
@@ -666,10 +604,6 @@ class Schema implements ConfigurationApplier
         return $this;
     }
 
-    /**
-     * @param Field $mutation
-     * @return $this
-     */
     public function addMutation(Field $mutation): self
     {
         $this->mutationType->addField($mutation->getName(), $mutation);
@@ -678,12 +612,9 @@ class Schema implements ConfigurationApplier
     }
 
     /**
-     * @param Type $type
-     * @param callable|null $callback
-     * @return Schema
      * @throws SchemaBuilderException
      */
-    public function addType(Type $type, ?callable $callback = null): Schema
+    public function addType(Type $type, ?callable $callback = null): self
     {
         $existing = $this->types[$type->getName()] ?? null;
         $typeObj = $existing ? $existing->mergeWith($type) : $type;
@@ -694,29 +625,19 @@ class Schema implements ConfigurationApplier
         return $this;
     }
 
-    /**
-     * @param string $type
-     * @return $this
-     */
-    public function removeType(string $type): Schema
+    public function removeType(string $type): self
     {
         unset($this->types[$type]);
 
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @return Type|null
-     */
     public function getType(string $name): ?Type
     {
         return $this->types[$name] ?? null;
     }
 
     /**
-     * @param string $name
-     * @return Type
      * @throws SchemaBuilderException
      */
     public function findOrMakeType(string $name): Type
@@ -732,9 +653,6 @@ class Schema implements ConfigurationApplier
 
     /**
      * Given a type name, try to resolve it to any model-implementing component
-     *
-     * @param string $typeName
-     * @return Type|null
      */
     public function getCanonicalType(string $typeName): ?Type
     {
@@ -777,51 +695,30 @@ class Schema implements ConfigurationApplier
         return $this->types;
     }
 
-    /**
-     * @return Type
-     */
     public function getQueryType(): Type
     {
         return $this->queryType;
     }
 
-    /**
-     * @return Type
-     */
     public function getMutationType(): Type
     {
         return $this->mutationType;
     }
 
-
-    /**
-     * @param string $name
-     * @return Type|null
-     */
     public function getTypeOrModel(string $name): ?Type
     {
         return $this->getType($name) ?: $this->getModel($name);
     }
 
-    /**
-     * @param Enum $enum
-     * @return $this
-     */
     public function addEnum(Enum $enum): self
     {
         $this->enums[$enum->getName()] = $enum;
-
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @return $this
-     */
     public function removeEnum(string $name): self
     {
         unset($this->enums[$name]);
-
         return $this;
     }
 
@@ -833,58 +730,34 @@ class Schema implements ConfigurationApplier
         return $this->enums;
     }
 
-    /**
-     * @param $name
-     * @return Enum|null
-     */
     public function getEnum(string $name): ?Enum
     {
         return $this->enums[$name] ?? null;
     }
 
-    /**
-     * @return array
-     */
     public function getScalars(): array
     {
         return $this->scalars;
     }
 
-    /**
-     * @param string $name
-     * @return Scalar|null
-     */
     public function getScalar(string $name): ?Scalar
     {
         return $this->scalars[$name] ?? null;
     }
 
-    /**
-     * @param Scalar $scalar
-     * @return $this
-     */
     public function addScalar(Scalar $scalar): self
     {
         $this->scalars[$scalar->getName()] = $scalar;
-
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @return $this
-     */
     public function removeScalar(string $name): self
     {
         unset($this->scalars[$name]);
-
         return $this;
     }
 
     /**
-     * @param ModelType $modelType
-     * @param callable|null $callback
-     * @return Schema
      * @throws SchemaBuilderException
      */
     public function addModel(ModelType $modelType, ?callable $callback = null): Schema
@@ -918,19 +791,12 @@ class Schema implements ConfigurationApplier
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @return ModelType|null
-     */
     public function getModel(string $name): ?ModelType
     {
         return $this->models[$name] ?? null;
     }
 
     /**
-     * @param string $class
-     * @param callable|null $callback
-     * @return $this
      * @throws SchemaBuilderException
      */
     public function addModelbyClassName(string $class, ?callable $callback = null): self
@@ -950,10 +816,6 @@ class Schema implements ConfigurationApplier
         return $this->addModel($model);
     }
 
-    /**
-     * @param string $class
-     * @return $this
-     */
     public function removeModelByClassName(string $class): self
     {
         if ($model = $this->getModelByClassName($class)) {
@@ -963,21 +825,12 @@ class Schema implements ConfigurationApplier
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @return $this
-     */
     public function removeModel(string $name): self
     {
         unset($this->models[$name]);
-
         return $this;
     }
 
-    /**
-     * @param string $class
-     * @return ModelType|null
-     */
     public function getModelByClassName(string $class): ?ModelType
     {
         foreach ($this->getModels() as $modelType) {
@@ -992,33 +845,24 @@ class Schema implements ConfigurationApplier
     /**
      * Some types must be eagerly loaded into the schema if they cannot be discovered through introspection.
      * This may include types that do not appear in any queries.
-     * @param string $name
-     * @return $this
      * @throws SchemaBuilderException
      */
     public function eagerLoad(string $name): self
     {
         $this->getConfig()->set("eagerLoadTypes.$name", $name);
-
         return $this;
     }
 
     /**
-     * @param string $name
-     * @return $this
      * @throws SchemaBuilderException
      */
     public function lazyLoad(string $name): self
     {
         $this->getConfig()->unset("eagerLoadTypes.$name");
-
         return $this;
     }
 
     /**
-     * @param string $class
-     * @param array $config
-     * @return ModelType|null
      * @throws SchemaBuilderException
      */
     public function createModel(string $class, array $config = []): ?ModelType
@@ -1040,8 +884,6 @@ class Schema implements ConfigurationApplier
     }
 
     /**
-     * @param string $class
-     * @return ModelType
      * @throws SchemaBuilderException
      */
     public function findOrMakeModel(string $class): ModelType
@@ -1058,9 +900,6 @@ class Schema implements ConfigurationApplier
     }
 
     /**
-     * @param InterfaceType $type
-     * @param callable|null $callback
-     * @return $this
      * @throws SchemaBuilderException
      */
     public function addInterface(InterfaceType $type, ?callable $callback = null): self
@@ -1074,10 +913,6 @@ class Schema implements ConfigurationApplier
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @return $this
-     */
     public function removeInterface(string $name): self
     {
         unset($this->interfaces[$name]);
@@ -1085,10 +920,6 @@ class Schema implements ConfigurationApplier
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @return InterfaceType|null
-     */
     public function getInterface(string $name): ?InterfaceType
     {
         return $this->interfaces[$name] ?? null;
@@ -1110,11 +941,6 @@ class Schema implements ConfigurationApplier
         });
     }
 
-    /**
-     * @param UnionType $union
-     * @param callable|null $callback
-     * @return $this
-     */
     public function addUnion(UnionType $union, ?callable $callback = null): self
     {
         $existing = $this->unions[$union->getName()] ?? null;
@@ -1126,38 +952,23 @@ class Schema implements ConfigurationApplier
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @return $this
-     */
     public function removeUnion(string $name): self
     {
         unset($this->unions[$name]);
-
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @return UnionType|null
-     */
     public function getUnion(string $name): ?UnionType
     {
         return $this->unions[$name] ?? null;
     }
 
-    /**
-     * @return array
-     */
     public function getUnions(): array
     {
         return $this->unions;
     }
 
     /**
-     * @param AbstractBulkLoader $loader
-     * @param array $modelConfig
-     * @return $this
      * @throws SchemaBuilderException
      */
     public function applyBulkLoader(AbstractBulkLoader $loader, array $modelConfig): self
@@ -1169,9 +980,6 @@ class Schema implements ConfigurationApplier
     }
 
     /**
-     * @param BulkLoaderSet $loaders
-     * @param array $modelConfig
-     * @return $this
      * @throws SchemaBuilderException
      */
     public function applyBulkLoaders(BulkLoaderSet $loaders, array $modelConfig): self
@@ -1194,7 +1002,6 @@ class Schema implements ConfigurationApplier
     }
 
     /**
-     * @return BulkLoaderSet
      * @throws SchemaBuilderException
      */
     private function getDefaultBulkLoaderSet(): BulkLoaderSet
@@ -1214,17 +1021,13 @@ class Schema implements ConfigurationApplier
     }
 
     /**
-     * @return array
+     * @return string[]
      */
     public static function getInternalTypes(): array
     {
         return ['String', 'Boolean', 'Int', 'Float', 'ID'];
     }
 
-    /**
-     * @param string $type
-     * @return bool
-     */
     public static function isInternalType(string $type): bool
     {
         return in_array($type, static::getInternalTypes() ?? []);
@@ -1233,11 +1036,9 @@ class Schema implements ConfigurationApplier
     /**
      * Pluralise a name
      *
-     * @param string $typeName
-     * @return string
      * @throws SchemaBuilderException
      */
-    public function pluralise($typeName): string
+    public function pluralise(string $typeName): string
     {
         $callable = $this->getConfig()->getPluraliser();
         Schema::invariant(
@@ -1249,9 +1050,6 @@ class Schema implements ConfigurationApplier
     }
 
     /**
-     * @param array $config
-     * @param array $allowedKeys
-     * @param array $requiredKeys
      * @throws SchemaBuilderException
      */
     public static function assertValidConfig(array $config, $allowedKeys = [], $requiredKeys = []): void
@@ -1289,10 +1087,9 @@ class Schema implements ConfigurationApplier
     }
 
     /**
-     * @param $name
      * @throws SchemaBuilderException
      */
-    public static function assertValidName($name): void
+    public static function assertValidName(?string $name): void
     {
         static::invariant(
             preg_match(' /[_A-Za-z][_0-9A-Za-z]*/', $name ?? ''),

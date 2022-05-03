@@ -25,40 +25,22 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
     use Injectable;
     use PluginConsumer;
 
-    /**
-     * @var string
-     */
-    private $name;
+    private string $name;
 
     /**
      * @var Field[]
      */
-    protected $fields = [];
+    protected array $fields = [];
+
+    private ?string $description = null;
+
+    private array $interfaces = [];
+
+    private bool $isInput = false;
+
+    private ?ResolverReference $fieldResolver = null;
 
     /**
-     * @var string|null
-     */
-    private $description;
-
-    /**
-     * @var array
-     */
-    private $interfaces = [];
-
-    /**
-     * @var bool
-     */
-    private $isInput = false;
-
-    /**
-     * @var ResolverReference|null
-     */
-    private $fieldResolver;
-
-    /**
-     * Type constructor.
-     * @param string $name
-     * @param array|null $config
      * @throws SchemaBuilderException
      */
     public function __construct(string $name, ?array $config = null)
@@ -70,7 +52,6 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
     }
 
     /**
-     * @param array $config
      * @throws SchemaBuilderException
      */
     public function applyConfig(array $config)
@@ -103,18 +84,11 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
         $this->setFields($fields);
     }
 
-    /**
-     * @return string|null
-     */
     public function getName(): ?string
     {
         return $this->name;
     }
 
-    /**
-     * @param string $name
-     * @return Type
-     */
     public function setName(string $name): self
     {
         $this->name = ucfirst($name ?? '');
@@ -130,8 +104,6 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
     }
 
     /**
-     * @param array $fields
-     * @return Type
      * @throws SchemaBuilderException
      */
     public function setFields(array $fields): self
@@ -180,26 +152,17 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
         return $this;
     }
 
-    /**
-     * @param string $fieldName
-     * @return Field|null
-     */
     public function getFieldByName(string $fieldName): ?Field
     {
         return $this->fields[$fieldName] ?? null;
     }
 
-    /**
-     * @return string|null
-     */
     public function getDescription(): ?string
     {
         return $this->description;
     }
 
     /**
-     * @param Type $type
-     * @return Type
      * @throws SchemaBuilderException
      */
     public function mergeWith(Type $type): self
@@ -249,54 +212,33 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
         }
     }
 
-    /**
-     * @return bool
-     */
     public function exists(): bool
     {
         return !empty($this->getFields());
     }
 
-    /**
-     * @param mixed $description
-     * @return Type
-     */
-    public function setDescription($description)
+    public function setDescription(?string $description)
     {
         $this->description = $description;
         return $this;
     }
 
-    /**
-     * @return array
-     */
     public function getInterfaces(): array
     {
         return $this->interfaces;
     }
 
-    /**
-     * @return string
-     */
     public function getEncodedInterfaces(): string
     {
         return var_export($this->interfaces, true);
     }
 
-    /**
-     * @param array $interfaces
-     * @return Type
-     */
     public function setInterfaces(array $interfaces): self
     {
         $this->interfaces = $interfaces;
         return $this;
     }
 
-    /**
-     * @param string $name
-     * @return $this
-     */
     public function addInterface(string $name): self
     {
         if (!in_array($name, $this->interfaces ?? [])) {
@@ -306,36 +248,22 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
         return $this;
     }
 
-    /**
-     * @param string $interfaceName
-     * @return bool
-     */
     public function implements(string $interfaceName): bool
     {
         return in_array($interfaceName, $this->interfaces ?? []);
     }
 
-    /**
-     * @return bool
-     */
     public function getIsInput(): bool
     {
         return $this->isInput;
     }
 
-    /**
-     * @param bool $isInput
-     * @return Type
-     */
     public function setIsInput(bool $isInput): self
     {
         $this->isInput = $isInput;
         return $this;
     }
 
-    /**
-     * @return ResolverReference|null
-     */
     public function getFieldResolver(): ?ResolverReference
     {
         return $this->fieldResolver;
@@ -361,7 +289,6 @@ class Type implements ConfigurationApplier, SchemaValidator, SignatureProvider, 
      * A deterministic representation of everything that gets encoded into the template.
      * Used as a cache key. This method will need to be updated if new data is added
      * to the generated code.
-     * @return string
      * @throws Exception
      */
     public function getSignature(): string

@@ -20,12 +20,12 @@ abstract class AbstractBulkLoader implements Identifiable, ConfigurationApplier
     /**
      * @var string[]
      */
-    protected $includeList;
+    protected array $includeList;
 
     /**
      * @var string[]
      */
-    protected $excludeList;
+    protected array $excludeList;
 
     /**
      * AbstractBulkLoader constructor.

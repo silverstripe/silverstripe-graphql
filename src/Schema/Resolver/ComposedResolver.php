@@ -20,11 +20,10 @@ class ComposedResolver
     /**
      * @var callable[]
      */
-    private $resolvers;
+    private array $resolvers;
 
     /**
      * @param callable[] $resolvers
-     * @return Closure
      */
     public function __construct(array $resolvers)
     {

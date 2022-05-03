@@ -107,7 +107,7 @@ class DevelopmentAdmin extends Controller
     /**
      * @return array of url => description
      */
-    protected static function get_links()
+    protected static function get_links(): array
     {
         $links = [];
 

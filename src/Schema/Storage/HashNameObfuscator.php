@@ -8,10 +8,6 @@ namespace SilverStripe\GraphQL\Schema\Storage;
  */
 class HashNameObfuscator implements NameObfuscator
 {
-    /**
-     * @param string $name
-     * @return string
-     */
     public function obfuscate(string $name): string
     {
         return strtoupper($name[0] ?? '') . md5($name ?? '');

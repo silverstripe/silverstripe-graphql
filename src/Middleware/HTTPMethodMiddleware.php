@@ -3,6 +3,7 @@
 namespace SilverStripe\GraphQL\Middleware;
 
 use Exception;
+use GraphQL\Executor\ExecutionResult;
 use GraphQL\Type\Schema;
 use SilverStripe\GraphQL\QueryHandler\RequestContextProvider;
 
@@ -14,7 +15,7 @@ class HTTPMethodMiddleware implements QueryMiddleware
     /**
      * @inheritDoc
      */
-    public function process(Schema $schema, $query, $context, $vars, callable $next)
+    public function process(Schema $schema, string $query, array $context, array $vars, callable $next)
     {
         $isGET = false;
         $isPOST = false;
