@@ -31,11 +31,6 @@
         "lint": "vendor/bin/phpcs src/ tests/",
         "lint-clean": "vendor/bin/phpcbf src/ tests/"
     },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "4.x-dev"
-        }
-    },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "suggest": {
