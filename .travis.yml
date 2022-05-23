@@ -5,9 +5,7 @@ import:
 
 env:
   global:
-    - COMPOSER_ROOT_VERSION="4.x-dev"
-    - REQUIRE_RECIPE="4.x-dev"
-    - REQUIRE_EXTRA="silverstripe/recipe-cms:4.x-dev dnadesign/silverstripe-elemental:4.x-dev silverstripe/frameworktest:^0.4"
+    - REQUIRE_EXTRA="dnadesign/silverstripe-elemental:4.x-dev silverstripe/frameworktest:^0.4.4"
 
 matrix:
   fast_finish: true
