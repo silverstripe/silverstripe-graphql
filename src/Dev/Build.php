@@ -67,11 +67,16 @@ class Build extends Controller
 
         // Check for old code dir
         if (is_dir(BASE_PATH . '/.graphql')) {
+            $dirName = CodeGenerationStore::config()->get('dirName');
+            $newDirNameMsg = $dirName
+                ? 'The new directory is named "' . $dirName . '".'
+                : 'The schema will be built inside your silverstripe-cache directory by default,
+                but we recommend setting a specific directory in '
+                . CodeGenerationStore::class . '.dirName';
             $logger->warning(
                 'You have a .graphql/ directory in your project root. This is no longer the default
-                name. The new directory is named ' . CodeGenerationStore::config()->get('dirName') . '. You may
-                want to delete this directory and update your .gitignore file, if you are ignoring the generated
-                GraphQL code.'
+                name. ' . $newDirNameMsg . ' You may want to delete this directory and update your
+                .gitignore file, if you are ignoring the generated GraphQL code.'
             );
         }
 
