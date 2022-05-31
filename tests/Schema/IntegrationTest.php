@@ -1176,6 +1176,27 @@ GRAPHQL;
         $this->assertResult('readOneDataObjectFake.id', $id1, $result);
     }
 
+    public function testHtaccess(): void
+    {
+        FakeProductPage::get()->removeAll();
+        $schema = $this->createSchema(new TestSchemaBuilder(['_testSimpleType']));
+
+        $file = Path::join(
+            __DIR__,
+            CodeGenerationStore::config()->get('dirName'),
+            $schema->getSchemaKey(),
+            '.htaccess'
+        );
+        $this->assertFileExists($file);
+        $this->assertEquals(
+            <<<HTACCESS
+            Require all denied
+            RewriteRule .* - [F]
+            HTACCESS,
+            file_get_contents($file)
+        );
+    }
+
     /**
      * @param TestSchemaBuilder $factory
      * @return Schema
