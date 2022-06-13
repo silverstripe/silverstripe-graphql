@@ -113,10 +113,20 @@ class CodeGenerationStore implements SchemaStorageInterface
                 $fs->mkdir($temp);
                 // Ensure none of these files get loaded into the manifest
                 $fs->touch($temp . DIRECTORY_SEPARATOR . '_manifest_exclude');
+                // Include a file to warn developers against modifying the schema manually
                 $warningFile = $temp . DIRECTORY_SEPARATOR . '__DO_NOT_MODIFY';
                 $fs->dumpFile(
                     $warningFile,
                     '*** This directory contains generated code for the GraphQL schema. Do not modify. ***'
+                );
+                // Include a file to ensure webservers don't serve the schema
+                $htaccessFile = $temp . DIRECTORY_SEPARATOR . '.htaccess';
+                $fs->dumpFile(
+                    $htaccessFile,
+                    <<<HTACCESS
+                    Require all denied
+                    RewriteRule .* - [F]
+                    HTACCESS
                 );
             } catch (IOException $e) {
                 throw new RuntimeException(sprintf(
