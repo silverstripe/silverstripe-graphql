@@ -102,7 +102,7 @@ class QueryHandler implements
             return GraphQL::executeQuery($schema, $query, null, $context, $vars);
         };
 
-        return $this->callMiddleware($schema, $query, $context, (array) $vars, $last);
+        return $this->callMiddleware($schema, $query, $context, $vars ?? [], $last);
     }
 
 
