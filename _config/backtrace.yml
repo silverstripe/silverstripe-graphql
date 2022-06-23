@@ -1,0 +1,6 @@
+---
+Name: graphql-backtrace
+---
+SilverStripe\Dev\Backtrace:
+  ignore_function_args:
+    - ['SilverStripe\GraphQL\QueryHandler\TokenContextProvider', __construct]
