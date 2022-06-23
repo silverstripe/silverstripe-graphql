@@ -26,13 +26,9 @@ class FiltersTest extends SapphireTest
     ];
 
     /**
-     * @param FieldFilterInterface $filter
-     * @param string $identifier
-     * @param array $params
-     * @dataProvider filterProvider
-     * @return void
+     * @dataProvider filterArgumentsProvider
      */
-    public function testFilterArguments(FieldFilterInterface $filter, string $identifier, array $params)
+    public function testFilterArguments(FieldFilterInterface $filter, string $identifier, array $params): void
     {
         $this->assertEquals($identifier, $filter->getIdentifier());
         $list = new ArrayList();
@@ -44,64 +40,54 @@ class FiltersTest extends SapphireTest
         }
     }
 
-    public function filterProvider(): array
+    public function filterArgumentsProvider(): array
     {
         return [
-            // Contains
             [
                 new ContainsFilter(),
                 'contains',
                 array_slice($this->values, 0, 2, true)
             ],
-            // Endswith
             [
                 new EndsWithFilter(),
                 'endswith',
                 array_slice($this->values, 0, 2, true)
             ],
-            // EqualToFilter
             [
                 new EqualToFilter(),
                 'eq',
                 $this->values
             ],
-            // GreaterThanFilter
             [
                 new GreaterThanFilter(),
                 'gt',
                 $this->values
             ],
-            // GreaterThanFilter
             [
                 new GreaterThanOrEqualFilter(),
                 'gte',
                 $this->values
             ],
-            // InFilter
             [
                 new InFilter(),
                 'in',
                 $this->values['array']
             ],
-            // LessThanFilter
             [
                 new LessThanFilter(),
                 'lt',
                 $this->values
             ],
-            // LessThanFilter
             [
                 new LessThanOrEqualFilter(),
                 'lte',
                 $this->values
             ],
-            // NotEqualFilter
             [
                 new NotEqualFilter(),
                 'ne',
                 $this->values
             ],
-            // StartsWithFilter
             [
                 new StartsWithFilter(),
                 'startswith',
