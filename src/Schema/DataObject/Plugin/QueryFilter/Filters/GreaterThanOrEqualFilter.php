@@ -14,7 +14,7 @@ class GreaterThanOrEqualFilter implements FieldFilterInterface
     /**
      * @inheritdoc
      */
-    public function apply(Filterable $list, string $fieldName, string $value): iterable
+    public function apply(Filterable $list, string $fieldName, $value): iterable
     {
         return $list->filter($fieldName . ':GreaterThanOrEqual', $value);
     }

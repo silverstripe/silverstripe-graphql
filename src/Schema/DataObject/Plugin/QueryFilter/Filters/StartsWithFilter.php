@@ -14,7 +14,7 @@ class StartsWithFilter implements FieldFilterInterface
     /**
      * @inheritDoc
      */
-    public function apply(Filterable $list, string $fieldName, string $value): iterable
+    public function apply(Filterable $list, string $fieldName, $value): iterable
     {
         return $list->filter($fieldName . ':StartsWith', $value);
     }
