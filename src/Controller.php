@@ -109,7 +109,7 @@ class Controller extends BaseController implements Flushable
                 Versioned::set_stage($stage);
             }
         }
-        
+
         // Check for a possible CORS preflight request and handle if necessary
         // Refer issue 66:  https://github.com/silverstripe/silverstripe-graphql/issues/66
         if ($request->httpMethod() === 'OPTIONS') {
@@ -524,13 +524,9 @@ class Controller extends BaseController implements Flushable
                     }
                 } catch (DatabaseException $e) {
                     // Allow failures on table doesn't exist or no database selected as we're flushing in first DB build
-                    $messageByLine = explode(PHP_EOL, $e->getMessage());
-
-                    // Get the last line
-                    $last = array_pop($messageByLine);
-
-                    if (strpos($last, 'No database selected') === false
-                        && !preg_match('/\s*(table|relation) .* does(n\'t| not) exist/i', $last)
+                    $message = $e->getMessage();
+                    if (strpos($message, 'No database selected') === false
+                        && !preg_match('/\s*(table|relation) .* does(n\'t| not) exist/i', $message)
                     ) {
                         throw $e;
                     }
