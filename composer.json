@@ -17,8 +17,10 @@
         "dnadesign/silverstripe-elemental": "<4.6"
     },
     "require-dev": {
+        "silverstripe/asset-admin": "^1.10",
         "phpunit/phpunit": "^9.5",
-        "squizlabs/php_codesniffer": "^3.0"
+        "squizlabs/php_codesniffer": "^3.0",
+        "silverstripe/frameworktest": "^0.4.3"
     },
     "autoload": {
         "psr-4": {
