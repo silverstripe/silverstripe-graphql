@@ -10,52 +10,69 @@ use SilverStripe\ORM\ArrayList;
 
 class CanViewPermissionCheckerTest extends SapphireTest
 {
+    protected static $fixture_file = 'CanViewPermissionCheckerTest.yml';
+
     protected static $extra_dataobjects = [
         DataObjectFake::class,
         RestrictedDataObjectFake::class,
     ];
 
-    public function testPermissionCheck()
+    public function testAppyToListNoRestricted()
     {
-        $o1 = new DataObjectFake();
-        $o1ID = $o1->write();
-        $o2 = new DataObjectFake();
-        $o2ID = $o2->write();
-
-        $o3 = new RestrictedDataObjectFake();
-        $o3->write();
-        $o4 = new RestrictedDataObjectFake();
-        $o4->write();
-        $o5 = new RestrictedDataObjectFake();
-        $o5->write();
-        $o6 = new RestrictedDataObjectFake();
-        $o6->write();
+        $fake1 = $this->objFromFixture(DataObjectFake::class, 'fake1');
+        $fake2 = $this->objFromFixture(DataObjectFake::class, 'fake2');
 
         $checker = new CanViewPermissionChecker();
-        $result = $checker->applyToList(ArrayList::create([$o1, $o2]), null);
-        $this->assertEquals([$o1ID, $o2ID], $result->column('ID'));
+        $result = $checker->applyToList(ArrayList::create([$fake1, $fake2]), null);
+        $this->assertEquals([$fake1->ID, $fake2->ID], $result->column('ID'));
+    }
 
-        $result = $checker->applyToList(ArrayList::create([$o1, $o2, $o3, $o4]), null);
-        $this->assertEquals([$o1ID, $o2ID], $result->column('ID'));
+    public function testAppyToListOmitRestricted()
+    {
+        $fake1 = $this->objFromFixture(DataObjectFake::class, 'fake1');
+        $fake2 = $this->objFromFixture(DataObjectFake::class, 'fake2');
+        $fake3 = $this->objFromFixture(RestrictedDataObjectFake::class, 'fake3');
+        $fake4 = $this->objFromFixture(RestrictedDataObjectFake::class, 'fake4');
+        $checker = new CanViewPermissionChecker();
 
-        $result = $checker->applyToList(ArrayList::create([$o3, $o4]), null);
+        $result = $checker->applyToList(ArrayList::create([$fake1, $fake2, $fake3, $fake4]), null);
+        $this->assertEquals([$fake1->ID, $fake2->ID], $result->column('ID'));
+    }
+
+    public function testAppyToListRestrcitedOnly()
+    {
+        $fake3 = $this->objFromFixture(RestrictedDataObjectFake::class, 'fake3');
+        $fake4 = $this->objFromFixture(RestrictedDataObjectFake::class, 'fake4');
+        $checker = new CanViewPermissionChecker();
+
+        $result = $checker->applyToList(ArrayList::create([$fake3, $fake4]), null);
         $this->assertEmpty($result);
+    }
 
-        $this->assertTrue($checker->checkItem($o1));
-        $this->assertFalse($checker->checkItem($o4));
+    public function testApplyToListWithDataListNoRestricted()
+    {
+        $fake1 = $this->objFromFixture(DataObjectFake::class, 'fake1');
+        $fake2 = $this->objFromFixture(DataObjectFake::class, 'fake2');
+        $checker = new CanViewPermissionChecker();
 
-        $this->assertEquals(6, DataObjectFake::get()->count());
+        $result = $checker->applyToList(DataObjectFake::get()->filter('ClassName', DataObjectFake::class), null);
+        $this->assertEquals([$fake1->ID, $fake2->ID], $result->column('ID'));
+    }
 
-        $result = $checker->applyToList(DataObjectFake::get()->limit(2, 0), null);
-        $this->assertEquals([$o1ID, $o2ID], $result->column('ID'));
-
-        $result = $checker->applyToList(DataObjectFake::get()->limit(2, 1), null);
-        $this->assertEquals([$o2ID], $result->column('ID'));
-
-        $result = $checker->applyToList(DataObjectFake::get()->limit(2, 2), null);
+    public function testApplyToListWithDataListRestrictedOnly()
+    {
+        $checker = new CanViewPermissionChecker();
+        $result = $checker->applyToList(DataObjectFake::get()->filter('ClassName', RestrictedDataObjectFake::class), null);
         $this->assertEquals(0, $result->count());
+    }
 
-        $result = $checker->applyToList(DataObjectFake::get()->limit(2, 4), null);
-        $this->assertEquals(0, $result->count());
+    public function testCheckItem()
+    {
+        $fake1 = $this->objFromFixture(DataObjectFake::class, 'fake1');
+        $fake4 = $this->objFromFixture(RestrictedDataObjectFake::class, 'fake4');
+        $checker = new CanViewPermissionChecker();
+
+        $this->assertTrue($checker->checkItem($fake1));
+        $this->assertFalse($checker->checkItem($fake4));
     }
 }
