@@ -523,11 +523,8 @@ class Controller extends BaseController implements Flushable
                         $inst->processTypeCaching();
                     }
                 } catch (DatabaseException $e) {
-                    // Allow failures on table doesn't exist or no database selected as we're flushing in first DB build
-                    $message = $e->getMessage();
-                    if (strpos($message, 'No database selected') === false
-                        && !preg_match('/\s*(table|relation) .* does(n\'t| not) exist/i', $message)
-                    ) {
+                    // Allow failures on table changes or no database selected as we're flushing in first DB build
+                    if (!self::exceptionIsSafeForFlush($e->getMessage())) {
                         throw $e;
                     }
                 }
@@ -541,5 +538,13 @@ class Controller extends BaseController implements Flushable
     protected function generateCacheFilename()
     {
         return $this->getManager()->getSchemaKey() . '.' . self::CACHE_FILENAME;
+    }
+
+    private static function exceptionIsSafeForFlush(string $message): bool
+    {
+        // Allow new tables/relations/fields and no db since flush might be before dev/build
+        return strpos($message, 'No database selected') !== false
+          || preg_match('/\s*(table|relation) .* does(n\'t| not) exist/i', $message)
+          || preg_match("/Column not found:.*Unknown column '[^']*'/", $message);
     }
 }
