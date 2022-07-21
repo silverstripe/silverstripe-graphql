@@ -1,0 +1,15 @@
+SilverStripe\GraphQL\Tests\Fake\DataObjectFake:
+  fake1:
+    MyInt: 1
+  fake2:
+    MyInt: 2
+
+SilverStripe\GraphQL\Tests\Fake\RestrictedDataObjectFake:
+  fake3:
+    MyInt: 3
+  fake4:
+    MyInt: 4
+  fake5:
+    MyInt: 5
+  fake6:
+    MyInt: 6
