@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Tests\Middleware;
 use Exception;
 use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
 
-class HTTPMethodMiddlewareTest extends MiddlewareProcessTestBase
+class HTTPMethodMiddlewareTest extends BaseMiddlewareProcessTest
 {
     public function testItDoesntDoAnythingIfNotAMutation()
     {
