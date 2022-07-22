@@ -13,6 +13,11 @@ class FakeResolveInfo extends ResolveInfo implements TestOnly
 {
     public function __construct(array $options = [])
     {
+        // webonyx/graphql-php v0.12
+        if (!property_exists(__CLASS__, 'fieldDefinition')) {
+            return;
+        }
+        // webonyx/graphql-php v14
         // This is a minimal implementation that's just good enough
         // to get unit tests to pass
         $name = 'fake';
