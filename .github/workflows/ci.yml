@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  # Every Wednesday at 11:00am UTC
+  schedule:
+    - cron: '0 11 * * 3'
+
+jobs:
+  ci:
+    name: CI
+    # Only run cron on the silverstripe account
+    if: (github.event_name == 'schedule' && startsWith(github.repository, 'silverstripe/')) || (github.event_name != 'schedule')
+    uses: silverstripe/gha-ci/.github/workflows/ci.yml@v1
+    with:
+      extra_jobs: |
+        - php: 7.4
+          endtoend: true
+          endtoend_suite: asset-admin
+          endtoend_config: vendor/silverstripe/asset-admin/behat.yml
+        - php: 8.0
+          endtoend: true
+          endtoend_suite: versioned-admin
+          endtoend_config: vendor/silverstripe/versioned-admin/behat.yml
+        - php: 8.1
+          endtoend: true
+          endtoend_suite: silverstripe-elemental
+          endtoend_config: vendor/dnadesign/silverstripe-elemental/behat.yml
