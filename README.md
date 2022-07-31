@@ -1,8 +1,7 @@
 # Silverstripe GraphQL Server
 
 [![CI](https://github.com/silverstripe/silverstripe-graphql/actions/workflows/ci.yml/badge.svg)](https://github.com/silverstripe/silverstripe-graphql/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/silverstripe/silverstripe-graphql/branch/master/graph/badge.svg)](https://codecov.io/gh/silverstripe/silverstripe-graphql)
-[![SilverStripe supported module](https://img.shields.io/badge/silverstripe-supported-0071C4.svg)](https://www.silverstripe.org/software/addons/silverstripe-commercially-supported-module-list/)
+[![Silverstripe supported module](https://img.shields.io/badge/silverstripe-supported-0071C4.svg)](https://www.silverstripe.org/software/addons/silverstripe-commercially-supported-module-list/)
 
 This modules serves Silverstripe data as
 [GraphQL](http://facebook.github.io/react/blog/2015/05/01/graphql-introduction.html)
@@ -76,8 +75,6 @@ composer require silverstripe/graphql
  - [Setting up a new GraphQL schema](#setting-up-a-new-graphql-schema)
  - [Strict HTTP Method Checking](#strict-http-method-checking)
  - [TODO](#todo)
-
-
 
 
 
@@ -168,7 +165,6 @@ SilverStripe\GraphQL\Manager:
       types:  
         member: 'MyProject\GraphQL\MemberTypeCreator'
 ```
-
 
 ### Define queries
 
@@ -882,7 +878,6 @@ SilverStripe\GraphQL\Manager:
               create: true
 ```
 
-
 **...Or with code**:
 
 ```php
@@ -1097,7 +1092,6 @@ $scaffolder
         ->addAllFieldsExcept(['SecretThing'])
     ->end()
 ```
-
 
 #### Adding arguments
 
@@ -1358,7 +1352,6 @@ to `File` and `Comment`. Let's expose both of those to the query.
 For the `$has_one`, the relationship can simply be declared as a field. For `$has_many`, `$many_many`,
 and any custom getter that returns a `DataList`, we can set up a nested query using `nestedQueries`:
 
-
 **Via YAML**:
 ```yaml
 SilverStripe\GraphQL\Manager:
@@ -1537,7 +1530,6 @@ $scaffolder
     //...
 ```
 
-
 **GraphQL**
 
 ```graphql
@@ -1673,7 +1665,6 @@ class MyCustomListQueryScaffolder extends ListQueryScaffolder
   nestedQueries:
     MyCustomList: My\Project\Scaffolders\MyCustomListQueryScaffolder
 ```
-
 
 **... Or with code**:
 ```php
@@ -1867,7 +1858,6 @@ The name of the operation has been fully customised to `currentBlogs`, returning
 
 Otherwise, the name of the read operation, given the `Schema` config above, will be `readBlogs`.
 
-
 ### Versioned content
 
 If the `silversrtripe/versioned` module is installed in your project (as it is with a default CMS install),
@@ -1928,7 +1918,6 @@ to the result set.
    </td>
 </tr>
 </table>
-
 
 **GraphQL**
 ```
@@ -2029,7 +2018,6 @@ class MyCreateExtension extends Extension
     $args['SendEmail'] = ['type' => Type::bool()];
   }
 
-
   public function augmentMutation($object, array $args, $context, ResolveInfo $info)
   {
     if ($args['SendEmail']) {
@@ -2070,14 +2058,12 @@ class AddToCartOperation extends MutationScaffolder
       });
    }
 
-
    protected function createArgs(Manager $manager)
    {
       return [
         'ID' => ['type' => Type::nonNull(Type::id())]
       ];
    }
-
 
    protected function createOperationName()
    {
@@ -2393,7 +2379,6 @@ SilverStripe\Core\Injector\Injector:
         Enabled: false
 ``` 
 
-
 ## Persisting queries
 
 A common pattern in GraphQL APIs is to store queries on the server by an identifier. This helps save
@@ -2424,7 +2409,6 @@ SilverStripe\Core\Injector\Injector:
        schemaMapping:
          default: '/var/www/project/query-mapping.json'
 ```
-
 
 A flat file in the path `/var/www/project/query-mapping.json` should contain something like:
 
