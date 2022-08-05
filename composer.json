@@ -21,6 +21,11 @@
         "dnadesign/silverstripe-elemental": "^4.9",
         "silverstripe/frameworktest": "^0.4.4"
     },
+    "conflict": {
+        "dnadesign/silverstripe-elemental": "<4.6.0",
+        "silverstripe/admin": "<1.8.0",
+        "silverstripe/asset-admin": "<1.8.0"
+    },
     "autoload": {
         "psr-4": {
             "SilverStripe\\GraphQL\\": "src/",
