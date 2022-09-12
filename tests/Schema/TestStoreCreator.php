@@ -3,13 +3,11 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema;
 
-use Psr\SimpleCache\CacheInterface;
-use SilverStripe\Core\Cache\CacheFactory;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageInterface;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
-use Symfony\Component\Cache\Simple\FilesystemCache;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\Cache\Psr16Cache;
 
 class TestStoreCreator implements SchemaStorageCreator
 {
@@ -18,10 +16,10 @@ class TestStoreCreator implements SchemaStorageCreator
      */
     public static $dir;
 
-
     public function createStore(string $name): SchemaStorageInterface
     {
-        $store = CodeGenerationStore::create($name, new FilesystemCache());
+        $cache = new Psr16Cache(new FilesystemAdapter);
+        $store = CodeGenerationStore::create($name, $cache);
         $store->setRootDir(static::$dir);
 
         return $store;
