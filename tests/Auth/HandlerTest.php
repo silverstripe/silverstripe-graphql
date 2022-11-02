@@ -42,7 +42,7 @@ class HandlerTest extends SapphireTest
      */
     public function testRequireAuthenticationReturnsMember()
     {
-        Handler::config()->update('authenticators', [
+        Handler::config()->merge('authenticators', [
             ['class' => PushoverAuthenticatorFake::class]
         ]);
 
@@ -55,7 +55,7 @@ class HandlerTest extends SapphireTest
      */
     public function testGetAuthenticator()
     {
-        Handler::config()->update('authenticators', [
+        Handler::config()->merge('authenticators', [
             ['class' => PushoverAuthenticatorFake::class]
         ]);
 
@@ -71,7 +71,7 @@ class HandlerTest extends SapphireTest
     {
         $this->expectException(\SilverStripe\ORM\ValidationException::class);
         $this->expectExceptionMessage('stdClass must implement SilverStripe\\GraphQL\\Auth\\AuthenticatorInterface!');
-        Handler::config()->update('authenticators', [['class' => 'stdClass']]);
+        Handler::config()->merge('authenticators', [['class' => 'stdClass']]);
         $this->handler->getAuthenticator(new HTTPRequest('GET', '/'));
     }
 
@@ -84,7 +84,7 @@ class HandlerTest extends SapphireTest
      */
     public function testAuthenticatorsCanBePrioritised($authenticators, $expected)
     {
-        Handler::config()->update('authenticators', $authenticators);
+        Handler::config()->set('authenticators', $authenticators);
 
         $this->assertInstanceOf($expected, $this->handler->getAuthenticator(new HTTPRequest('GET', '/')));
     }
@@ -134,7 +134,7 @@ class HandlerTest extends SapphireTest
     {
         $this->expectException(\SilverStripe\ORM\ValidationException::class);
         $this->expectExceptionMessage('Never!');
-        Handler::config()->update('authenticators', [['class' => BrutalAuthenticatorFake::class]]);
+        Handler::config()->merge('authenticators', [['class' => BrutalAuthenticatorFake::class]]);
         $this->handler->requireAuthentication(new HTTPRequest('/', 'GET'));
     }
 
@@ -148,7 +148,7 @@ class HandlerTest extends SapphireTest
     {
         $this->expectException(\SilverStripe\ORM\ValidationException::class);
         $this->expectExceptionMessage('Authentication failed.');
-        Handler::config()->update('authenticators', [['class' => FalsyAuthenticatorFake::class]]);
+        Handler::config()->merge('authenticators', [['class' => FalsyAuthenticatorFake::class]]);
         $this->handler->requireAuthentication(new HTTPRequest('/', 'GET'));
     }
 }
