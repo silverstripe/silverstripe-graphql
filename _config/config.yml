@@ -33,7 +33,7 @@ SilverStripe\Core\Injector\Injector:
       storeCreator: '%$SilverStripe\GraphQL\Schema\Interfaces\SchemaStorageCreator'
 
   SilverStripe\GraphQL\Schema\Storage\NameObfuscator:
-    class: SilverStripe\GraphQL\Schema\Storage\HybridObfuscator
+    class: SilverStripe\GraphQL\Schema\Storage\HashNameObfuscator
 
 SilverStripe\GraphQL\Schema\Schema:
   schemas: []
@@ -61,12 +61,3 @@ Only:
 SilverStripe\Core\Injector\Injector:
   SilverStripe\GraphQL\Schema\Storage\NameObfuscator:
     class: SilverStripe\GraphQL\Schema\Storage\NaiveNameObfuscator
-
----
-Name: graphqlconfig-live
-Except:
-  environment: dev
----
-SilverStripe\Core\Injector\Injector:
-  SilverStripe\GraphQL\Schema\Storage\NameObfuscator:
-    class: SilverStripe\GraphQL\Schema\Storage\HashNameObfuscator
