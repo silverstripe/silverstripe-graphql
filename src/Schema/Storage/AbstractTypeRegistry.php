@@ -41,13 +41,15 @@ abstract class AbstractTypeRegistry
         if (!isset(static::$types[$typename])) {
             $obfuscatedName = $obfuscator->obfuscate($typename);
             $file = static::getSourceDirectory() . DIRECTORY_SEPARATOR . $obfuscatedName . '.php';
-            if (file_exists($file ?? '')) {
-                require_once($file);
-                $cls = static::getSourceNamespace() . '\\' . $obfuscatedName;
-                if (class_exists($cls ?? '')) {
-                    $type = new $cls();
-                }
+            if (!file_exists($file)) {
+                throw new Exception('Missing graphql file for ' . $typename);
             }
+            require_once($file);
+            $cls = static::getSourceNamespace() . '\\' . $obfuscatedName;
+            if (!class_exists($cls)) {
+                throw new Exception('Missing graphql class for ' . $typename);
+            }
+            $type = new $cls();
             static::$types[$typename] = $type;
         }
         $type = static::$types[$typename];
