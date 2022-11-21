@@ -4,7 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\Storage;
 
 /**
- * For the most obscure approach, hash the file names so they're completely undiscoverable.
+ * For the most obscure approach, hash the file names so they're highly undiscoverable in IDE search
  */
 class HashNameObfuscator implements NameObfuscator
 {
