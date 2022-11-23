@@ -45,7 +45,7 @@ class QueryCachingMiddleware implements QueryMiddleware, Flushable
                 __CLASS__
             ));
         }
-        $vars = $vars['vars'];
+        $vars = $vars['vars'] ?? [];
         $key = $this->generateCacheKey($query, $vars);
 
         // Get successful cache response
