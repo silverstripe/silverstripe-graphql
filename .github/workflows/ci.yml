@@ -28,3 +28,6 @@ jobs:
           endtoend: true
           endtoend_suite: silverstripe-elemental
           endtoend_config: vendor/dnadesign/silverstripe-elemental/behat.yml
+        - php: 8.2
+          phpunit: true
+#         ^^ TODO: remove this extra php 8.2 job once php 8.2 is a standard part of the gha matrix
