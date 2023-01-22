@@ -33,7 +33,6 @@ use BadMethodCallException;
 
 /**
  * Top level controller for handling graphql requests.
- * @skipUpgrade
  */
 class Controller extends BaseController
 {
