@@ -15,6 +15,7 @@ jobs:
     if: (github.event_name == 'schedule' && startsWith(github.repository, 'silverstripe/')) || (github.event_name != 'schedule')
     uses: silverstripe/gha-ci/.github/workflows/ci.yml@v1
     with:
+      composer_require_extra: silverstripe/recipe-testing:^3
       extra_jobs: |
         - php: 8.1
           endtoend: true
@@ -28,6 +29,3 @@ jobs:
           endtoend: true
           endtoend_suite: silverstripe-elemental
           endtoend_config: vendor/dnadesign/silverstripe-elemental/behat.yml
-        - php: 8.2
-          phpunit: true
-#         ^^ TODO: remove this extra php 8.2 job once php 8.2 is a standard part of the gha matrix
