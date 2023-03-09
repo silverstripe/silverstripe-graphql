@@ -30,6 +30,7 @@ use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
 use BadMethodCallException;
+use SilverStripe\Dev\Backtrace;
 
 /**
  * Top level controller for handling graphql requests.
@@ -136,7 +137,7 @@ class Controller extends BaseController
                 $error['code'] = $exception->getCode();
                 $error['file'] = $exception->getFile();
                 $error['line'] = $exception->getLine();
-                $error['trace'] = $exception->getTrace();
+                $error['trace'] = $this->prepareBacktrace($exception->getTrace());
             }
 
             $result = [
@@ -146,6 +147,28 @@ class Controller extends BaseController
 
         $response = $this->addCorsHeaders($request, new HTTPResponse(json_encode($result)));
         return $response->addHeader('Content-Type', 'application/json');
+    }
+
+    private function prepareBacktrace(array $trace): array
+    {
+        $argCharLimit = 10000;
+        $trace = Backtrace::filter_backtrace($trace);
+        foreach ($trace as &$item) {
+            // This mimics how Backtrace::full_func_name() treats arguments
+            if (isset($item['args'])) {
+                $args = [];
+                foreach ($item['args'] as $arg) {
+                    if (!is_object($arg) || method_exists($arg, '__toString')) {
+                        $sarg = is_array($arg) ? 'Array' : strval($arg);
+                        $args[] = (strlen($sarg ?? '') > $argCharLimit) ? substr($sarg, 0, $argCharLimit) . '...' : $sarg;
+                    } else {
+                        $args[] = get_class($arg);
+                    }
+                }
+                $item['args'] = $args;
+            }
+        }
+        return $trace;
     }
 
     public function autobuildEnabled(): bool
