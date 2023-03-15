@@ -9,10 +9,6 @@ use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ListOfType;
 use Exception;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\GraphQL\Schema\SchemaBuilder;
-use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
-use SilverStripe\Control\Controller;
-use SilverStripe\GraphQL\Controller as GraphQLController;
 
 abstract class AbstractTypeRegistry
 {
@@ -25,30 +21,7 @@ abstract class AbstractTypeRegistry
      */
     public static function get(string $typename)
     {
-        try {
-            return static::fromCache($typename);
-        } catch (Exception $e) {
-            if (!Controller::has_curr() ||
-                !(Controller::curr() instanceof GraphQLController) ||
-                !Controller::curr()->autobuildEnabled()
-            ) {
-                throw $e;
-            }
-            // Try to rebuild the whole schema as fallback.
-            // This is to solve mysterious edge cases where schema files do not exist when they should.
-            // These edge cases are more likely on multi-server environments
-            $dirParts = explode(DIRECTORY_SEPARATOR, static::getSourceDirectory());
-            $key = $dirParts[count($dirParts) - 1];
-            $builder = SchemaBuilder::singleton();
-            $schema = $builder->boot($key);
-            try {
-                $builder->build($schema, true);
-            } catch (EmptySchemaException $e) {
-                // noop
-            }
-            // Attempt to return again now the schema has been rebuilt.
-            return static::fromCache($typename);
-        }
+        return static::fromCache($typename);
     }
 
     abstract protected static function getSourceDirectory(): string;
