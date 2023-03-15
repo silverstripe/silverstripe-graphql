@@ -1217,8 +1217,6 @@ GRAPHQL;
 
         // Register as the default SchemaBuilder so that any calls to
         // SchemaBuidler::singleton() get this TestSchemaBuilder
-        // This is important for the call in AbstractTypeRegisty::get() because
-        // otherwise a duplicate .graphql-generated folder will be created
         Injector::inst()->registerService($factory, SchemaBuilder::class);
 
         return $schema;
