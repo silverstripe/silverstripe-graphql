@@ -184,17 +184,24 @@ class Controller extends BaseController
             return $response;
         }
 
-        // Calculate origin
+        // Get origin - only one host name is allowed in the Allow-Origin header, so we must return the current origin
         $origin = $this->getRequestOrigin($request);
 
-        // Check if valid
+        // Only output an Allow-Origin header if the current origin is a valid one
         $allowedOrigins = (array)$corsConfig['Allow-Origin'];
-        $originAuthorised = $this->validateOrigin($origin, $allowedOrigins);
-        if (!$originAuthorised) {
-            $this->httpError(403, "Access Forbidden");
+        if ($this->validateOrigin($origin, $allowedOrigins)) {
+            if ($corsConfig['Allow-Origin'] === '*') {
+                // Any origin is allowed
+                $response->addHeader('Access-Control-Allow-Origin', '*');
+            } else {
+                // Specific origins allowed - only one can be output at a time, so we have to output the current one
+                $response->addHeader('Access-Control-Allow-Origin', $origin);
+                // If specific allowed origins are set, the response headers will vary by request origin, so use the
+                // Vary header to tell browsers/CDNs that
+                $response->addHeader('Vary', 'Origin');
+            }
         }
 
-        $response->addHeader('Access-Control-Allow-Origin', $origin);
         $response->addHeader('Access-Control-Allow-Headers', $corsConfig['Allow-Headers']);
         $response->addHeader('Access-Control-Allow-Methods', $corsConfig['Allow-Methods']);
         $response->addHeader('Access-Control-Max-Age', $corsConfig['Max-Age']);
