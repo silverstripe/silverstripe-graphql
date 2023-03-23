@@ -1,17 +1,16 @@
-name: Keepalive
+name: Dispatch CI
 
 on:
-  workflow_dispatch:
-  # The 4th of every month at 10:50am UTC
+  # At 11:00 AM UTC, only on Wednesday and Thursday
   schedule:
-    - cron: '50 10 4 * *'
+    - cron: '0 11 * * 3,4'
 
 jobs:
-  keepalive:
-    name: Keepalive
+  dispatch-ci:
+    name: Dispatch CI
     # Only run cron on the silverstripe account
     if: (github.event_name == 'schedule' && github.repository_owner == 'silverstripe') || (github.event_name != 'schedule')
     runs-on: ubuntu-latest
     steps:
-      - name: Keepalive
-        uses: silverstripe/gha-keepalive@v1
+      - name: Dispatch CI
+        uses: silverstripe/gha-dispatch-ci@v1
