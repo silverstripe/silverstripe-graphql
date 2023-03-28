@@ -27,7 +27,7 @@ abstract class AbstractTypeRegistry
      * the schema files themselves are missing.
      */
     private static bool $rebuild_on_missing_schema_file = true;
-    
+
     /**
      * Minimum number of seconds between rebuilding the schema if a schema file is missing.
      * If set too low this may make the site vulnerable to the schema being repeatedly rebuilt
