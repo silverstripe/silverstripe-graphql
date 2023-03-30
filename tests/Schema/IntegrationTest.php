@@ -1215,6 +1215,10 @@ GRAPHQL;
 
         $factory->build($schema, true);
 
+        // Register as the default SchemaBuilder so that any calls to
+        // SchemaBuidler::singleton() get this TestSchemaBuilder
+        Injector::inst()->registerService($factory, SchemaBuilder::class);
+
         return $schema;
     }
 
