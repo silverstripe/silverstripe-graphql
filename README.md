@@ -10,7 +10,6 @@ introspection. It layers a pluggable schema registration system on top of the
 [graphql-php](https://github.com/webonyx/graphql-php) library. The APIs are
 very similar.
 
-
 ## This is the 4.x release branch
 
 If you are looking for version 3 [check the `3` branch](https://github.com/silverstripe/silverstripe-graphql/tree/3), which contains documentation inlined into the README.
