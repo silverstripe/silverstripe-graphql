@@ -47,7 +47,7 @@ abstract class AbstractTypeRegistry
         try {
             return static::fromCache($typename);
         } catch (Exception $e) {
-            if (preg_match('/(Missing|Unknown) graphql/', $e->getMessage()) || !self::canRebuildOnMissing()) {
+            if (!preg_match('/(Missing|Unknown) graphql/', $e->getMessage()) || !self::canRebuildOnMissing()) {
                 throw $e;
             }
             // Try to rebuild the whole schema as fallback.
