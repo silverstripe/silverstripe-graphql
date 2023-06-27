@@ -52,6 +52,9 @@ class CodeGenerationStore implements SchemaStorageInterface
     private static string $namespacePrefix = 'SSGraphQLSchema_';
 
     /**
+     * The directory, relative to $rootDir, where the generated graphql schema
+     * will be stored. If set to a blank string, generated schema will be stored
+     * in the TEMP_PATH directory.
      * @config
      */
     private static string $dirName = '.graphql-generated';
@@ -103,38 +106,19 @@ class CodeGenerationStore implements SchemaStorageInterface
         $fs = new Filesystem();
         $finder = new Finder();
         $temp = $this->getTempDirectory();
-        $dest = $this->getDirectory();
-        if ($fs->exists($dest)) {
-            $logger->info('Moving current schema to temp folder');
-            $fs->mirror($dest, $temp);
-        } else {
-            $logger->info('Creating new schema');
-            try {
-                $fs->mkdir($temp);
-                // Ensure none of these files get loaded into the manifest
-                $fs->touch($temp . DIRECTORY_SEPARATOR . '_manifest_exclude');
-                // Include a file to warn developers against modifying the schema manually
-                $warningFile = $temp . DIRECTORY_SEPARATOR . '__DO_NOT_MODIFY';
-                $fs->dumpFile(
-                    $warningFile,
-                    '*** This directory contains generated code for the GraphQL schema. Do not modify. ***'
-                );
-                // Include a file to ensure webservers don't serve the schema
-                $htaccessFile = $temp . DIRECTORY_SEPARATOR . '.htaccess';
-                $fs->dumpFile(
-                    $htaccessFile,
-                    <<<HTACCESS
-                    Require all denied
-                    RewriteRule .* - [F]
-                    HTACCESS
-                );
-            } catch (IOException $e) {
-                throw new RuntimeException(sprintf(
-                    'Could not persist schema. Failed to create directory %s. Full message: %s',
-                    $temp,
-                    $e->getMessage()
-                ));
+        if ($this->dirNameIsDefined()) {
+            $dest = $this->getDirectory();
+            if ($fs->exists($dest)) {
+                $logger->info('Moving current schema to temp folder');
+                $fs->mirror($dest, $temp);
+            } else {
+                $logger->info('Creating new schema');
+                $this->createNewTempSchema($fs, $temp);
             }
+        } else {
+            $logger->info('Using temporary directory for schema');
+            $logger->info('Creating new schema which will override any old schema');
+            $this->createNewTempSchema($fs, $temp);
         }
 
         $templateDir = static::getTemplateDir();
@@ -246,15 +230,16 @@ class CodeGenerationStore implements SchemaStorageInterface
         }
 
         // Move the new schema into the proper destination
-        if ($fs->exists($dest)) {
-            $logger->info('Deleting current schema');
-            $fs->remove($dest);
+        if ($this->dirNameIsDefined()) {
+            if ($fs->exists($dest)) {
+                $logger->info('Deleting current schema');
+                $fs->remove($dest);
+            }
+            $logger->info('Migrating new schema');
+            $fs->mirror($temp, $dest);
+            $logger->info('Deleting temp schema');
+            $fs->remove($temp);
         }
-
-        $logger->info('Migrating new schema');
-        $fs->mirror($temp, $dest);
-        $logger->info('Deleting temp schema');
-        $fs->remove($temp);
 
         $logger->info("Total types: $total");
         $logger->info(sprintf('Types built: %s', count($built ?? [])));
@@ -395,9 +380,13 @@ class CodeGenerationStore implements SchemaStorageInterface
 
     private function getDirectory(): string
     {
+        $dirName = $this->config()->get('dirName');
+        if (!$dirName) {
+            return $this->getTempDirectory();
+        }
         return Path::join(
             $this->getRootDir(),
-            $this->config()->get('dirName'),
+            $dirName,
             $this->name
         );
     }
@@ -405,10 +394,15 @@ class CodeGenerationStore implements SchemaStorageInterface
     private function getTempDirectory(): string
     {
         return Path::join(
-            TEMP_FOLDER,
-            $this->config()->get('dirName'),
+            TEMP_PATH,
+            $this->config()->get('dirName') ?: '.graphql-generated',
             $this->name
         );
+    }
+
+    private function dirNameIsDefined(): bool
+    {
+        return (bool) $this->config()->get('dirName');
     }
 
     private function getNamespace(): string
@@ -457,5 +451,35 @@ class CodeGenerationStore implements SchemaStorageInterface
     {
         $code = preg_replace("/(^[\r\n]*|[\r\n]+)[\s\t]*[\r\n]+/", "\n", $rawCode ?? '');
         return "<?php\n\n /** GENERATED CODE -- DO NOT MODIFY **/\n\n{$code}";
+    }
+
+    private function createNewTempSchema(FileSystem $fs, string $tempDir): void
+    {
+        try {
+            $fs->mkdir($tempDir);
+            // Ensure none of these files get loaded into the manifest
+            $fs->touch(Path::join($tempDir, '_manifest_exclude'));
+            // Include a file to warn developers against modifying the schema manually
+            $warningFile = Path::join($tempDir, '__DO_NOT_MODIFY');
+            $fs->dumpFile(
+                $warningFile,
+                '*** This directory contains generated code for the GraphQL schema. Do not modify. ***'
+            );
+            // Include a file to ensure webservers don't serve the schema
+            $htaccessFile = Path::join($tempDir, '.htaccess');
+            $fs->dumpFile(
+                $htaccessFile,
+                <<<HTACCESS
+                Require all denied
+                RewriteRule .* - [F]
+                HTACCESS
+            );
+        } catch (IOException $e) {
+            throw new RuntimeException(sprintf(
+                'Could not persist schema. Failed to create directory %s. Full message: %s',
+                $tempDir,
+                $e->getMessage()
+            ));
+        }
     }
 }
