@@ -88,7 +88,7 @@ class PaginationPlugin implements FieldPlugin, SchemaUpdater
 
         $defaultLimit = $config['defaultLimit'] ?? $this->config()->get('default_limit');
         $connectionName = $config['connection'] ?? $plainType;
-        $max = $this->config()->get('max_limit');
+        $max = $config['maximumLimit'] ?? $this->config()->get('max_limit');
         $limit = min($defaultLimit, $max);
         $field->addArg('limit', "Int = $limit")
             ->addArg('offset', "Int = 0")
