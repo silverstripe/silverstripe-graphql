@@ -6,6 +6,7 @@ SilverStripe\GraphQL\Tests\Fake\DataObjectFake:
         sort: true
   fields:
     myField: true
+    AuthorID: true
     author:
       fields:
         firstName: true

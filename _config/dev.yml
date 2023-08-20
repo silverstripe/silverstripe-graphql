@@ -1,6 +1,10 @@
 ---
 Name: graphql-dev
 ---
+SilverStripe\ORM\DatabaseAdmin:
+  extensions:
+    - SilverStripe\GraphQL\Extensions\DevBuildExtension
+
 SilverStripe\Dev\DevelopmentAdmin:
   registered_controllers:
     graphql:

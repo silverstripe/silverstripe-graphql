@@ -425,6 +425,9 @@ GRAPHQL;
         $dataObject2 = DataObjectFake::create(['MyField' => 'test2', 'AuthorID' => $author2->ID]);
         $dataObject2->write();
 
+        $dataObject3 = DataObjectFake::create(['MyField' => 'test3', 'AuthorID' => $author2->ID]);
+        $dataObject3->write();
+
         $file1 = File::create(['Title' => 'file1']);
         $file1->write();
 
@@ -436,6 +439,7 @@ GRAPHQL;
 
         $id1 = $dataObject1->ID;
         $id2 = $dataObject2->ID;
+        $id3 = $dataObject3->ID;
 
         $schema = $this->createSchema(new TestSchemaBuilder([$dir]));
 
@@ -474,7 +478,7 @@ GRAPHQL;
 
         $query = <<<GRAPHQL
 query {
-  readOneDataObjectFake(sort: { myField: DESC }) {
+  readOneDataObjectFake(sort: { AuthorID: DESC , myField: ASC }) {
     myField
   }
 }
@@ -485,14 +489,25 @@ GRAPHQL;
 
         $query = <<<GRAPHQL
 query {
-  readOneDataObjectFake(sort: { myField: DESC }, filter: { id: { ne: $id2 } }) {
+  readOneDataObjectFake(sort: { myField: DESC }) {
     myField
   }
 }
 GRAPHQL;
         $result = $this->querySchema($schema, $query);
         $this->assertSuccess($result);
-        $this->assertResult('readOneDataObjectFake.myField', 'test1', $result);
+        $this->assertResult('readOneDataObjectFake.myField', 'test3', $result);
+
+        $query = <<<GRAPHQL
+query {
+  readOneDataObjectFake(sort: { myField: DESC }, filter: { id: { ne: $id3 } }) {
+    myField
+  }
+}
+GRAPHQL;
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $this->assertResult('readOneDataObjectFake.myField', 'test2', $result);
 
         $query = <<<GRAPHQL
 query {
