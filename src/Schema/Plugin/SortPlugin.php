@@ -91,9 +91,7 @@ class SortPlugin implements FieldPlugin, SchemaUpdater
                 return null;
             }
             $sortArgs = $args[$fieldName] ?? [];
-            foreach ($sortArgs as $field => $dir) {
-                $list = $list->sort($field, $dir);
-            }
+            $list = $list->sort($sortArgs);
 
             return $list;
         };

@@ -97,9 +97,6 @@ class NestedInputBuilder
 
         if ($this->fields === Schema::ALL) {
             $this->fields = $this->buildAllFieldsConfig($type);
-        } elseif (isset($this->fields[Schema::ALL]) && $this->fields[Schema::ALL]) {
-            unset($this->fields[Schema::ALL]);
-            $this->fields = array_merge($this->fields, $this->buildAllFieldsConfig($type));
         }
         $this->addInputTypesToSchema($type, $this->fields, null, null, $prefix);
         $rootTypeName = $prefix . $this->getTypeName($type);
@@ -167,10 +164,11 @@ class NestedInputBuilder
         if (!$inputType) {
             $inputType = InputType::create($inputTypeName);
         }
+        if (isset($fields[Schema::ALL]) && $fields[Schema::ALL]) {
+            unset($fields[Schema::ALL]);
+            $fields = array_merge($fields, $this->buildAllFieldsConfig($type));
+        }
         foreach ($fields as $fieldName => $data) {
-            if ($fieldName === Schema::ALL) {
-                $this->buildAllFieldsConfig($type);
-            }
             if ($data === false) {
                 continue;
             }
