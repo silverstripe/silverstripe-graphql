@@ -5,6 +5,3 @@ SilverStripe\ORM\DataObject:
   graphql_blacklisted_fields:
     LinkTracking: true
     FileTracking: true
-  extensions:
-    - SilverStripe\GraphQL\Extensions\DevBuildExtension
-
