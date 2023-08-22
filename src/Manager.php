@@ -28,6 +28,13 @@ use Closure;
 use SilverStripe\Security\Security;
 use BadMethodCallException;
 use Exception;
+use GraphQL\Language\Lexer;
+use GraphQL\Language\Source;
+use GraphQL\Language\Token;
+use GraphQL\Utils\Utils;
+use GraphQL\Validator\DocumentValidator;
+use GraphQL\Validator\Rules\QueryComplexity;
+use GraphQL\Validator\Rules\QueryDepth;
 
 /**
  * Manager is the master container for a graphql endpoint, and contains
@@ -46,6 +53,36 @@ class Manager implements ConfigurationApplier
     const MUTATION_ROOT = 'mutation';
 
     const TYPES_ROOT = 'types';
+
+    /**
+     * Default maximum query nodes if not defined in the current schema config
+     */
+    private static $default_max_query_nodes = 500;
+
+    /**
+     * Default maximum query depth if not defined in the current schema config
+     */
+    private static $default_max_query_depth = 15;
+
+    /**
+     * Default maximum query complexity if not defined in the current schema config
+     */
+    private static $default_max_query_complexity = 0;
+
+    /**
+     * Maximum query nodes allowed for the current schema config
+     */
+    private ?int $maxQueryNodes = null;
+
+    /**
+     * Maximum query depth allowed for the current schema config
+     */
+    private ?int $maxQueryDepth = null;
+
+    /**
+     * Maximum query complexity allowed for the current schema config
+     */
+    private ?int $maxQueryComplexity = null;
 
     /**
      * @var string
@@ -203,6 +240,17 @@ class Manager implements ConfigurationApplier
     public function applyConfig(array $config)
     {
         $this->extend('updateConfig', $config);
+
+        // Security validation rules
+        if (array_key_exists('max_query_nodes', $config)) {
+            $this->maxQueryNodes = $config['max_query_nodes'];
+        }
+        if (array_key_exists('max_query_depth', $config)) {
+            $this->maxQueryDepth = $config['max_query_depth'];
+        }
+        if (array_key_exists('max_query_complexity', $config)) {
+            $this->maxQueryComplexity = $config['max_query_complexity'];
+        }
 
         // Bootstrap schema class mapping from config
         if (array_key_exists('typeNames', $config ?? [])) {
@@ -372,10 +420,76 @@ class Manager implements ConfigurationApplier
         $context = $this->getContext();
 
         $last = function ($schema, $query, $context, $params) {
-            return GraphQL::executeQuery($schema, $query, null, $context, $params);
+            if (is_string($query)) {
+                $this->validateQueryBeforeParsing($query, $context);
+            }
+
+            $validationRules = DocumentValidator::allRules();
+            $maxDepth = $this->getMaxQueryDepth();
+            $maxComplexity = $this->getMaxQueryComplexity();
+            if ($maxDepth) {
+                $validationRules[QueryDepth::class] = new QueryDepth($maxDepth);
+            }
+            if ($maxComplexity) {
+                $validationRules[QueryComplexity::class] = new QueryComplexity($maxComplexity);
+            }
+            return GraphQL::executeQuery($schema, $query, null, $context, $params, null, null, $validationRules);
         };
 
         return $this->callMiddleware($schema, $query, $context, $params, $last);
+    }
+
+    /**
+     * Validate a query before parsing it in case there are issues we can catch early.
+     */
+    private function validateQueryBeforeParsing(string $query): void
+    {
+        $maxNodes = $this->getMaxQueryNodes();
+
+        if (!$maxNodes) {
+            return;
+        }
+
+        $lexer = new Lexer(new Source($query));
+        $numNodes = 0;
+
+        // Check how many nodes there are in this query
+        do {
+            $next = $lexer->advance();
+            if ($next->kind === Token::NAME) {
+                $numNodes++;
+            }
+        } while ($next->kind !== Token::EOF && $numNodes <= $maxNodes);
+
+        // Throw a GraphQL Invariant violation if there are too many nodes
+        Utils::invariant(
+            $maxNodes >= $numNodes,
+            "GraphQL query body must not be longer than $maxNodes nodes."
+        );
+    }
+
+    private function getMaxQueryNodes()
+    {
+        if ($this->maxQueryNodes !== null) {
+            return $this->maxQueryNodes;
+        }
+        return static::config()->get('default_max_query_nodes');
+    }
+
+    private function getMaxQueryDepth()
+    {
+        if ($this->maxQueryDepth !== null) {
+            return $this->maxQueryDepth;
+        }
+        return static::config()->get('default_max_query_depth');
+    }
+
+    private function getMaxQueryComplexity()
+    {
+        if ($this->maxQueryComplexity !== null) {
+            return $this->maxQueryComplexity;
+        }
+        return static::config()->get('default_max_query_complexity');
     }
 
     /**

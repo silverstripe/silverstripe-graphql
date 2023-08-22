@@ -71,7 +71,8 @@ composer require silverstripe/graphql
  - [CSRF tokens (required for mutations)](#csrf-tokens-required-for-mutations)
  - [Cross-Origin Resource Sharing (CORS)](#cross-origin-resource-sharing-cors)
    - [Sample Custom CORS Config](#sample-custom-cors-config)
- - [Persisting Queries](#persisting-queries)   
+ - [Recursive or complex queries](#recursive-or-complex-queries)
+ - [Persisting Queries](#persisting-queries)
  - [Schema introspection](#schema-introspection)
  - [Setting up a new GraphQL schema](#setting-up-a-new-graphql-schema)
  - [Strict HTTP Method Checking](#strict-http-method-checking)
@@ -2391,8 +2392,42 @@ SilverStripe\Core\Injector\Injector:
     properties:
       corsConfig:
         Enabled: false
-``` 
+```
 
+## Recursive or complex queries
+
+GraphQL schemas can contain recursive types and circular dependencies. Recursive or overly complex queries can take up a lot of resources,
+and could have a high impact on server performance and even result in a denial of service if not handled carefully.
+
+Before parsing queries, if a query is found to have more than 500 nodes, it is rejected.
+
+While executing queries, there is a default query depth limit of 15 for all schemas, and no current complexity limit.
+
+For calculating the query complexity, every field in the query gets a default score 1 (including ObjectType nodes). Total complexity of the query is the sum of all field scores.
+
+You can customise the node limit and query depth and complexity limits by setting the following configuration:
+
+**app/_config/graphql.yml**
+
+```yaml
+SilverStripe\GraphQL\Manager:
+  default_max_query_nodes: 250 # default 500
+  default_max_query_depth: 20 # default 15
+  default_max_query_complexity: 100 # default unlimited
+```
+
+You can also configure these settings for individual schemas. This allows you to fine-tune the security of your custom public-facing schema without affecting the security of the schema used in the CMS. To do so, set the values for your schema like so:
+
+**app/_config/graphql.yml**
+
+```yaml
+SilverStripe\GraphQL\Manager:
+  schemas:
+    default:
+      max_query_nodes: 250
+      max_query_depth: 20
+      max_query_complexity: 100
+```
 
 ## Persisting queries
 

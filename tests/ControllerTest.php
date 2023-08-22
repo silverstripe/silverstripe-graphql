@@ -3,9 +3,16 @@
 namespace SilverStripe\GraphQL\Tests;
 
 use Exception;
+use GraphQL\Error\Error as GraphQLError;
 use GraphQL\Type\Definition\Type;
+use GraphQL\Validator\DocumentValidator;
+use GraphQL\Validator\Rules\CustomValidationRule;
+use GraphQL\Validator\Rules\QueryComplexity;
+use GraphQL\Validator\Rules\QueryDepth;
+use GraphQL\Validator\ValidationContext;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\MockObject\MockBuilder;
+use ReflectionProperty;
 use SilverStripe\Assets\Dev\TestAssetStore;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
@@ -23,6 +30,7 @@ use SilverStripe\GraphQL\Middleware\CSRFMiddleware;
 use SilverStripe\GraphQL\Middleware\HTTPMethodMiddleware;
 use SilverStripe\GraphQL\Scaffolding\StaticSchema;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\HierarchicalObject;
 use SilverStripe\GraphQL\Tests\Fake\QueryCreatorFake;
 use SilverStripe\GraphQL\Tests\Fake\TypeCreatorFake;
 use SilverStripe\Security\SecurityToken;
@@ -30,6 +38,10 @@ use SilverStripe\Security\SecurityToken;
 class ControllerTest extends SapphireTest
 {
     protected $usesDatabase = true;
+
+    protected static $extra_dataobjects = [
+        HierarchicalObject::class,
+    ];
 
     protected function setUp(): void
     {
@@ -567,14 +579,20 @@ class ControllerTest extends SapphireTest
         $this->assertMatchesRegularExpression($regExp, $data['errors'][0]['message']);
     }
 
-    protected function assertQuerySuccess(Controller $controller, HTTPRequest $request, $operation)
+    protected function assertQuerySuccess(Controller $controller, HTTPRequest $request, $operation = null)
     {
         $controller->setRequest($request);
         $data = json_decode($controller->handleRequest($request)->getBody() ?? '', true);
-        $this->assertArrayNotHasKey('errors', $data);
+        $errorMessages = [];
+        foreach ($data['errors'] ?? [] as $error) {
+            $errorMessages[] = '"' . $error['message'] . '"';
+        }
+        $this->assertArrayNotHasKey('errors', $data, 'Errors were: ' . implode(', ', $errorMessages));
         $this->assertArrayHasKey('data', $data);
-        $this->assertArrayHasKey($operation, $data['data']);
-        $this->assertEquals('success', $data['data'][$operation]);
+        if ($operation !== null) {
+            $this->assertArrayHasKey($operation, $data['data']);
+            $this->assertEquals('success', $data['data'][$operation]);
+        }
     }
 
     /**
@@ -646,6 +664,270 @@ class ControllerTest extends SapphireTest
         ]);
         $result = $controller->index($request)->getBody();
         $this->assertArrayHasKey('errors', json_decode($result ?? '', true));
+    }
+
+    /**
+     * @dataProvider provideDefaultDepthLimit
+     */
+    public function testDefaultDepthLimit(int $queryDepth, int $limit)
+    {
+        // This global rule should be ignored.
+        DocumentValidator::addRule(new QueryDepth(1));
+
+        try {
+            $schema = $this->createRecursiveSchema();
+            $this->runDepthLimitTest($queryDepth, $limit, $schema);
+        } finally {
+            $this->removeDocumentValidatorRule(QueryDepth::class);
+        }
+    }
+
+    public function provideDefaultDepthLimit()
+    {
+        return $this->createProviderForComplexityOrDepth(15);
+    }
+
+    /**
+     * @dataProvider provideCustomDepthLimit
+     */
+    public function testCustomDepthLimit(int $queryDepth, int $limit)
+    {
+        // This global rule should be ignored.
+        DocumentValidator::addRule(new QueryDepth(1));
+
+        try {
+            $schema = $this->createRecursiveSchema();
+            $schema['test_schema']['max_query_depth'] = $limit;
+            $this->runDepthLimitTest($queryDepth, $limit, $schema);
+        } finally {
+            $this->removeDocumentValidatorRule(QueryDepth::class);
+        }
+    }
+
+    public function provideCustomDepthLimit()
+    {
+        return $this->createProviderForComplexityOrDepth(25);
+    }
+
+    /**
+     * @dataProvider provideCustomComplexityLimit
+     */
+    public function testCustomComplexityLimit(int $queryComplexity, int $limit)
+    {
+        // This global rule should be ignored.
+        DocumentValidator::addRule(new QueryComplexity(1));
+
+        try {
+            $schema = $this->createRecursiveSchema();
+            $schema['test_schema']['max_query_complexity'] = $limit;
+            $this->runComplexityLimitTest($queryComplexity, $limit, $schema);
+        } finally {
+            $this->removeDocumentValidatorRule(QueryComplexity::class);
+        }
+    }
+
+    public function provideCustomComplexityLimit()
+    {
+        return $this->createProviderForComplexityOrDepth(10);
+    }
+
+    /**
+     * @dataProvider provideDefaultNodeLimit
+     */
+    public function testDefaultNodeLimit(int $numNodes, int $limit)
+    {
+        $schema = $this->createRecursiveSchema();
+        $this->runNodeLimitTest($numNodes, $limit, $schema);
+    }
+
+    public function provideDefaultNodeLimit()
+    {
+        return $this->createProviderForComplexityOrDepth(500);
+    }
+
+    /**
+     * @dataProvider provideCustomNodeLimit
+     */
+    public function testCustomNodeLimit(int $numNodes, int $limit)
+    {
+        $schema = $this->createRecursiveSchema();
+        $schema['test_schema']['max_query_nodes'] = $limit;
+        $this->runNodeLimitTest($numNodes, $limit, $schema);
+    }
+
+    public function provideCustomNodeLimit()
+    {
+        return $this->createProviderForComplexityOrDepth(200);
+    }
+
+    public function testGlobalRuleNotRemoved()
+    {
+        // This global rule should NOT be ignored.
+        DocumentValidator::addRule(new CustomValidationRule('never-passes', function (ValidationContext $context) {
+            $context->reportError(new GraphQLError('This is the custom rule'));
+            return [];
+        }));
+
+        try {
+            $schema = $this->createRecursiveSchema();
+            Config::modify()->set(Manager::class, 'schemas', $schema);
+            $manager = new Manager('test_schema');
+            $manager->configure();
+            $request = $this->createGraphqlRequest($this->craftRecursiveQuery(15));
+            $controller = $this->getFakeController($request, $manager);
+
+            $this->assertQueryError($controller, $request, '/^This is the custom rule$/');
+        } finally {
+            $this->removeDocumentValidatorRule('never-passes');
+        }
+    }
+
+    private function removeDocumentValidatorRule(string $ruleName): void
+    {
+        $reflectionRules = new ReflectionProperty(DocumentValidator::class, 'rules');
+        $reflectionRules->setAccessible(true);
+        $rules = $reflectionRules->getValue();
+        unset($rules[$ruleName]);
+        $reflectionRules->setValue($rules);
+    }
+
+    private function createRecursiveSchema(): array
+    {
+        return [
+            'test_schema' => [
+                'scaffolding' => [
+                    'types' => [
+                        HierarchicalObject::class => [
+                            'fields' => '*',
+                            'operations' => '*',
+                            'nestedQueries' => [
+                                'Children' => true,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+    private function createProviderForComplexityOrDepth(int $limit): array
+    {
+        return [
+            'far less than limit' => [1, $limit],
+            'one less than limit' => [$limit - 1, $limit],
+            'exactly at the limit' => [$limit, $limit],
+            'one more than limit' => [$limit + 1, $limit],
+            'far more than limit' => [$limit + 25, $limit],
+        ];
+    }
+
+    private function runDepthLimitTest(int $queryDepth, int $maxDepth, array $schema): void
+    {
+        Config::modify()->set(Manager::class, 'schemas', $schema);
+        $manager = new Manager('test_schema');
+        $manager->configure();
+        $request = $this->createGraphqlRequest($this->craftRecursiveQuery($queryDepth));
+        $controller = $this->getFakeController($request, $manager);
+
+        if ($queryDepth > $maxDepth) {
+            $this->assertQueryError(
+                $controller,
+                $request,
+                '/^Max query depth should be ' . $maxDepth . ' but got ' . $queryDepth . '\.$/'
+            );
+        } else {
+            // Note that the depth limit is based on the depth of the QUERY, not of the RESULTS, so all we really care about
+            // is that the query was successful, not what the results were.
+            $this->assertQuerySuccess($controller, $request);
+        }
+    }
+
+    private function runComplexityLimitTest(int $queryComplexity, int $maxComplexity, array $schema): void
+    {
+        Config::modify()->set(Manager::class, 'schemas', $schema);
+        $manager = new Manager('test_schema');
+        $manager->configure();
+        $request = $this->createGraphqlRequest($this->craftComplexQuery($queryComplexity));
+        $controller = $this->getFakeController($request, $manager);
+
+        if ($queryComplexity > $maxComplexity) {
+            $this->assertQueryError(
+                $controller,
+                $request,
+                '/^Max query complexity should be ' . $maxComplexity . ' but got ' . $queryComplexity . '\.$/'
+            );
+        } else {
+            // Note that the complexity limit is based on the complexity of the QUERY, not of the RESULTS, so all we really care about
+            // is that the query was successful, not what the results were.
+            $this->assertQuerySuccess($controller, $request);
+        }
+    }
+
+    private function runNodeLimitTest(int $queryNodeCount, int $maxNodes, array $schema): void
+    {
+        Config::modify()->set(Manager::class, 'schemas', $schema);
+        $manager = new Manager('test_schema');
+        $manager->configure();
+        $request = $this->createGraphqlRequest($this->craftComplexQuery($queryNodeCount - 1));
+        $controller = $this->getFakeController($request, $manager);
+
+        if ($queryNodeCount > $maxNodes) {
+            $this->assertQueryError(
+                $controller,
+                $request,
+                '/^GraphQL query body must not be longer than ' . $maxNodes . ' nodes\.$/'
+            );
+        } else {
+            // Note that the complexity limit is based on the complexity of the QUERY, not of the RESULTS, so all we really care about
+            // is that the query was successful, not what the results were.
+            $this->assertQuerySuccess($controller, $request);
+        }
+    }
+
+    private function craftRecursiveQuery(int $queryDepth): string
+    {
+        $query = 'query{ readSilverStripeHierarchicalObjects { nodes {';
+
+        for ($i = 0; $i < $queryDepth; $i++) {
+            if ($i % 3 === 0) {
+                $query .= 'ID Title';
+            } elseif ($i % 3 === 1) {
+                $query .= ' Parent {';
+            } elseif ($i % 3 === 2) {
+                if ($i === $queryDepth - 1) {
+                    $query .= 'ID Title';
+                } else {
+                    $query .= 'ID Title Children { nodes {';
+                }
+            }
+        }
+
+        $endsWith = strrpos($query, 'ID Title') === strlen($query) - strlen('ID Title');
+        $query .= $endsWith ? '' : 'ID Title';
+        // Add all of the closing brackets
+        $numChars = array_count_values(str_split($query));
+        for ($i = 0; $i < $numChars['{']; $i++) {
+            $query .= '}';
+        }
+
+        return $query;
+    }
+
+    private function craftComplexQuery(int $queryComplexity): string
+    {
+        $query = 'query{ readOneSilverStripeHierarchicalObject { ID';
+
+        // skip the first two complexity, because those are taken up by "readOneSilverStripeHierarchicalObject { ID" above
+        for ($i = 0; $i < $queryComplexity - 2; $i++) {
+            $query .= ' ID';
+        }
+        // Add all of the closing brackets
+        $numChars = array_count_values(str_split($query));
+        for ($i = 0; $i < $numChars['{']; $i++) {
+            $query .= '}';
+        }
+
+        return $query;
     }
 
     protected function getType(Manager $manager)
