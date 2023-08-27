@@ -49,15 +49,21 @@ class InheritanceBuilder
         $chain = InheritanceChain::create($modelType->getModel()->getSourceClass())
             ->hideAncestors($this->hideAncestors);
         $ancestors = $chain->getAncestralModels();
-        if (empty($ancestors)) {
+        $ancestorModel = null;
+        foreach ($ancestors as $ancestor) {
+            $ancestorModel = $this->getSchema()->findOrMakeModel($ancestor);
+            if ($ancestorModel && $ancestorModel->getName() !== $modelType->getName()) {
+                break;
+            }
+            $ancestorModel = null;
+        }
+        if (!$ancestorModel) {
             return;
         }
-        $parent = $ancestors[0];
-        $parentModel = $this->getSchema()->findOrMakeModel($parent);
         // Merge descendant fields up into the ancestor
         foreach ($modelType->getFields() as $fieldObj) {
             // If the field already exists on the ancestor with the same config, skip it
-            if ($existing = $parentModel->getFieldByName($fieldObj->getName())) {
+            if ($existing = $ancestorModel->getFieldByName($fieldObj->getName())) {
                 if ($existing->getSignature() === $fieldObj->getSignature()) {
                     continue;
                 }
@@ -66,12 +72,12 @@ class InheritanceBuilder
                 ? $fieldObj->getPropertyName()
                 : $fieldObj->getName();
             // If the field is unique to the descendant, skip it.
-            if ($parentModel->getModel()->hasField($fieldName)) {
+            if ($ancestorModel->getModel()->hasField($fieldName)) {
                 $clone = clone $fieldObj;
-                $parentModel->addField($fieldObj->getName(), $clone);
+                $ancestorModel->addField($fieldObj->getName(), $clone);
             }
         }
-        $this->fillAncestry($parentModel);
+        $this->fillAncestry($ancestorModel);
     }
 
     /**
