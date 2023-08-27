@@ -21,6 +21,10 @@ use SilverStripe\GraphQL\Tests\Fake\Inheritance\C;
 use SilverStripe\GraphQL\Tests\Fake\Inheritance\C1;
 use SilverStripe\GraphQL\Tests\Fake\Inheritance\C2;
 use SilverStripe\GraphQL\Tests\Fake\Inheritance\C2a;
+use SilverStripe\GraphQL\Tests\Fake\Inheritance\MyOrig;
+use SilverStripe\GraphQL\Tests\Fake\Inheritance\MySubclass;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
 
 class InheritanceBuilderTest extends SapphireTest
 {
@@ -40,6 +44,8 @@ class InheritanceBuilderTest extends SapphireTest
         C1::class,
         C2::class,
         C2a::class,
+        MyOrig::class,
+        MySubclass::class,
     ];
 
     public function testBaseModel()
@@ -313,5 +319,28 @@ class InheritanceBuilderTest extends SapphireTest
 
         $this->assertEmpty(array_diff($expected ?? [], $compare));
         $this->assertEmpty(array_diff($compare ?? [], $expected));
+    }
+
+    public function testFillAncestryInjectorSubclass()
+    {
+        Config::modify()->merge(Injector::class, MyOrig::class, ['class' => MySubclass::class]);
+        $obj = MyOrig::create();
+        $this->assertSame(MySubclass::class, get_class($obj));
+        $schema = new TestSchema();
+        $schema->applyConfig([
+            'models' => [
+                MyOrig::class => [
+                    'fields' => [
+                        'MyField' => true,
+                        'MySubclassField' => true,
+                    ],
+                ],
+            ]
+        ]);
+        $schema->createStoreableSchema();
+        $modelType = $schema->getModelByClassName(MySubclass::class);
+        $builder = new InheritanceBuilder($schema);
+        $builder->fillAncestry($modelType);
+        $this->assertFields(['id', 'MyField', 'MySubclassField'], $modelType);
     }
 }
