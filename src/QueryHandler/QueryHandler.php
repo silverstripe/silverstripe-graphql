@@ -5,14 +5,20 @@ namespace SilverStripe\GraphQL\QueryHandler;
 
 use GraphQL\Error\Error;
 use GraphQL\Error\SyntaxError;
+use GraphQL\Error\UserError;
 use GraphQL\Executor\ExecutionResult;
 use GraphQL\GraphQL;
 use GraphQL\Language\AST\DocumentNode;
 use GraphQL\Language\AST\NodeKind;
+use GraphQL\Language\Lexer;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Source;
 use GraphQL\Language\SourceLocation;
+use GraphQL\Language\Token;
 use GraphQL\Type\Schema as GraphQLSchema;
+use GraphQL\Validator\DocumentValidator;
+use GraphQL\Validator\Rules\QueryComplexity;
+use GraphQL\Validator\Rules\QueryDepth;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Extensible;
@@ -24,6 +30,7 @@ use SilverStripe\GraphQL\PersistedQuery\PersistedQueryMappingProvider;
 use SilverStripe\GraphQL\PersistedQuery\PersistedQueryProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
 use SilverStripe\GraphQL\Schema\Schema;
+use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\ORM\ValidationException;
 
 /**
@@ -99,12 +106,61 @@ class QueryHandler implements
         }
         $context = $this->getContext();
         $last = function ($schema, $query, $context, $vars) {
-            return GraphQL::executeQuery($schema, $query, null, $context, $vars);
+            if (is_string($query)) {
+                $this->validateQueryBeforeParsing($query, $context);
+            }
+
+            $validationRules = DocumentValidator::allRules();
+            if (isset($context[SchemaConfigProvider::KEY])) {
+                /** @var SchemaConfig $config */
+                $config = $context[SchemaConfigProvider::KEY];
+                $maxDepth = $config->get('max_query_depth');
+                $maxComplexity = $config->get('max_query_complexity');
+                if ($maxDepth) {
+                    $validationRules[QueryDepth::class] = new QueryDepth($maxDepth);
+                }
+                if ($maxComplexity) {
+                    $validationRules[QueryComplexity::class] = new QueryComplexity($maxComplexity);
+                }
+            }
+            return GraphQL::executeQuery($schema, $query, null, $context, $vars, null, null, $validationRules);
         };
 
         return $this->callMiddleware($schema, $query, $context, $vars ?? [], $last);
     }
 
+    /**
+     * Validate a query before parsing it in case there are issues we can catch early.
+     */
+    public function validateQueryBeforeParsing(string $query, array $context): void
+    {
+        if (!isset($context[SchemaConfigProvider::KEY])) {
+            return;
+        }
+
+        /** @var SchemaConfig $config */
+        $config = $context[SchemaConfigProvider::KEY];
+        $maxNodes = $config->get('max_query_nodes');
+        if (!$maxNodes) {
+            return;
+        }
+
+        $lexer = new Lexer(new Source($query));
+        $numNodes = 0;
+
+        // Check how many nodes there are in this query
+        do {
+            $next = $lexer->advance();
+            if ($next->kind === Token::NAME) {
+                $numNodes++;
+            }
+        } while ($next->kind !== Token::EOF && $numNodes <= $maxNodes);
+
+        // Throw a UserError if there are too many nodes
+        if ($numNodes > $maxNodes) {
+            throw new UserError("GraphQL query body must not be longer than $maxNodes nodes.");
+        }
+    }
 
     /**
      * get query from persisted id, return null if not found
