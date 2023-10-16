@@ -1,0 +1,5 @@
+# this just makes it easier to craft the recursive query programatically
+modelConfig:
+  DataObject:
+    nested_query_plugins:
+      paginateList: true

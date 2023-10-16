@@ -10,6 +10,8 @@ SilverStripe\GraphQL\Schema\Schema:
           valueParser: 'SilverStripe\GraphQL\Schema\Resolver\JSONResolver::parseValue'
           literalParser: 'SilverStripe\GraphQL\Schema\Resolver\JSONResolver::parseLiteral'
       config:
+        max_query_depth: 15
+        max_query_nodes: 500
         resolverStrategy: 'SilverStripe\GraphQL\Schema\Resolver\DefaultResolverStrategy::getResolverMethod'
         defaultResolver: 'SilverStripe\GraphQL\Schema\Resolver\DefaultResolver::defaultFieldResolver'
         modelCreators:

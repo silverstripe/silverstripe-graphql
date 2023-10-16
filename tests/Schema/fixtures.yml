@@ -3,6 +3,7 @@ SilverStripe\Security\Member:
     FirstName: Author1
   author2:
     FirstName: Author2
+
 SilverStripe\GraphQL\Tests\Fake\FakeProductPage:
   productPage1:
     Title: This is product page one
