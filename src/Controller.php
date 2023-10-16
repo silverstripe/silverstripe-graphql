@@ -31,6 +31,7 @@ use SilverStripe\Security\Permission;
 use SilverStripe\Versioned\Versioned;
 use BadMethodCallException;
 use SilverStripe\Dev\Backtrace;
+use SilverStripe\Core\ClassInfo;
 
 /**
  * Top level controller for handling graphql requests.
@@ -113,8 +114,11 @@ class Controller extends BaseController
             }
             $handler = $this->getQueryHandler();
             $this->applyContext($handler);
-            $queryDocument = Parser::parse(new Source($query));
             $ctx = $handler->getContext();
+            if (ClassInfo::hasMethod($handler, 'validateQueryBeforeParsing')) {
+                $handler->validateQueryBeforeParsing($query, $ctx);
+            }
+            $queryDocument = Parser::parse(new Source($query));
             $result = $handler->query($graphqlSchema, $query, $variables);
 
             // Fire an eventYou
