@@ -8,14 +8,16 @@ use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\DebugView;
+use SilverStripe\Dev\DevelopmentAdmin as RootDevelopmentAdmin;
 use SilverStripe\Security\Permission;
+use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Security\Security;
 use Exception;
 use Psr\Log\LoggerInterface;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\Logger;
 
-class DevelopmentAdmin extends Controller
+class DevelopmentAdmin extends Controller implements PermissionProvider
 {
     private static $allowed_actions = [
         'runRegisteredController'
@@ -30,21 +32,12 @@ class DevelopmentAdmin extends Controller
     {
         parent::init();
 
-        if (DevelopmentAdmin::config()->get('deny_non_cli') && !Director::is_cli()) {
+        if (RootDevelopmentAdmin::config()->get('deny_non_cli') && !Director::is_cli()) {
             return $this->httpError(404);
         }
-        // We allow access to this controller regardless of live-status or ADMIN permission only
-        // if on CLI.  Access to this controller is always allowed in "dev-mode", or of the user is ADMIN.
-        $allowAllCLI = DevelopmentAdmin::config()->get('allow_all_cli');
-        $canAccess = (
-            Director::isDev()
-            || (Director::is_cli() && $allowAllCLI)
-            // Its important that we don't run this check if dev/build was requested
-            || Permission::check("ADMIN")
-        );
-        if (!$canAccess) {
+
+        if (!$this->canInit()) {
             Security::permissionFailure($this);
-            return;
         }
 
         // Define custom logger
@@ -102,6 +95,29 @@ class DevelopmentAdmin extends Controller
         } else {
             $this->httpError(404, $msg);
         }
+    }
+
+    public function canInit(): bool
+    {
+        return (
+            Director::isDev()
+            // We need to ensure that DevelopmentAdminTest can simulate permission failures when running
+            // "dev/tasks" from CLI.
+            || (Director::is_cli() && RootDevelopmentAdmin::config()->get('allow_all_cli'))
+            || Permission::check(['ADMIN', 'ALL_DEV_ADMIN', 'CAN_DEV_GRAPHQL'])
+        );
+    }
+
+    public function providePermissions(): array
+    {
+        return [
+            'CAN_DEV_GRAPHQL' => [
+                'name' => _t(__CLASS__ . '.CAN_DEV_GRAPHQL_DESCRIPTION', 'Can view and execute /dev/graphql'),
+                'help' => _t(__CLASS__ . '.CAN_DEV_GRAPHQL_HELP', 'Can view and execute GraphQL development tools (/dev/graphql).'),
+                'category' => RootDevelopmentAdmin::permissionsCategory(),
+                'sort' => 80
+            ],
+        ];
     }
 
     /**
