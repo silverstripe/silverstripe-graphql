@@ -21,10 +21,7 @@ class Handler
      * @config
      * @var array
      *
-     * @internal Experimental config:
-     * @todo Move this to a per-schema configuration and refer to this schema from the current endpoint
-     * @link https://github.com/silverstripe/silverstripe-graphql/issues/58
-     * @link https://github.com/silverstripe/silverstripe-graphql/issues/52
+     * @internal Experimental config
      */
     private static $authenticators = [
         [
