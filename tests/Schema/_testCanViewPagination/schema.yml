@@ -1,0 +1,8 @@
+models:
+  SilverStripe\GraphQL\Tests\Fake\FakeDataObjectWithCanView:
+    fields: '*'
+    operations:
+      read:
+        plugins:
+          paginateList: true
+          canView: true
