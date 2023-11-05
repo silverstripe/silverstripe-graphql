@@ -65,8 +65,6 @@ class InterfaceBuilder
         )
             ->setTypeResolver([AbstractTypeResolver::class, 'resolveType']);
 
-        // TODO: this makes a really good case for
-        // https://github.com/silverstripe/silverstripe-graphql/issues/364
         $validPlugins = [];
         foreach ($modelType->getPlugins() as $name => $config) {
             $plugin = $modelType->getPluginRegistry()->getPluginByID($name);

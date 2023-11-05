@@ -111,8 +111,6 @@ class QueryCachingMiddleware implements QueryMiddleware, Flushable
 
         // On cache success validate against cached classes
         foreach ($cached['classes'] as $class) {
-            // Note: Could combine these clases into a UNION to cut down on extravagant queries
-            // Todo: We can get last-deleted/modified as well for versioned records
             $lastEditedDate = DataObject::get($class)->max('LastEdited');
             if (strtotime($lastEditedDate ?? '') > strtotime($cached['date'] ?? '')) {
                 // class modified, fail validation of cache
