@@ -102,6 +102,9 @@ class QuerySort extends AbstractQuerySortPlugin
             }
             $filterArgs = $args[$fieldName] ?? [];
             $paths = NestedInputBuilder::buildPathsFromArgs($filterArgs);
+            if (empty($paths)) {
+                return $list;
+            }
             $schemaContext = SchemaConfigProvider::get($context);
             if (!$schemaContext) {
                 throw new Exception(sprintf(
@@ -111,6 +114,7 @@ class QuerySort extends AbstractQuerySortPlugin
                 ));
             }
 
+            $normalisedPaths = [];
             foreach ($paths as $path => $value) {
                 $normalised = $schemaContext->mapPath($rootType, $path);
                 Schema::invariant(
@@ -120,10 +124,11 @@ class QuerySort extends AbstractQuerySortPlugin
                     $path,
                     $rootType
                 );
-                $list = $list->sort($normalised, $value);
+
+                $normalisedPaths[$normalised] = $value;
             }
 
-            return $list;
+            return $list->sort($normalisedPaths);
         };
     }
 
