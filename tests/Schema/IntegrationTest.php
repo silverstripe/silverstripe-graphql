@@ -42,6 +42,7 @@ use GraphQL\Validator\Rules\CustomValidationRule;
 use GraphQL\Validator\Rules\QueryComplexity;
 use GraphQL\Validator\Rules\QueryDepth;
 use GraphQL\Validator\ValidationContext;
+use LogicException;
 use ReflectionProperty;
 
 class IntegrationTest extends SapphireTest
@@ -415,7 +416,88 @@ GRAPHQL;
         $this->assertMissingField($result, 'title');
     }
 
-    public function testFilterAndSort()
+    public function provideFilterAndSort(): array
+    {
+        return [
+            [
+                'query' => <<<GRAPHQL
+                query {
+                  readOneDataObjectFake(filter: { id: { eq: _ID_PLACEHOLDER_ } }) {
+                    id
+                  }
+                }
+                GRAPHQL,
+                'testAgainst' => 'id',
+                'placeholderRecord' => 'fake1',
+                'expected' => 'fake1',
+            ],
+            [
+                'query' => <<<GRAPHQL
+                query {
+                  readOneDataObjectFake(filter: { id: { ne: _ID_PLACEHOLDER_ } }) {
+                    id
+                  }
+                }
+                GRAPHQL,
+                'testAgainst' => 'id',
+                'placeholderRecord' => 'fake1',
+                'expected' => 'fake2',
+            ],
+            [
+                'query' => <<<GRAPHQL
+                query {
+                  readOneDataObjectFake(sort: { myField: ASC }) {
+                    myField
+                  }
+                }
+                GRAPHQL,
+                'testAgainst' => 'myField',
+                'placeholderRecord' => '',
+                'expected' => 'test1',
+            ],
+            [
+                'query' => <<<GRAPHQL
+                query {
+                  readOneDataObjectFake(sort: { AuthorID: DESC, myField: ASC }) {
+                    myField
+                  }
+                }
+                GRAPHQL,
+                'testAgainst' => 'myField',
+                'placeholderRecord' => '',
+                'expected' => 'test2',
+            ],
+            [
+                'query' => <<<GRAPHQL
+                query {
+                  readOneDataObjectFake(sort: { myField: DESC }) {
+                    myField
+                  }
+                }
+                GRAPHQL,
+                'testAgainst' => 'myField',
+                'placeholderRecord' => '',
+                'expected' => 'test3',
+            ],
+            [
+                'query' => <<<GRAPHQL
+                query {
+                  readOneDataObjectFake(sort: { myField: DESC }, filter: { id: { ne: _ID_PLACEHOLDER_ } }) {
+                    myField
+                  }
+                }
+                GRAPHQL,
+                'testAgainst' => 'myField',
+                'placeholderRecord' => 'fake3',
+                'expected' => 'test2',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider provideFilterAndSort
+     */
+    public function testFilterAndSort(string $query, string $testAgainst, string $placeholderRecord, string $expected): void
     {
         $dir = '_' . __FUNCTION__;
 
@@ -447,103 +529,43 @@ GRAPHQL;
         $id2 = $dataObject2->ID;
         $id3 = $dataObject3->ID;
 
+        if ($testAgainst === 'id') {
+            switch ($expected) {
+                case 'fake1':
+                    $expected = $id1;
+                    break;
+                case 'fake2':
+                    $expected = $id2;
+                    break;
+                case 'fake3':
+                    $expected = $id3;
+                    break;
+                default:
+                    throw new LogicException("No ID known for '$expected'");
+            }
+        }
+
+        $placeholderID = null;
+        switch ($placeholderRecord) {
+            case 'fake1':
+                $placeholderID = $id1;
+                break;
+            case 'fake2':
+                $placeholderID = $id2;
+                break;
+            case 'fake3':
+                $placeholderID = $id3;
+                break;
+        }
+        if ($placeholderID) {
+            $query = str_replace('_ID_PLACEHOLDER_', (string) $placeholderID, $query);
+        }
+
         $schema = $this->createSchema(new TestSchemaBuilder([$dir]));
 
-        $query = <<<GRAPHQL
-query {
-  readOneDataObjectFake(filter: { id: { eq: $id1 } }) {
-    id
-  }
-}
-GRAPHQL;
         $result = $this->querySchema($schema, $query);
         $this->assertSuccess($result);
-        $this->assertResult('readOneDataObjectFake.id', $id1, $result);
-
-        $query = <<<GRAPHQL
-query {
-  readOneDataObjectFake(filter: { id: { ne: $id1 } }) {
-    id
-  }
-}
-GRAPHQL;
-        $result = $this->querySchema($schema, $query);
-        $this->assertSuccess($result);
-        $this->assertResult('readOneDataObjectFake.id', $id2, $result);
-
-        $query = <<<GRAPHQL
-query {
-  readOneDataObjectFake(sort: { myField: ASC }) {
-    myField
-  }
-}
-GRAPHQL;
-        $result = $this->querySchema($schema, $query);
-        $this->assertSuccess($result);
-        $this->assertResult('readOneDataObjectFake.myField', 'test1', $result);
-
-        $query = <<<GRAPHQL
-query {
-  readOneDataObjectFake(sort: { AuthorID: DESC , myField: ASC }) {
-    myField
-  }
-}
-GRAPHQL;
-        $result = $this->querySchema($schema, $query);
-        $this->assertSuccess($result);
-        $this->assertResult('readOneDataObjectFake.myField', 'test2', $result);
-
-        $query = <<<GRAPHQL
-query {
-  readOneDataObjectFake(sort: { myField: DESC }) {
-    myField
-  }
-}
-GRAPHQL;
-        $result = $this->querySchema($schema, $query);
-        $this->assertSuccess($result);
-        $this->assertResult('readOneDataObjectFake.myField', 'test3', $result);
-
-        $query = <<<GRAPHQL
-query {
-  readOneDataObjectFake(sort: { myField: DESC }, filter: { id: { ne: $id3 } }) {
-    myField
-  }
-}
-GRAPHQL;
-        $result = $this->querySchema($schema, $query);
-        $this->assertSuccess($result);
-        $this->assertResult('readOneDataObjectFake.myField', 'test2', $result);
-
-        $query = <<<GRAPHQL
-query {
-  readOneDataObjectFake(filter: { author: { firstName: { eq: "tester1" } } }) {
-    id
-    author {
-      firstName
-    }
-  }
-}
-GRAPHQL;
-        $result = $this->querySchema($schema, $query);
-        // Nested fields aren't working. Needs refactoring.
-//        $this->assertSuccess($result);
-//        $this->assertResult('readOneDataObjectFake.author.firstName', 'tester1', $result);
-
-        $query = <<<GRAPHQL
-query {
-  readOneDataObjectFake(filter: { author: { firstName: { eq: "tester2" } } }) {
-    id
-    author {
-      firstName
-    }
-  }
-}
-GRAPHQL;
-        $result = $this->querySchema($schema, $query);
-
-//        $this->assertSuccess($result);
-//        $this->assertNull($result['data']['readOneDataObjectFake']);
+        $this->assertResult("readOneDataObjectFake.{$testAgainst}", $expected, $result);
     }
 
 
