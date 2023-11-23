@@ -18,6 +18,7 @@ use SilverStripe\ORM\DataObject;
 use Closure;
 use SilverStripe\ORM\Sortable;
 use Exception;
+use GraphQL\Type\Definition\ResolveInfo;
 
 /**
  * Adds a sort parameter to a DataObject query
@@ -87,7 +88,6 @@ class QuerySort extends AbstractQuerySortPlugin
         return $filters;
     }
 
-
     /**
      * @param array $context
      * @return Closure
@@ -96,12 +96,21 @@ class QuerySort extends AbstractQuerySortPlugin
     {
         $fieldName = $context['fieldName'];
         $rootType = $context['rootType'];
-        return function (?Sortable $list, array $args, array $context) use ($fieldName, $rootType) {
+        return function (?Sortable $list, array $args, array $context, ResolveInfo $info) use ($fieldName, $rootType) {
             if ($list === null) {
                 return null;
             }
-            $filterArgs = $args[$fieldName] ?? [];
-            $paths = NestedInputBuilder::buildPathsFromArgs($filterArgs);
+
+            if (!isset($args[$fieldName])) {
+                return $list;
+            }
+
+            $sortArgs = static::getSortArgs($info, $args, $rootType, $fieldName);
+            $paths = NestedInputBuilder::buildPathsFromArgs($sortArgs);
+            if (empty($paths)) {
+                return $list;
+            }
+
             $schemaContext = SchemaConfigProvider::get($context);
             if (!$schemaContext) {
                 throw new Exception(sprintf(
@@ -111,6 +120,7 @@ class QuerySort extends AbstractQuerySortPlugin
                 ));
             }
 
+            $normalisedPaths = [];
             foreach ($paths as $path => $value) {
                 $normalised = $schemaContext->mapPath($rootType, $path);
                 Schema::invariant(
@@ -120,11 +130,62 @@ class QuerySort extends AbstractQuerySortPlugin
                     $path,
                     $rootType
                 );
-                $list = $list->sort($normalised, $value);
+
+                $normalisedPaths[$normalised] = $value;
             }
 
-            return $list;
+            return $list->sort($normalisedPaths);
         };
+    }
+
+    private static function getSortArgs(ResolveInfo $info, array $args, string $rootType, string $fieldName): array
+    {
+        $sortArgs = [];
+        $sortOrder = self::getSortOrder($info, $fieldName);
+
+        foreach ($sortOrder as $orderName) {
+            if (!isset($args[$fieldName][$orderName])) {
+                continue;
+            }
+            $sortArgs[$orderName] = $args[$fieldName][$orderName];
+            unset($args[$fieldName][$orderName]);
+        }
+
+        return array_merge($sortArgs, $args[$fieldName]);
+    }
+
+    /**
+     * Gets the original order of fields to be sorted based on the query args order.
+     *
+     * This is necessary because the underlying GraphQL implementation we're using ignores the
+     * order of query args, and uses the order that fields are defined in the schema instead.
+     */
+    private static function getSortOrder(ResolveInfo $info, string $fieldName)
+    {
+        $relevantNode = $info->fieldDefinition->getName();
+
+        // Find the query field node that matches the schema
+        foreach ($info->fieldNodes as $node) {
+            if ($node->name->value !== $relevantNode) {
+                continue;
+            }
+
+            // Find the sort arg
+            foreach ($node->arguments as $arg) {
+                if ($arg->name->value !== $fieldName) {
+                    continue;
+                }
+
+                // Get the sort order from the query
+                $sortOrder = [];
+                foreach ($arg->value->fields as $field) {
+                    $sortOrder[] = $field->name->value;
+                }
+                return $sortOrder;
+            }
+        }
+
+        return [];
     }
 
     /**
