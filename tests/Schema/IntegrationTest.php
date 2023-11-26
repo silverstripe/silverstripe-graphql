@@ -685,6 +685,111 @@ GRAPHQL;
               }
             }
             GRAPHQL,
+            'expected' => [
+              ["myField" => "test2", "author" => ["firstName" => "tester2"]],
+              ["myField" => "test3", "author" => ["firstName" => "tester2"]],
+              ["myField" => "test1", "author" => ["firstName" => "tester1"]],
+            ],
+          ],
+          'read with sorter files title DESC' => [
+            'fixture' => '_SortPlugin',
+            'query' => <<<GRAPHQL
+            query {
+              readDataObjectFakes(sort: { myField: ASC }) {
+                nodes {
+                  myField
+                  files(sort: { title: DESC }) {
+                    title
+                  }
+                }
+              }
+            }
+            GRAPHQL,
+            'expected' => [
+              ["myField" => "test1", "files" => [["title" => "file4"], ["title" => "file3"], ["title" => "file2"], ["title" => "file1"]]],
+              ["myField" => "test2", "files" => []],
+              ["myField" => "test3", "files" => []],
+            ],
+          ],
+          'read with sorter files ParentID ACS, name DESC' => [
+            'fixture' => '_SortPlugin',
+            'query' => <<<GRAPHQL
+            query {
+              readDataObjectFakes(sort: { myField: ASC }) {
+                nodes {
+                  myField
+                  files(sort: { ParentID: ASC, name: DESC }) {
+                    title
+                  }
+                }
+              }
+            }
+            GRAPHQL,
+            'expected' => [
+              ["myField" => "test1", "files" => [["title" => "file2"],["title" => "file1"], ["title" => "file4"],["title" => "file3"]]],
+              ["myField" => "test2", "files" => []],
+              ["myField" => "test3", "files" => []],
+            ],
+          ],
+          'read with sorter files ParentID DESC, name ASC' => [
+            'fixture' => '_SortPlugin',
+            'query' => <<<GRAPHQL
+            query {
+              readDataObjectFakes(sort: { myField: ASC }) {
+                nodes {
+                  myField
+                  files(sort: { ParentID: DESC, name: ASC }) {
+                    title
+                  }
+                }
+              }
+            }
+            GRAPHQL,
+            'expected' => [
+              ["myField" => "test1", "files" => [["title" => "file3"],["title" => "file4"], ["title" => "file1"],["title" => "file2"]]],
+              ["myField" => "test2", "files" => []],
+              ["myField" => "test3", "files" => []],
+            ],
+          ],
+          'read with sorter files name ASC, ParentID DESC' => [
+            'fixture' => '_SortPlugin',
+            'query' => <<<GRAPHQL
+            query {
+              readDataObjectFakes(sort: { myField: ASC }) {
+                nodes {
+                  myField
+                  files(sort: { name: ASC, ParentID: DESC }) {
+                    title
+                  }
+                }
+              }
+            }
+            GRAPHQL,
+            'expected' => [
+              ["myField" => "test1", "files" => [["title" => "file3"],["title" => "file1"], ["title" => "file4"],["title" => "file2"]]],
+              ["myField" => "test2", "files" => []],
+              ["myField" => "test3", "files" => []],
+            ],
+          ],
+          'read with sorter files name DESC, ParentID ASC' => [
+            'fixture' => '_SortPlugin',
+            'query' => <<<GRAPHQL
+            query {
+              readDataObjectFakes(sort: { myField: ASC }) {
+                nodes {
+                  myField
+                  files(sort: { name: DESC, ParentID: ASC }) {
+                    title
+                  }
+                }
+              }
+            }
+            GRAPHQL,
+            'expected' => [
+              ["myField" => "test1", "files" => [["title" => "file2"],[ "title" => "file4"],["title" => "file1"],["title" => "file3"]]],
+              ["myField" => "test2", "files" => []],
+              ["myField" => "test3", "files" => []],
+            ],
           ],
         ];
     }
@@ -692,7 +797,7 @@ GRAPHQL;
     /**
      * @dataProvider provideFilterAndSortOnlyRead
      */
-    public function testFilterAndSortOnlyRead($fixture, $query)
+    public function testFilterAndSortOnlyRead(string $fixture, string $query, array $expected)
     {
         $author = Member::create(['FirstName' => 'tester1']);
         $author->write();
@@ -709,6 +814,26 @@ GRAPHQL;
         $dataObject3 = DataObjectFake::create(['MyField' => 'test3', 'AuthorID' => $author2->ID]);
         $dataObject3->write();
 
+        $file1 = File::create(['Title' => 'file1', 'Name' => 'asc_name']);
+        $file1->ParentID = 1;
+        $file1->write();
+
+        $file2 = File::create(['Title' => 'file2', 'Name' => 'desc_name']);
+        $file2->ParentID = 1;
+        $file2->write();
+
+        $file3 = File::create(['Title' => 'file3', 'Name' => 'asc_name']);
+        $file3->ParentID = 2;
+        $file3->write();
+
+        $file4 = File::create(['Title' => 'file4', 'Name' => 'desc_name']);
+        $file4->ParentID = 2;
+        $file4->write();
+
+        $dataObject1->Files()->add($file1);
+        $dataObject1->Files()->add($file2);
+        $dataObject1->Files()->add($file3);
+        $dataObject1->Files()->add($file4);
 
         $factory = new TestSchemaBuilder(['_' . __FUNCTION__ . $fixture]);
         $schema = $this->createSchema($factory);
@@ -716,11 +841,7 @@ GRAPHQL;
         $result = $this->querySchema($schema, $query);
         $this->assertSuccess($result);
         $records = $result['data']['readDataObjectFakes']['nodes'] ?? [];
-        $this->assertResults([
-              ["myField" => "test2", "author" => ["firstName" => "tester2"]],
-              ["myField" => "test3", "author" => ["firstName" => "tester2"]],
-              ["myField" => "test1", "author" => ["firstName" => "tester1"]],
-        ], $records);
+        $this->assertResults($expected, $records);
     }
 
     public function testAggregateProperties()
