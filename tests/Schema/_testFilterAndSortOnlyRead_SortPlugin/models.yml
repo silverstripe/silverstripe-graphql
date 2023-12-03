@@ -1,0 +1,22 @@
+SilverStripe\GraphQL\Tests\Fake\DataObjectFake:
+  operations:
+    read:
+      plugins:
+        sort:
+          before: paginateList
+  fields:
+    myField: true
+    AuthorID: true
+    author:
+      fields:
+        firstName: true
+    files:
+      fields:
+        title: true
+      plugins:
+        sorter:
+          fields:
+            id: true
+            title: true
+            name: true
+            ParentID: true

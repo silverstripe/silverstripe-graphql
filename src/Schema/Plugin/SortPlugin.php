@@ -14,14 +14,17 @@ use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Resolver\ResolverReference;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Services\NestedInputBuilder;
+use SilverStripe\GraphQL\Schema\Traits\SortTrait;
 use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\ORM\Sortable;
 use Closure;
+use GraphQL\Type\Definition\ResolveInfo;
 
 class SortPlugin implements FieldPlugin, SchemaUpdater
 {
     use Configurable;
     use Injectable;
+    use SortTrait;
 
     const IDENTIFIER = 'sorter';
 
@@ -86,11 +89,16 @@ class SortPlugin implements FieldPlugin, SchemaUpdater
     public static function sort(array $context): Closure
     {
         $fieldName = $context['fieldName'];
-        return function (?Sortable $list, array $args) use ($fieldName) {
+        return function (?Sortable $list, array $args, array $context, ResolveInfo $info) use ($fieldName) {
             if ($list === null) {
                 return null;
             }
-            $sortArgs = $args[$fieldName] ?? [];
+
+            if (!isset($args[$fieldName])) {
+                return $list;
+            }
+
+            $sortArgs = self::getSortArgs($info, $args, $fieldName);
             $list = $list->sort($sortArgs);
 
             return $list;
