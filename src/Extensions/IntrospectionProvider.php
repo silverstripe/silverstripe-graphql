@@ -26,8 +26,9 @@ class IntrospectionProvider extends Extension
         try {
             $manager = $this->owner->getManager();
         } catch (Exception $ex) {
-            if ($ex->getMessage() == "Authentication required") {
-                return (new HTTPResponse(json_encode(["error" => "Authentication required"]), 401))
+            $message = $ex->getMessage();
+            if ($message == "Authentication required" || $message == "Not authorised") {
+                return (new HTTPResponse(json_encode(["error" => $message]), 401))
                     ->addHeader('Content-Type', 'application/json');
             }
             throw $ex;
