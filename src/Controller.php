@@ -354,7 +354,6 @@ class Controller extends BaseController
             $query = isset($data['query']) ? $data['query'] : null;
             $variables = isset($data['variables']) ? (array)$data['variables'] : null;
         } else {
-            /** @var RequestProcessor $persistedProcessor  */
             $persistedProcessor = Injector::inst()->get(RequestProcessor::class);
             list($query, $variables) = $persistedProcessor->getRequestQueryVariables($request);
         }

@@ -8,7 +8,11 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Dev\Benchmark;
+use SilverStripe\TestSession\TestSessionEnvironment;
 
+/**
+ * @extends Extension<TestSessionEnvironment>
+ */
 class TestSessionEnvironmentExtension extends Extension
 {
     /**

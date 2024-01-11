@@ -26,7 +26,6 @@ class RequestIDProcessor implements RequestProcessor
             if ($query) {
                 throw new LogicException('Cannot pass a query when an ID has been specified.');
             }
-            /** @var PersistedQueryMappingProvider $provider */
             $provider = Injector::inst()->get(PersistedQueryMappingProvider::class);
 
             $query = $provider->getByID($id);

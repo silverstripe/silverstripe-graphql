@@ -11,6 +11,8 @@ use SilverStripe\ORM\Queries\SQLSelect;
 /**
  * Attaches itself to {@see DataQuery} and records any classes that are queried within a closure context.
  * Allows code to measure and detect affected classes within any operation. E.g. for caching.
+ *
+ * @extends DataExtension<DataObject>
  */
 class QueryRecorderExtension extends DataExtension
 {

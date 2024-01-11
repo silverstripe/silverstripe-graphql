@@ -8,8 +8,12 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Dev\Build;
 use SilverStripe\GraphQL\Schema\Logger;
+use SilverStripe\ORM\DatabaseAdmin;
 use SilverStripe\ORM\DataExtension;
 
+/**
+ * @extends DataExtension<DatabaseAdmin>
+ */
 class DevBuildExtension extends DataExtension
 {
     use Configurable;

@@ -82,7 +82,6 @@ class DeleteCreator implements OperationCreator
                 }
 
                 // Before deleting, check if any items fail canDelete()
-                /** @var DataObject[] $resultsList */
                 $resultsList = $results->toArray();
                 foreach ($resultsList as $obj) {
                     $member = UserContextProvider::get($context);
