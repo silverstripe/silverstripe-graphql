@@ -170,7 +170,6 @@ class QueryHandler implements
      */
     public function getQueryFromPersistedID(string $id): ?string
     {
-        /** @var PersistedQueryMappingProvider $provider */
         $provider = Injector::inst()->get(PersistedQueryMappingProvider::class);
 
         return $provider->getByID($id);
@@ -291,7 +290,6 @@ class QueryHandler implements
         $next = $last;
         // Filter out any middlewares that are set to `false`, e.g. via config
         $middlewares = array_reverse(array_filter($this->getMiddlewares() ?? []));
-        /** @var QueryMiddleware $middleware */
         foreach ($middlewares as $middleware) {
             $next = function ($schema, $query, $context, $params) use ($middleware, $next) {
                 return $middleware->process($schema, $query, $context, $params, $next);
