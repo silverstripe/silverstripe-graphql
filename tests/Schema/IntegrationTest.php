@@ -24,6 +24,7 @@ use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStoreCreator;
 use SilverStripe\GraphQL\Schema\Storage\HashNameObfuscator;
 use SilverStripe\GraphQL\Schema\Storage\NameObfuscator;
 use SilverStripe\GraphQL\Tests\Fake\DataObjectFake;
+use SilverStripe\GraphQL\Tests\Fake\FakeDataObjectWithCanView;
 use SilverStripe\GraphQL\Tests\Fake\FakePage;
 use SilverStripe\GraphQL\Tests\Fake\FakeProduct;
 use SilverStripe\GraphQL\Tests\Fake\FakeProductPage;
@@ -55,6 +56,7 @@ class IntegrationTest extends SapphireTest
         FakeProduct::class,
         FakeReview::class,
         Member::class,
+        FakeDataObjectWithCanView::class,
     ];
 
     protected function setUp(): void
@@ -70,6 +72,7 @@ class IntegrationTest extends SapphireTest
         DataObjectFake::get()->removeAll();
         File::get()->removeAll();
         Member::get()->removeAll();
+        FakeDataObjectWithCanView::get()->removeAll();
     }
 
     public function testSimpleType()
@@ -1006,6 +1009,43 @@ GRAPHQL;
             ['field1' => 'field1-9'],
             ['field1' => 'field1-10'],
         ], $records);
+    }
+
+    public function testCanViewPagination()
+    {
+        // FakeDataObjectWithCanView has a canView() check of `return $this->ID % 2` i.e. half the records are viewable
+        // This test will:
+        // - Create 20 records
+        // - Query 10 records
+        // - Assert that 5 records were returned
+        for ($i = 0; $i < 20; $i++) {
+            $obj = FakeDataObjectWithCanView::create(['Title' => "obj$i"]);
+            $obj->write();
+        }
+        $schema = $this->createSchema(new TestSchemaBuilder(['_' . __FUNCTION__]));
+        $query = <<<GRAPHQL
+            query {
+              readFakeDataObjectWithCanViews(limit: 10) {
+                nodes {
+                  id
+                  title
+                }
+                edges {
+                  node {
+                    id
+                    title
+                  }
+                }
+              }
+            }
+        GRAPHQL;
+        $result = $this->querySchema($schema, $query);
+        $this->assertSuccess($result);
+        $records = $result['data']['readFakeDataObjectWithCanViews']['nodes'];
+        $this->assertCount(5, $records);
+        $ids = array_map(fn($record) => $record['id'], $records);
+        $filteredIDs = array_filter($ids, fn($id) => $id % 2);
+        $this->assertSame(count($ids), count($filteredIDs));
     }
 
     /**

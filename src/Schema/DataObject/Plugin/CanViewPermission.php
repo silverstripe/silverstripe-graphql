@@ -13,6 +13,7 @@ use SilverStripe\ORM\Filterable;
 use InvalidArgumentException;
 use SilverStripe\ORM\SS_List;
 use SilverStripe\View\ArrayData;
+use SilverStripe\ORM\DataList;
 
 /**
  * A permission checking plugin for DataLists
@@ -83,19 +84,9 @@ class CanViewPermission extends AbstractCanViewPermission
     public static function paginatedPermissionCheck(array $obj, array $args, array $context, ResolveInfo $info): array
     {
         $list = $obj['nodes'];
-        $originalCount = count($list ?? []);
         $filteredList = static::permissionCheck($list, $args, $context, $info);
-        $newCount = $filteredList->count();
-        if ($originalCount === $newCount) {
-            return $obj;
-        }
         $obj['nodes'] = $filteredList;
-        $edges = [];
-        foreach ($filteredList as $record) {
-            $edges[] = ['node' => $record];
-        }
-        $obj['edges'] = $edges;
-
+        $obj['edges'] = $filteredList;
         return $obj;
     }
 
@@ -123,6 +114,20 @@ class CanViewPermission extends AbstractCanViewPermission
      */
     public static function listPermissionCheck(Filterable $obj, array $args, array $context, ResolveInfo $info): Filterable
     {
+        // Use an ArrayList rather than a DataList to ensure items returns all have had a canView() check run on them.
+        // Converting to an ArrayList will run a query and mean we start with a fixed number of items before
+        // running the canView() check on them e.g. 10 results. from there we remove items that fail a canView() check.
+        // This means the paginated results may only return say 6 out of 10 results. This is consistent with
+        // Silverstripe pagination and canView() checks.
+        // If we don't convert run the query immediately by converting to an ArrayList, then the resulting SQL will
+        // be SELECT ... WHERE "ID" NOT IN (1,2,...) ... LIMIT 10, which will result in 10 results
+        // however there will be 4 additional results that have NOT had a canView() check run on them
+        if ($obj instanceof DataList) {
+            $new = ArrayList::create();
+            $new->merge($obj);
+            $obj = $new;
+        }
+
         $member = UserContextProvider::get($context);
         $excludes = [];
 
