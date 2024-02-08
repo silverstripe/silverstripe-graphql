@@ -2,6 +2,7 @@
 
 namespace SilverStripe\GraphQL\Schema\Traits;
 
+use GraphQL\Language\AST\ObjectValueNode;
 use GraphQL\Type\Definition\ResolveInfo;
 
 trait SortTrait
@@ -41,6 +42,12 @@ trait SortTrait
             // Find the sort arg
             foreach ($node->arguments as $arg) {
                 if ($arg->name->value !== $fieldName) {
+                    continue;
+                }
+
+                // If the sort has been passed as a variable, we can't attempt to fix it
+                // See https://github.com/silverstripe/silverstripe-graphql/issues/573
+                if (!$arg->value instanceof ObjectValueNode) {
                     continue;
                 }
 
