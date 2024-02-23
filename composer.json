@@ -8,7 +8,7 @@
         "silverstripe/framework": "^6",
         "silverstripe/vendor-plugin": "^2",
         "webonyx/graphql-php": "^15.0.1",
-        "silverstripe/event-dispatcher": "^1",
+        "silverstripe/event-dispatcher": "^2",
         "guzzlehttp/guzzle": "^7.5.0",
         "guzzlehttp/psr7": "^2.4.1",
         "m1/env": "^2.2.0"
