@@ -11,15 +11,15 @@ jobs:
     uses: silverstripe/gha-ci/.github/workflows/ci.yml@v1
     with:
       extra_jobs: |
-        - php: 8.1
+        - php: 8.3
           endtoend: true
           endtoend_suite: asset-admin
           endtoend_config: vendor/silverstripe/asset-admin/behat.yml
-        - php: 8.1
+        - php: 8.3
           endtoend: true
           endtoend_suite: versioned-admin
           endtoend_config: vendor/silverstripe/versioned-admin/behat.yml
-        - php: 8.1
+        - php: 8.3
           endtoend: true
           endtoend_suite: silverstripe-elemental
           endtoend_config: vendor/dnadesign/silverstripe-elemental/behat.yml
