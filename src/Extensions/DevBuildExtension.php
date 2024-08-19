@@ -23,7 +23,7 @@ class DevBuildExtension extends DataExtension
      */
     private static bool $enabled = true;
 
-    public function onAfterBuild(): void
+    protected function onAfterBuild(): void
     {
         if (!static::config()->get('enabled')) {
             return;
