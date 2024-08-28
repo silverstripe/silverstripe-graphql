@@ -17,7 +17,7 @@ to your environment file. The classnames and filenames in the generated code dir
 
 > [!WARNING]
 > Take care not to use `DEBUG_SCHEMA=1` as an inline environment variable to your build command, e.g.
-> `DEBUG_SCHEMA=1 vendor/bin/sake dev/graphql/build` because any activity that happens at run time, e.g. querying the schema
+> `DEBUG_SCHEMA=1 vendor/bin/sake graphql:build` because any activity that happens at run time, e.g. querying the schema
 > will fail, since the environment variable is no longer set.
 
 In live mode, full obfuscation kicks in and the filenames become unreadable. You can only determine the type they map

@@ -16,7 +16,7 @@ The schema is generated during a build step, which generates code generation art
 
 ![A high-level view of the GraphQL build process](_images/build_process.png)
 
-- **`/dev/graphql/build`**: This is the command that builds the schema. It also runs as a side effect of `dev/build` as a fallback. It accepts a `schema` parameter if you only want to build one schema.
+- **`sake graphql:build`**: This is the command that builds the schema. It also runs as a side effect of `sake db:build` as a fallback. It accepts a `schema` parameter if you only want to build one schema.
 
 - **Schema Factory**: This class is responsible for rebuilding a schema or fetching an existing one (i.e. as cached generated code)
 

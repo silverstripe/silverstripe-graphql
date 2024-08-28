@@ -2,12 +2,14 @@
 
 namespace SilverStripe\GraphQL\Extensions;
 
+use SilverStripe\Control\Director;
 use SilverStripe\Core\Extension;
 use SilverStripe\GraphQL\Schema\Logger;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Dev\Benchmark;
+use SilverStripe\PolyExecution\PolyOutput;
 use SilverStripe\TestSession\TestSessionEnvironment;
 
 /**
@@ -18,13 +20,18 @@ class TestSessionEnvironmentExtension extends Extension
     /**
      * Build the graphql schema after a new testsession is started
      * This is to ensure that the schema is available when a behat test is run, particularly on CI
-     * This does laregely the same thing as SilverStripe\GraphQL\Dev\Build::buildSchema(), though
+     * This does laregely the same thing as SilverStripe\GraphQL\Dev\SchemaBuild::buildSchema(), though
      * it also checks for the existance of persisted schemas first do that the schema is not rebuilt
      * after each behat scenario
      */
     protected function onAfterStartTestSession(): void
     {
+        $output = PolyOutput::create(
+            Director::is_cli() ? PolyOutput::FORMAT_ANSI : PolyOutput::FORMAT_HTML,
+            PolyOutput::VERBOSITY_QUIET
+        );
         $logger = Logger::singleton();
+        $logger->setOutput($output);
         $keys = array_keys(Schema::config()->get('schemas') ?? []);
         $keys = array_filter($keys ?? [], function ($key) {
             return $key !== Schema::ALL;

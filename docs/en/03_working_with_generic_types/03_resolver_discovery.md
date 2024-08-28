@@ -145,7 +145,7 @@ resolvers:
 
 Re-run the schema build, with a flush (because we created a new PHP class), and let's go!
 
-`vendor/bin/sake dev/graphql/build schema=default flush=1`
+`vendor/bin/sake graphql:build --schema=default flush=1`
 
 ### Field resolvers
 

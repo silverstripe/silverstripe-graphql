@@ -96,7 +96,7 @@ can handle the rest. It will return an array including `edges`, `nodes`, and `pa
 
 Rebuild the schema and test it out:
 
-`vendor/bin/sake dev/graphql/build schema=default`
+`vendor/bin/sake graphql:build --schema=default`
 
 ```graphql
 query {

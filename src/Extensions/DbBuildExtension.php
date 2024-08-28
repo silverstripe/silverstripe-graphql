@@ -5,17 +5,17 @@ namespace SilverStripe\GraphQL\Extensions;
 
 use Psr\Log\LoggerInterface;
 use SilverStripe\Core\Config\Configurable;
-use SilverStripe\Core\Injector\Injector;
-use SilverStripe\Dev\Deprecation;
-use SilverStripe\GraphQL\Dev\Build;
-use SilverStripe\GraphQL\Schema\Logger;
-use SilverStripe\ORM\DatabaseAdmin;
 use SilverStripe\Core\Extension;
+use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Dev\Command\DbBuild;
+use SilverStripe\PolyExecution\PolyOutput;
+use SilverStripe\GraphQL\Dev\SchemaBuild;
+use SilverStripe\GraphQL\Schema\Logger;
 
 /**
- * @extends Extension<DatabaseAdmin>
+ * @extends Extension<DbBuild>
  */
-class DevBuildExtension extends Extension
+class DbBuildExtension extends Extension
 {
     use Configurable;
 
@@ -24,19 +24,7 @@ class DevBuildExtension extends Extension
      */
     private static bool $enabled = true;
 
-    public function __construct()
-    {
-        parent::__construct();
-        Deprecation::withSuppressedNotice(function () {
-            Deprecation::notice(
-                '5.4.0',
-                'Will be replaced with SilverStripe\GraphQL\Extensions\DbBuildExtension',
-                Deprecation::SCOPE_CLASS
-            );
-        });
-    }
-
-    protected function onAfterBuild(): void
+    protected function onAfterBuild(PolyOutput $output): void
     {
         if (!static::config()->get('enabled')) {
             return;
@@ -48,10 +36,10 @@ class DevBuildExtension extends Extension
         try {
             // Define custom logger
             $logger = Logger::singleton();
-            $logger->setVerbosity(Logger::INFO);
+            $logger->setOutput($output);
             Injector::inst()->registerService($logger, LoggerInterface::class . '.graphql-build');
 
-            Build::singleton()->buildSchema();
+            SchemaBuild::singleton()->buildSchema();
         } finally {
             // Restore default logger back to its starting state
             Injector::inst()->registerService($defaultLogger, LoggerInterface::class . '.graphql-build');

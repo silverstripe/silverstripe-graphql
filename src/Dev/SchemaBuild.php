@@ -4,12 +4,10 @@
 namespace SilverStripe\GraphQL\Dev;
 
 use Psr\Log\LoggerInterface;
-use SilverStripe\Control\Controller;
-use SilverStripe\Control\Director;
-use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\Dev\DebugView;
-use SilverStripe\Dev\Deprecation;
+use SilverStripe\Dev\Command\DevCommand;
+use SilverStripe\Dev\DevelopmentAdmin;
+use SilverStripe\PolyExecution\PolyOutput;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -19,53 +17,44 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
 use SilverStripe\ORM\Connect\NullDatabaseException;
+use SilverStripe\Security\PermissionProvider;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 
-/**
- * @deprecated 5.3.0 Will be replaced with SilverStripe\GraphQL\Dev\SchemaBuild
- */
-class Build extends Controller
+class SchemaBuild extends DevCommand implements PermissionProvider
 {
-    private static $url_handlers = [
-        '' => 'build'
+    protected static string $commandName = 'graphql:build';
+
+    protected static string $description = 'Build the GraphQL schema(s)';
+
+    private static array $permissions_for_browser_execution = [
+        'CAN_DEV_GRAPHQL',
     ];
 
-    private static $allowed_actions = [
-        'build'
-    ];
-
-    public function __construct()
+    public function getTitle(): string
     {
-        parent::__construct();
-        Deprecation::withSuppressedNotice(function () {
-            Deprecation::notice(
-                '5.4.0',
-                'Will be replaced with SilverStripe\GraphQL\Dev\SchemaBuild',
-                Deprecation::SCOPE_CLASS
-            );
-        });
+        return 'GraphQL Schema Builder';
     }
 
-    /**
-     * @throws SchemaBuilderException
-     * @throws SchemaNotFoundException
-     */
-    public function build(HTTPRequest $request): void
+    protected function execute(InputInterface $input, PolyOutput $output): int
     {
-        $isBrowser = !Director::is_cli();
-        if ($isBrowser) {
-            $renderer = DebugView::create();
-            echo $renderer->renderHeader();
-            echo $renderer->renderInfo("GraphQL Schema Builder", Director::absoluteBaseURL());
-            echo "<div class=\"build\">";
+        $originalLogger = Injector::inst()->get(LoggerInterface::class . '.graphql-build');
+        try {
+            $logger = Logger::singleton();
+            $logger->setOutput($output);
+            Injector::inst()->registerService($logger, LoggerInterface::class . '.graphql-build');
+            $this->buildSchema($input->getOption('schema'), true, $output);
+        } finally {
+            // Restore default logger back to its starting state
+            Injector::inst()->registerService($originalLogger, LoggerInterface::class . '.graphql-build');
         }
-        $clear = true;
+        return Command::SUCCESS;
+    }
 
-        $this->buildSchema($request->getVar('schema'), $clear);
-
-        if ($isBrowser) {
-            echo "</div>";
-            echo $renderer->renderFooter();
-        }
+    protected function getHeading(): string
+    {
+        return '';
     }
 
     /**
@@ -113,15 +102,15 @@ class Build extends Controller
                         break;
                     }
                 }
-                $logger->warning("
-                    Your schema configuration requires access to the database. This can happen
+                $logger->warning(
+                    "Your schema configuration requires access to the database. This can happen
                     when you add fields that require type introspection (i.e. custom getters).
                     It is recommended that you specify an explicit type when adding custom getters
-                    to your schema.");
+                    to your schema."
+                );
                 if ($candidate) {
                     $logger->warning(sprintf(
-                        "
-                    This most likely happened when you tried to add the field '%s' to '%s'",
+                        "This most likely happened when you tried to add the field '%s' to '%s'",
                         $candidate['args'][1],
                         get_class($candidate['args'][0])
                     ));
@@ -130,9 +119,32 @@ class Build extends Controller
                 throw $e;
             }
 
-            $logger->info(
-                Benchmark::end('build-schema-' . $key, 'Built schema in %sms.')
-            );
+            $logger->info(Benchmark::end('build-schema-' . $key, 'Built schema in %sms.'));
         }
+    }
+
+    public function getOptions(): array
+    {
+        return [
+            new InputOption(
+                'schema',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'The name of the schema to be built. If not passed, all schemas will be built',
+                suggestedValues: array_keys(Schema::config()->get('schemas') ?? [])
+            )
+        ];
+    }
+
+    public function providePermissions(): array
+    {
+        return [
+            'CAN_DEV_GRAPHQL' => [
+                'name' => _t(__CLASS__ . '.CAN_DEV_GRAPHQL_DESCRIPTION', 'Can view and execute /dev/graphql'),
+                'help' => _t(__CLASS__ . '.CAN_DEV_GRAPHQL_HELP', 'Can view and execute GraphQL development tools (/dev/graphql).'),
+                'category' => DevelopmentAdmin::permissionsCategory(),
+                'sort' => 80
+            ],
+        ];
     }
 }

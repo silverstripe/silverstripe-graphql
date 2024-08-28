@@ -1,19 +1,10 @@
 ---
 Name: graphql-dev
 ---
-SilverStripe\ORM\DatabaseAdmin:
+SilverStripe\Dev\Command\DbBuild:
   extensions:
-    - SilverStripe\GraphQL\Extensions\DevBuildExtension
+    - SilverStripe\GraphQL\Extensions\DbBuildExtension
 
 SilverStripe\Dev\DevelopmentAdmin:
-  registered_controllers:
-    graphql:
-      controller: SilverStripe\GraphQL\Dev\DevelopmentAdmin
-      links:
-        graphql: 'List GraphQL development tools'
-SilverStripe\GraphQL\Dev\DevelopmentAdmin:
-  registered_controllers:
-    build:
-      controller: SilverStripe\GraphQL\Dev\Build
-      links:
-        build: Build the GraphQL schema
+  commands:
+    'graphql/build': 'SilverStripe\GraphQL\Dev\SchemaBuild'

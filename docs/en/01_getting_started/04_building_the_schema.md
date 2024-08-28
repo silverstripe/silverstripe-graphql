@@ -22,19 +22,19 @@ whenever the schema definition changes, or a new schema definition is added.
 
 ### What triggers a GraphQL code build?
 
-- Any time you run the `dev/graphql/build` command to explicitly build your GraphQL schemas.
-- Any time you run the `dev/build` command on your project.
+- Any time you run the `sake graphql:build` command to explicitly build your GraphQL schemas.
+- Any time you run the `sake db:build` command on your project.
 - `silverstripe/graphql` will attempt to generate your schema "on-demand" on the first GraphQL request *only* if it wasn’t already generated.
 
 > [!WARNING]
 > Relying on the "on-demand" schema generation on the first GraphQL request requires some additional consideration.
 > See [deploying the schema](06_deploying_the_schema.md#on-demand).
 
-#### Running `dev/graphql/build`
+#### Running `sake graphql:build`
 
-The main command for generating the schema code is `dev/graphql/build`.
+The main command for generating the schema code is `sake graphql:build`.
 
-`vendor/bin/sake dev/graphql/build`
+`vendor/bin/sake graphql:build`
 
 This command takes an optional `schema` parameter. If you only want to generate a specific schema
 (e.g. generate your custom schema, but not the CMS schema), you should pass in the name of the
@@ -43,7 +43,7 @@ schema you want to build.
 > [!NOTE]
 > If you do not provide a `schema` parameter, the command will build all schemas.
 
-`vendor/bin/sake dev/graphql/build schema=default`
+`vendor/bin/sake graphql:build --schema=default`
 
 > [!NOTE]
 > Most of the time, the name of your custom schema is `default`.
@@ -51,11 +51,11 @@ schema you want to build.
 Keep in mind that some of your changes will be in YAML in the `_config/` directory, which also
 requires a flush.
 
-`vendor/bin/sake dev/graphql/build schema=default flush=1`
+`vendor/bin/sake graphql:build --schema=default --flush`
 
-#### Building on dev/build
+#### Building with `sake db:build`
 
-By default, all schemas will be built during `dev/build`. To disable this, change the config:
+By default, all schemas will be built during `sake db:build`. To disable this, change the config:
 
 ```yml
 SilverStripe\GraphQL\Extensions\DevBuildExtension:
@@ -74,11 +74,11 @@ If the type hasn't changed, it doesn't get re-built. This reduces build times to
 
 #### Clearing the schema cache
 
-If you want to completely re-generate your schema from scratch, you can add `clear=1` to the `dev/graphql/build` command.
+If you want to completely re-generate your schema from scratch, you can add `--clear` to the `sake graphql:build` command.
 
-`vendor/bin/sake dev/graphql/build schema=default clear=1`
+`vendor/bin/sake graphql:build --schema=default --clear`
 
-If your schema is producing unexpected results, try using `clear=1` to eliminate the possibility
+If your schema is producing unexpected results, try using `--clear` to eliminate the possibility
 of a caching issue. If the issue is resolved, record exactly what you changed and [create an issue](https://github.com/silverstripe/silverstripe-graphql/issues/new).
 
 ### Build gotchas

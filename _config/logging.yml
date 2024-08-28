@@ -4,7 +4,7 @@ after: '#logging'
 ---
 
 SilverStripe\Core\Injector\Injector:
-  # Omits the HTTPOutputHandler from the logger so errors won't appear in output
+  # Omits the ErrorOutputHandler from the logger so errors won't appear in output
   Psr\Log\LoggerInterface.graphql-quiet:
     type: singleton
     class: Monolog\Logger

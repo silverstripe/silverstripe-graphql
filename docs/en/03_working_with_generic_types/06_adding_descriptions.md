@@ -10,7 +10,7 @@ summary: Add descriptions to just about anything in your schema to improve your 
 
 One of the great features of a schema-backed API is that it is self-documenting. If you use
 the [`silverstripe/graphql-devtools`](https://github.com/silverstripe/silverstripe-graphql-devtools)
-module you can see the documentation by navigating to /dev/graphql/ide in your browser anc clicking
+module you can see the documentation by navigating to `/dev/graphql/ide` in your browser anc clicking
 on "DOCS" on the right.
 
 Many API developers choose to maximise the benefit of this by adding descriptions to some or

@@ -67,7 +67,7 @@ queries:
 
 Now, we just have to build the schema:
 
-`vendor/bin/sake dev/graphql/build schema=default`
+`vendor/bin/sake graphql:build --schema=default`
 
 ### Testing the query
 

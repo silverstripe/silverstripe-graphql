@@ -1,11 +1,11 @@
 <?php
 
-
 namespace SilverStripe\GraphQL\Schema;
 
 use Psr\Log\LoggerInterface;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Injector\Injectable;
+use SilverStripe\PolyExecution\PolyOutput;
 use Stringable;
 
 class Logger implements LoggerInterface
@@ -32,6 +32,13 @@ class Logger implements LoggerInterface
     const EMERGENCY = 600;
 
     private int $level = Logger::INFO;
+
+    private ?PolyOutput $output = null;
+
+    public function setOutput(?PolyOutput $output): void
+    {
+        $this->output = $output;
+    }
 
     public function setVerbosity(int $level): Logger
     {
@@ -118,18 +125,45 @@ class Logger implements LoggerInterface
 
     public function output(string $msg, ?string $prefix = null, ?string $colour = null): void
     {
-        $cli = Director::is_cli();
-        $formatted = sprintf(
-            '%s%s%s%s',
-            $colour && $cli ? $colour :'',
-            $prefix ? '[' . $prefix . ']: ' : '',
-            $colour && $cli ? Logger::RESET : '',
-            $msg
-        );
-        if ($cli) {
-            fwrite(STDOUT, $formatted . PHP_EOL);
-        } else {
-            echo $formatted . "<br>";
+        $prefix = $prefix ? '[' . $prefix . ']: ' : '';
+        $this->output?->writeln($this->colouriseText($prefix, $colour) . $msg);
+        if (!$this->output) {
+            $cli = Director::is_cli();
+            $formatted = sprintf(
+                '%s%s%s%s',
+                $colour && $cli ? $colour :'',
+                $prefix,
+                $colour && $cli ? Logger::RESET : '',
+                $msg
+            );
+            if ($cli) {
+                fwrite(STDOUT, $formatted . PHP_EOL);
+            } else {
+                echo $formatted . "<br>";
+            }
         }
+    }
+
+    private function colouriseText(string $msg, ?string $colour): string
+    {
+        switch ($colour) {
+            case Logger::BLACK:
+                return "<fg=black>$msg</>";
+            case Logger::RED:
+                return "<fg=red>$msg</>";
+            case Logger::GREEN:
+                return "<fg=green>$msg</>";
+            case Logger::YELLOW:
+                return "<fg=yellow>$msg</>";
+            case Logger::BLUE:
+                return "<fg=blue>$msg</>";
+            case Logger::MAGENTA:
+                return "<fg=magenta>$msg</>";
+            case Logger::CYAN:
+                return "<fg=cyan>$msg</>";
+            case Logger::WHITE:
+                return "<fg=white;bg=black>$msg</>";
+        }
+        return $msg;
     }
 }
