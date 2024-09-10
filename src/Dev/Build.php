@@ -9,6 +9,7 @@ use SilverStripe\Control\Director;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\DebugView;
+use SilverStripe\Dev\Deprecation;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
@@ -19,6 +20,9 @@ use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
 use SilverStripe\ORM\Connect\NullDatabaseException;
 
+/**
+ * @deprecated 5.3.0 Will be replaced with SilverStripe\GraphQL\Dev\SchemaBuild
+ */
 class Build extends Controller
 {
     private static $url_handlers = [
@@ -28,6 +32,18 @@ class Build extends Controller
     private static $allowed_actions = [
         'build'
     ];
+
+    public function __construct()
+    {
+        parent::__construct();
+        Deprecation::withNoReplacement(function () {
+            Deprecation::notice(
+                '5.4.0',
+                'Will be replaced with SilverStripe\GraphQL\Dev\SchemaBuild',
+                Deprecation::SCOPE_CLASS
+            );
+        });
+    }
 
     /**
      * @throws SchemaBuilderException

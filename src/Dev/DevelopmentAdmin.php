@@ -15,8 +15,12 @@ use SilverStripe\Security\Security;
 use Exception;
 use Psr\Log\LoggerInterface;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Dev\Deprecation;
 use SilverStripe\GraphQL\Schema\Logger;
 
+/**
+ * @deprecated 5.3.0 Will be removed without equivalent functionality to replace it
+ */
 class DevelopmentAdmin extends Controller implements PermissionProvider
 {
     private static $allowed_actions = [
@@ -33,6 +37,18 @@ class DevelopmentAdmin extends Controller implements PermissionProvider
         'ALL_DEV_ADMIN',
         'CAN_DEV_GRAPHQL',
     ];
+
+    public function __construct()
+    {
+        parent::__construct();
+        Deprecation::withNoReplacement(function () {
+            Deprecation::notice(
+                '5.4.0',
+                'Will be removed without equivalent functionality to replace it',
+                Deprecation::SCOPE_CLASS
+            );
+        });
+    }
 
     protected function init()
     {
