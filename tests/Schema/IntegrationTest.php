@@ -43,7 +43,7 @@ use GraphQL\Validator\Rules\CustomValidationRule;
 use GraphQL\Validator\Rules\QueryComplexity;
 use GraphQL\Validator\Rules\QueryDepth;
 use GraphQL\Validator\ValidationContext;
-use ReflectionProperty;
+use ReflectionClass;
 
 class IntegrationTest extends SapphireTest
 {
@@ -1688,11 +1688,10 @@ GRAPHQL;
 
     private function removeDocumentValidatorRule(string $ruleName): void
     {
-        $reflectionRules = new ReflectionProperty(DocumentValidator::class, 'rules');
-        $reflectionRules->setAccessible(true);
-        $rules = $reflectionRules->getValue();
+        $reflectionRules = new ReflectionClass(DocumentValidator::class);
+        $rules = $reflectionRules->getStaticPropertyValue('rules');
         unset($rules[$ruleName]);
-        $reflectionRules->setValue($rules);
+        $reflectionRules->setStaticPropertyValue('rules', $rules);
     }
 
     private function createProviderForComplexityOrDepth(int $limit): array
