@@ -10,7 +10,6 @@ use Psr\SimpleCache\CacheInterface;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
-use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
 use SilverStripe\GraphQL\Schema\Exception\SchemaNotFoundException;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -22,6 +21,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Psr\SimpleCache\InvalidArgumentException;
 use RuntimeException;
+use Symfony\Component\Filesystem\Path;
 
 class CodeGenerationStore implements SchemaStorageInterface
 {

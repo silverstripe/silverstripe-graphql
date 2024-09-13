@@ -5,11 +5,11 @@ namespace SilverStripe\GraphQL\Schema\Services;
 
 use SilverStripe\Assets\Storage\GeneratedAssetHandler;
 use SilverStripe\Core\Injector\Injectable;
-use SilverStripe\Core\Path;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use GraphQL\Type\Schema as GraphQLSchema;
 use Exception;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
 
 /**
  * Persists a graphql schema to a json document consumable by Apollo

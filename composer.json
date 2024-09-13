@@ -11,6 +11,7 @@
         "silverstripe/event-dispatcher": "^2",
         "guzzlehttp/guzzle": "^7.5.0",
         "guzzlehttp/psr7": "^2.4.1",
+        "symfony/filesystem": "^7.0",
         "m1/env": "^2.2.0"
     },
     "require-dev": {

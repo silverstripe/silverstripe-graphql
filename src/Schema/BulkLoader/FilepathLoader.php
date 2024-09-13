@@ -4,7 +4,7 @@ namespace SilverStripe\GraphQL\Schema\BulkLoader;
 
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Manifest\ModuleResourceLoader;
-use SilverStripe\Core\Path;
+use Symfony\Component\Filesystem\Path;
 
 /**
  * Loads classes by fuzzy match (glob), relative to the root e.g. `src/*.model.php`
