@@ -36,7 +36,7 @@ class Build extends Controller
     public function __construct()
     {
         parent::__construct();
-        Deprecation::withNoReplacement(function () {
+        Deprecation::withSuppressedNotice(function () {
             Deprecation::notice(
                 '5.4.0',
                 'Will be replaced with SilverStripe\GraphQL\Dev\SchemaBuild',
