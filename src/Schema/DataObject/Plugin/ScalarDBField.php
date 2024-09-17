@@ -11,7 +11,7 @@ use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\FieldType\DBField;
 
 /**
- * Ensures any field that ends up as ViewableData, e.g. DBField,
+ * Ensures any field that ends up as ModelData, e.g. DBField,
  * invokes forTemplate() after resolving.
  */
 class ScalarDBField implements ModelTypePlugin

@@ -78,7 +78,7 @@ class ReadFileQueryCreatorTest extends SapphireTest
     /**
      * @param array $args
      * @param array $context
-     * @return \SilverStripe\ORM\DataList|\SilverStripe\ORM\Filterable
+     * @return \SilverStripe\ORM\DataList|\SilverStripe\Model\List\Filterable
      */
     protected function getResultsForSearch($args, $context = null)
     {

@@ -9,8 +9,8 @@ use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
-use SilverStripe\ORM\SS_List;
-use SilverStripe\View\ViewableData;
+use SilverStripe\Model\List\SS_List;
+use SilverStripe\Model\ModelData;
 
 class FirstResult implements ModelQueryPlugin
 {
@@ -38,7 +38,7 @@ class FirstResult implements ModelQueryPlugin
         $query->addResolverAfterware([static::class, 'firstResult']);
     }
 
-    public static function firstResult(SS_List $obj): ?ViewableData
+    public static function firstResult(SS_List $obj): ?ModelData
     {
         return $obj->first();
     }

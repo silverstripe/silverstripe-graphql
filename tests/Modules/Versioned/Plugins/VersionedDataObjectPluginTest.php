@@ -17,7 +17,7 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\Type;
-use SilverStripe\ORM\SS_List;
+use SilverStripe\Model\List\SS_List;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 use SilverStripe\GraphQL\Modules\Versioned\Operations\ReadVersions;

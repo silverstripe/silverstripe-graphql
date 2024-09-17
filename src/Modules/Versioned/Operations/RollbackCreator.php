@@ -11,7 +11,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\GraphQL\Modules\Versioned\Resolvers\VersionedResolver;
 use SilverStripe\Versioned\Versioned;
-use SilverStripe\View\ViewableData;
+use SilverStripe\Model\ModelData;
 
 // GraphQL dependency is optional in versioned,
 // and the following implementation relies on existence of this class (in GraphQL v4)
@@ -47,7 +47,7 @@ class RollbackCreator implements OperationCreator
         string $typeName,
         array $config = []
     ): ?ModelOperation {
-        if (!ViewableData::has_extension($model->getSourceClass(), Versioned::class)) {
+        if (!ModelData::has_extension($model->getSourceClass(), Versioned::class)) {
             return null;
         }
 

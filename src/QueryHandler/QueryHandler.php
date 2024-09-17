@@ -31,7 +31,7 @@ use SilverStripe\GraphQL\PersistedQuery\PersistedQueryProvider;
 use SilverStripe\GraphQL\Schema\Interfaces\ContextProvider;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\SchemaConfig;
-use SilverStripe\ORM\ValidationException;
+use SilverStripe\Core\Validation\ValidationException;
 
 /**
  * This class is responsible for taking query information from a controller,

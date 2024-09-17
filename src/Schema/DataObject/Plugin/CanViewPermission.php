@@ -7,12 +7,12 @@ use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
-use SilverStripe\ORM\ArrayLib;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\ORM\Filterable;
+use SilverStripe\Core\ArrayLib;
+use SilverStripe\Model\List\ArrayList;
+use SilverStripe\Model\List\Filterable;
 use InvalidArgumentException;
-use SilverStripe\ORM\SS_List;
-use SilverStripe\View\ArrayData;
+use SilverStripe\Model\List\SS_List;
+use SilverStripe\Model\ArrayData;
 use SilverStripe\ORM\DataList;
 
 /**

@@ -4,7 +4,7 @@ namespace SilverStripe\GraphQL\Schema\BulkLoader;
 
 use InvalidArgumentException;
 use SilverStripe\Core\Extension;
-use SilverStripe\View\ViewableData;
+use SilverStripe\Model\ModelData;
 
 /**
  * Loads classes that have a given extension assigned to them.
@@ -25,13 +25,13 @@ class ExtensionLoader extends AbstractBulkLoader
         foreach ($collection->getClasses() as $class) {
             $isIncluded = false;
             foreach ($this->includeList as $pattern) {
-                if (ViewableData::has_extension($class, $pattern)) {
+                if (ModelData::has_extension($class, $pattern)) {
                     $isIncluded = true;
                     break;
                 }
             }
             foreach ($this->excludeList as $pattern) {
-                if (ViewableData::has_extension($class, $pattern)) {
+                if (ModelData::has_extension($class, $pattern)) {
                     $isIncluded = false;
                     break;
                 }

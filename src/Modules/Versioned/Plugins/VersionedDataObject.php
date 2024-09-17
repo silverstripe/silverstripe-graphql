@@ -17,12 +17,12 @@ use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\ORM\DataObject;
-use SilverStripe\ORM\Sortable;
+use SilverStripe\Model\List\Sortable;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Modules\Versioned\Resolvers\VersionedResolver;
 use SilverStripe\Versioned\Versioned;
 use Closure;
-use SilverStripe\View\ViewableData;
+use SilverStripe\Model\ModelData;
 
 // GraphQL dependency is optional in versioned,
 // and the following implementation relies on existence of this class (in GraphQL v4)
@@ -75,7 +75,7 @@ class VersionedDataObject implements ModelTypePlugin, SchemaUpdater
             __CLASS__,
             DataObject::class
         );
-        if (!ViewableData::has_extension($class, Versioned::class)) {
+        if (!ModelData::has_extension($class, Versioned::class)) {
             return;
         }
 

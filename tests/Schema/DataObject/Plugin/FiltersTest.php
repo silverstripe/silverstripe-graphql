@@ -14,7 +14,7 @@ use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters\LessThanFi
 use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters\LessThanOrEqualFilter;
 use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters\NotEqualFilter;
 use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters\StartsWithFilter;
-use SilverStripe\ORM\ArrayList;
+use SilverStripe\Model\List\ArrayList;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 class FiltersTest extends SapphireTest

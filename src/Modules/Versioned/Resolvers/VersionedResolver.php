@@ -11,7 +11,7 @@ use SilverStripe\GraphQL\Resolvers\VersionFilters;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
-use SilverStripe\ORM\ValidationException;
+use SilverStripe\Core\Validation\ValidationException;
 use SilverStripe\GraphQL\Modules\Versioned\Operations\AbstractPublishOperationCreator;
 use SilverStripe\GraphQL\Modules\Versioned\Operations\CopyToStageCreator;
 use SilverStripe\GraphQL\Modules\Versioned\Operations\RollbackCreator;

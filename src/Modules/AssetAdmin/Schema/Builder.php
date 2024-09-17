@@ -7,7 +7,7 @@ use SilverStripe\Assets\File;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaUpdater;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\Enum;
-use SilverStripe\ORM\ArrayLib;
+use SilverStripe\Core\ArrayLib;
 
 if (!interface_exists(SchemaUpdater::class)) {
     return;

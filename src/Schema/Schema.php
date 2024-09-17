@@ -34,7 +34,7 @@ use SilverStripe\GraphQL\Schema\Type\Scalar;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
 use SilverStripe\GraphQL\Schema\Type\UnionType;
-use SilverStripe\ORM\ArrayLib;
+use SilverStripe\Core\ArrayLib;
 use Exception;
 use SilverStripe\Core\Injector\Injector;
 use TypeError;

@@ -14,7 +14,7 @@ use SilverStripe\ORM\DB;
 use SilverStripe\Versioned\Versioned;
 use Exception;
 use Closure;
-use SilverStripe\View\ViewableData;
+use SilverStripe\Model\ModelData;
 
 // GraphQL dependency is optional in versioned,
 // and the following implementation relies on existence of this class (in GraphQL v4)
@@ -53,7 +53,7 @@ class UnpublishOnDelete implements ModelMutationPlugin
             if (!$dataClass) {
                 return;
             }
-            if (!ViewableData::has_extension($dataClass, Versioned::class)) {
+            if (!ModelData::has_extension($dataClass, Versioned::class)) {
                 return;
             }
             DB::get_conn()->withTransaction(function () use ($args, $context, $dataClass) {

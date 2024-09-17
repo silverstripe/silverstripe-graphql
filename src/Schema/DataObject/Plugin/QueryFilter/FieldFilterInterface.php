@@ -4,7 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter;
 
 use SilverStripe\ORM\DataList;
-use SilverStripe\ORM\Filterable;
+use SilverStripe\Model\List\Filterable;
 
 /**
  * Defines the interface used by all read filters for operations

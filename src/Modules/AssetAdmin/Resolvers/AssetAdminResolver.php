@@ -13,7 +13,7 @@ use SilverStripe\Control\HTTPResponse_Exception;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\ORM\DataList;
-use SilverStripe\ORM\Filterable;
+use SilverStripe\Model\List\Filterable;
 use SilverStripe\Versioned\Versioned;
 use InvalidArgumentException;
 

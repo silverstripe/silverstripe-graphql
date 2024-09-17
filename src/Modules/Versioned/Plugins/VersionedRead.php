@@ -8,7 +8,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Modules\Versioned\Resolvers\VersionedResolver;
 use SilverStripe\Versioned\Versioned;
-use SilverStripe\View\ViewableData;
+use SilverStripe\Model\ModelData;
 
 // GraphQL dependency is optional in versioned,
 // and the following implementation relies on existence of this class (in GraphQL v4)
@@ -36,7 +36,7 @@ class VersionedRead implements ModelQueryPlugin
     public function apply(ModelQuery $query, Schema $schema, array $config = []): void
     {
         $class = $query->getModel()->getSourceClass();
-        if (!ViewableData::has_extension($class, Versioned::class)) {
+        if (!ModelData::has_extension($class, Versioned::class)) {
             return;
         }
 

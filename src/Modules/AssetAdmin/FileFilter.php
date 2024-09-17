@@ -8,8 +8,8 @@ use SilverStripe\Assets\File;
 use SilverStripe\Assets\Folder;
 use SilverStripe\Control\HTTPResponse_Exception;
 use SilverStripe\Forms\DateField;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\ORM\Filterable;
+use SilverStripe\Model\List\ArrayList;
+use SilverStripe\Model\List\Filterable;
 
 class FileFilter
 {

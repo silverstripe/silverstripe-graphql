@@ -69,7 +69,7 @@ class HandlerTest extends SapphireTest
      */
     public function testExceptionThrownWhenAuthenticatorDoesNotImplementAuthenticatorInterface()
     {
-        $this->expectException(\SilverStripe\ORM\ValidationException::class);
+        $this->expectException(\SilverStripe\Core\Validation\ValidationException::class);
         $this->expectExceptionMessage('stdClass must implement SilverStripe\\GraphQL\\Auth\\AuthenticatorInterface!');
         Handler::config()->merge('authenticators', [['class' => 'stdClass']]);
         $this->handler->getAuthenticator(new HTTPRequest('GET', '/'));
@@ -131,7 +131,7 @@ class HandlerTest extends SapphireTest
      */
     public function testFailedAuthenticationThrowsException()
     {
-        $this->expectException(\SilverStripe\ORM\ValidationException::class);
+        $this->expectException(\SilverStripe\Core\Validation\ValidationException::class);
         $this->expectExceptionMessage('Never!');
         Handler::config()->merge('authenticators', [['class' => BrutalAuthenticatorFake::class]]);
         $this->handler->requireAuthentication(new HTTPRequest('/', 'GET'));
@@ -144,7 +144,7 @@ class HandlerTest extends SapphireTest
      */
     public function testFailedAuthenticationWithFalsyReturnValueThrowsDefaultException()
     {
-        $this->expectException(\SilverStripe\ORM\ValidationException::class);
+        $this->expectException(\SilverStripe\Core\Validation\ValidationException::class);
         $this->expectExceptionMessage('Authentication failed.');
         Handler::config()->merge('authenticators', [['class' => FalsyAuthenticatorFake::class]]);
         $this->handler->requireAuthentication(new HTTPRequest('/', 'GET'));

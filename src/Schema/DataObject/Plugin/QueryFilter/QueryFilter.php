@@ -18,7 +18,7 @@ use SilverStripe\GraphQL\Schema\Services\NestedInputBuilder;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\DataObject;
 use Closure;
-use SilverStripe\ORM\Filterable;
+use SilverStripe\Model\List\Filterable;
 use Exception;
 
 /**

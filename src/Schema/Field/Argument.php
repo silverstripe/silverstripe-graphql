@@ -12,7 +12,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\SignatureProvider;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Type\EncodedType;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
-use SilverStripe\View\ViewableData;
+use SilverStripe\Model\ModelData;
 
 /**
  * An abstraction of a field argument

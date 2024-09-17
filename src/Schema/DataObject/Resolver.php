@@ -10,7 +10,7 @@ use SilverStripe\GraphQL\Schema\SchemaConfig;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
-use SilverStripe\ORM\SS_List;
+use SilverStripe\Model\List\SS_List;
 
 /**
  * Generic resolver for DataObjects
@@ -34,7 +34,7 @@ class Resolver
     }
 
     /**
-     * Just the basic ViewableData field accessor bit, without all the property mapping
+     * Just the basic ModelData field accessor bit, without all the property mapping
      * overhead. Useful for custom dataobject types that circumvent the model layer.
      *
      * @param DataObject $obj

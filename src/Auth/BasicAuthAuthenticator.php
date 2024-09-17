@@ -4,7 +4,7 @@ namespace SilverStripe\GraphQL\Auth;
 
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse_Exception;
-use SilverStripe\ORM\ValidationException;
+use SilverStripe\Core\Validation\ValidationException;
 use SilverStripe\Security\BasicAuth;
 use SilverStripe\Security\Member;
 

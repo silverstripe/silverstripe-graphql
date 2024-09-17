@@ -14,7 +14,7 @@ use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\ModelUnionType;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\GraphQL\Schema\Type\TypeReference;
-use SilverStripe\ORM\ArrayLib;
+use SilverStripe\Core\ArrayLib;
 
 /**
  * An agnostic service that builds an input type based on a given field, with nesting.

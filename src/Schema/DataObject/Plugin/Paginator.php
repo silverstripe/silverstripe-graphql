@@ -4,7 +4,7 @@ namespace SilverStripe\GraphQL\Schema\DataObject\Plugin;
 
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\ORM\Limitable;
+use SilverStripe\Model\List\Limitable;
 use SilverStripe\GraphQL\Schema\Plugin\PaginationPlugin;
 use Closure;
 

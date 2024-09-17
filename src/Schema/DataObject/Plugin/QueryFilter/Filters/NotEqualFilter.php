@@ -4,7 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters;
 
 use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\FieldFilterInterface;
-use SilverStripe\ORM\Filterable;
+use SilverStripe\Model\List\Filterable;
 
 /**
  * A query filter that filters records by negating an exact match

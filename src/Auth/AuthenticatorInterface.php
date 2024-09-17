@@ -3,7 +3,7 @@
 namespace SilverStripe\GraphQL\Auth;
 
 use SilverStripe\Control\HTTPRequest;
-use SilverStripe\ORM\ValidationException;
+use SilverStripe\Core\Validation\ValidationException;
 use SilverStripe\Security\Member;
 
 /**

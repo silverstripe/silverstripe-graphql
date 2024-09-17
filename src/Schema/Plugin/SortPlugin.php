@@ -16,7 +16,7 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Services\NestedInputBuilder;
 use SilverStripe\GraphQL\Schema\Traits\SortTrait;
 use SilverStripe\GraphQL\Schema\Type\InputType;
-use SilverStripe\ORM\Sortable;
+use SilverStripe\Model\List\Sortable;
 use Closure;
 use GraphQL\Type\Definition\ResolveInfo;
 

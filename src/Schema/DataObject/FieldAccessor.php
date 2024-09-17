@@ -13,7 +13,7 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DataObjectSchema;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\ORM\RelationList;
-use SilverStripe\ORM\SS_List;
+use SilverStripe\Model\List\SS_List;
 use LogicException;
 use SilverStripe\ORM\UnsavedRelationList;
 

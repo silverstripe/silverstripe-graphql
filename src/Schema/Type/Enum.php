@@ -6,7 +6,7 @@ namespace SilverStripe\GraphQL\Schema\Type;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaValidator;
 use SilverStripe\GraphQL\Schema\Schema;
-use SilverStripe\ORM\ArrayLib;
+use SilverStripe\Core\ArrayLib;
 
 /**
  * Abstraction for enum types

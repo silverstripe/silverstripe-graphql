@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Tests\Fake;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\GraphQL\Auth\AuthenticatorInterface;
-use SilverStripe\ORM\ValidationException;
+use SilverStripe\Core\Validation\ValidationException;
 use SilverStripe\Security\Member;
 
 class BrutalAuthenticatorFake implements AuthenticatorInterface, TestOnly

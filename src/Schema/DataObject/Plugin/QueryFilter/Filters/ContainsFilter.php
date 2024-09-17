@@ -4,7 +4,7 @@
 namespace SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\Filters;
 
 use SilverStripe\GraphQL\Schema\DataObject\Plugin\QueryFilter\FieldFilterInterface;
-use SilverStripe\ORM\Filterable;
+use SilverStripe\Model\List\Filterable;
 
 /**
  * A filter that selects records that partially match a keyword
