@@ -7,6 +7,9 @@ use InvalidArgumentException;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Validation\ConstraintValidator;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Url;
 
 /**
  * Class HTTPProvider
@@ -108,7 +111,7 @@ class HTTPProvider implements PersistedQueryMappingProvider
     public function setSchemaMapping(array $mapping): HTTPProvider
     {
         foreach ($mapping as $schemaKey => $url) {
-            if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            if (!ConstraintValidator::validate($url, [new Url(), new NotBlank()])->isValid()) {
                 throw new InvalidArgumentException(
                     'setSchemaMapping accepts an array of schema keys to URLs'
                 );
