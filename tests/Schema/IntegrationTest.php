@@ -1434,8 +1434,8 @@ GRAPHQL;
         $node = $result['data']['readOneDataObjectFake'] ?? null;
         $this->assertEquals('This is a varchar field', $node['myField']);
         $this->assertEquals('Saturday', $node['date1']);
-        $this->assertEquals('2/29/20, 5:00 PM', $node['date2']);
-        $this->assertEquals('5:00:00 PM', $node['date3']);
+        $this->assertMatchesRegularExpression('#2/29/20,\h5:00\hPM#u', $node['date2']);
+        $this->assertMatchesRegularExpression('#5:00:00\hPM#u', $node['date3']);
         $this->assertEquals('2020', $node['date4']);
         $this->assertEquals('This is a really long text field. It has a few sentences.', $node['myText']);
     }
