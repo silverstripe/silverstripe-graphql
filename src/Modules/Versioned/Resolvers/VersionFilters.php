@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Resolvers;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\RelationList;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 use InvalidArgumentException;
 use DateTime;
 

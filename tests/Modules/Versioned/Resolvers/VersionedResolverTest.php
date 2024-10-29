@@ -9,7 +9,7 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\Security\Member;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Security\Security;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 use SilverStripe\GraphQL\Schema\Schema;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\GraphQL\Tests\Modules\Versioned\Fake\Fake;

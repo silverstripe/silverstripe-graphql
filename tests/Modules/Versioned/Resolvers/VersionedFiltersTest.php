@@ -5,7 +5,7 @@ namespace SilverStripe\Versioned\GraphQL\Resolvers;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Resolvers\VersionFilters;
 use SilverStripe\GraphQL\Tests\Modules\Versioned\Fake\Fake;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 
 // Versioned dependency is optional
 // and the following implementation relies on existence of this class (in Versioned)

@@ -7,7 +7,7 @@ use SilverStripe\GraphQL\Schema\Field\ModelQuery;
 use SilverStripe\GraphQL\Schema\Interfaces\ModelQueryPlugin;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Modules\Versioned\Resolvers\VersionedResolver;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 use SilverStripe\Model\ModelData;
 
 // GraphQL dependency is optional in versioned,

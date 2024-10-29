@@ -28,7 +28,7 @@ use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 use BadMethodCallException;
 use SilverStripe\Dev\Backtrace;
 use SilverStripe\Core\ClassInfo;

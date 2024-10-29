@@ -14,7 +14,7 @@ use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
 use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\ORM\DataList;
 use SilverStripe\Model\List\Filterable;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 use InvalidArgumentException;
 
 class AssetAdminResolver

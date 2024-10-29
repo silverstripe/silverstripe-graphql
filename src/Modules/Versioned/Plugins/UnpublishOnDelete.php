@@ -11,7 +11,7 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 use Exception;
 use Closure;
 use SilverStripe\Model\ModelData;

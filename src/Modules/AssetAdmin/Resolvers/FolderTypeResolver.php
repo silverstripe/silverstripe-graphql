@@ -14,7 +14,7 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DB;
 use SilverStripe\Model\List\Sortable;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 use InvalidArgumentException;
 use Exception;
 use Closure;

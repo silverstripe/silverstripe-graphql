@@ -21,7 +21,7 @@ use SilverStripe\ORM\DB;
 use SilverStripe\Core\Validation\ValidationException;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Modules\Versioned\Resolvers\VersionedResolver;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 use SilverStripe\Model\ModelData;
 
 // GraphQL dependency is optional in versioned,

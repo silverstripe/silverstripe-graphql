@@ -8,8 +8,8 @@ use SilverStripe\GraphQL\Modules\AssetAdmin\Notice;
 use SilverStripe\Assets\File;
 use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
-use SilverStripe\Versioned\RecursivePublishable;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Staged\RecursivePublishable;
+use SilverStripe\Versioned\Mode\Versioned;
 use InvalidArgumentException;
 
 class PublicationResolver

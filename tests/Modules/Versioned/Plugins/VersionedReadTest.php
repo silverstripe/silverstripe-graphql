@@ -24,7 +24,7 @@ use SilverStripe\GraphQL\Modules\Versioned\Plugins\VersionedRead;
 use SilverStripe\GraphQL\Modules\Versioned\Resolvers\VersionedResolver;
 use SilverStripe\GraphQL\Modules\Versioned\Types\VersionedInputType;
 use SilverStripe\GraphQL\Tests\Modules\Versioned\Fake\Fake;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 
 // Versioned dependency is optional
 // and the following implementation relies on existence of this class (in Versioned)

@@ -17,7 +17,7 @@ use SilverStripe\GraphQL\Modules\Versioned\Operations\CopyToStageCreator;
 use SilverStripe\GraphQL\Modules\Versioned\Operations\RollbackCreator;
 use SilverStripe\GraphQL\Modules\Versioned\Plugins\VersionedDataObject;
 use SilverStripe\GraphQL\Modules\Versioned\Plugins\VersionedRead;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 use Exception;
 use Closure;
 use InvalidArgumentException;

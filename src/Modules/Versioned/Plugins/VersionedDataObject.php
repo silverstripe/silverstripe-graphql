@@ -20,7 +20,7 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\Model\List\Sortable;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Modules\Versioned\Resolvers\VersionedResolver;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 use Closure;
 use SilverStripe\Model\ModelData;
 

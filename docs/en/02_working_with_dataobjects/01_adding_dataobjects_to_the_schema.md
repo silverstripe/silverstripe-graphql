@@ -248,7 +248,7 @@ app:
         - App\Model\*
     extensionLoader:
       include:
-        - SilverStripe\Versioned\Versioned
+        - SilverStripe\Versioned\Mode\Versioned
     filepathLoader:
       exclude:
         - app/src/Model/*.secret.php
@@ -277,7 +277,7 @@ By default, four loaders are provided to you to help gather specific classnames:
 
 - **Identifier**: `extensionLoader`
 - **Description**: Include or exclude any class that has a given extension applied
-- **Example**: `include: [SilverStripe\Versioned\Versioned]`
+- **Example**: `include: [SilverStripe\Versioned\Mode\Versioned]`
 
 #### By filepath
 

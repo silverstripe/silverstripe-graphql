@@ -5,7 +5,7 @@ namespace SilverStripe\GraphQL\Tests\Fake;
 
 use SilverStripe\Dev\TestOnly;
 use SilverStripe\ORM\DataObject;
-use SilverStripe\Versioned\Versioned;
+use SilverStripe\Versioned\Mode\Versioned;
 
 class FakeProduct extends DataObject implements TestOnly
 {
