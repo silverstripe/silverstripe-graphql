@@ -16,9 +16,9 @@ use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Services\NestedInputBuilder;
 use SilverStripe\GraphQL\Schema\Traits\SortTrait;
 use SilverStripe\GraphQL\Schema\Type\InputType;
-use SilverStripe\Model\List\Sortable;
 use Closure;
 use GraphQL\Type\Definition\ResolveInfo;
+use SilverStripe\Model\List\SS_List;
 
 class SortPlugin implements FieldPlugin, SchemaUpdater
 {
@@ -89,7 +89,7 @@ class SortPlugin implements FieldPlugin, SchemaUpdater
     public static function sort(array $context): Closure
     {
         $fieldName = $context['fieldName'];
-        return function (?Sortable $list, array $args, array $context, ResolveInfo $info) use ($fieldName) {
+        return function (?SS_List $list, array $args, array $context, ResolveInfo $info) use ($fieldName) {
             if ($list === null) {
                 return null;
             }

@@ -9,19 +9,19 @@ use SilverStripe\Assets\Folder;
 use SilverStripe\Control\HTTPResponse_Exception;
 use SilverStripe\Forms\DateField;
 use SilverStripe\Model\List\ArrayList;
-use SilverStripe\Model\List\Filterable;
+use SilverStripe\Model\List\SS_List;
 
 class FileFilter
 {
     /**
      * Caution: Does NOT enforce canView permissions
      *
-     * @param Filterable $list
+     * @param SS_List $list
      * @param array $filter
-     * @return Filterable
+     * @return SS_List
      * @throws HTTPResponse_Exception
      */
-    public static function filterList(Filterable $list, $filter)
+    public static function filterList(SS_List $list, $filter)
     {
         // ID filtering
         if (isset($filter['id']) && (int)$filter['id'] > 0) {

@@ -18,8 +18,8 @@ use SilverStripe\GraphQL\Schema\Services\NestedInputBuilder;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\DataObject;
 use Closure;
-use SilverStripe\Model\List\Filterable;
 use Exception;
+use SilverStripe\Model\List\SS_List;
 
 /**
  * Adds a filter parameter to a DataObject query
@@ -80,7 +80,7 @@ class QueryFilter extends AbstractQueryFilterPlugin
         $rootType = $context['rootType'];
         $resolvers = $context['resolvers'] ?? [];
 
-        return function (?Filterable $list, array $args, array $context, ResolveInfo $info) use ($fieldName, $rootType, $resolvers) {
+        return function (?SS_List $list, array $args, array $context, ResolveInfo $info) use ($fieldName, $rootType, $resolvers) {
             if ($list === null) {
                 return null;
             }

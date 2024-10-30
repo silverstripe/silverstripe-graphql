@@ -13,7 +13,6 @@ use SilverStripe\GraphQL\Schema\DataObject\FieldAccessor;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DB;
-use SilverStripe\Model\List\Sortable;
 use SilverStripe\Versioned\Versioned;
 use InvalidArgumentException;
 use Exception;

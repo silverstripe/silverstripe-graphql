@@ -17,11 +17,11 @@ use SilverStripe\GraphQL\Schema\Type\InputType;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\GraphQL\Schema\Type\Type;
 use SilverStripe\ORM\DataObject;
-use SilverStripe\Model\List\Sortable;
 use SilverStripe\Security\Member;
 use SilverStripe\GraphQL\Modules\Versioned\Resolvers\VersionedResolver;
 use SilverStripe\Versioned\Versioned;
 use Closure;
+use SilverStripe\Model\List\SS_List;
 use SilverStripe\Model\ModelData;
 
 // GraphQL dependency is optional in versioned,
@@ -131,7 +131,7 @@ class VersionedDataObject implements ModelTypePlugin, SchemaUpdater
     public static function sortVersions(array $config): Closure
     {
         $fieldName = $config['fieldName'];
-        return function (Sortable $list, array $args) use ($fieldName) {
+        return function (SS_List $list, array $args) use ($fieldName) {
             $versionSort = $args[$fieldName]['version'] ?? null;
             if ($versionSort) {
                 $list = $list->sort('Version', $versionSort);

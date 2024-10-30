@@ -15,9 +15,8 @@ class FilterDataList extends DataList implements TestOnly
 
     public $excludeValue;
 
-    public function filter()
+    public function filter(...$args): static
     {
-        $args = func_get_args();
         $field = $args[0];
         $value = $args[1];
 
@@ -28,9 +27,8 @@ class FilterDataList extends DataList implements TestOnly
         return $clone;
     }
 
-    public function exclude()
+    public function exclude(...$args): static
     {
-        $args = func_get_args();
         $field = $args[0];
         $value = $args[1];
 

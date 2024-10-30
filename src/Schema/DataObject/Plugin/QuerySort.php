@@ -16,10 +16,10 @@ use SilverStripe\GraphQL\Schema\Services\NestedInputBuilder;
 use SilverStripe\GraphQL\Schema\Type\ModelType;
 use SilverStripe\ORM\DataObject;
 use Closure;
-use SilverStripe\Model\List\Sortable;
 use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
 use SilverStripe\GraphQL\Schema\Traits\SortTrait;
+use SilverStripe\Model\List\SS_List;
 
 /**
  * Adds a sort parameter to a DataObject query
@@ -99,7 +99,7 @@ class QuerySort extends AbstractQuerySortPlugin
     {
         $fieldName = $context['fieldName'];
         $rootType = $context['rootType'];
-        return function (?Sortable $list, array $args, array $context, ResolveInfo $info) use ($fieldName, $rootType) {
+        return function (?SS_List $list, array $args, array $context, ResolveInfo $info) use ($fieldName, $rootType) {
             if ($list === null) {
                 return null;
             }

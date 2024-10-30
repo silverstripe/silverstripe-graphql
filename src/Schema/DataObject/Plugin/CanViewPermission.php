@@ -9,7 +9,6 @@ use SilverStripe\GraphQL\QueryHandler\QueryHandler;
 use SilverStripe\GraphQL\QueryHandler\UserContextProvider;
 use SilverStripe\Core\ArrayLib;
 use SilverStripe\Model\List\ArrayList;
-use SilverStripe\Model\List\Filterable;
 use InvalidArgumentException;
 use SilverStripe\Model\List\SS_List;
 use SilverStripe\Model\ArrayData;
@@ -37,7 +36,7 @@ class CanViewPermission extends AbstractCanViewPermission
 
     /**
      * @param mixed $obj
-     * @return Filterable|object|array|null
+     * @return SS_List|object|array|null
      * @throws InvalidArgumentException
      */
     public static function permissionCheck($obj, array $args, array $context, ResolveInfo $info)
@@ -57,7 +56,7 @@ class CanViewPermission extends AbstractCanViewPermission
 
 
         if (is_object($obj)) {
-            return $obj instanceof Filterable
+            return $obj instanceof SS_List
                 ? static::listPermissionCheck($obj, $args, $context, $info)
                 : static::itemPermissionCheck($obj, $args, $context, $info);
         }
@@ -68,10 +67,10 @@ class CanViewPermission extends AbstractCanViewPermission
             Otherwise, try returning an instance of %s or another implementation of %s.',
             CanViewPermission::IDENTIFIER,
             $info->fieldName,
-            Filterable::class,
+            SS_List::class,
             AbstractCanViewPermission::class,
             SS_List::class,
-            Filterable::class
+            SS_List::class
         ));
     }
 
@@ -106,13 +105,13 @@ class CanViewPermission extends AbstractCanViewPermission
     }
 
     /**
-     * @param Filterable $obj
+     * @param SS_List $obj
      * @param array $args
      * @param array $context
      * @param ResolveInfo $info
-     * @return Filterable
+     * @return SS_List
      */
-    public static function listPermissionCheck(Filterable $obj, array $args, array $context, ResolveInfo $info): Filterable
+    public static function listPermissionCheck(SS_List $obj, array $args, array $context, ResolveInfo $info): SS_List
     {
         // Use an ArrayList rather than a DataList to ensure items returns all have had a canView() check run on them.
         // Converting to an ArrayList will run a query and mean we start with a fixed number of items before
