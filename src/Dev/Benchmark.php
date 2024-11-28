@@ -29,7 +29,7 @@ class Benchmark
      * @return string|null
      * @throws \Exception
      */
-    public static function end(string $id, string $message = null, bool $return = true): ?string
+    public static function end(string $id, ?string $message = null, bool $return = true): ?string
     {
         $benchmark = Benchmark::$benchmarks[$id] ?? null;
         if (!$benchmark) {

@@ -61,7 +61,7 @@ class SchemaBuild extends DevCommand implements PermissionProvider
      * @throws SchemaNotFoundException
      * @throws SchemaBuilderException
      */
-    public function buildSchema(string $key = null, bool $clear = true): void
+    public function buildSchema(?string $key = null, bool $clear = true): void
     {
         /** @var LoggerInterface $logger */
         $logger = Injector::inst()->get(LoggerInterface::class . '.graphql-build');
