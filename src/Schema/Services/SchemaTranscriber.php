@@ -38,7 +38,7 @@ class SchemaTranscriber
      * @param string $rootDir Storage path for the generated file.
      *                        Caution: This location may be used by frontend assets relying on GraphQL, e.g. silverstripe/assets.
      */
-    public function __construct(GraphQLSchema $schema, string $name, string $rootDir = null)
+    public function __construct(GraphQLSchema $schema, string $name, ?string $rootDir = null)
     {
         $this->fs = new Filesystem();
         $this->schema = $schema;

@@ -285,7 +285,7 @@ class SchemaTest extends SapphireTest
     {
     }
 
-    private function buildSchema(string $key = 'test', SchemaConfig $context = null): Schema
+    private function buildSchema(string $key = 'test', ?SchemaConfig $context = null): Schema
     {
         $schema = new Schema($key, $this->createSchemaContext());
 
