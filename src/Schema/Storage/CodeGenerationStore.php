@@ -399,7 +399,7 @@ class CodeGenerationStore implements SchemaStorageInterface
     private function getTempDirectory(): string
     {
         return Path::join(
-            TEMP_FOLDER,
+            TEMP_PATH,
             $this->config()->get('dirName'),
             $this->name
         );
