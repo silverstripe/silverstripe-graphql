@@ -71,9 +71,10 @@ abstract class AbstractTypeRegistry
 
     private static function canRebuildOnMissing(): bool
     {
-        if (!Controller::has_curr() ||
-            !(Controller::curr() instanceof GraphQLController) ||
-            !Controller::curr()->autobuildEnabled()
+        $controller = Controller::curr();
+        if (!$controller ||
+            !($controller instanceof GraphQLController) ||
+            !$controller->autobuildEnabled()
         ) {
             return false;
         }

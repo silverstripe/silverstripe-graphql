@@ -37,8 +37,9 @@ class AbstractTypeRegistryTest extends SapphireTest
             $fs->remove($dir);
         }
         // ensure that any GraphqlController added to controller_stack is removed
-        if (Controller::has_curr() && (Controller::curr() instanceof GraphQLController)) {
-            Controller::curr()->popCurrent();
+        $controller = Controller::curr();
+        if ($controller instanceof GraphQLController) {
+            $controller->popCurrent();
         }
     }
 
