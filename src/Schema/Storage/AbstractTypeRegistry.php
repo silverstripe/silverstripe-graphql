@@ -47,7 +47,7 @@ abstract class AbstractTypeRegistry
         try {
             return static::fromCache($typename);
         } catch (Exception $e) {
-            if (!preg_match('/(Missing|Unknown) graphql/', $e->getMessage()) || !AbstractTypeRegistry::canRebuildOnMissing()) {
+            if (!preg_match('/(Missing|Unknown) graphql/', $e->getMessage()) || !static::canRebuildOnMissing()) {
                 throw $e;
             }
             // Try to rebuild the whole schema as fallback.
@@ -59,7 +59,7 @@ abstract class AbstractTypeRegistry
             $schema = $builder->boot($key);
             try {
                 $builder->build($schema, true);
-                $path = AbstractTypeRegistry::getRebuildOnMissingPath();
+                $path = static::getRebuildOnMissingPath();
                 file_put_contents($path, time());
             } catch (EmptySchemaException $e) {
                 // noop

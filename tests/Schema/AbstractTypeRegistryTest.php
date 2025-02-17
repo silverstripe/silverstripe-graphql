@@ -2,16 +2,16 @@
 
 namespace SilverStripe\GraphQL\Tests\Schema;
 
-use GraphQL\Type\Definition\AbstractType;
+use Exception;
 use SilverStripe\Control\Controller;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\GraphQL\Schema\Storage\AbstractTypeRegistry;
 use SilverStripe\GraphQL\Controller as GraphQLController;
 use Symfony\Component\Filesystem\Filesystem;
 use ReflectionObject;
-use stdClass;
 use SilverStripe\Control\Session;
 use PHPUnit\Framework\Attributes\DataProvider;
+use SilverStripe\GraphQL\Schema\Schema;
 
 class AbstractTypeRegistryTest extends SapphireTest
 {
@@ -61,20 +61,7 @@ class AbstractTypeRegistryTest extends SapphireTest
         bool $expected
     ): void {
         list($registry, $canRebuildOnMissingMethod, $_, $getRebuildOnMissingFilename) = $this->getInstance();
-        $graphqlController = new GraphQLController('test');
-
-        // autobuild
-        $graphqlController->setAutobuildSchema($autobuild);
-
-        // controller
-        if ($controller) {
-            // Make it so that Controller::curr() returns a GraphQLController
-            $fakeSession = new Session([]);
-            $request = Controller::curr()->getRequest();
-            $request->setSession($fakeSession);
-            $graphqlController->setRequest($request);
-            $graphqlController->pushCurrent();
-        }
+        $this->prepGraphQLController($controller, $autobuild);
 
         // config
         AbstractTypeRegistry::config()->set('rebuild_on_missing_schema_file', $config);
@@ -136,6 +123,68 @@ class AbstractTypeRegistryTest extends SapphireTest
                 'expected' => true,
             ],
         ];
+    }
+
+    /**
+     * This test checks no uncaught exceptions are thrown with a successful rebuild.
+     * This test is required separately from the others, because the other tests explicitly
+     * set some private methods to be accesible via reflection.
+     */
+    public function testGetRebuildOnMissing(): void
+    {
+        $registry = new class extends AbstractTypeRegistry
+        {
+            private static int $getAttempts = 0;
+
+            protected static function getSourceDirectory(): string
+            {
+                return AbstractTypeRegistryTest::SOURCE_DIRECTORY;
+            }
+
+            protected static function getSourceNamespace(): string
+            {
+                return '';
+            }
+
+            protected static function fromCache(string $typename): bool
+            {
+                if (static::$getAttempts === 0) {
+                    static::$getAttempts++;
+                    throw new Exception('Missing graphql file for ' . $typename);
+                }
+                return true;
+            }
+        };
+        $this->prepGraphQLController(true, true);
+        AbstractTypeRegistry::config()->set('rebuild_on_missing_schema_file', true);
+        Schema::config()->merge('schemas', [
+            '.graphql-generated' => [],
+        ]);
+
+        $registry::get('test');
+        // This test passes by not throwing any exceptions.
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * Prepare a GraphQLController for AbstractTypeRegistry::canRebuildOnMissing() checks.
+     */
+    private function prepGraphQLController(bool $controller, bool $autobuild): void
+    {
+        $graphqlController = new GraphQLController('test');
+
+        // autobuild
+        $graphqlController->setAutobuildSchema($autobuild);
+
+        // controller
+        if ($controller) {
+            // Make it so that Controller::curr() returns a GraphQLController
+            $fakeSession = new Session([]);
+            $request = Controller::curr()->getRequest();
+            $request->setSession($fakeSession);
+            $graphqlController->setRequest($request);
+            $graphqlController->pushCurrent();
+        }
     }
 
     private function getInstance()
