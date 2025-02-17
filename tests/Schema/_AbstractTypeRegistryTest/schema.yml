@@ -1,0 +1,12 @@
+types:
+  MyType:
+    fields:
+      field1: String
+      field2: Int
+queries:
+  readMyTypes:
+    type: '[MyType]'
+    resolver: [SilverStripe\GraphQL\Tests\Fake\IntegrationTestResolver, lotsOfMyTypes]
+    plugins:
+      paginate:
+        resolver: [SilverStripe\GraphQL\Tests\Fake\IntegrationTestResolver, testPaginate]
