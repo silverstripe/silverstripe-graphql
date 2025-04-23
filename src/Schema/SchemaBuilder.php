@@ -195,7 +195,7 @@ class SchemaBuilder
         Schema::invariant(
             !is_file($absConfigSrc ?? ''),
             'Provided source config file "%s" rather than directory on schema %s. ' .
-            'See https://docs.silverstripe.org/en/4/developer_guides/graphql/getting_started/configuring_your_schema/',
+            'See https://docs.silverstripe.org/en/developer_guides/graphql/getting_started/configuring_your_schema/',
             $absConfigSrc,
             $schemaKey
         );
@@ -203,7 +203,7 @@ class SchemaBuilder
         Schema::invariant(
             is_dir($absConfigSrc ?? ''),
             'Source config directory %s does not exist on schema %s. ' .
-            'See https://docs.silverstripe.org/en/4/developer_guides/graphql/getting_started/configuring_your_schema/',
+            'See https://docs.silverstripe.org/en/developer_guides/graphql/getting_started/configuring_your_schema/',
             $absConfigSrc,
             $schemaKey
         );
