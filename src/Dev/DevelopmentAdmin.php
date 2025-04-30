@@ -19,7 +19,7 @@ use SilverStripe\Dev\Deprecation;
 use SilverStripe\GraphQL\Schema\Logger;
 
 /**
- * @deprecated 5.3.0 Will be removed without equivalent functionality to replace it
+ * @deprecated 5.3.0 Will be removed without equivalent functionality to replace it in a future major release
  */
 class DevelopmentAdmin extends Controller implements PermissionProvider
 {
@@ -44,7 +44,7 @@ class DevelopmentAdmin extends Controller implements PermissionProvider
         Deprecation::withSuppressedNotice(function () {
             Deprecation::notice(
                 '5.4.0',
-                'Will be removed without equivalent functionality to replace it',
+                'Will be removed without equivalent functionality to replace it in a future major release',
                 Deprecation::SCOPE_CLASS
             );
         });

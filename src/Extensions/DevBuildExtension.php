@@ -14,7 +14,7 @@ use SilverStripe\ORM\DataExtension;
 
 /**
  * @extends DataExtension<DatabaseAdmin>
- * @deprecated 5.4.0 Will be replaced with SilverStripe\GraphQL\Extensions\DbBuildExtension
+ * @deprecated 5.4.0 Will be replaced with SilverStripe\GraphQL\Extensions\DbBuildExtension in a future major release
  */
 class DevBuildExtension extends DataExtension
 {
@@ -31,7 +31,7 @@ class DevBuildExtension extends DataExtension
         Deprecation::withSuppressedNotice(function () {
             Deprecation::notice(
                 '5.4.0',
-                'Will be replaced with SilverStripe\GraphQL\Extensions\DbBuildExtension',
+                'Will be replaced with SilverStripe\GraphQL\Extensions\DbBuildExtension in a future major release',
                 Deprecation::SCOPE_CLASS
             );
         });
