@@ -21,7 +21,7 @@ use SilverStripe\GraphQL\Schema\Storage\CodeGenerationStore;
 use SilverStripe\ORM\Connect\NullDatabaseException;
 
 /**
- * @deprecated 5.3.0 Will be replaced with SilverStripe\GraphQL\Dev\SchemaBuild
+ * @deprecated 5.3.0 Will be replaced with SilverStripe\GraphQL\Dev\SchemaBuild in a future major release
  */
 class Build extends Controller
 {
@@ -39,7 +39,7 @@ class Build extends Controller
         Deprecation::withSuppressedNotice(function () {
             Deprecation::notice(
                 '5.4.0',
-                'Will be replaced with SilverStripe\GraphQL\Dev\SchemaBuild',
+                'Will be replaced with SilverStripe\GraphQL\Dev\SchemaBuild in a future major release',
                 Deprecation::SCOPE_CLASS
             );
         });
