@@ -84,7 +84,7 @@ class DuplicateCreator implements OperationCreator
             if (!$dataClass) {
                 return null;
             }
-            return DataObject::get_by_id($dataClass, $args['id'])
+            return DataObject::get($dataClass)->setUseCache(true)->byID($args['id'])
                 ->duplicate();
         };
     }

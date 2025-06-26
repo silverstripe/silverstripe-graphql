@@ -115,7 +115,7 @@ class CreateCreator implements OperationCreator, InputTypeProvider
 
             // Save and return
             $newObject->write();
-            $newObject = DataObject::get_by_id($dataClass, $newObject->ID);
+            $newObject = DataObject::get($dataClass)->setUseCache(true)->byID($newObject->ID);
 
             return $newObject;
         };
