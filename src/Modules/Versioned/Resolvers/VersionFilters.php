@@ -13,7 +13,7 @@ class VersionFilters
 {
     /**
      * Use this as a fallback where resolver results aren't queried as a DataList,
-     * but rather use DataObject::get_one(). Example: SiteTree::get_by_link().
+     * but rather use DataObject::get()->setUseCache(true). Example: SiteTree::get_by_link().
      * Note that the 'status' and 'version' modes are not supported.
      * Wrap this call in {@link Versioned::withVersionedMode()} in order to avoid side effects.
      *
