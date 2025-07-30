@@ -33,8 +33,8 @@ class AssetAdminResolver
         $accessor = FieldAccessor::singleton();
         $parentID = isset($args['file']['parentId']) ? intval($args['file']['parentId']) : 0;
         if ($parentID) {
-            $parent = Versioned::get_by_stage(Folder::class, Versioned::DRAFT)->byID($parentID);
-            if (!$parent) {
+            $parentExists = Versioned::get_by_stage(Folder::class, Versioned::DRAFT)->filter('ID', $parentID)->exists();
+            if (!$parentExists) {
                 throw new InvalidArgumentException(sprintf(
                     '%s#%s not found',
                     Folder::class,
@@ -71,8 +71,8 @@ class AssetAdminResolver
         $accessor = FieldAccessor::singleton();
         $parentID = isset($args['folder']['parentId']) ? intval($args['folder']['parentId']) : 0;
         if ($parentID) {
-            $parent = Versioned::get_by_stage(Folder::class, Versioned::DRAFT)->byID($parentID);
-            if (!$parent) {
+            $parentExists = Versioned::get_by_stage(Folder::class, Versioned::DRAFT)->filter('ID', $parentID)->exists();
+            if (!$parentExists) {
                 throw new InvalidArgumentException(sprintf(
                     '%s#%s not found',
                     Folder::class,
