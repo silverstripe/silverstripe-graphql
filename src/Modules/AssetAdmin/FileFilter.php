@@ -97,8 +97,8 @@ class FileFilter
 
         // Filter unknown id by known child if search is not applied
         if (!$search && isset($filter['anyChildId'])) {
-            $child = File::get()->byID($filter['anyChildId']);
-            $id = $child ? ($child->ParentID ?: 0) : 0;
+            $parentIDs = File::get()->filter('ID', $filter['anyChildId'])->limit(1)->column('ParentID');
+            $id = empty($parentIDs) ? 0 : $parentIDs[0];
             if ($id) {
                 $list = $list->filter('ID', $id);
             } else {
