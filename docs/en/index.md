@@ -13,7 +13,7 @@ For more information on GraphQL in general, visit its [documentation site](https
 ## Installation
 
 ```bash
-composer require silverstripe/silverstripe-graphql
+composer require silverstripe/graphql
 ```
 
 ## GitHub repository
