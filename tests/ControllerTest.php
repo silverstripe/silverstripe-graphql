@@ -158,8 +158,6 @@ class ControllerTest extends SapphireTest
     {
         $controller = new Controller(__FUNCTION__);
         $reflectionPrepareBacktrace = new ReflectionMethod($controller, 'prepareBacktrace');
-        $reflectionPrepareBacktrace->setAccessible(true);
-
         $this->assertSame($expected, $reflectionPrepareBacktrace->invoke($controller, $trace));
     }
 }
