@@ -12,6 +12,7 @@ use ReflectionObject;
 use SilverStripe\Control\Session;
 use PHPUnit\Framework\Attributes\DataProvider;
 use SilverStripe\GraphQL\Schema\Schema;
+use GraphQL\Type\Definition\ScalarType;
 
 class AbstractTypeRegistryTest extends SapphireTest
 {
@@ -164,6 +165,59 @@ class AbstractTypeRegistryTest extends SapphireTest
         $registry::get('test');
         // This test passes by not throwing any exceptions.
         $this->expectNotToPerformAssertions();
+    }
+
+    public function testGetReturnsBuiltinScalarWhenCacheMisses(): void
+    {
+        $registry = new class extends AbstractTypeRegistry
+        {
+            protected static function getSourceDirectory(): string
+            {
+                return AbstractTypeRegistryTest::SOURCE_DIRECTORY;
+            }
+
+            protected static function getSourceNamespace(): string
+            {
+                return '';
+            }
+
+            protected static function fromCache(string $typename): ScalarType
+            {
+                throw new Exception('Missing graphql file for ' . $typename);
+            }
+        };
+
+        $this->assertInstanceOf(ScalarType::class, $registry::get('Int'));
+    }
+
+    public function testGetDoesNotUseBuiltinWhenScalarOverrideExists(): void
+    {
+        $registry = new class extends AbstractTypeRegistry
+        {
+            protected static function getSourceDirectory(): string
+            {
+                return AbstractTypeRegistryTest::SOURCE_DIRECTORY;
+            }
+
+            protected static function getSourceNamespace(): string
+            {
+                return '';
+            }
+
+            protected static function fromCache(string $typename): ScalarType
+            {
+                throw new Exception('Missing graphql file for ' . $typename);
+            }
+
+            public static function Int(): ScalarType
+            {
+                throw new Exception('schema override should be used');
+            }
+        };
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Missing graphql file for Int');
+        $registry::get('Int');
     }
 
     /**
