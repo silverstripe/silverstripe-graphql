@@ -8,6 +8,7 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ListOfType;
 use Exception;
+use ReflectionMethod;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\GraphQL\Schema\SchemaBuilder;
 use SilverStripe\GraphQL\Schema\Exception\EmptySchemaException;
@@ -47,6 +48,13 @@ abstract class AbstractTypeRegistry
         try {
             return static::fromCache($typename);
         } catch (Exception $e) {
+            // Built-in scalars (with no schema-level override) will trigger exceptions as they don't have a
+            // generated file. So we have to catch that here and return the built-in types.
+            $builtIn = static::getBuiltinScalar($typename);
+            if ($builtIn && !static::hasRegistryScalarOverride($typename)) {
+                return $builtIn;
+            }
+
             if (!preg_match('/(Missing|Unknown) graphql/', $e->getMessage()) || !static::canRebuildOnMissing()) {
                 throw $e;
             }
@@ -137,6 +145,24 @@ abstract class AbstractTypeRegistry
             throw new Exception("Unknown graphql type: " . $typename);
         }
         return $type;
+    }
+
+    private static function getBuiltinScalar(string $typename): ?ScalarType
+    {
+        $builtIns = method_exists(Type::class, 'builtInScalars') ? Type::builtInScalars() : Type::getStandardTypes();
+        return $builtIns[$typename] ?? null;
+    }
+
+    private static function hasRegistryScalarOverride(string $typename): bool
+    {
+        if (!method_exists(static::class, $typename)) {
+            return false;
+        }
+
+        // Override exists only when concrete registry implementation declares Int()/String() etc itself.
+        // Inherited methods from this abstract class don't count
+        $method = new ReflectionMethod(static::class, $typename);
+        return $method->getDeclaringClass()->getName() === static::class;
     }
 
     public static function ID(): ScalarType
