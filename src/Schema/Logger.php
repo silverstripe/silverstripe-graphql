@@ -3,7 +3,7 @@
 namespace SilverStripe\GraphQL\Schema;
 
 use Psr\Log\LoggerInterface;
-use SilverStripe\Control\Director;
+use SilverStripe\Core\Environment;
 use SilverStripe\Core\Injector\Injectable;
 use SilverStripe\PolyExecution\PolyOutput;
 use Stringable;
@@ -128,7 +128,7 @@ class Logger implements LoggerInterface
         $prefix = $prefix ? '[' . $prefix . ']: ' : '';
         $this->output?->writeln($this->colouriseText($prefix, $colour) . $msg);
         if (!$this->output) {
-            $cli = Director::is_cli();
+            $cli = Environment::isCli();
             $formatted = sprintf(
                 '%s%s%s%s',
                 $colour && $cli ? $colour :'',

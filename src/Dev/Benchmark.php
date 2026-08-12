@@ -2,7 +2,7 @@
 
 namespace SilverStripe\GraphQL\Dev;
 
-use SilverStripe\Control\Director;
+use SilverStripe\Core\Environment;
 
 /**
  * @internal
@@ -47,7 +47,7 @@ class Benchmark
         }
 
         echo $result;
-        echo Director::is_cli() ? PHP_EOL : "<br>";
+        echo Environment::isCli() ? PHP_EOL : "<br>";
 
 
         return null;
