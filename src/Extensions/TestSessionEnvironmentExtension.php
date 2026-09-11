@@ -2,7 +2,7 @@
 
 namespace SilverStripe\GraphQL\Extensions;
 
-use SilverStripe\Control\Director;
+use SilverStripe\Core\Environment;
 use SilverStripe\Core\Extension;
 use SilverStripe\GraphQL\Schema\Logger;
 use SilverStripe\GraphQL\Schema\Schema;
@@ -27,7 +27,7 @@ class TestSessionEnvironmentExtension extends Extension
     protected function onAfterStartTestSession(): void
     {
         $output = PolyOutput::create(
-            Director::is_cli() ? PolyOutput::FORMAT_ANSI : PolyOutput::FORMAT_HTML,
+            Environment::isCli() ? PolyOutput::FORMAT_ANSI : PolyOutput::FORMAT_HTML,
             PolyOutput::VERBOSITY_QUIET
         );
         $logger = Logger::singleton();
