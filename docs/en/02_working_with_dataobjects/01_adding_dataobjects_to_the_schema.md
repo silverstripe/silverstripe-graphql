@@ -165,6 +165,12 @@ Page:
         immutableField: false
 ```
 
+#### Providing a description
+
+You can help your API users by providing description for your types. Define the
+[`class_description`](api:SilverStripe\ORM\DataObject->class_description) configuration property on your DataObjects.
+This will automatically be used for the description of your Types derived from those DataObjects.
+
 ### Adding more fields
 
 Let's add some more DataObjects, but this time, we'll only add a subset of fields and operations.
