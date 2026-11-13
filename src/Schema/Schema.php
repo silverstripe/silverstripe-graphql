@@ -74,6 +74,12 @@ class Schema implements ConfigurationApplier
 
     private static bool $verbose = false;
 
+    /**
+     * The configuration for each schema, keyed by schema name.
+     * The "*" key holds configuration that is merged into every schema.
+     */
+    private static array $schemas = [];
+
     private LoggerInterface $logger;
 
     private string $schemaKey;
