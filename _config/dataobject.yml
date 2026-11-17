@@ -5,3 +5,10 @@ SilverStripe\ORM\DataObject:
   graphql_blacklisted_fields:
     LinkTracking: true
     FileTracking: true
+
+# graphql_blacklisted_fields is read from DataObject classes, which don't declare it,
+# so config:audit must not report it as a missing property
+SilverStripe\Dev\Command\ConfigAudit:
+  ignored_properties:
+    SilverStripe\ORM\DataObject:
+      - graphql_blacklisted_fields
