@@ -5,20 +5,20 @@
     "license": "BSD-3-Clause",
     "require": {
         "php": "^8.3",
-        "silverstripe/framework": "^6.1",
+        "silverstripe/framework": "^7",
         "webonyx/graphql-php": "^15.19",
-        "silverstripe/event-dispatcher": "^2",
+        "silverstripe/event-dispatcher": "^3",
         "guzzlehttp/guzzle": "^7.9",
         "guzzlehttp/psr7": "^2.7",
         "m1/env": "^2.2.0"
     },
     "require-dev": {
-        "silverstripe/recipe-testing": "^4",
+        "silverstripe/recipe-testing": "^5",
         "squizlabs/php_codesniffer": "^3.7",
-        "silverstripe/asset-admin": "^3",
-        "silverstripe/versioned-admin": "^3",
-        "dnadesign/silverstripe-elemental": "^6",
-        "silverstripe/frameworktest": "^2",
+        "silverstripe/asset-admin": "^4",
+        "silverstripe/versioned-admin": "^4",
+        "dnadesign/silverstripe-elemental": "^7",
+        "silverstripe/frameworktest": "^3",
         "silverstripe/standards": "^1",
         "phpstan/extension-installer": "^1.3"
     },
