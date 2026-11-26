@@ -20,6 +20,7 @@ use SilverStripe\GraphQL\Schema\Interfaces\OperationCreator;
 use SilverStripe\GraphQL\Schema\Interfaces\OperationProvider;
 use SilverStripe\GraphQL\Schema\Schema;
 use SilverStripe\GraphQL\Schema\Exception\SchemaBuilderException;
+use SilverStripe\GraphQL\Schema\Interfaces\ModelTypeDescription;
 use SilverStripe\GraphQL\Schema\Interfaces\SchemaModelInterface;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\FieldType\DBField;
@@ -34,7 +35,8 @@ class DataObjectModel implements
     OperationProvider,
     DefaultFieldsProvider,
     BaseFieldsProvider,
-    ModelBlacklist
+    ModelBlacklist,
+    ModelTypeDescription
 {
     use Injectable;
     use Configurable;
@@ -380,6 +382,11 @@ class DataObjectModel implements
         }
 
         return $this->getModelConfiguration()->getTypeName($class);
+    }
+
+    public function getTypeDescription(): ?string
+    {
+        return $this->dataObject->classDescription() ?? null;
     }
 
     /**

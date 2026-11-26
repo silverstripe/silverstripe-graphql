@@ -47,6 +47,22 @@ class SchemaContextTest extends SapphireTest
         );
     }
 
+    public function testTypeDescription()
+    {
+        $schema = SchemaBuilder::singleton()->boot('default');
+
+        DataObjectFake::config()->set('class_description', 'A fake data object');
+
+        $modelType = new ModelType(
+            DataObjectModel::create(DataObjectFake::class, new SchemaConfig())
+        );
+        $this->assertEquals(
+            'A fake data object',
+            $modelType->getDescription(),
+            'Model type description should be set from class description'
+        );
+    }
+
     public function testResolverDiscovery()
     {
         $context = new SchemaConfig([
